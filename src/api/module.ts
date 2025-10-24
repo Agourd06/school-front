@@ -1,4 +1,5 @@
 import api from './axios';
+import type { PaginatedResponse, FilterParams } from '../types/api';
 
 // Forward declarations
 interface Company {
@@ -12,7 +13,7 @@ interface Course {
   title: string;
   description?: string;
   volume?: number;
-  confusion?: number;
+  coefficient?: number;
   status: number;
   company_id?: number;
 }
@@ -22,7 +23,7 @@ export interface Module {
   title: string;
   description?: string;
   volume?: number;
-  confusion?: number;
+  coefficient?: number;
   status: number;
   company_id?: number;
   created_at?: string;
@@ -35,7 +36,7 @@ export interface CreateModuleRequest {
   title: string;
   description?: string;
   volume?: number;
-  confusion?: number;
+  coefficient?: number;
   status?: number;
   company_id?: number;
 }
@@ -44,14 +45,45 @@ export interface UpdateModuleRequest {
   title?: string;
   description?: string;
   volume?: number;
-  confusion?: number;
+  coefficient?: number;
   status?: number;
   company_id?: number;
 }
 
 export const moduleApi = {
-  getAll: async (): Promise<Module[]> => {
-    const response = await api.get('/module');
+  getAll: async (params: FilterParams = {}): Promise<PaginatedResponse<Module>> => {
+    const queryParams = new URLSearchParams();
+    
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
+    if (params.status !== undefined && params.status !== null) queryParams.append('status', params.status.toString());
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `/module?${queryString}` : '/module';
+    
+    console.log('Modules API request params:', params);
+    console.log('Modules API request URL:', url);
+    
+    const response = await api.get(url);
+    console.log('Modules API response:', response.data);
+    
+    // Handle both direct array and wrapped response formats
+    if (Array.isArray(response.data)) {
+      // Legacy format - convert to paginated format
+      return {
+        data: response.data,
+        meta: {
+          page: 1,
+          limit: response.data.length,
+          total: response.data.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false
+        }
+      };
+    }
+    
     return response.data;
   },
 

@@ -1,4 +1,5 @@
 import api from './axios';
+import type { PaginatedResponse, SearchParams } from '../types/api';
 
 // Forward declaration
 interface Company {
@@ -34,8 +35,38 @@ export interface UpdateUserRequest {
 }
 
 export const usersApi = {
-  getAll: async (): Promise<User[]> => {
-    const response = await api.get('/users');
+  getAll: async (params: SearchParams = {}): Promise<PaginatedResponse<User>> => {
+    const queryParams = new URLSearchParams();
+    
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
+    
+    const queryString = queryParams.toString();
+    const url = queryString ? `/users?${queryString}` : '/users';
+    
+    console.log('Users API request params:', params);
+    console.log('Users API request URL:', url);
+    
+    const response = await api.get(url);
+    console.log('Users API response:', response.data);
+    
+    // Handle both direct array and wrapped response formats
+    if (Array.isArray(response.data)) {
+      // Legacy format - convert to paginated format
+      return {
+        data: response.data,
+        meta: {
+          page: 1,
+          limit: response.data.length,
+          total: response.data.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false
+        }
+      };
+    }
+    
     return response.data;
   },
 

@@ -8,7 +8,7 @@ interface Module {
   title: string;
   description?: string;
   volume?: number;
-  confusion?: number;
+  coefficient?: number;
   status: number;
   company_id?: number;
   created_at?: string;
@@ -26,7 +26,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isOpen, onClose, module }) =>
     title: '',
     description: '',
     volume: '',
-    confusion: '',
+    coefficient: '',
     status: 1
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,7 +43,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isOpen, onClose, module }) =>
         title: module.title || '',
         description: module.description || '',
         volume: module.volume ? module.volume.toString() : '',
-        confusion: module.confusion ? module.confusion.toString() : '',
+        coefficient: module.coefficient ? module.coefficient.toString() : '',
         status: module.status || 1
       });
     } else {
@@ -51,7 +51,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isOpen, onClose, module }) =>
         title: '',
         description: '',
         volume: '',
-        confusion: '',
+        coefficient: '',
         status: 1
       });
     }
@@ -69,8 +69,8 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isOpen, onClose, module }) =>
       newErrors.volume = 'Volume must be a positive number';
     }
 
-    if (formData.confusion && (isNaN(Number(formData.confusion)) || Number(formData.confusion) < 0)) {
-      newErrors.confusion = 'Confusion must be a positive number';
+    if (formData.coefficient && (isNaN(Number(formData.coefficient)) || Number(formData.coefficient) < 0)) {
+      newErrors.coefficient = 'Coefficient must be a positive number';
     }
 
     setErrors(newErrors);
@@ -92,7 +92,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isOpen, onClose, module }) =>
           title: formData.title,
           description: formData.description || undefined,
           volume: formData.volume ? Number(formData.volume) : undefined,
-          confusion: formData.confusion ? Number(formData.confusion) : undefined,
+          coefficient: formData.coefficient ? Number(formData.coefficient) : undefined,
           status: formData.status
         });
         console.log('Module updated successfully');
@@ -102,7 +102,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isOpen, onClose, module }) =>
           title: formData.title,
           description: formData.description || undefined,
           volume: formData.volume ? Number(formData.volume) : undefined,
-          confusion: formData.confusion ? Number(formData.confusion) : undefined,
+          coefficient: formData.coefficient ? Number(formData.coefficient) : undefined,
           status: formData.status
         });
         console.log('Module created successfully');
@@ -188,21 +188,21 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isOpen, onClose, module }) =>
       </div>
 
       <div>
-        <label htmlFor="confusion" className="block text-sm font-medium text-gray-700">
-          Confusion (optional)
+        <label htmlFor="coefficient" className="block text-sm font-medium text-gray-700">
+          Coefficient (optional)
         </label>
         <input
           type="number"
           step="0.1"
-          id="confusion"
-          name="confusion"
-          value={formData.confusion}
+          id="coefficient"
+          name="coefficient"
+          value={formData.coefficient}
           onChange={handleChange}
           className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-            errors.confusion ? 'border-red-300' : 'border-gray-300'
+            errors.coefficient ? 'border-red-300' : 'border-gray-300'
           }`}
         />
-        {errors.confusion && <p className="mt-1 text-sm text-red-600">{errors.confusion}</p>}
+        {errors.coefficient && <p className="mt-1 text-sm text-red-600">{errors.coefficient}</p>}
       </div>
 
         <div>

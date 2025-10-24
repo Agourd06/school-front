@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { moduleApi } from '../api/module';
 import type { UpdateModuleRequest } from '../api/module';
+import type { FilterParams } from '../types/api';
 
-export const useModules = () => {
+export const useModules = (params: FilterParams = {}) => {
   return useQuery({
-    queryKey: ['modules'],
-    queryFn: moduleApi.getAll,
+    queryKey: ['modules', params],
+    queryFn: () => moduleApi.getAll(params),
   });
 };
 

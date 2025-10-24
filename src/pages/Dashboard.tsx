@@ -1,17 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useUsers, useDeleteUser } from '../hooks/useUsers';
 import { useDeleteCompany } from '../hooks/useCompanies';
 import { useCourses, useDeleteCourse } from '../hooks/useCourses';
 import { useModules, useDeleteModule } from '../hooks/useModules';
 import { UserModal, CourseModal, ModuleModal, DescriptionModal } from '../components/modals';
 import Sidebar from '../components/Sidebar';
+import DataTable from '../components/DataTable';
+import type { ListState, SearchParams, FilterParams } from '../types/api';
 
+// Main Dashboard component with reusable DataTable
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'users' | 'courses' | 'modules'>('users');
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionItem, setDescriptionItem] = useState<any>(null);
+
+  // State for each tab's pagination and filtering
+  const [usersState, setUsersState] = useState<ListState<any>>({
+    data: [],
+    loading: false,
+    error: null,
+    pagination: {
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+      hasNext: false,
+      hasPrevious: false
+    },
+    filters: {
+      search: ''
+    }
+  });
+
+  const [coursesState, setCoursesState] = useState<ListState<any>>({
+    data: [],
+    loading: false,
+    error: null,
+    pagination: {
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+      hasNext: false,
+      hasPrevious: false
+    },
+    filters: {
+      search: '',
+      status: undefined
+    }
+  });
+
+  const [modulesState, setModulesState] = useState<ListState<any>>({
+    data: [],
+    loading: false,
+    error: null,
+    pagination: {
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+      hasNext: false,
+      hasPrevious: false
+    },
+    filters: {
+      search: '',
+      status: undefined
+    }
+  });
 
   // Helper function to get status display
   const getStatusDisplay = (status: number) => {
@@ -32,11 +89,66 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  // Data fetching
-  const { data: users, isLoading: usersLoading } = useUsers();
-  // const { data: companies, isLoading: companiesLoading } = useCompanies();
-  const { data: courses, isLoading: coursesLoading } = useCourses();
-  const { data: modules, isLoading: modulesLoading } = useModules();
+  // Data fetching with pagination and filtering
+  const usersParams: SearchParams = {
+    page: usersState.pagination.page,
+    limit: usersState.pagination.limit,
+    search: usersState.filters.search || undefined
+  };
+  const { data: usersResponse, isLoading: usersLoading, error: usersError } = useUsers(usersParams);
+
+  const coursesParams: FilterParams = {
+    page: coursesState.pagination.page,
+    limit: coursesState.pagination.limit,
+    search: coursesState.filters.search || undefined,
+    status: coursesState.filters.status
+  };
+  const { data: coursesResponse, isLoading: coursesLoading, error: coursesError } = useCourses(coursesParams);
+
+  const modulesParams: FilterParams = {
+    page: modulesState.pagination.page,
+    limit: modulesState.pagination.limit,
+    search: modulesState.filters.search || undefined,
+    status: modulesState.filters.status
+  };
+  const { data: modulesResponse, isLoading: modulesLoading, error: modulesError } = useModules(modulesParams);
+
+  // Update state when API responses change
+  React.useEffect(() => {
+    if (usersResponse) {
+      setUsersState(prev => ({
+        ...prev,
+        data: usersResponse.data,
+        loading: usersLoading,
+        error: usersError?.message || null,
+        pagination: usersResponse.meta
+      }));
+    }
+  }, [usersResponse, usersLoading, usersError]);
+
+  React.useEffect(() => {
+    if (coursesResponse) {
+      setCoursesState(prev => ({
+        ...prev,
+        data: coursesResponse.data,
+        loading: coursesLoading,
+        error: coursesError?.message || null,
+        pagination: coursesResponse.meta
+      }));
+    }
+  }, [coursesResponse, coursesLoading, coursesError]);
+
+  React.useEffect(() => {
+    if (modulesResponse) {
+      setModulesState(prev => ({
+        ...prev,
+        data: modulesResponse.data,
+        loading: modulesLoading,
+        error: modulesError?.message || null,
+        pagination: modulesResponse.meta
+      }));
+    }
+  }, [modulesResponse, modulesLoading, modulesError]);
 
   // Create mutations
   // const createUser = useCreateUser();
@@ -81,50 +193,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const renderUsersTable = () => (
-    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-      <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-        <h3 className="text-lg leading-6 font-medium text-gray-900">Users</h3>
-        <button
-          onClick={handleAddClick}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
-          Add User
-        </button>
-      </div>
-      {usersLoading ? (
-        <div className="p-4 text-center">Loading...</div>
-      ) : (
-        <ul className="divide-y divide-gray-200">
-          {users?.map((user) => (
-            <li key={user.id} className="px-4 py-4 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
-                  <p className="text-sm text-gray-500">Role: {user.role}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleEditClick(user)}
-                    className="text-blue-600 hover:text-blue-900"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user.id, 'user')}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
 
   // const renderCompaniesTable = () => (
   //   <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -172,107 +240,7 @@ const Dashboard: React.FC = () => {
   //   </div>
   // );
 
-  const renderCoursesTable = () => (
-    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-      <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-        <h3 className="text-lg leading-6 font-medium text-gray-900">Courses</h3>
-        <button
-          onClick={handleAddClick}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
-          Add Course
-        </button>
-      </div>
-      {coursesLoading ? (
-        <div className="p-4 text-center">Loading...</div>
-      ) : (
-        <ul className="divide-y divide-gray-200">
-          {courses?.map((course) => (
-            <li key={course.id} className="px-4 py-4 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{course.title}</p>
-                  <p className="text-sm text-gray-500">Volume: {course.volume || 'N/A'}</p>
-                  <p className="text-sm text-gray-500">Status: {getStatusDisplay(course.status)}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleDescriptionClick(course)}
-                    className="text-green-600 hover:text-green-900"
-                  >
-                    View Description
-                  </button>
-                  <button
-                    onClick={() => handleEditClick(course)}
-                    className="text-blue-600 hover:text-blue-900"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(course.id, 'course')}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
 
-  const renderModulesTable = () => (
-    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-      <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-        <h3 className="text-lg leading-6 font-medium text-gray-900">Modules</h3>
-        <button
-          onClick={handleAddClick}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
-          Add Module
-        </button>
-      </div>
-      {modulesLoading ? (
-        <div className="p-4 text-center">Loading...</div>
-      ) : (
-        <ul className="divide-y divide-gray-200">
-          {modules?.map((module) => (
-            <li key={module.id} className="px-4 py-4 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{module.title}</p>
-                  <p className="text-sm text-gray-500">Volume: {module.volume || 'N/A'}</p>
-                  <p className="text-sm text-gray-500">Status: {getStatusDisplay(module.status)}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleDescriptionClick(module)}
-                    className="text-green-600 hover:text-green-900"
-                  >
-                    View Description
-                  </button>
-                  <button
-                    onClick={() => handleEditClick(module)}
-                    className="text-blue-600 hover:text-blue-900"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(module.id, 'module')}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
 
   const handleAddClick = () => {
     setEditingItem(null);
@@ -298,6 +266,89 @@ const Dashboard: React.FC = () => {
     setShowDescriptionModal(false);
     setDescriptionItem(null);
   };
+
+  // Event handlers for pagination, search, and filtering
+  const handleUsersPageChange = useCallback((page: number) => {
+    setUsersState(prev => ({
+      ...prev,
+      pagination: { ...prev.pagination, page }
+    }));
+  }, []);
+
+  const handleUsersPageSizeChange = useCallback((size: number) => {
+    setUsersState(prev => ({
+      ...prev,
+      pagination: { ...prev.pagination, limit: size, page: 1 }
+    }));
+  }, []);
+
+  const handleUsersSearch = useCallback((query: string) => {
+    setUsersState(prev => ({
+      ...prev,
+      filters: { ...prev.filters, search: query },
+      pagination: { ...prev.pagination, page: 1 }
+    }));
+  }, []);
+
+  const handleCoursesPageChange = useCallback((page: number) => {
+    setCoursesState(prev => ({
+      ...prev,
+      pagination: { ...prev.pagination, page }
+    }));
+  }, []);
+
+  const handleCoursesPageSizeChange = useCallback((size: number) => {
+    setCoursesState(prev => ({
+      ...prev,
+      pagination: { ...prev.pagination, limit: size, page: 1 }
+    }));
+  }, []);
+
+  const handleCoursesSearch = useCallback((query: string) => {
+    setCoursesState(prev => ({
+      ...prev,
+      filters: { ...prev.filters, search: query },
+      pagination: { ...prev.pagination, page: 1 }
+    }));
+  }, []);
+
+  const handleCoursesFilterChange = useCallback((status: number | null) => {
+    setCoursesState(prev => ({
+      ...prev,
+      filters: { ...prev.filters, status },
+      pagination: { ...prev.pagination, page: 1 }
+    }));
+  }, []);
+
+  const handleModulesPageChange = useCallback((page: number) => {
+    setModulesState(prev => ({
+      ...prev,
+      pagination: { ...prev.pagination, page }
+    }));
+  }, []);
+
+  const handleModulesPageSizeChange = useCallback((size: number) => {
+    setModulesState(prev => ({
+      ...prev,
+      pagination: { ...prev.pagination, limit: size, page: 1 }
+    }));
+  }, []);
+
+  const handleModulesSearch = useCallback((query: string) => {
+    setModulesState(prev => ({
+      ...prev,
+      filters: { ...prev.filters, search: query },
+      pagination: { ...prev.pagination, page: 1 }
+    }));
+  }, []);
+
+  const handleModulesFilterChange = useCallback((status: number | null) => {
+    setModulesState(prev => ({
+      ...prev,
+      filters: { ...prev.filters, status },
+      pagination: { ...prev.pagination, page: 1 }
+    }));
+  }, []);
 
   const renderModal = () => {
     switch (activeTab) {
@@ -350,9 +401,52 @@ const Dashboard: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
             
             {/* Content */}
-            {activeTab === 'users' && renderUsersTable()}
-            {activeTab === 'courses' && renderCoursesTable()}
-            {activeTab === 'modules' && renderModulesTable()}
+            {activeTab === 'users' && (
+              <DataTable
+                title="Users"
+                state={usersState}
+                onAdd={handleAddClick}
+                onEdit={handleEditClick}
+                onDelete={handleDelete}
+                onPageChange={handleUsersPageChange}
+                onPageSizeChange={handleUsersPageSizeChange}
+                onSearch={handleUsersSearch}
+                type="users"
+                getStatusDisplay={getStatusDisplay}
+              />
+            )}
+            {activeTab === 'courses' && (
+              <DataTable
+                title="Courses"
+                state={coursesState}
+                onAdd={handleAddClick}
+                onEdit={handleEditClick}
+                onDelete={handleDelete}
+                onViewDescription={handleDescriptionClick}
+                onPageChange={handleCoursesPageChange}
+                onPageSizeChange={handleCoursesPageSizeChange}
+                onSearch={handleCoursesSearch}
+                onFilterChange={handleCoursesFilterChange}
+                type="courses"
+                getStatusDisplay={getStatusDisplay}
+              />
+            )}
+            {activeTab === 'modules' && (
+              <DataTable
+                title="Modules"
+                state={modulesState}
+                onAdd={handleAddClick}
+                onEdit={handleEditClick}
+                onDelete={handleDelete}
+                onViewDescription={handleDescriptionClick}
+                onPageChange={handleModulesPageChange}
+                onPageSizeChange={handleModulesPageSizeChange}
+                onSearch={handleModulesSearch}
+                onFilterChange={handleModulesFilterChange}
+                type="modules"
+                getStatusDisplay={getStatusDisplay}
+              />
+            )}
           </div>
         </div>
       </div>

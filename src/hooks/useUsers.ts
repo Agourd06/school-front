@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../api/users';
 import type { UpdateUserRequest } from '../api/users';
+import type { SearchParams } from '../types/api';
 
-export const useUsers = () => {
+export const useUsers = (params: SearchParams = {}) => {
   return useQuery({
-    queryKey: ['users'],
-    queryFn: usersApi.getAll,
+    queryKey: ['users', params],
+    queryFn: () => usersApi.getAll(params),
   });
 };
 
