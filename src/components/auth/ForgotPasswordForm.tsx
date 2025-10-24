@@ -3,11 +3,10 @@ import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 
 interface ForgotPasswordFormProps {
-  onSuccess?: () => void;
   showLinks?: boolean;
 }
 
-const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSuccess, showLinks = true }) => {
+const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = true }) => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);

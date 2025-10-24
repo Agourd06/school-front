@@ -1,3 +1,35 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* SunEditor custom styles for better text handling */
+.se-container {
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.5rem !important;
+}
+
+.se-wrapper {
+  border-radius: 0.5rem !important;
+}
+
+.se-toolbar {
+  border-bottom: 1px solid #e5e7eb !important;
+  background-color: #f9fafb !important;
+}
+
+.se-content {
+  min-height: 200px !important;
+  max-height: 600px !important;
+  overflow-y: auto !important;
+  padding: 1rem !important;
+  line-height: 1.6 !important;
+}
+
+.se-content p {
+  margin-bottom: 0.75rem !important;
+}
+
+.se-content ul, .se-content ol {
+  margin-bottom: 0.75rem !important;
+  padding-left: 1.5rem !important;
+}

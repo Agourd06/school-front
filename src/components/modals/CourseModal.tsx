@@ -163,7 +163,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ isOpen, onClose, course }) =>
             value={formData.description}
             onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
             placeholder="Enter course description..."
-            rows={4}
+            rows={8}
           />
           {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
         </div>

@@ -115,4 +115,26 @@ export const courseApi = {
     const response = await api.delete(`/course/${courseId}/modules/${moduleId}`);
     return response.data;
   },
+
+  // Module assignment management
+  getModuleAssignments: async (courseId: number): Promise<{ assigned: Module[]; unassigned: Module[] }> => {
+    const response = await api.get(`/course/${courseId}/modules`);
+    return response.data;
+  },
+
+  updateModuleAssignments: async (courseId: number, data: { add: number[]; remove: number[] }): Promise<{ message: string }> => {
+    const response = await api.post(`/course/${courseId}/modules`, data);
+    return response.data;
+  },
+
+  // Individual module assignment operations
+  addModuleToCourse: async (courseId: number, moduleId: number): Promise<{ message: string }> => {
+    const response = await api.post(`/course/${courseId}/modules/${moduleId}`);
+    return response.data;
+  },
+
+  removeModuleFromCourse: async (courseId: number, moduleId: number): Promise<{ message: string }> => {
+    const response = await api.delete(`/course/${courseId}/modules/${moduleId}`);
+    return response.data;
+  },
 };

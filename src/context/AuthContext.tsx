@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { authApi } from '../api/auth';
 
 interface User {
@@ -67,20 +68,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const data = await authApi.login({ email, password });
       console.log('Login response:', data);
       
-      // Handle your backend's response structure: {token, email}
-      const token = data.access_token || data.token;
-      const userEmail = data.email;
+      // Handle your backend's response structure: {access_token, user: {id, email, username, role}}
+      const token = data.access_token;
+      const userData = data.user;
       
-      if (!token || !userEmail) {
-        throw new Error('Invalid login response: missing token or email');
+      if (!token || !userData) {
+        throw new Error('Invalid login response: missing token or user data');
       }
       
-      // Create user object from available data
+      // Create user object from the nested user data
       const user = {
-        id: data.id || 0, // Use id if available, otherwise 0
-        email: userEmail,
-        username: data.username || userEmail.split('@')[0], // Use username if available, otherwise email prefix
-        role: data.role || 'user' // Use role if available, otherwise 'user'
+        id: userData.id,
+        email: userData.email,
+        username: userData.username,
+        role: userData.role
       };
       
       setToken(token);

@@ -24,7 +24,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <SunEditor
         onChange={handleEditorChange}
         setContents={value}
-        height={`${rows * 1.6}rem`}
+        height={`${Math.max(rows * 1.6, 8)}rem`}
         placeholder={placeholder}
         setOptions={{
           buttonList: [
@@ -36,6 +36,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             ['removeFormat'],
           ],
           fontSize: [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48],
+          minHeight: '200px',
+          maxHeight: '600px',
+          resizingBar: true,
+          showPathLabel: false,
+          charCounter: true,
+          charCounterLabel: 'Characters: ',
         }}
       />
     </div>

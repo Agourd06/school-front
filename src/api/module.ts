@@ -116,5 +116,27 @@ export const moduleApi = {
     const response = await api.delete(`/module/${moduleId}/courses/${courseId}`);
     return response.data;
   },
+
+  // Course assignment management
+  getCourseAssignments: async (moduleId: number): Promise<{ assigned: Course[]; unassigned: Course[] }> => {
+    const response = await api.get(`/module/${moduleId}/courses`);
+    return response.data;
+  },
+
+  updateCourseAssignments: async (moduleId: number, data: { add: number[]; remove: number[] }): Promise<{ message: string }> => {
+    const response = await api.post(`/module/${moduleId}/courses`, data);
+    return response.data;
+  },
+
+  // Individual course assignment operations
+  addCourseToModule: async (moduleId: number, courseId: number): Promise<{ message: string }> => {
+    const response = await api.post(`/module/${moduleId}/courses/${courseId}`);
+    return response.data;
+  },
+
+  removeCourseFromModule: async (moduleId: number, courseId: number): Promise<{ message: string }> => {
+    const response = await api.delete(`/module/${moduleId}/courses/${courseId}`);
+    return response.data;
+  },
 };
 

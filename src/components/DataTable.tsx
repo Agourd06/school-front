@@ -12,6 +12,8 @@ interface DataTableProps {
   onEdit: (item: any) => void;
   onDelete: (id: number, type: 'user' | 'company' | 'course' | 'module') => Promise<void>;
   onViewDescription?: (item: any) => void;
+  onManageCourses?: (item: any) => void;
+  onManageModules?: (item: any) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   onSearch: (query: string) => void;
@@ -27,6 +29,8 @@ const DataTable: React.FC<DataTableProps> = ({
   onEdit,
   onDelete,
   onViewDescription,
+  onManageCourses,
+  onManageModules,
   onPageChange,
   onPageSizeChange,
   onSearch,
@@ -79,6 +83,14 @@ const DataTable: React.FC<DataTableProps> = ({
               View Description
             </button>
           )}
+          {onManageModules && (
+            <button
+              onClick={() => onManageModules(course)}
+              className="text-purple-600 hover:text-purple-900"
+            >
+              Manage Modules
+            </button>
+          )}
           <button
             onClick={() => onEdit(course)}
             className="text-blue-600 hover:text-blue-900"
@@ -112,6 +124,14 @@ const DataTable: React.FC<DataTableProps> = ({
               className="text-green-600 hover:text-green-900"
             >
               View Description
+            </button>
+          )}
+          {onManageCourses && (
+            <button
+              onClick={() => onManageCourses(module)}
+              className="text-purple-600 hover:text-purple-900"
+            >
+              Manage Courses
             </button>
           )}
           <button

@@ -22,7 +22,6 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   isLoading = false,
   className = ''
 }) => {
-  const selectedOption = options.find(option => option.value === value);
 
   return (
     <div className={`relative ${className}`}>

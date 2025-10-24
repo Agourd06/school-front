@@ -161,12 +161,12 @@ const ModuleModal: React.FC<ModuleModalProps> = ({ isOpen, onClose, module }) =>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
           Description
         </label>
-        <RichTextEditor
-          value={formData.description}
-          onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-          placeholder="Enter module description..."
-          rows={4}
-        />
+          <RichTextEditor
+            value={formData.description}
+            onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+            placeholder="Enter module description..."
+            rows={8}
+          />
         {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
       </div>
 

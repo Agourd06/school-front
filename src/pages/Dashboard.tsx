@@ -3,7 +3,7 @@ import { useUsers, useDeleteUser } from '../hooks/useUsers';
 import { useDeleteCompany } from '../hooks/useCompanies';
 import { useCourses, useDeleteCourse } from '../hooks/useCourses';
 import { useModules, useDeleteModule } from '../hooks/useModules';
-import { UserModal, CourseModal, ModuleModal, DescriptionModal } from '../components/modals';
+import { UserModal, CourseModal, ModuleModal, DescriptionModal, CourseAssignmentModal, ModuleAssignmentModal } from '../components/modals';
 import Sidebar from '../components/Sidebar';
 import DataTable from '../components/DataTable';
 import type { ListState, SearchParams, FilterParams } from '../types/api';
@@ -15,6 +15,10 @@ const Dashboard: React.FC = () => {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionItem, setDescriptionItem] = useState<any>(null);
+  const [showCourseAssignmentModal, setShowCourseAssignmentModal] = useState(false);
+  const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [showModuleAssignmentModal, setShowModuleAssignmentModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
   // State for each tab's pagination and filtering
   const [usersState, setUsersState] = useState<ListState<any>>({
@@ -267,6 +271,26 @@ const Dashboard: React.FC = () => {
     setDescriptionItem(null);
   };
 
+  const handleCourseAssignmentClick = (module: any) => {
+    setSelectedModule(module);
+    setShowCourseAssignmentModal(true);
+  };
+
+  const handleCourseAssignmentModalClose = () => {
+    setShowCourseAssignmentModal(false);
+    setSelectedModule(null);
+  };
+
+  const handleModuleAssignmentClick = (course: any) => {
+    setSelectedCourse(course);
+    setShowModuleAssignmentModal(true);
+  };
+
+  const handleModuleAssignmentModalClose = () => {
+    setShowModuleAssignmentModal(false);
+    setSelectedCourse(null);
+  };
+
   // Event handlers for pagination, search, and filtering
   const handleUsersPageChange = useCallback((page: number) => {
     setUsersState(prev => ({
@@ -423,6 +447,7 @@ const Dashboard: React.FC = () => {
                 onEdit={handleEditClick}
                 onDelete={handleDelete}
                 onViewDescription={handleDescriptionClick}
+                onManageModules={handleModuleAssignmentClick}
                 onPageChange={handleCoursesPageChange}
                 onPageSizeChange={handleCoursesPageSizeChange}
                 onSearch={handleCoursesSearch}
@@ -439,6 +464,7 @@ const Dashboard: React.FC = () => {
                 onEdit={handleEditClick}
                 onDelete={handleDelete}
                 onViewDescription={handleDescriptionClick}
+                onManageCourses={handleCourseAssignmentClick}
                 onPageChange={handleModulesPageChange}
                 onPageSizeChange={handleModulesPageSizeChange}
                 onSearch={handleModulesSearch}
@@ -462,6 +488,26 @@ const Dashboard: React.FC = () => {
           title={descriptionItem.title}
           description={descriptionItem.description}
           type={activeTab === 'courses' ? 'course' : 'module'}
+        />
+      )}
+
+      {/* Course Assignment Modal */}
+      {selectedModule && (
+        <CourseAssignmentModal
+          isOpen={showCourseAssignmentModal}
+          onClose={handleCourseAssignmentModalClose}
+          moduleId={selectedModule.id}
+          moduleTitle={selectedModule.title}
+        />
+      )}
+
+      {/* Module Assignment Modal */}
+      {selectedCourse && (
+        <ModuleAssignmentModal
+          isOpen={showModuleAssignmentModal}
+          onClose={handleModuleAssignmentModalClose}
+          courseId={selectedCourse.id}
+          courseTitle={selectedCourse.title}
         />
       )}
     </div>
