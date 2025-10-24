@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '../hooks/useUsers';
-import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany } from '../hooks/useCompanies';
-import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from '../hooks/useCourses';
-import { useModules, useCreateModule, useUpdateModule, useDeleteModule } from '../hooks/useModules';
-import { UserModal, CompanyModal, CourseModal, ModuleModal } from '../components/modals';
+import { useUsers, useDeleteUser } from '../hooks/useUsers';
+import { useDeleteCompany } from '../hooks/useCompanies';
+import { useCourses, useDeleteCourse } from '../hooks/useCourses';
+import { useModules, useDeleteModule } from '../hooks/useModules';
+import { UserModal, CourseModal, ModuleModal, DescriptionModal } from '../components/modals';
+import Sidebar from '../components/Sidebar';
 
 const Dashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'users' | 'companies' | 'courses' | 'modules'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'courses' | 'modules'>('users');
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [descriptionItem, setDescriptionItem] = useState<any>(null);
 
   // Helper function to get status display
   const getStatusDisplay = (status: number) => {
@@ -189,11 +192,16 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{course.title}</p>
-                  <p className="text-sm text-gray-500">{course.description || 'No description'}</p>
                   <p className="text-sm text-gray-500">Volume: {course.volume || 'N/A'}</p>
                   <p className="text-sm text-gray-500">Status: {getStatusDisplay(course.status)}</p>
                 </div>
                 <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleDescriptionClick(course)}
+                    className="text-green-600 hover:text-green-900"
+                  >
+                    View Description
+                  </button>
                   <button
                     onClick={() => handleEditClick(course)}
                     className="text-blue-600 hover:text-blue-900"
@@ -235,11 +243,16 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{module.title}</p>
-                  <p className="text-sm text-gray-500">{module.description || 'No description'}</p>
                   <p className="text-sm text-gray-500">Volume: {module.volume || 'N/A'}</p>
                   <p className="text-sm text-gray-500">Status: {getStatusDisplay(module.status)}</p>
                 </div>
                 <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleDescriptionClick(module)}
+                    className="text-green-600 hover:text-green-900"
+                  >
+                    View Description
+                  </button>
                   <button
                     onClick={() => handleEditClick(module)}
                     className="text-blue-600 hover:text-blue-900"
@@ -274,6 +287,16 @@ const Dashboard: React.FC = () => {
   const handleModalClose = () => {
     setShowModal(false);
     setEditingItem(null);
+  };
+
+  const handleDescriptionClick = (item: any) => {
+    setDescriptionItem(item);
+    setShowDescriptionModal(true);
+  };
+
+  const handleDescriptionModalClose = () => {
+    setShowDescriptionModal(false);
+    setDescriptionItem(null);
   };
 
   const renderModal = () => {
@@ -316,45 +339,37 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
-          
-          {/* Tabs */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="-mb-px flex space-x-8">
-              {[
-                { key: 'users', label: 'Users' },
-                // { key: 'companies', label: 'Companies' },
-                { key: 'courses', label: 'Courses' },
-                { key: 'modules', label: 'Modules' },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key as any)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.key
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      
+      {/* Main Content */}
+      <div className="flex-1 ml-64">
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+            
+            {/* Content */}
+            {activeTab === 'users' && renderUsersTable()}
+            {activeTab === 'courses' && renderCoursesTable()}
+            {activeTab === 'modules' && renderModulesTable()}
           </div>
-
-          {/* Content */}
-          {activeTab === 'users' && renderUsersTable()}
-          {/* {activeTab === 'companies' && renderCompaniesTable()} */}
-          {activeTab === 'courses' && renderCoursesTable()}
-          {activeTab === 'modules' && renderModulesTable()}
         </div>
       </div>
 
       {/* Modals */}
       {renderModal()}
+      
+      {/* Description Modal */}
+      {descriptionItem && (
+        <DescriptionModal
+          isOpen={showDescriptionModal}
+          onClose={handleDescriptionModalClose}
+          title={descriptionItem.title}
+          description={descriptionItem.description}
+          type={activeTab === 'courses' ? 'course' : 'module'}
+        />
+      )}
     </div>
   );
 };
