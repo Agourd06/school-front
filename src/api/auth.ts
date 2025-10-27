@@ -6,9 +6,9 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  access_token: string;
-  user: {
-    id: number;
+  token: string;
+  user?: {
+    id?: number;
     email: string;
     username: string;
     role: string;
@@ -49,6 +49,7 @@ export interface ChangePasswordRequest {
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
     const response = await api.post('/auth/login', data);
+      
     return response.data;
   },
 

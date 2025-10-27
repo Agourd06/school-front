@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 interface SidebarProps {
-  activeTab: 'users' | 'courses' | 'modules';
-  onTabChange: (tab: 'users' | 'courses' | 'modules') => void;
+  activeTab: 'users' | 'courses' | 'modules' | 'schoolYear' | 'schoolYearPeriod';
+  onTabChange: (tab: 'users' | 'courses' | 'modules' | 'schoolYear' | 'schoolYearPeriod') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
@@ -93,6 +93,41 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                   Modules
+                </div>
+              </button>
+              
+              {/* School Year */}
+              <button
+                onClick={() => onTabChange('schoolYear')}
+                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                  activeTab === 'schoolYear'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z" />
+                  </svg>
+                  School Year
+                </div>
+              </button>
+
+              {/* School Year Period */}
+              <button
+                onClick={() => onTabChange('schoolYearPeriod')}
+                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                  activeTab === 'schoolYearPeriod'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M7 21h10a2 2 0 002-2V9H5v10a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13h8" />
+                  </svg>
+                  School Year Period
                 </div>
               </button>
             </div>
