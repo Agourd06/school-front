@@ -12,9 +12,10 @@ const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-5 mx-auto p-6 border w-[calc(100%-40px)] h-[calc(100%-40px)] max-w-none shadow-lg rounded-md bg-white">
-        <div className="mt-3">
+    <div className="fixed inset-0 z-50 bg-gray-600 bg-opacity-50 ">
+      <div className="absolute inset-0 p-2 sm:p-4 flex items-center justify-center">
+        <div className="w-[96vw] max-w-none bg-white border rounded-md shadow-lg p-4 sm:p-6 max-h-[92vh] overflow-y-auto">
+          <div className="mt-1">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-medium text-gray-900">{title}</h3>
             <button
@@ -28,6 +29,7 @@ const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children 
             </button>
           </div>
           {children}
+          </div>
         </div>
       </div>
     </div>

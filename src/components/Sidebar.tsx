@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 interface SidebarProps {
-  activeTab: 'users' | 'courses' | 'modules' | 'schoolYear' | 'schoolYearPeriod';
-  onTabChange: (tab: 'users' | 'courses' | 'modules' | 'schoolYear' | 'schoolYearPeriod') => void;
+  activeTab: 'users' | 'courses' | 'modules' | 'schoolYears' | 'schoolYearPeriods';
+  onTabChange: (tab: 'users' | 'courses' | 'modules' | 'schoolYears' | 'schoolYearPeriods') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
@@ -98,9 +98,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
               
               {/* School Year */}
               <button
-                onClick={() => onTabChange('schoolYear')}
+                onClick={() => onTabChange('schoolYears')}
                 className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
-                  activeTab === 'schoolYear'
+                  activeTab === 'schoolYears'
                     ? 'bg-blue-50 text-blue-700 font-medium'
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                 }`}
@@ -115,9 +115,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
 
               {/* School Year Period */}
               <button
-                onClick={() => onTabChange('schoolYearPeriod')}
+                onClick={() => onTabChange('schoolYearPeriods')}
                 className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
-                  activeTab === 'schoolYearPeriod'
+                  activeTab === 'schoolYearPeriods'
                     ? 'bg-blue-50 text-blue-700 font-medium'
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                 }`}

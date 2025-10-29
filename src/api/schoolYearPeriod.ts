@@ -53,7 +53,6 @@ export const schoolYearPeriodApi = {
     const searchVal = (rawParams.title ?? rawParams.search) as string | undefined;
     if (searchVal && searchVal.trim()) {
       const s = searchVal.trim();
-      queryParams.append('search', s);
       queryParams.append('title', s);
     }
     if (params.status !== undefined && params.status !== null) queryParams.append('status', params.status.toString());

@@ -1,12 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { schoolYearApi } from '../api';
-import type { CreateSchoolYearRequest, UpdateSchoolYearRequest } from '../api/schoolYear';
-import type { FilterParams } from '../types/api';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { schoolYearApi } from '../api/schoolYear';
+import type { CreateSchoolYearRequest, UpdateSchoolYearRequest, GetAllSchoolYearsParams } from '../api/schoolYear';
 
-export const useSchoolYears = (params: FilterParams = {}) => {
+export const useSchoolYears = (params: GetAllSchoolYearsParams = {}) => {
   return useQuery({
     queryKey: ['schoolYears', params],
     queryFn: () => schoolYearApi.getAll(params),
+    placeholderData: keepPreviousData, 
   });
 };
 
@@ -29,7 +29,8 @@ export const useCreateSchoolYear = () => {
 export const useUpdateSchoolYear = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: UpdateSchoolYearRequest & { id: number }) => schoolYearApi.update(id, data),
+    mutationFn: ({ id, ...data }: UpdateSchoolYearRequest & { id: number }) =>
+      schoolYearApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['schoolYears'] }),
   });
 };

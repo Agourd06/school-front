@@ -1,103 +1,114 @@
 import api from './axios';
-import type { PaginatedResponse, FilterParams } from '../types/api';
 
 export interface SchoolYear {
   id: number;
-  companyId: number;
-  title: string;
-  start_date: string; // ISO date
-  end_date: string; // ISO date
-  status: number;
-  created_at?: string;
-  updated_at?: string;
-  company?: any;
-  periods?: any[];
-}
-
-export interface CreateSchoolYearRequest {
-  companyId: number;
   title: string;
   start_date: string;
   end_date: string;
   status: number;
+  company?: {
+    id: number;
+    name: string;
+    logo?: string;
+    email?: string;
+    phone?: string;
+    website?: string;
+  } | null;
+}
+
+export interface Meta {
+  total: number;
+  page: number;
+  limit: number;
+  lastPage: number;
+  // Add these for frontend compatibility
+  totalPages?: number;
+  hasNext?: boolean;
+  hasPrevious?: boolean;
+}
+
+export interface GetAllSchoolYearsResponse {
+  data: SchoolYear[];
+  meta: Meta;
+}
+
+export interface GetAllSchoolYearsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: number;
+}
+
+export interface CreateSchoolYearRequest {
+  title: string;
+  start_date: string;
+  end_date: string;
+  status: number;
+  companyId: number;
 }
 
 export interface UpdateSchoolYearRequest {
-  companyId?: number;
   title?: string;
   start_date?: string;
   end_date?: string;
-  status?: number | string;
-}
-
-function validateDates(start?: string, end?: string) {
-  if (!start || !end) return;
-  const s = Date.parse(start);
-  const e = Date.parse(end);
-  if (Number.isNaN(s) || Number.isNaN(e)) throw new Error('Invalid date format');
-  if (e <= s) throw new Error('end_date must be greater than start_date');
+  status?: number;
+  companyId?: number;
 }
 
 export const schoolYearApi = {
-  create: async (data: CreateSchoolYearRequest): Promise<SchoolYear> => {
-    validateDates(data.start_date, data.end_date);
-    const response = await api.post('/school-years', data);
-    return response.data;
-  },
-
-  getAll: async (params: FilterParams = {}): Promise<PaginatedResponse<SchoolYear>> => {
+  async getAll(params?: GetAllSchoolYearsParams): Promise<GetAllSchoolYearsResponse> {
+    // Normalize query: backend supports `title` for search; send both
     const queryParams = new URLSearchParams();
-
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-    if (params.search && params.search.trim()) {
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search && params.search.trim()) {
       const s = params.search.trim();
-      // Some backends expect `search`, others expect `title`. Send both to be compatible.
-      queryParams.append('search', s);
       queryParams.append('title', s);
     }
-    if (params.status !== undefined && params.status !== null) queryParams.append('status', params.status.toString());
+    if (params?.status !== undefined) queryParams.append('status', params.status.toString());
 
-    const queryString = queryParams.toString();
-    const url = queryString ? `/school-years?${queryString}` : '/school-years';
-
+    const qs = queryParams.toString();
+    const url = qs ? `/school-years?${qs}` : '/school-years';
     const response = await api.get(url);
-    console.log('SchoolYears API request params:', params);
-    console.log('SchoolYears API request URL:', url);
-    console.log('SchoolYears API response:', response.data);
+    const resData = response.data;
 
-    if (Array.isArray(response.data)) {
-      return {
-        data: response.data,
-        meta: {
-          page: 1,
-          limit: response.data.length,
-          total: response.data.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrevious: false,
-        },
-      };
-    }
+    const total = resData.meta?.total ?? 0;
+    const page = resData.meta?.page ?? 1;
+    const limit = resData.meta?.limit ?? 10;
+    const lastPage = resData.meta?.lastPage ?? 1;
 
-    return response.data;
+    return {
+      data: resData.data || [],
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage,
+        // Frontend pagination compatibility
+        totalPages: lastPage,
+        hasNext: page < lastPage,
+        hasPrevious: page > 1,
+      },
+    };
   },
 
-  getById: async (id: number): Promise<SchoolYear> => {
+  async getById(id: number): Promise<SchoolYear> {
     const response = await api.get(`/school-years/${id}`);
     return response.data;
   },
 
-  update: async (id: number, data: UpdateSchoolYearRequest): Promise<SchoolYear> => {
-    validateDates(data.start_date, data.end_date);
+  async create(data: CreateSchoolYearRequest) {
+    const response = await api.post('/school-years', data);
+    return response.data;
+  },
+
+  async update(id: number, data: UpdateSchoolYearRequest) {
     const response = await api.patch(`/school-years/${id}`, data);
     return response.data;
   },
 
-  delete: async (id: number): Promise<any> => {
+  async delete(id: number) {
     const response = await api.delete(`/school-years/${id}`);
     return response.data;
   },
 };
-
-export default schoolYearApi;

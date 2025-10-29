@@ -10,7 +10,7 @@ interface DataTableProps {
   state: ListState<any>;
   onAdd: () => void;
   onEdit: (item: any) => void;
-  onDelete: (id: number, type: 'user' | 'company' | 'course' | 'module') => Promise<void>;
+  onDelete: (id: number, type: 'user' | 'company' | 'course' | 'module' | 'schoolYear' | 'schoolYearPeriod') => Promise<void>;
   onViewDescription?: (item: any) => void;
   onManageCourses?: (item: any) => void;
   onManageModules?: (item: any) => void;
@@ -18,7 +18,7 @@ interface DataTableProps {
   onPageSizeChange: (size: number) => void;
   onSearch: (query: string) => void;
   onFilterChange?: (status: number | null) => void;
-  type: 'users' | 'courses' | 'modules';
+  type: 'users' | 'courses' | 'modules' | 'schoolYearPeriods' | 'schoolYears';
   getStatusDisplay: (status: number) => React.ReactNode;
 }
 
@@ -151,6 +151,68 @@ const DataTable: React.FC<DataTableProps> = ({
     </li>
   );
 
+  const renderSchoolYearRow = (schoolYear: any) => (
+    <li key={schoolYear.id} className="px-4 py-4 sm:px-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-900">{schoolYear.title}</p>
+          <p className="text-sm text-gray-500">
+            {schoolYear.start_date} → {schoolYear.end_date}
+          </p>
+          <p className="text-sm text-gray-500">
+            Company: {schoolYear.company?.name || 'N/A'}
+          </p>
+          <p className="text-sm text-gray-500">Status: {getStatusDisplay(schoolYear.status)}</p>
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => onEdit(schoolYear)}
+            className="text-blue-600 hover:text-blue-900"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => onDelete(schoolYear.id, 'schoolYear')}
+            className="text-red-600 hover:text-red-900"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+
+  const renderSchoolYearPeriodRow = (period: any) => (
+    <li key={period.id} className="px-4 py-4 sm:px-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-900">{period.title}</p>
+          <p className="text-sm text-gray-500">
+            {period.start_date} → {period.end_date}
+          </p>
+          <p className="text-sm text-gray-500">
+            School Year: {period.schoolYear?.title || period.schoolYearTitle || 'N/A'}
+          </p>
+          <p className="text-sm text-gray-500">Status: {getStatusDisplay(period.status)}</p>
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => onEdit(period)}
+            className="text-blue-600 hover:text-blue-900"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => onDelete(period.id, 'schoolYearPeriod')}
+            className="text-red-600 hover:text-red-900"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+
   const renderRow = (item: any) => {
     switch (type) {
       case 'users':
@@ -159,6 +221,10 @@ const DataTable: React.FC<DataTableProps> = ({
         return renderCourseRow(item);
       case 'modules':
         return renderModuleRow(item);
+      case 'schoolYears':
+        return renderSchoolYearRow(item);
+      case 'schoolYearPeriods':
+        return renderSchoolYearPeriodRow(item);
       default:
         return null;
     }
@@ -172,6 +238,10 @@ const DataTable: React.FC<DataTableProps> = ({
         return 'Add Course';
       case 'modules':
         return 'Add Module';
+      case 'schoolYears':
+        return 'Add School Year';
+      case 'schoolYearPeriods':
+        return 'Add Period';
       default:
         return 'Add Item';
     }
@@ -193,6 +263,10 @@ const DataTable: React.FC<DataTableProps> = ({
         return 'Search by course title...';
       case 'modules':
         return 'Search by module title...';
+      case 'schoolYears':
+        return 'Search by school year title...';
+      case 'schoolYearPeriods':
+        return 'Search by period or year title...';
       default:
         return 'Search...';
     }
@@ -223,8 +297,8 @@ const DataTable: React.FC<DataTableProps> = ({
             />
           </div>
 
-          {/* Status Filter (only for courses and modules) */}
-          {(type === 'courses' || type === 'modules') && onFilterChange && (
+          {/* Status Filter (for courses, modules, school years, and school year periods) */}
+          {(type === 'courses' || type === 'modules' || type === 'schoolYears' || type === 'schoolYearPeriods') && onFilterChange && (
             <div className="w-full sm:w-48">
               <FilterDropdown
   options={statusFilterOptions}

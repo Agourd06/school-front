@@ -43,9 +43,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    
+
     console.log('Loading from localStorage - token:', storedToken ? 'exists' : 'missing', 'user:', storedUser ? 'exists' : 'missing');
-    
+
     if (storedToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -67,23 +67,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Logging in with:', { email });
       const data = await authApi.login({ email, password });
       console.log('Login response:', data);
-      
+
       // Handle your backend's response structure: {access_token, user: {id, email, username, role}}
-      const token = data.access_token;
+      const token = data.token;
       const userData = data.user;
-      
+
       if (!token || !userData) {
         throw new Error('Invalid login response: missing token or user data');
       }
-      
-      // Create user object from the nested user data
-      const user = {
-        id: userData.id,
+
+      const user: User = {
+        id: userData.id!,
         email: userData.email,
         username: userData.username,
         role: userData.role
       };
-      
+
+
       setToken(token);
       setUser(user);
       localStorage.setItem('token', token);
