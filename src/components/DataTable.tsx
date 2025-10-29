@@ -10,7 +10,7 @@ interface DataTableProps {
   state: ListState<any>;
   onAdd: () => void;
   onEdit: (item: any) => void;
-  onDelete: (id: number, type: 'user' | 'company' | 'course' | 'module' | 'schoolYear' | 'schoolYearPeriod') => Promise<void>;
+  onDelete: (id: number, type: 'user' | 'company' | 'course' | 'module' | 'schoolYear' | 'schoolYearPeriod' | 'classRoom' | 'student') => Promise<void>;
   onViewDescription?: (item: any) => void;
   onManageCourses?: (item: any) => void;
   onManageModules?: (item: any) => void;
@@ -18,7 +18,7 @@ interface DataTableProps {
   onPageSizeChange: (size: number) => void;
   onSearch: (query: string) => void;
   onFilterChange?: (status: number | null) => void;
-  type: 'users' | 'courses' | 'modules' | 'schoolYearPeriods' | 'schoolYears';
+  type: 'users' | 'courses' | 'modules' | 'schoolYearPeriods' | 'schoolYears' | 'classRooms' | 'students';
   getStatusDisplay: (status: number) => React.ReactNode;
 }
 
@@ -213,6 +213,47 @@ const DataTable: React.FC<DataTableProps> = ({
     </li>
   );
 
+  const renderClassRoomRow = (cr: any) => (
+    <li key={cr.id} className="px-4 py-4 sm:px-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-900">{cr.code} — {cr.title}</p>
+          <p className="text-sm text-gray-500">Capacity: {cr.capacity}</p>
+          <p className="text-sm text-gray-500">Company ID: {cr.company_id ?? 'N/A'}</p>
+        </div>
+        <div className="flex space-x-2">
+          <button onClick={() => onEdit(cr)} className="text-blue-600 hover:text-blue-900">Edit</button>
+          <button onClick={() => onDelete(cr.id, 'classRoom')} className="text-red-600 hover:text-red-900">Delete</button>
+        </div>
+      </div>
+    </li>
+  );
+
+  const renderStudentRow = (s: any) => (
+    <li key={s.id} className="px-4 py-4 sm:px-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-900">{s.code} — {s.first_name} {s.last_name}</p>
+          <p className="text-sm text-gray-500">Email: {s.email}</p>
+          <p className="text-sm text-gray-500">
+            {(() => {
+              const classRoom = s.classRoom || s.class_room;
+              const classLabel = classRoom 
+                ? `${classRoom.title || ''}${classRoom.code ? (classRoom.title ? ` (${classRoom.code})` : classRoom.code) : ''}`.trim()
+                : (s.class_room_id ? `ID: ${s.class_room_id}` : 'N/A');
+              const companyLabel = s.company?.name || s.company_id || 'N/A';
+              return <>Class: {classLabel} • Company: {companyLabel}</>;
+            })()}
+          </p>
+        </div>
+        <div className="flex space-x-2">
+          <button onClick={() => onEdit(s)} className="text-blue-600 hover:text-blue-900">Edit</button>
+          <button onClick={() => onDelete(s.id, 'student')} className="text-red-600 hover:text-red-900">Delete</button>
+        </div>
+      </div>
+    </li>
+  );
+
   const renderRow = (item: any) => {
     switch (type) {
       case 'users':
@@ -225,6 +266,10 @@ const DataTable: React.FC<DataTableProps> = ({
         return renderSchoolYearRow(item);
       case 'schoolYearPeriods':
         return renderSchoolYearPeriodRow(item);
+      case 'classRooms':
+        return renderClassRoomRow(item);
+      case 'students':
+        return renderStudentRow(item);
       default:
         return null;
     }
@@ -242,6 +287,10 @@ const DataTable: React.FC<DataTableProps> = ({
         return 'Add School Year';
       case 'schoolYearPeriods':
         return 'Add Period';
+      case 'classRooms':
+        return 'Add Class Room';
+      case 'students':
+        return 'Add Student';
       default:
         return 'Add Item';
     }
@@ -267,6 +316,10 @@ const DataTable: React.FC<DataTableProps> = ({
         return 'Search by school year title...';
       case 'schoolYearPeriods':
         return 'Search by period or year title...';
+      case 'classRooms':
+        return 'Search by code or title...';
+      case 'students':
+        return 'Search by code, name or email...';
       default:
         return 'Search...';
     }

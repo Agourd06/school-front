@@ -17,6 +17,8 @@ import {
   useDeleteSchoolYear
 } from '../hooks/useSchoolYears';
 import useSchoolYearPeriods, { useDeleteSchoolYearPeriod } from '../hooks/useSchoolYearPeriods';
+import { useClassRooms, useDeleteClassRoom } from '../hooks/useClassRooms';
+import { useStudents, useDeleteStudent } from '../hooks/useStudents';
 import {
   UserModal,
   CourseModal,
@@ -25,6 +27,8 @@ import {
   CourseAssignmentModal,
   ModuleAssignmentModal,
   SchoolYearPeriodModal,
+  ClassRoomModal,
+  StudentModal,
   
 } from '../components/modals';
 import Sidebar from '../components/Sidebar';
@@ -36,7 +40,7 @@ import SchoolYearModal from '../components/modals/SchoolYearModal';
 // Main Dashboard component with reusable DataTable
 const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    'users' | 'courses' | 'modules' | 'schoolYears' | 'schoolYearPeriods'
+    'users' | 'courses' | 'modules' | 'schoolYears' | 'schoolYearPeriods' | 'classRooms' | 'students'
   >('users');
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -137,6 +141,40 @@ const Dashboard: React.FC = () => {
     }
   });
 
+  const [classRoomsState, setClassRoomsState] = useState<ListState<any>>({
+    data: [],
+    loading: false,
+    error: null,
+    pagination: {
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+      hasNext: false,
+      hasPrevious: false
+    },
+    filters: {
+      search: '',
+    }
+  });
+
+  const [studentsState, setStudentsState] = useState<ListState<any>>({
+    data: [],
+    loading: false,
+    error: null,
+    pagination: {
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+      hasNext: false,
+      hasPrevious: false
+    },
+    filters: {
+      search: '',
+    }
+  });
+
   // --- Helper for displaying status ---
   const getStatusDisplay = (status: number) => {
     const statusMap = {
@@ -208,6 +246,20 @@ const Dashboard: React.FC = () => {
     isLoading: schoolYearPeriodsLoading,
     error: schoolYearPeriodsError
   } = useSchoolYearPeriods(schoolYearPeriodsParams);
+
+  const classRoomsParams: SearchParams = {
+    page: classRoomsState.pagination.page,
+    limit: classRoomsState.pagination.limit,
+    search: classRoomsState.filters.search || undefined,
+  };
+  const { data: classRoomsResponse, isLoading: classRoomsLoading, error: classRoomsError } = useClassRooms(classRoomsParams as any);
+
+  const studentsParams: SearchParams = {
+    page: studentsState.pagination.page,
+    limit: studentsState.pagination.limit,
+    search: studentsState.filters.search || undefined,
+  };
+  const { data: studentsResponse, isLoading: studentsLoading, error: studentsError } = useStudents(studentsParams as any);
 
   // --- Update states from responses ---
   React.useEffect(() => {
@@ -286,6 +338,30 @@ const Dashboard: React.FC = () => {
     }
   }, [schoolYearPeriodsResponse, schoolYearPeriodsLoading, schoolYearPeriodsError]);
 
+  React.useEffect(() => {
+    if (classRoomsResponse) {
+      setClassRoomsState(prev => ({
+        ...prev,
+        data: classRoomsResponse.data,
+        loading: classRoomsLoading,
+        error: (classRoomsError as any)?.message || null,
+        pagination: classRoomsResponse.meta,
+      }));
+    }
+  }, [classRoomsResponse, classRoomsLoading, classRoomsError]);
+
+  React.useEffect(() => {
+    if (studentsResponse) {
+      setStudentsState(prev => ({
+        ...prev,
+        data: studentsResponse.data,
+        loading: studentsLoading,
+        error: (studentsError as any)?.message || null,
+        pagination: studentsResponse.meta,
+      }));
+    }
+  }, [studentsResponse, studentsLoading, studentsError]);
+
   // --- Delete Mutations ---
   const deleteUser = useDeleteUser();
   const deleteCompany = useDeleteCompany();
@@ -293,10 +369,12 @@ const Dashboard: React.FC = () => {
   const deleteModule = useDeleteModule();
   const deleteSchoolYear = useDeleteSchoolYear();
   const deleteSchoolYearPeriod = useDeleteSchoolYearPeriod();
+  const deleteClassRoom = useDeleteClassRoom();
+  const deleteStudent = useDeleteStudent();
 
   const handleDelete = async (
     id: number,
-    type: 'user' | 'company' | 'course' | 'module' | 'schoolYear' | 'schoolYearPeriod'
+    type: 'user' | 'company' | 'course' | 'module' | 'schoolYear' | 'schoolYearPeriod' | 'classRoom' | 'student'
   ) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
       try {
@@ -308,6 +386,8 @@ const Dashboard: React.FC = () => {
         else if (type === 'module') await deleteModule.mutateAsync(id);
         else if (type === 'schoolYear') await deleteSchoolYear.mutateAsync(id);
         else if (type === 'schoolYearPeriod') await deleteSchoolYearPeriod.mutateAsync(id);
+        else if (type === 'classRoom') await deleteClassRoom.mutateAsync(id);
+        else if (type === 'student') await deleteStudent.mutateAsync(id);
 
         console.log(`${type} deleted successfully`);
       } catch (error) {
@@ -544,6 +624,62 @@ const Dashboard: React.FC = () => {
     []
   );
 
+  const handleClassRoomsPageChange = useCallback(
+    (page: number) =>
+      setClassRoomsState(prev => ({
+        ...prev,
+        pagination: { ...prev.pagination, page }
+      })),
+    []
+  );
+
+  const handleClassRoomsPageSizeChange = useCallback(
+    (size: number) =>
+      setClassRoomsState(prev => ({
+        ...prev,
+        pagination: { ...prev.pagination, limit: size, page: 1 }
+      })),
+    []
+  );
+
+  const handleClassRoomsSearch = useCallback(
+    (query: string) =>
+      setClassRoomsState(prev => ({
+        ...prev,
+        filters: { ...prev.filters, search: query },
+        pagination: { ...prev.pagination, page: 1 }
+      })),
+    []
+  );
+
+  const handleStudentsPageChange = useCallback(
+    (page: number) =>
+      setStudentsState(prev => ({
+        ...prev,
+        pagination: { ...prev.pagination, page }
+      })),
+    []
+  );
+
+  const handleStudentsPageSizeChange = useCallback(
+    (size: number) =>
+      setStudentsState(prev => ({
+        ...prev,
+        pagination: { ...prev.pagination, limit: size, page: 1 }
+      })),
+    []
+  );
+
+  const handleStudentsSearch = useCallback(
+    (query: string) =>
+      setStudentsState(prev => ({
+        ...prev,
+        filters: { ...prev.filters, search: query },
+        pagination: { ...prev.pagination, page: 1 }
+      })),
+    []
+  );
+
   // --- Modals rendering ---
   const renderModal = () => {
     switch (activeTab) {
@@ -567,6 +703,22 @@ const Dashboard: React.FC = () => {
             isOpen={showModal}
             onClose={handleModalClose}
             period={editingItem}
+          />
+        );
+      case 'classRooms':
+        return (
+          <ClassRoomModal
+            isOpen={showModal}
+            onClose={handleModalClose}
+            classRoom={editingItem}
+          />
+        );
+      case 'students':
+        return (
+          <StudentModal
+            isOpen={showModal}
+            onClose={handleModalClose}
+            student={editingItem}
           />
         );
       default:
@@ -665,6 +817,36 @@ const Dashboard: React.FC = () => {
                 onSearch={handleSchoolYearPeriodsSearch}
                 onFilterChange={handleSchoolYearPeriodsFilterChange}
                 type="schoolYearPeriods"
+                getStatusDisplay={getStatusDisplay}
+              />
+            )}
+
+            {activeTab === 'classRooms' && (
+              <DataTable
+                title="Class Rooms"
+                state={classRoomsState}
+                onAdd={handleAddClick}
+                onEdit={handleEditClick}
+                onDelete={handleDelete}
+                onPageChange={handleClassRoomsPageChange}
+                onPageSizeChange={handleClassRoomsPageSizeChange}
+                onSearch={handleClassRoomsSearch}
+                type="classRooms"
+                getStatusDisplay={getStatusDisplay}
+              />
+            )}
+
+            {activeTab === 'students' && (
+              <DataTable
+                title="Students"
+                state={studentsState}
+                onAdd={handleAddClick}
+                onEdit={handleEditClick}
+                onDelete={handleDelete}
+                onPageChange={handleStudentsPageChange}
+                onPageSizeChange={handleStudentsPageSizeChange}
+                onSearch={handleStudentsSearch}
+                type="students"
                 getStatusDisplay={getStatusDisplay}
               />
             )}

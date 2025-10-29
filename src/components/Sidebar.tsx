@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 interface SidebarProps {
-  activeTab: 'users' | 'courses' | 'modules' | 'schoolYears' | 'schoolYearPeriods';
-  onTabChange: (tab: 'users' | 'courses' | 'modules' | 'schoolYears' | 'schoolYearPeriods') => void;
+  activeTab: 'users' | 'courses' | 'modules' | 'schoolYears' | 'schoolYearPeriods' | 'classRooms' | 'students';
+  onTabChange: (tab: 'users' | 'courses' | 'modules' | 'schoolYears' | 'schoolYearPeriods' | 'classRooms' | 'students') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
@@ -128,6 +128,40 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 13h8" />
                   </svg>
                   School Year Period
+                </div>
+              </button>
+
+              {/* Class Rooms */}
+              <button
+                onClick={() => onTabChange('classRooms')}
+                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                  activeTab === 'classRooms'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+                  </svg>
+                  Class Rooms
+                </div>
+              </button>
+
+              {/* Students */}
+              <button
+                onClick={() => onTabChange('students')}
+                className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                  activeTab === 'students'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A7 7 0 1118.88 4.196M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Students
                 </div>
               </button>
             </div>

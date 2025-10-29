@@ -3,6 +3,7 @@ import BaseModal from './BaseModal';
 import { useCreateSchoolYearPeriod, useUpdateSchoolYearPeriod } from '../../hooks/useSchoolYearPeriods';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import type { GetAllSchoolYearsParams } from '../../api/schoolYear';
+import { validateRequired, validateDateOrder, validateSelectRequired } from './validations';
 
 interface SchoolYearPeriodModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
   const createMutation = useCreateSchoolYearPeriod();
   const updateMutation = useUpdateSchoolYearPeriod();
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (period) {
       setTitle(period.title || '');
@@ -41,7 +44,20 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!schoolYearId) return;
+    const newErrors: Record<string, string> = {};
+    const requiredTitle = validateRequired(title, 'Title');
+    if (requiredTitle) newErrors.title = requiredTitle;
+    const startReq = validateRequired(startDate, 'Start date');
+    if (startReq) newErrors.start_date = startReq;
+    const endReq = validateRequired(endDate, 'End date');
+    if (endReq) newErrors.end_date = endReq;
+    const dateOrder = validateDateOrder(startDate, endDate, { start: 'start date', end: 'end date' });
+    if (!newErrors.start_date && !newErrors.end_date && dateOrder) newErrors.date = dateOrder;
+    const yearReq = validateSelectRequired(schoolYearId, 'School year');
+    if (yearReq) newErrors.schoolYearId = yearReq;
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
     const payload = {
       schoolYearId: Number(schoolYearId),
       title,
@@ -70,6 +86,7 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
             onChange={(e) => setTitle(e.target.value)}
             required
           />
+          {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -120,7 +137,14 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
               <option key={y.id} value={y.id}>{y.title}</option>
             ))}
           </select>
+          {errors.schoolYearId && <p className="mt-1 text-sm text-red-600">{errors.schoolYearId}</p>}
         </div>
+
+        {(errors.start_date || errors.end_date || errors.date) && (
+          <div className="text-sm text-red-600">
+            {errors.start_date || errors.end_date || errors.date}
+          </div>
+        )}
 
         <div className="flex justify-end space-x-3 pt-4">
           <button

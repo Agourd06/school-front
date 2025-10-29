@@ -7,4 +7,6 @@ export { default as DescriptionModal } from './DescriptionModal';
 export { default as CourseAssignmentModal } from './CourseAssignmentModal';
 export { default as ModuleAssignmentModal } from './ModuleAssignmentModal';
 export { default as SchoolYearPeriodModal } from './SchoolYearPeriodModal';
+export { default as ClassRoomModal } from './ClassRoomModal';
+export { default as StudentModal } from './StudentModal';
 

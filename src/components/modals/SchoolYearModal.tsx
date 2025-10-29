@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCreateSchoolYear, useUpdateSchoolYear } from '../../hooks/useSchoolYears';
 import { useCompanies } from '../../hooks/useCompanies';
 import BaseModal from './BaseModal';
+import { validateRequired, validateDateOrder } from './validations';
 
 interface SchoolYear {
   id: number;
@@ -59,9 +60,14 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.start_date) newErrors.start_date = 'Start date is required';
-    if (!formData.end_date) newErrors.end_date = 'End date is required';
+    const titleErr = validateRequired(formData.title, 'Title');
+    if (titleErr) newErrors.title = titleErr;
+    const startErr = validateRequired(formData.start_date, 'Start date');
+    if (startErr) newErrors.start_date = startErr;
+    const endErr = validateRequired(formData.end_date, 'End date');
+    if (endErr) newErrors.end_date = endErr;
+    const orderErr = validateDateOrder(formData.start_date, formData.end_date, { start: 'start date', end: 'end date' });
+    if (!newErrors.start_date && !newErrors.end_date && orderErr) newErrors.end_date = orderErr;
     if (!formData.companyId || formData.companyId === 0) newErrors.companyId = 'Company is required';
 
     setErrors(newErrors);

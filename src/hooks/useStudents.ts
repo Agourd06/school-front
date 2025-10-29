@@ -1,63 +1,45 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../api/axios';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { studentsApi } from '../api/students';
+import type { CreateStudentRequest, UpdateStudentRequest, GetAllStudentsParams } from '../api/students';
 
-export interface Student {
-  id: string;
-  name: string;
-  email: string;
-  studentId: string;
-  grade: string;
-  createdAt: string;
-}
-
-export const useStudents = () => {
+export const useStudents = (params: GetAllStudentsParams = {}) => {
   return useQuery({
-    queryKey: ['students'],
-    queryFn: async (): Promise<Student[]> => {
-      const response = await api.get('/students');
-      return response.data;
-    },
+    queryKey: ['students', params],
+    queryFn: () => studentsApi.getAll(params),
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useStudent = (id: number) => {
+  return useQuery({
+    queryKey: ['students', id],
+    queryFn: () => studentsApi.getById(id),
+    enabled: !!id,
   });
 };
 
 export const useCreateStudent = () => {
-  const queryClient = useQueryClient();
-  
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (studentData: Omit<Student, 'id' | 'createdAt'>) => {
-      const response = await api.post('/students', studentData);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-    },
+    mutationFn: (data: CreateStudentRequest) => studentsApi.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['students'] }),
   });
 };
 
 export const useUpdateStudent = () => {
-  const queryClient = useQueryClient();
-  
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...studentData }: Partial<Student> & { id: string }) => {
-      const response = await api.put(`/students/${id}`, studentData);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-    },
+    mutationFn: ({ id, ...data }: UpdateStudentRequest & { id: number }) => studentsApi.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['students'] }),
   });
 };
 
 export const useDeleteStudent = () => {
-  const queryClient = useQueryClient();
-  
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/students/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-    },
+    mutationFn: (id: number) => studentsApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['students'] }),
   });
 };
 
+export default useStudents;
