@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
-import { useCreateStudent, useUpdateStudent } from '../../hooks/useStudents';
+import { useCreateTeacher, useUpdateTeacher } from '../../hooks/useTeachers';
 import { useCompanies } from '../../hooks/useCompanies';
 import { useClassRooms } from '../../hooks/useClassRooms';
 import { validateRequired } from './validations';
 
-interface StudentModalProps {
+interface TeacherModalProps {
   isOpen: boolean;
   onClose: () => void;
-  student?: any | null;
+  teacher?: any | null;
 }
 
-const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student }) => {
+const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher }) => {
   const [form, setForm] = useState({
     gender: '',
     first_name: '',
@@ -29,29 +29,29 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const createMutation = useCreateStudent();
-  const updateMutation = useUpdateStudent();
+  const createMutation = useCreateTeacher();
+  const updateMutation = useUpdateTeacher();
   const { data: companies } = useCompanies();
   const { data: classRooms } = useClassRooms({ limit: 100, page: 1 } as any);
 
-  const isEditing = !!student;
+  const isEditing = !!teacher;
 
   useEffect(() => {
-    if (student) {
+    if (teacher) {
       setForm({
-        gender: student.gender || '',
-        first_name: student.first_name || '',
-        last_name: student.last_name || '',
-        birthday: student.birthday || '',
-        email: student.email || '',
-        phone: student.phone || '',
-        address: student.address || '',
-        city: student.city || '',
-        country: student.country || '',
-        nationality: student.nationality || '',
-        picture: student.picture || '',
-        company_id: student.company_id ?? '',
-        class_room_id: student.class_room_id ?? '',
+        gender: teacher.gender || '',
+        first_name: teacher.first_name || '',
+        last_name: teacher.last_name || '',
+        birthday: teacher.birthday || '',
+        email: teacher.email || '',
+        phone: teacher.phone || '',
+        address: teacher.address || '',
+        city: teacher.city || '',
+        country: teacher.country || '',
+        nationality: teacher.nationality || '',
+        picture: teacher.picture || '',
+        company_id: teacher.company_id ?? '',
+        class_room_id: teacher.class_room_id ?? '',
       });
     } else {
       setForm({
@@ -59,7 +59,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
       });
     }
     setErrors({});
-  }, [student, isOpen]);
+  }, [teacher, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -95,8 +95,8 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
       ...(form.class_room_id !== '' ? { class_room_id: Number(form.class_room_id) } : {}),
     };
 
-    if (isEditing && student?.id) {
-      await updateMutation.mutateAsync({ id: student.id, ...payload });
+    if (isEditing && teacher?.id) {
+      await updateMutation.mutateAsync({ id: teacher.id, ...payload });
     } else {
       await createMutation.mutateAsync(payload);
     }
@@ -104,7 +104,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Student' : 'Add Student'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Teacher' : 'Add Teacher'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -197,6 +197,6 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   );
 };
 
-export default StudentModal;
+export default TeacherModal;
 
 

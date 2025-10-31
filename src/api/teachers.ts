@@ -1,6 +1,6 @@
 import api from './axios';
 
-export type Student = {
+export type Teacher = {
   id: number;
   gender?: string;
   first_name: string;
@@ -42,7 +42,7 @@ export type PaginationMeta = {
 
 export type Paginated<T> = { data: T[]; meta: PaginationMeta };
 
-export type GetAllStudentsParams = {
+export type GetAllTeachersParams = {
   page?: number;
   limit?: number;
   search?: string;
@@ -50,11 +50,11 @@ export type GetAllStudentsParams = {
   class_room_id?: number;
 };
 
-export type CreateStudentRequest = Omit<Student, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateStudentRequest = Partial<CreateStudentRequest>;
+export type CreateTeacherRequest = Omit<Teacher, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateTeacherRequest = Partial<CreateTeacherRequest>;
 
-export const studentsApi = {
-  async getAll(params: GetAllStudentsParams = {}): Promise<Paginated<Student>> {
+export const teachersApi = {
+  async getAll(params: GetAllTeachersParams = {}): Promise<Paginated<Teacher>> {
     const qp = new URLSearchParams();
     if (params.page) qp.append('page', String(params.page));
     if (params.limit) qp.append('limit', String(params.limit));
@@ -62,31 +62,31 @@ export const studentsApi = {
     if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
     if (typeof params.class_room_id === 'number') qp.append('class_room_id', String(params.class_room_id));
     const qs = qp.toString();
-    const url = qs ? `/students?${qs}` : '/students';
+    const url = qs ? `/teachers?${qs}` : '/teachers';
     const response = await api.get(url);
     return response.data;
   },
 
-  async getById(id: number): Promise<Student> {
-    const response = await api.get(`/students/${id}`);
+  async getById(id: number): Promise<Teacher> {
+    const response = await api.get(`/teachers/${id}`);
     return response.data;
   },
 
-  async create(data: CreateStudentRequest): Promise<Student> {
-    const response = await api.post('/students', data);
+  async create(data: CreateTeacherRequest): Promise<Teacher> {
+    const response = await api.post('/teachers', data);
     return response.data;
   },
 
-  async update(id: number, data: UpdateStudentRequest): Promise<Student> {
-    const response = await api.patch(`/students/${id}`, data);
+  async update(id: number, data: UpdateTeacherRequest): Promise<Teacher> {
+    const response = await api.patch(`/teachers/${id}`, data);
     return response.data;
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/students/${id}`);
+    await api.delete(`/teachers/${id}`);
   },
 };
 
-export default studentsApi;
+export default teachersApi;
 
 

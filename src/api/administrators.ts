@@ -1,6 +1,6 @@
 import api from './axios';
 
-export type Student = {
+export type Administrator = {
   id: number;
   gender?: string;
   first_name: string;
@@ -42,7 +42,7 @@ export type PaginationMeta = {
 
 export type Paginated<T> = { data: T[]; meta: PaginationMeta };
 
-export type GetAllStudentsParams = {
+export type GetAllAdministratorsParams = {
   page?: number;
   limit?: number;
   search?: string;
@@ -50,11 +50,11 @@ export type GetAllStudentsParams = {
   class_room_id?: number;
 };
 
-export type CreateStudentRequest = Omit<Student, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateStudentRequest = Partial<CreateStudentRequest>;
+export type CreateAdministratorRequest = Omit<Administrator, 'id' | 'created_at' | 'updated_at'>;
+export type UpdateAdministratorRequest = Partial<CreateAdministratorRequest>;
 
-export const studentsApi = {
-  async getAll(params: GetAllStudentsParams = {}): Promise<Paginated<Student>> {
+export const administratorsApi = {
+  async getAll(params: GetAllAdministratorsParams = {}): Promise<Paginated<Administrator>> {
     const qp = new URLSearchParams();
     if (params.page) qp.append('page', String(params.page));
     if (params.limit) qp.append('limit', String(params.limit));
@@ -62,31 +62,31 @@ export const studentsApi = {
     if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
     if (typeof params.class_room_id === 'number') qp.append('class_room_id', String(params.class_room_id));
     const qs = qp.toString();
-    const url = qs ? `/students?${qs}` : '/students';
+    const url = qs ? `/administrators?${qs}` : '/administrators';
     const response = await api.get(url);
     return response.data;
   },
 
-  async getById(id: number): Promise<Student> {
-    const response = await api.get(`/students/${id}`);
+  async getById(id: number): Promise<Administrator> {
+    const response = await api.get(`/administrators/${id}`);
     return response.data;
   },
 
-  async create(data: CreateStudentRequest): Promise<Student> {
-    const response = await api.post('/students', data);
+  async create(data: CreateAdministratorRequest): Promise<Administrator> {
+    const response = await api.post('/administrators', data);
     return response.data;
   },
 
-  async update(id: number, data: UpdateStudentRequest): Promise<Student> {
-    const response = await api.patch(`/students/${id}`, data);
+  async update(id: number, data: UpdateAdministratorRequest): Promise<Administrator> {
+    const response = await api.patch(`/administrators/${id}`, data);
     return response.data;
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/students/${id}`);
+    await api.delete(`/administrators/${id}`);
   },
 };
 
-export default studentsApi;
+export default administratorsApi;
 
 

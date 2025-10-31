@@ -21,7 +21,8 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <Routes>
+      <div className="pt-16">
+        <Routes>
         <Route 
           path="/auth" 
           element={user ? <Navigate to="/dashboard" /> : <AuthPage />} 
@@ -43,10 +44,19 @@ const App: React.FC = () => {
           element={user ? <Dashboard /> : <Navigate to="/auth" />} 
         />
         <Route 
+          path="/teachers" 
+          element={user ? <Dashboard initialTab="teachers" /> : <Navigate to="/auth" />} 
+        />
+        <Route 
+          path="/administrators" 
+          element={user ? <Dashboard initialTab="administrators" /> : <Navigate to="/auth" />} 
+        />
+        <Route 
           path="/" 
           element={<Navigate to={user ? "/dashboard" : "/auth"} />} 
         />
-      </Routes>
+        </Routes>
+      </div>
       
       
     </div>

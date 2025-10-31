@@ -9,4 +9,6 @@ export { default as ModuleAssignmentModal } from './ModuleAssignmentModal';
 export { default as SchoolYearPeriodModal } from './SchoolYearPeriodModal';
 export { default as ClassRoomModal } from './ClassRoomModal';
 export { default as StudentModal } from './StudentModal';
+export { default as TeacherModal } from './TeacherModal';
+export { default as AdministratorModal } from './AdministratorModal';
 

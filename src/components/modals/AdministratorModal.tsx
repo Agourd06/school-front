@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
-import { useCreateStudent, useUpdateStudent } from '../../hooks/useStudents';
+import { useCreateAdministrator, useUpdateAdministrator } from '../../hooks/useAdministrators';
 import { useCompanies } from '../../hooks/useCompanies';
 import { useClassRooms } from '../../hooks/useClassRooms';
 import { validateRequired } from './validations';
 
-interface StudentModalProps {
+interface AdministratorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  student?: any | null;
+  administrator?: any | null;
 }
 
-const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student }) => {
+const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose, administrator }) => {
   const [form, setForm] = useState({
     gender: '',
     first_name: '',
@@ -29,29 +29,29 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const createMutation = useCreateStudent();
-  const updateMutation = useUpdateStudent();
+  const createMutation = useCreateAdministrator();
+  const updateMutation = useUpdateAdministrator();
   const { data: companies } = useCompanies();
   const { data: classRooms } = useClassRooms({ limit: 100, page: 1 } as any);
 
-  const isEditing = !!student;
+  const isEditing = !!administrator;
 
   useEffect(() => {
-    if (student) {
+    if (administrator) {
       setForm({
-        gender: student.gender || '',
-        first_name: student.first_name || '',
-        last_name: student.last_name || '',
-        birthday: student.birthday || '',
-        email: student.email || '',
-        phone: student.phone || '',
-        address: student.address || '',
-        city: student.city || '',
-        country: student.country || '',
-        nationality: student.nationality || '',
-        picture: student.picture || '',
-        company_id: student.company_id ?? '',
-        class_room_id: student.class_room_id ?? '',
+        gender: administrator.gender || '',
+        first_name: administrator.first_name || '',
+        last_name: administrator.last_name || '',
+        birthday: administrator.birthday || '',
+        email: administrator.email || '',
+        phone: administrator.phone || '',
+        address: administrator.address || '',
+        city: administrator.city || '',
+        country: administrator.country || '',
+        nationality: administrator.nationality || '',
+        picture: administrator.picture || '',
+        company_id: administrator.company_id ?? '',
+        class_room_id: administrator.class_room_id ?? '',
       });
     } else {
       setForm({
@@ -59,7 +59,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
       });
     }
     setErrors({});
-  }, [student, isOpen]);
+  }, [administrator, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -95,8 +95,8 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
       ...(form.class_room_id !== '' ? { class_room_id: Number(form.class_room_id) } : {}),
     };
 
-    if (isEditing && student?.id) {
-      await updateMutation.mutateAsync({ id: student.id, ...payload });
+    if (isEditing && administrator?.id) {
+      await updateMutation.mutateAsync({ id: administrator.id, ...payload });
     } else {
       await createMutation.mutateAsync(payload);
     }
@@ -104,7 +104,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Student' : 'Add Student'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Administrator' : 'Add Administrator'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -197,6 +197,6 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   );
 };
 
-export default StudentModal;
+export default AdministratorModal;
 
 
