@@ -72,12 +72,12 @@ export const teachersApi = {
     return response.data;
   },
 
-  async create(data: CreateTeacherRequest): Promise<Teacher> {
+  async create(data: CreateTeacherRequest | FormData): Promise<Teacher> {
     const response = await api.post('/teachers', data);
     return response.data;
   },
 
-  async update(id: number, data: UpdateTeacherRequest): Promise<Teacher> {
+  async update(id: number, data: UpdateTeacherRequest | FormData): Promise<Teacher> {
     const response = await api.patch(`/teachers/${id}`, data);
     return response.data;
   },

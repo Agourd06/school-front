@@ -29,7 +29,7 @@ export const useCreateAdministrator = () => {
 export const useUpdateAdministrator = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: UpdateAdministratorRequest & { id: number }) => administratorsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: UpdateAdministratorRequest | FormData }) => administratorsApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['administrators'] }),
   });
 };

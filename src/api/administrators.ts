@@ -72,12 +72,12 @@ export const administratorsApi = {
     return response.data;
   },
 
-  async create(data: CreateAdministratorRequest): Promise<Administrator> {
+  async create(data: CreateAdministratorRequest | FormData): Promise<Administrator> {
     const response = await api.post('/administrators', data);
     return response.data;
   },
 
-  async update(id: number, data: UpdateAdministratorRequest): Promise<Administrator> {
+  async update(id: number, data: UpdateAdministratorRequest | FormData): Promise<Administrator> {
     const response = await api.patch(`/administrators/${id}`, data);
     return response.data;
   },

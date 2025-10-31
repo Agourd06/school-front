@@ -60,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-gray-900">Dashboard</h2>
+            <h2 className="text-xl font-bold text-gray-900">Edusol</h2>
             {/* Close button on mobile */}
             <button
               type="button"

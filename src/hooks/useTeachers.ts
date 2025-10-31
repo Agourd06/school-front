@@ -29,7 +29,7 @@ export const useCreateTeacher = () => {
 export const useUpdateTeacher = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: UpdateTeacherRequest & { id: number }) => teachersApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: UpdateTeacherRequest | FormData }) => teachersApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['teachers'] }),
   });
 };

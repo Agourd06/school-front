@@ -28,6 +28,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
     class_room_id: '' as number | '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [pictureFile, setPictureFile] = useState<File | null>(null);
 
   const createMutation = useCreateStudent();
   const updateMutation = useUpdateStudent();
@@ -67,6 +68,22 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
+  const handlePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    if (!f) { setPictureFile(null); return; }
+    const validTypes = ['image/jpeg','image/png','image/gif','image/webp'];
+    if (!validTypes.includes(f.type)) {
+      setErrors(prev => ({ ...prev, picture: 'Invalid file type. Allowed: jpeg, png, gif, webp' }));
+      return;
+    }
+    if (f.size > 2 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, picture: 'File too large. Max 2MB' }));
+      return;
+    }
+    setErrors(prev => ({ ...prev, picture: '' }));
+    setPictureFile(f);
+  };
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
     const fnErr = validateRequired(form.first_name, 'First name'); if (fnErr) newErrors.first_name = fnErr;
@@ -79,26 +96,25 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    const payload: any = {
-      gender: form.gender || undefined,
-      first_name: form.first_name,
-      last_name: form.last_name,
-      birthday: form.birthday || undefined,
-      email: form.email,
-      phone: form.phone || undefined,
-      address: form.address || undefined,
-      city: form.city || undefined,
-      country: form.country || undefined,
-      nationality: form.nationality || undefined,
-      picture: form.picture || undefined,
-      ...(form.company_id !== '' ? { company_id: Number(form.company_id) } : {}),
-      ...(form.class_room_id !== '' ? { class_room_id: Number(form.class_room_id) } : {}),
-    };
+    const formData = new FormData();
+    formData.append('first_name', form.first_name);
+    formData.append('last_name', form.last_name);
+    formData.append('email', form.email);
+    if (form.gender) formData.append('gender', form.gender);
+    if (form.birthday) formData.append('birthday', form.birthday);
+    if (form.phone) formData.append('phone', form.phone);
+    if (form.address) formData.append('address', form.address);
+    if (form.city) formData.append('city', form.city);
+    if (form.country) formData.append('country', form.country);
+    if (form.nationality) formData.append('nationality', form.nationality);
+    if (form.company_id !== '') formData.append('company_id', String(form.company_id));
+    if (form.class_room_id !== '') formData.append('class_room_id', String(form.class_room_id));
+    if (pictureFile instanceof File) formData.append('picture', pictureFile, pictureFile.name);
 
     if (isEditing && student?.id) {
-      await updateMutation.mutateAsync({ id: student.id, ...payload });
+      await updateMutation.mutateAsync({ id: student.id, data: formData });
     } else {
-      await createMutation.mutateAsync(payload);
+      await createMutation.mutateAsync(formData as any);
     }
     onClose();
   };
@@ -107,6 +123,11 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
     <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Student' : 'Add Student'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Picture</label>
+            <input name="picture" type="file" accept="image/*" onChange={handlePictureChange} className="mt-1 block w-full text-sm" />
+            {errors.picture && <p className="mt-1 text-sm text-red-600">{errors.picture}</p>}
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
             <input name="email" type="email" value={form.email} onChange={handleChange} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.email ? 'border-red-300' : 'border-gray-300'}`} />

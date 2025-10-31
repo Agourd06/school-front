@@ -72,12 +72,12 @@ export const studentsApi = {
     return response.data;
   },
 
-  async create(data: CreateStudentRequest): Promise<Student> {
+  async create(data: CreateStudentRequest | FormData): Promise<Student> {
     const response = await api.post('/students', data);
     return response.data;
   },
 
-  async update(id: number, data: UpdateStudentRequest): Promise<Student> {
+  async update(id: number, data: UpdateStudentRequest | FormData): Promise<Student> {
     const response = await api.patch(`/students/${id}`, data);
     return response.data;
   },

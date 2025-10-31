@@ -44,10 +44,17 @@ const AdministratorsSection: React.FC = () => {
         addButtonText="Add Administrator"
         searchPlaceholder="Search by name or email..."
         renderRow={(a: any, onEdit, onDelete) => (
-          <li key={a.id} className="px-4 py-4 sm:px-6">
+           <li key={a.id} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{a.first_name} {a.last_name}</p>
+              <div className="flex items-center gap-3">
+                {a.picture && (
+                  <img
+                    src={(a.picture?.startsWith('http') ? a.picture : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${a.picture?.startsWith('/') ? '' : '/'}${a.picture || ''}`)}
+                    alt="avatar"
+                    className="h-10 w-10 rounded-full object-cover border"
+                  />
+                )}
+                 <p className="text-sm font-medium text-gray-900">{a.first_name} {a.last_name}</p>
                 <p className="text-sm text-gray-500">Email: {a.email}</p>
                 <p className="text-sm text-gray-500">
                   {(() => {

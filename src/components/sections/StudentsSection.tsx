@@ -44,10 +44,17 @@ const StudentsSection: React.FC = () => {
         addButtonText="Add Student"
         searchPlaceholder="Search by name or email..."
         renderRow={(s: any, onEdit, onDelete) => (
-          <li key={s.id} className="px-4 py-4 sm:px-6">
+           <li key={s.id} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{s.first_name} {s.last_name}</p>
+              <div className="flex items-center gap-3">
+                {s.picture && (
+                  <img
+                    src={(s.picture?.startsWith('http') ? s.picture : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${s.picture?.startsWith('/') ? '' : '/'}${s.picture || ''}`)}
+                    alt="avatar"
+                    className="h-10 w-10 rounded-full object-cover border"
+                  />
+                )}
+                 <p className="text-sm font-medium text-gray-900">{s.first_name} {s.last_name}</p>
                 <p className="text-sm text-gray-500">Email: {s.email}</p>
                 <p className="text-sm text-gray-500">
                   {(() => {

@@ -21,7 +21,7 @@ export const useStudent = (id: number) => {
 export const useCreateStudent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateStudentRequest) => studentsApi.create(data),
+    mutationFn: (data: CreateStudentRequest | FormData) => studentsApi.create(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['students'] }),
   });
 };
@@ -29,7 +29,7 @@ export const useCreateStudent = () => {
 export const useUpdateStudent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: UpdateStudentRequest & { id: number }) => studentsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: UpdateStudentRequest | FormData }) => studentsApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['students'] }),
   });
 };

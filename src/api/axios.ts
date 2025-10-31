@@ -6,14 +6,22 @@ console.log('All env vars:', import.meta.env);
 const api = axios.create({
   baseURL: 'http://localhost:3000', // Hardcoded for now
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
+    // If sending FormData, let the browser set the correct multipart boundary
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete (config.headers as any)['Content-Type'];
+      }
+    } else {
+      // Default JSON for non-FormData bodies
+      if (config.headers && !(config.headers as any)['Content-Type']) {
+        (config.headers as any)['Content-Type'] = 'application/json';
+      }
+    }
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
