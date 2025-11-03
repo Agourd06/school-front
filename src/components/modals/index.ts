@@ -10,5 +10,9 @@ export { default as SchoolYearPeriodModal } from './SchoolYearPeriodModal';
 export { default as ClassRoomModal } from './ClassRoomModal';
 export { default as StudentModal } from './StudentModal';
 export { default as TeacherModal } from './TeacherModal';
+export { default as StudentLinkTypeModal } from './StudentLinkTypeModal';
+export { default as StudentContactModal } from './StudentContactModal';
+export { default as StudentDiplomeModal } from './StudentDiplomeModal';
+export { default as StudentDiplomeDetailsModal } from './StudentDiplomeDetailsModal';
 export { default as AdministratorModal } from './AdministratorModal';
 

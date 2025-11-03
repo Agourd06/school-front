@@ -9,6 +9,9 @@ import ClassRoomsSection from '../components/sections/ClassRoomsSection';
 import StudentsSection from '../components/sections/StudentsSection';
 import TeachersSection from '../components/sections/TeachersSection';
 import AdministratorsSection from '../components/sections/AdministratorsSection';
+import StudentLinkTypesSection from '../components/sections/StudentLinkTypesSection';
+import StudentContactsSection from '../components/sections/StudentContactsSection';
+import StudentDiplomesSection from '../components/sections/StudentDiplomesSection';
 
 // Dashboard only handles tab selection and lazy-renders sections
 export type DashboardTab =
@@ -20,7 +23,10 @@ export type DashboardTab =
   | 'classRooms'
   | 'students'
   | 'teachers'
-  | 'administrators';
+  | 'administrators'
+  | 'studentLinkTypes'
+  | 'studentContacts'
+  | 'studentDiplomes';
 
 const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab || 'users');
@@ -43,6 +49,9 @@ const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
             {activeTab === 'students' && <StudentsSection />}
             {activeTab === 'teachers' && <TeachersSection />}
             {activeTab === 'administrators' && <AdministratorsSection />}
+            {activeTab === 'studentLinkTypes' && <StudentLinkTypesSection />}
+            {activeTab === 'studentContacts' && <StudentContactsSection />}
+            {activeTab === 'studentDiplomes' && <StudentDiplomesSection />}
           </div>
         </div>
       </div>

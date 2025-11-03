@@ -1,0 +1,166 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import BaseModal from './BaseModal';
+import { useCreateStudentContact, useUpdateStudentContact } from '../../hooks/useStudentContacts';
+import { useStudentLinkTypes } from '../../hooks/useStudentLinkTypes';
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  item?: any | null;
+}
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
+  const [form, setForm] = useState({
+    firstname: '',
+    lastname: '',
+    birthday: '',
+    email: '',
+    phone: '',
+    adress: '',
+    city: '',
+    country: '',
+    studentlinktypeId: '' as number | string | '',
+    status: 1 as number,
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const createMut = useCreateStudentContact();
+  const updateMut = useUpdateStudentContact();
+  const { data: linkTypes } = useStudentLinkTypes({ page: 1, limit: 100 });
+
+  const isEditing = !!item;
+
+  useEffect(() => {
+    if (item) {
+      setForm({
+        firstname: item.firstname || '',
+        lastname: item.lastname || '',
+        birthday: item.birthday || '',
+        email: item.email || '',
+        phone: item.phone || '',
+        adress: item.adress || '',
+        city: item.city || '',
+        country: item.country || '',
+        studentlinktypeId: item.studentlinktypeId ?? '',
+        status: typeof item.status === 'number' ? item.status : 1,
+      });
+    } else {
+      setForm({ firstname: '', lastname: '', birthday: '', email: '', phone: '', adress: '', city: '', country: '', studentlinktypeId: '', status: 1 });
+    }
+    setErrors({});
+  }, [item, isOpen]);
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.firstname.trim()) e.firstname = 'First name is required';
+    if (!form.lastname.trim()) e.lastname = 'Last name is required';
+    if (form.email && !emailRegex.test(form.email)) e.email = 'Invalid email';
+    return e;
+  };
+
+  const handleChange = (ev: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = ev.target;
+    setForm(prev => ({ ...prev, [name]: name === 'studentlinktypeId' ? (value ? String(value) : '') : value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const eMap = validate();
+    if (Object.keys(eMap).length) { setErrors(eMap); return; }
+    try {
+      const payload = { ...form, company_id: 1 } as any;
+      if (payload.studentlinktypeId === '') delete payload.studentlinktypeId;
+      if (isEditing) await updateMut.mutateAsync({ id: item.id, data: payload });
+      else await createMut.mutateAsync(payload);
+      onClose();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Failed to save';
+      setErrors(prev => ({ ...prev, form: msg }));
+    }
+  };
+
+  return (
+    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Contact' : 'Add Contact'}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">First name</label>
+            <input name="firstname" value={form.firstname} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+            {errors.firstname && <p className="text-sm text-red-600">{errors.firstname}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Last name</label>
+            <input name="lastname" value={form.lastname} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+            {errors.lastname && <p className="text-sm text-red-600">{errors.lastname}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Birthday</label>
+            <input type="date" name="birthday" value={form.birthday} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <input name="email" value={form.email} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+            {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Phone</label>
+            <input name="phone" value={form.phone} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Link type</label>
+            <select name="studentlinktypeId" value={form.studentlinktypeId} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+              <option value="">None</option>
+              {(((linkTypes as any)?.data) || []).map((lt: any) => (
+                <option key={lt.id} value={lt.id}>{lt.title}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <select name="status" value={form.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+              <option value={-2}>Deleted (-2)</option>
+              <option value={-1}>Archived (-1)</option>
+              <option value={0}>Disabled (0)</option>
+              <option value={1}>Active (1)</option>
+              <option value={2}>Pending (2)</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Adress</label>
+            <input name="adress" value={form.adress} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">City</label>
+            <input name="city" value={form.city} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Country</label>
+            <input name="country" value={form.country} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">Cancel</button>
+          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{isEditing ? 'Update' : 'Create'}</button>
+        </div>
+      </form>
+    </BaseModal>
+  );
+};
+
+export default StudentContactModal;
+
+

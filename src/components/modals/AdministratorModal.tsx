@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateAdministrator, useUpdateAdministrator } from '../../hooks/useAdministrators';
-import { useCompanies } from '../../hooks/useCompanies';
 import { useClassRooms } from '../../hooks/useClassRooms';
 import { validateRequired } from './validations';
 
@@ -24,6 +23,7 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
     country: '',
     nationality: '',
     picture: '',
+    status: 1 as number,
     company_id: '' as number | '',
     class_room_id: '' as number | '',
   });
@@ -32,7 +32,6 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
 
   const createMutation = useCreateAdministrator();
   const updateMutation = useUpdateAdministrator();
-  const { data: companies } = useCompanies();
   const { data: classRooms } = useClassRooms({ limit: 100, page: 1 } as any);
 
   const isEditing = !!administrator;
@@ -51,12 +50,13 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
         country: administrator.country || '',
         nationality: administrator.nationality || '',
         picture: administrator.picture || '',
+        status: typeof administrator.status === 'number' ? administrator.status : 1,
         company_id: administrator.company_id ?? '',
         class_room_id: administrator.class_room_id ?? '',
       });
     } else {
       setForm({
-        gender: '', first_name: '', last_name: '', birthday: '', email: '', phone: '', address: '', city: '', country: '', nationality: '', picture: '', company_id: '', class_room_id: ''
+        gender: '', first_name: '', last_name: '', birthday: '', email: '', phone: '', address: '', city: '', country: '', nationality: '', picture: '', status: 1, company_id: '', class_room_id: ''
       });
     }
     setErrors({});
@@ -107,7 +107,8 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
     if (form.city) formData.append('city', form.city);
     if (form.country) formData.append('country', form.country);
     if (form.nationality) formData.append('nationality', form.nationality);
-    if (form.company_id !== '') formData.append('company_id', String(form.company_id));
+    formData.append('company_id', '1');
+    if (form.status != null) formData.append('status', String(form.status));
     if (form.class_room_id !== '') formData.append('class_room_id', String(form.class_room_id));
     if (pictureFile instanceof File) formData.append('picture', pictureFile, pictureFile.name);
 
@@ -190,12 +191,13 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Company</label>
-            <select name="company_id" value={form.company_id} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-              <option value="">No company</option>
-              {companies?.map((c: any) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
+            <label className="block text-sm font-medium text-gray-700">Status</label>
+            <select name="status" value={form.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+              <option value={-2}>Deleted (-2)</option>
+              <option value={-1}>Archived (-1)</option>
+              <option value={0}>Disabled (0)</option>
+              <option value={1}>Active (1)</option>
+              <option value={2}>Pending (2)</option>
             </select>
           </div>
           <div>

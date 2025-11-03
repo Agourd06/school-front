@@ -10,7 +10,10 @@ interface SidebarProps {
     | "classRooms"
     | "students"
     | "teachers"
-    | "administrators";
+    | "administrators"
+    | "studentLinkTypes"
+    | "studentContacts"
+    | "studentDiplomes";
   onTabChange: (
     tab:
       | "users"
@@ -22,6 +25,9 @@ interface SidebarProps {
       | "students"
       | "teachers"
       | "administrators"
+      | "studentLinkTypes"
+      | "studentContacts"
+      | "studentDiplomes"
   ) => void;
 }
 
@@ -299,6 +305,87 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                       />
                     </svg>
                     Class Rooms
+                  </div>
+                </button>
+
+                {/* Student Link Types */}
+                <button
+                  onClick={() => onTabChange("studentLinkTypes")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "studentLinkTypes"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 8h10M7 12h6m-6 4h10"
+                      />
+                    </svg>
+                    Student Link Types
+                  </div>
+                </button>
+
+                {/* Student Contacts */}
+                <button
+                  onClick={() => onTabChange("studentContacts")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "studentContacts"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5.121 17.804A13.937 13.937 0 0112 15c2.485 0 4.797.607 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Student Contacts
+                  </div>
+                </button>
+
+                {/* Student Diplomes */}
+                <button
+                  onClick={() => onTabChange("studentDiplomes")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "studentDiplomes"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 14l9-5-9-5-9 5 9 5zm0 0v6"
+                      />
+                    </svg>
+                    Student Diplomes
                   </div>
                 </button>
 

@@ -11,7 +11,7 @@ interface ClassRoomModalProps {
 }
 
 const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classRoom }) => {
-  const [form, setForm] = useState({ code: '', title: '', capacity: '', company_id: '' as number | '' });
+  const [form, setForm] = useState({ code: '', title: '', capacity: '', company_id: '' as number | '', status: 1 as number });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createMutation = useCreateClassRoom();
@@ -27,9 +27,10 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
         title: classRoom.title || '',
         capacity: classRoom.capacity != null ? String(classRoom.capacity) : '',
         company_id: classRoom.company_id ?? '',
+        status: typeof classRoom.status === 'number' ? classRoom.status : 1,
       });
     } else {
-      setForm({ code: '', title: '', capacity: '', company_id: '' });
+      setForm({ code: '', title: '', capacity: '', company_id: '', status: 1 });
     }
     setErrors({});
   }, [classRoom, isOpen]);
@@ -60,6 +61,7 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
       title: form.title,
       capacity: Number(form.capacity || 0),
       ...(form.company_id !== '' ? { company_id: Number(form.company_id) } : {}),
+      status: Number(form.status),
     };
 
     if (isEditing && classRoom?.id) {
@@ -82,6 +84,22 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.code ? 'border-red-300' : 'border-gray-300'}`}
           />
           {errors.code && <p className="mt-1 text-sm text-red-600">{errors.code}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Status</label>
+          <select
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value={-2}>Deleted (-2)</option>
+            <option value={-1}>Archived (-1)</option>
+            <option value={0}>Disabled (0)</option>
+            <option value={1}>Active (1)</option>
+            <option value={2}>Pending (2)</option>
+          </select>
         </div>
 
         <div>
