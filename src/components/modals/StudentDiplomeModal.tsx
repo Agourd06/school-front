@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateStudentDiplome, useUpdateStudentDiplome } from '../../hooks/useStudentDiplomes';
-import StudentSelect from '../inputs/StudentSelect';
+import SearchSelect from '../inputs/SearchSelect';
+import { useStudents } from '../../hooks/useStudents';
 
 interface Props {
   isOpen: boolean;
@@ -30,6 +31,14 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
 
   const createMut = useCreateStudentDiplome();
   const updateMut = useUpdateStudentDiplome();
+  const { data: studentsResp, isLoading: studentsLoading, error: studentsError } = useStudents({ page: 1, limit: 200 } as any);
+  const studentOptions = useMemo(
+    () => ((studentsResp as any)?.data || []).map((s: any) => ({
+      value: s.id,
+      label: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `ID ${s.id}`,
+    })),
+    [studentsResp]
+  );
 
   const isEditing = !!item;
 
@@ -136,11 +145,14 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
             {errors.annee && <p className="text-sm text-red-600">{errors.annee}</p>}
           </div>
           <div>
-            <StudentSelect
+            <SearchSelect
               label="Student"
               value={form.student_id}
               onChange={(val) => setForm(prev => ({ ...prev, student_id: val }))}
               placeholder="Search students..."
+              options={studentOptions}
+              isLoading={studentsLoading}
+              error={studentsError ? 'Failed to load students' : null}
             />
             {errors.student_id && <p className="text-sm text-red-600">{errors.student_id}</p>}
           </div>

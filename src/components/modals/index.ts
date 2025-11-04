@@ -14,5 +14,9 @@ export { default as StudentLinkTypeModal } from './StudentLinkTypeModal';
 export { default as StudentContactModal } from './StudentContactModal';
 export { default as StudentDiplomeModal } from './StudentDiplomeModal';
 export { default as StudentDiplomeDetailsModal } from './StudentDiplomeDetailsModal';
+export { default as ProgramModal } from './ProgramModal';
+export { default as SpecializationModal } from './SpecializationModal';
+export { default as LevelModal } from './LevelModal';
+export { default as ClassModal } from './ClassModal';
 export { default as AdministratorModal } from './AdministratorModal';
 

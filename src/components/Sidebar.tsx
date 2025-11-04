@@ -3,6 +3,10 @@ import React, { useEffect, useState } from "react";
 interface SidebarProps {
   activeTab:
     | "users"
+    | "programs"
+    | "specializations"
+    | "levels"
+    | "classes"
     | "courses"
     | "modules"
     | "schoolYears"
@@ -17,6 +21,10 @@ interface SidebarProps {
   onTabChange: (
     tab:
       | "users"
+      | "programs"
+      | "specializations"
+      | "levels"
+      | "classes"
       | "courses"
       | "modules"
       | "schoolYears"
@@ -169,6 +177,70 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
             {/* Dropdown Content */}
             {isParametersOpen && (
               <div className="ml-8 mt-2 space-y-2">
+                <button
+                  onClick={() => onTabChange("programs")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "programs"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h10M4 18h6" />
+                  </svg>
+                    Programs
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onTabChange("specializations")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "specializations"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c1.657 0 3-1.343 3-3S13.657 2 12 2 9 3.343 9 5s1.343 3 3 3zM5.5 21a4.5 4.5 0 019 0m-11-7a4.5 4.5 0 019 0" />
+                    </svg>
+                    Specializations
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onTabChange("levels")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "levels"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h10M4 18h6" />
+                    </svg>
+                    Levels
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onTabChange("classes")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "classes"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 11h16M4 16h10" />
+                    </svg>
+                    Classes
+                  </div>
+                </button>
+
                 <button
                   onClick={() => onTabChange("courses")}
                   className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${

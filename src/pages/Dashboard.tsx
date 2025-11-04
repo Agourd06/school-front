@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import UsersSection from '../components/sections/UsersSection';
+import ProgramsSection from '../components/sections/ProgramsSection';
+import SpecializationsSection from '../components/sections/SpecializationsSection';
+import LevelsSection from '../components/sections/LevelsSection';
+import ClassesSection from '../components/sections/ClassesSection';
 import CoursesSection from '../components/sections/CoursesSection';
 import ModulesSection from '../components/sections/ModulesSection';
 import SchoolYearsSection from '../components/sections/SchoolYearsSection';
@@ -16,6 +20,10 @@ import StudentDiplomesSection from '../components/sections/StudentDiplomesSectio
 // Dashboard only handles tab selection and lazy-renders sections
 export type DashboardTab =
   | 'users'
+  | 'programs'
+  | 'specializations'
+  | 'levels'
+  | 'classes'
   | 'courses'
   | 'modules'
   | 'schoolYears'
@@ -41,6 +49,10 @@ const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
 
             {activeTab === 'users' && <UsersSection />}
+            {activeTab === 'programs' && <ProgramsSection />}
+            {activeTab === 'specializations' && <SpecializationsSection />}
+            {activeTab === 'levels' && <LevelsSection />}
+            {activeTab === 'classes' && <ClassesSection />}
             {activeTab === 'courses' && <CoursesSection />}
             {activeTab === 'modules' && <ModulesSection />}
             {activeTab === 'schoolYears' && <SchoolYearsSection />}
