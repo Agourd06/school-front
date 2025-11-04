@@ -49,41 +49,73 @@ export interface UpdateCourseRequest {
   company_id?: number;
 }
 
+const fetchCourses = async (params: FilterParams = {}): Promise<PaginatedResponse<Course>> => {
+  const queryParams = new URLSearchParams();
+
+  if (params.page) queryParams.append('page', params.page.toString());
+  if (params.limit) queryParams.append('limit', params.limit.toString());
+  if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
+  if (params.status !== undefined && params.status !== null) queryParams.append('status', params.status.toString());
+
+  const queryString = queryParams.toString();
+  const url = queryString ? `/course?${queryString}` : '/course';
+
+  console.log('Courses API request params:', params);
+  console.log('Courses API request URL:', url);
+
+  const response = await api.get(url);
+  console.log('Courses API response:', response.data);
+
+  if (Array.isArray(response.data)) {
+    return {
+      data: response.data,
+      meta: {
+        page: 1,
+        limit: response.data.length,
+        total: response.data.length,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+      },
+    };
+  }
+
+  return response.data;
+};
+
 export const courseApi = {
   getAll: async (params: FilterParams = {}): Promise<PaginatedResponse<Course>> => {
-    const queryParams = new URLSearchParams();
-    
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-    if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
-    if (params.status !== undefined && params.status !== null) queryParams.append('status', params.status.toString());
-    
-    const queryString = queryParams.toString();
-    const url = queryString ? `/course?${queryString}` : '/course';
-    
-    console.log('Courses API request params:', params);
-    console.log('Courses API request URL:', url);
-    
-    const response = await api.get(url);
-    console.log('Courses API response:', response.data);
-    
-    // Handle both direct array and wrapped response formats
-    if (Array.isArray(response.data)) {
-      // Legacy format - convert to paginated format
-      return {
-        data: response.data,
-        meta: {
-          page: 1,
-          limit: response.data.length,
-          total: response.data.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrevious: false
-        }
-      };
+    const hasStatusFilter = params.status !== undefined && params.status !== null;
+
+    if (!hasStatusFilter) {
+      return fetchCourses(params);
     }
-    
-    return response.data;
+
+    const fallbackParams: FilterParams = { ...params };
+    const targetStatus = params.status as number;
+    delete fallbackParams.status;
+
+    const fallbackResponse = await fetchCourses(fallbackParams);
+    const filteredData = fallbackResponse.data.filter(course => course.status === targetStatus);
+
+    const limit = (params.limit ?? fallbackResponse.meta.limit ?? filteredData.length) || 1;
+    const page = Math.max(1, Math.min(params.page ?? 1, Math.ceil(filteredData.length / limit) || 1));
+    const start = (page - 1) * limit;
+    const paginatedData = filteredData.slice(start, start + limit);
+    const total = filteredData.length;
+    const totalPages = total === 0 ? 1 : Math.max(1, Math.ceil(total / limit));
+
+    return {
+      data: paginatedData,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrevious: page > 1,
+      },
+    };
   },
 
   getById: async (id: number): Promise<Course> => {

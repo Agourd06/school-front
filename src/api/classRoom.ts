@@ -5,6 +5,7 @@ export type ClassRoom = {
   code: string;
   title: string;
   capacity: number;
+  status: number;
   company_id?: number;
   created_at: string;
   updated_at: string;
@@ -26,12 +27,14 @@ export type GetAllClassRoomsParams = {
   limit?: number;
   search?: string;
   company_id?: number;
+  status?: number;
 };
 
 export type CreateClassRoomRequest = {
   code: string;
   title: string;
   capacity: number;
+  status?: number;
   company_id?: number;
 };
 
@@ -44,6 +47,7 @@ export const classRoomApi = {
     if (params.limit) qp.append('limit', params.limit.toString());
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
     if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
+    if (typeof params.status === 'number') qp.append('status', String(params.status));
     const qs = qp.toString();
     const url = qs ? `/class-rooms?${qs}` : '/class-rooms';
     const response = await api.get(url);

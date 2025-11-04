@@ -26,17 +26,23 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   return (
     <div className={`relative ${className}`}>
       <select
-        value={value || ''}
+        value={value ?? ''}
         onChange={(e) => {
           const newValue = e.target.value;
-          onChange(newValue === '' ? null : newValue);
+          if (newValue === '') {
+            onChange(null);
+          } else if (!Number.isNaN(Number(newValue))) {
+            onChange(Number(newValue));
+          } else {
+            onChange(newValue);
+          }
         }}
         disabled={isLoading}
         className="block w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (
-          <option key={option.value || 'null'} value={option.value || ''}>
+          <option key={(option.value ?? 'null').toString()} value={option.value ?? ''}>
             {option.label}
           </option>
         ))}

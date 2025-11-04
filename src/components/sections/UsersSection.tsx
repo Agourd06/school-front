@@ -1,8 +1,10 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import { useUsers, useDeleteUser } from '../../hooks/useUsers';
-import type { ListState, SearchParams } from '../../types/api';
+import type { FilterParams, ListState } from '../../types/api';
 import { UserModal } from '../../components/modals';
+import { STATUS_OPTIONS } from '../../constants/status';
+import StatusBadge from '../../components/StatusBadge';
 
 const UsersSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -10,16 +12,18 @@ const UsersSection: React.FC = () => {
     loading: false,
     error: null,
     pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrevious: false },
-    filters: { search: '' },
+    filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'user' | null; data?: any }>({ type: null });
 
-  const params: SearchParams = {
+  const params: FilterParams = {
     page: state.pagination.page,
     limit: state.pagination.limit,
     search: state.filters.search || undefined,
+    status: (state.filters as any).status,
   };
   const { data: response, isLoading, error } = useUsers(params);
+
   React.useEffect(() => {
     if (response) {
       setState(prev => ({
@@ -63,15 +67,24 @@ const UsersSection: React.FC = () => {
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
+        onFilterChange={(status) => setState(prev => ({
+          ...prev,
+          filters: { ...prev.filters, status },
+          pagination: { ...prev.pagination, page: 1 },
+        }))}
         addButtonText="Add User"
-        searchPlaceholder="Search by email or username..."
-        renderRow={(user: any, onEdit, onDelete) => (
-          <li key={user.id} className="px-4 py-4 sm:px-6">
+        searchPlaceholder="Search by name or email..."
+        filterOptions={STATUS_OPTIONS}
+        renderRow={(user: any, onEdit, onDelete, index) => (
+          <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{user.username}</p>
                 <p className="text-sm text-gray-500">{user.email}</p>
-                <p className="text-sm text-gray-500">Role: {user.role}</p>
+                <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
+                  <span>Status:</span>
+                  <StatusBadge value={user.status} />
+                </div>
               </div>
               <div className="flex space-x-2">
                 <button onClick={() => onEdit(user)} className="text-blue-600 hover:text-blue-900">Edit</button>

@@ -11,6 +11,7 @@ export interface StudentContact {
   city?: string;
   country?: string;
   studentlinktypeId?: number | string;
+  status?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -36,6 +37,7 @@ export interface GetAllStudentContactParams {
   limit?: number;
   search?: string;
   studentlinktypeId?: number | string;
+  status?: number;
 }
 
 export const studentContactApi = {

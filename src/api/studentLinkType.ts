@@ -3,6 +3,7 @@ import api from './axios';
 export interface StudentLinkType {
   id: number;
   title: string;
+  status?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -19,6 +20,7 @@ export interface GetAllStudentLinkTypeParams {
   page?: number;
   limit?: number;
   search?: string;
+  status?: number;
 }
 
 export const studentLinkTypeApi = {

@@ -40,6 +40,6 @@ export interface ListState<T> {
   };
   filters: {
     search: string;
-    status?: number | null; // Only for courses and modules
+    status?: number | null; // Optional status filter for list views
   };
 }

@@ -2,8 +2,9 @@ import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import useSchoolYearPeriods, { useDeleteSchoolYearPeriod } from '../../hooks/useSchoolYearPeriods';
 import type { FilterParams, ListState } from '../../types/api';
-import { SchoolYearPeriodModal } from '../../components/modals';
+import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
+import { SchoolYearPeriodModal } from '../../components/modals';
 
 const SchoolYearPeriodsSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -62,6 +63,7 @@ const SchoolYearPeriodsSection: React.FC = () => {
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Period"
         searchPlaceholder="Search by period or year title..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(period: any, onEdit, onDelete, index) => (
           <li key={period?.id ?? `period-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">

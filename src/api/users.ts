@@ -1,5 +1,5 @@
 import api from './axios';
-import type { PaginatedResponse, SearchParams } from '../types/api';
+import type { PaginatedResponse, FilterParams } from '../types/api';
 
 // Forward declaration
 interface Company {
@@ -13,6 +13,7 @@ export interface User {
   username: string;
   email: string;
   role: 'user' | 'admin';
+  status?: number;
   company_id?: number;
   created_at?: string;
   updated_at?: string;
@@ -35,12 +36,13 @@ export interface UpdateUserRequest {
 }
 
 export const usersApi = {
-  getAll: async (params: SearchParams = {}): Promise<PaginatedResponse<User>> => {
+  getAll: async (params: FilterParams = {}): Promise<PaginatedResponse<User>> => {
     const queryParams = new URLSearchParams();
     
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
     if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
+    if (typeof params.status === 'number') queryParams.append('status', params.status.toString());
     
     const queryString = queryParams.toString();
     const url = queryString ? `/users?${queryString}` : '/users';

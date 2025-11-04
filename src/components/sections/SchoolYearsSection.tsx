@@ -5,6 +5,7 @@ import type { GetAllSchoolYearsParams } from '../../api/schoolYear';
 import type { ListState } from '../../types/api';
 import SchoolYearModal from '../../components/modals/SchoolYearModal';
 import StatusBadge from '../../components/StatusBadge';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const SchoolYearsSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -63,6 +64,7 @@ const SchoolYearsSection: React.FC = () => {
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add School Year"
         searchPlaceholder="Search by school year title..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(schoolYear: any, onEdit, onDelete, index) => (
           <li key={schoolYear?.id ?? `schoolYear-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">

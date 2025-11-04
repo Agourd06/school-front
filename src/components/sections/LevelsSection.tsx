@@ -6,6 +6,7 @@ import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { LevelModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const LevelsSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -121,6 +122,7 @@ const LevelsSection: React.FC = () => {
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Level"
         searchPlaceholder="Search by level title..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(lvl: any, onEdit, onDelete, index) => (
           <li key={lvl?.id ?? `level-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">

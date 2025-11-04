@@ -1,8 +1,11 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { ListState } from '../../types/api';
+import type { GetAllStudentDiplomeParams } from '../../api/studentDiplome';
 import { useStudentDiplomes, useDeleteStudentDiplome } from '../../hooks/useStudentDiplomes';
 import { StudentDiplomeModal, StudentDiplomeDetailsModal } from '../modals';
+import StatusBadge from '../../components/StatusBadge';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
 
@@ -10,11 +13,16 @@ const StudentDiplomesSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
     data: [], loading: false, error: null,
     pagination: { page: 1, limit: 50, total: 0, totalPages: 0, hasNext: false, hasPrevious: false },
-    filters: { search: '' },
+    filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'sd' | 'sd_details' | null; data?: any }>({ type: null });
 
-  const params = { page: state.pagination.page, limit: state.pagination.limit, search: state.filters.search || undefined } as any;
+  const params: GetAllStudentDiplomeParams = {
+    page: state.pagination.page,
+    limit: state.pagination.limit,
+    search: state.filters.search || undefined,
+    status: (state.filters as any).status ?? undefined,
+  };
   const { data: response, isLoading, error } = useStudentDiplomes(params);
 
   React.useEffect(() => {
@@ -52,8 +60,10 @@ const StudentDiplomesSection: React.FC = () => {
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
+        onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Diplome"
         searchPlaceholder="Search by title, school, city..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(d: any, onEdit, onDelete) => (
           <li key={d.id} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
@@ -67,6 +77,10 @@ const StudentDiplomesSection: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-900">{d.title} — {d.school}</p>
                   <p className="text-xs text-gray-500">{d.city || ''}{d.country ? `, ${d.country}` : ''} {d.annee ? `· ${d.annee}` : ''}</p>
+                  <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
+                    <span>Status:</span>
+                    <StatusBadge value={d.status} />
+                  </div>
                 </div>
               </div>
               <div className="flex space-x-2">

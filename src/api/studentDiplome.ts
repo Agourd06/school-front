@@ -11,6 +11,7 @@ export interface StudentDiplome {
   student_id: number;
   diplome_picture_1?: string | null;
   diplome_picture_2?: string | null;
+  status?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -37,6 +38,7 @@ export interface GetAllStudentDiplomeParams {
   search?: string;
   student_id?: number | string;
   annee?: number | string;
+  status?: number;
 }
 
 const buildFormData = (payload: Partial<CreateStudentDiplomeRequest>) => {

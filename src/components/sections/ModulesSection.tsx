@@ -4,6 +4,7 @@ import { useModules, useDeleteModule } from '../../hooks/useModules';
 import type { FilterParams, ListState } from '../../types/api';
 import { ModuleModal, DescriptionModal, CourseAssignmentModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const ModulesSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -49,8 +50,9 @@ const ModulesSection: React.FC = () => {
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Module"
         searchPlaceholder="Search by module title..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(module: any, onEdit, onDelete, index) => (
-          <li key={module?.id ?? `module-${index}`} className="px-4 py-4 sm:px-6">
+          <li key={module?.id ?? ('module-' + index)} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{module.title}</p>

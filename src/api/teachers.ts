@@ -15,6 +15,7 @@ export type Teacher = {
   picture?: string;
   company_id?: number;
   class_room_id?: number;
+  status?: number;
   classRoom?: {
     id: number;
     code: string;
@@ -48,6 +49,7 @@ export type GetAllTeachersParams = {
   search?: string;
   company_id?: number;
   class_room_id?: number;
+  status?: number;
 };
 
 export type CreateTeacherRequest = Omit<Teacher, 'id' | 'created_at' | 'updated_at'>;
@@ -61,6 +63,7 @@ export const teachersApi = {
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
     if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
     if (typeof params.class_room_id === 'number') qp.append('class_room_id', String(params.class_room_id));
+    if (typeof params.status === 'number') qp.append('status', String(params.status));
     const qs = qp.toString();
     const url = qs ? `/teachers?${qs}` : '/teachers';
     const response = await api.get(url);

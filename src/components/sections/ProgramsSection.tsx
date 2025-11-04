@@ -4,6 +4,7 @@ import type { FilterParams, ListState } from '../../types/api';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { ProgramModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const ProgramsSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -69,8 +70,9 @@ const ProgramsSection: React.FC = () => {
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Program"
         searchPlaceholder="Search by program title..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(program: any, onEdit, onDelete, index) => (
-          <li key={program?.id ?? `program-${index}`} className="px-4 py-4 sm:px-6">
+          <li key={program?.id ?? ('program-' + index)} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{program.title}</p>
@@ -94,5 +96,3 @@ const ProgramsSection: React.FC = () => {
 };
 
 export default ProgramsSection;
-
-

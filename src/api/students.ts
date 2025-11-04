@@ -15,6 +15,7 @@ export type Student = {
   picture?: string;
   company_id?: number;
   class_room_id?: number;
+  status?: number;
   classRoom?: {
     id: number;
     code: string;
@@ -48,6 +49,7 @@ export type GetAllStudentsParams = {
   search?: string;
   company_id?: number;
   class_room_id?: number;
+  status?: number;
 };
 
 export type CreateStudentRequest = Omit<Student, 'id' | 'created_at' | 'updated_at'>;
@@ -61,6 +63,7 @@ export const studentsApi = {
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
     if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
     if (typeof params.class_room_id === 'number') qp.append('class_room_id', String(params.class_room_id));
+    if (typeof params.status === 'number') qp.append('status', String(params.status));
     const qs = qp.toString();
     const url = qs ? `/students?${qs}` : '/students';
     const response = await api.get(url);

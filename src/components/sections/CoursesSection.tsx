@@ -4,6 +4,7 @@ import { useCourses, useDeleteCourse } from '../../hooks/useCourses';
 import type { FilterParams, ListState } from '../../types/api';
 import { CourseModal, DescriptionModal, ModuleAssignmentModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const CoursesSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -49,8 +50,9 @@ const CoursesSection: React.FC = () => {
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Course"
         searchPlaceholder="Search by course title..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(course: any, onEdit, onDelete, index) => (
-          <li key={course?.id ?? `course-${index}`} className="px-4 py-4 sm:px-6">
+          <li key={course?.id ?? ('course-' + index)} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{course.title} </p>
@@ -73,10 +75,21 @@ const CoursesSection: React.FC = () => {
         <CourseModal isOpen onClose={close} course={modal.data} />
       )}
       {modal.type === 'description' && (
-        <DescriptionModal isOpen onClose={close} title={modal.data?.title} description={modal.data?.description} type="course" />
+        <DescriptionModal
+          isOpen
+          onClose={close}
+          title={modal.data?.title}
+          description={modal.data?.description}
+          type="course"
+        />
       )}
       {modal.type === 'assign-modules' && (
-        <ModuleAssignmentModal isOpen onClose={close} courseId={modal.data?.id} courseTitle={modal.data?.title} />
+        <ModuleAssignmentModal
+          isOpen
+          onClose={close}
+          courseId={modal.data?.id}
+          courseTitle={modal.data?.title}
+        />
       )}
     </>
   );

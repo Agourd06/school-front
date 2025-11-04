@@ -11,6 +11,7 @@ import { ClassModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import SearchSelect from '../inputs/SearchSelect';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const ClassesSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -241,6 +242,7 @@ const ClassesSection: React.FC = () => {
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Class"
         searchPlaceholder="Search by class title..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(cls: any, onEdit, onDelete, index) => (
           <li key={cls?.id ?? `class-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">

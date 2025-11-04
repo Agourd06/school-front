@@ -18,6 +18,11 @@ type ListState<T> = {
   filters: Record<string, any> & { search?: string; status?: number | null | undefined };
 };
 
+interface StatusOption {
+  value: number;
+  label: string;
+}
+
 interface DataTableGenericProps<T> {
   title: string;
   state: ListState<T>;
@@ -30,6 +35,7 @@ interface DataTableGenericProps<T> {
   onFilterChange?: (status: number | null) => void;
   addButtonText: string;
   searchPlaceholder: string;
+  filterOptions?: StatusOption[];
   renderRow: (item: T, onEdit: (item: T) => void, onDelete: (id: number) => void, index: number) => React.ReactNode;
 }
 
@@ -45,14 +51,17 @@ function DataTableGeneric<T extends { id: number }>({
   onFilterChange,
   addButtonText,
   searchPlaceholder,
+  filterOptions,
   renderRow,
 }: DataTableGenericProps<T>) {
   const { data, loading, error, pagination, filters } = state as ListState<T>;
 
-  const statusFilterOptions = [
-    { value: null, label: 'All' },
+  const statusFilterOptions = filterOptions ?? [
+    { value: 0, label: 'Disabled (0)' },
     { value: 1, label: 'Active (1)' },
-    { value: 0, label: 'Inactive (0)' },
+    { value: 2, label: 'Pending (2)' },
+    { value: -1, label: 'Archived (-1)' },
+    { value: -2, label: 'Deleted (-2)' },
   ];
 
   return (

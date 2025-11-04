@@ -5,6 +5,7 @@ import { useSpecializations, useDeleteSpecialization } from '../../hooks/useSpec
 import { usePrograms } from '../../hooks/usePrograms';
 import { SpecializationModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const SpecializationsSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -96,6 +97,7 @@ const SpecializationsSection: React.FC = () => {
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Specialization"
         searchPlaceholder="Search by specialization title..."
+        filterOptions={STATUS_OPTIONS}
         renderRow={(spec: any, onEdit, onDelete, index) => (
           <li key={spec?.id ?? `specialization-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">

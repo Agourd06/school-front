@@ -28,6 +28,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
 }) => {
   const [assignedModules, setAssignedModules] = useState<Module[]>([]);
   const [unassignedModules, setUnassignedModules] = useState<Module[]>([]);
+  const [isMutationLoading, setIsMutationLoading] = useState(false);
 
   // React Query hooks
   const { data: moduleAssignments, isLoading, error } = useModuleAssignments(courseId);
@@ -78,6 +79,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
 
     // Immediately call the API using individual endpoints
     try {
+      setIsMutationLoading(true);
       if (source.droppableId === 'assigned' && destination.droppableId === 'unassigned') {
         // Remove module from course
         await removeModuleFromCourse.mutateAsync({
@@ -101,6 +103,8 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
         setAssignedModules(prev => prev.filter(m => m.id !== moduleId));
       }
       console.error('Failed to update module assignment:', error);
+    } finally {
+      setIsMutationLoading(false);
     }
   };
 
@@ -157,7 +161,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
                         snapshot.isDraggingOver
                           ? 'border-blue-400 bg-blue-50'
                           : 'border-gray-300 bg-gray-50'
-                      }`}
+                      } ${isMutationLoading ? 'opacity-60 pointer-events-none' : ''}`}
                     >
                       {unassignedModules.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
@@ -165,7 +169,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
                         </div>
                       ) : (
                         unassignedModules.map((module, index) => (
-                          <Draggable key={module.id} draggableId={module.id.toString()} index={index}>
+                          <Draggable key={module.id} draggableId={module.id.toString()} index={index} isDragDisabled={isMutationLoading}>
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
@@ -206,7 +210,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
                         snapshot.isDraggingOver
                           ? 'border-green-400 bg-green-50'
                           : 'border-gray-300 bg-gray-50'
-                      }`}
+                      } ${isMutationLoading ? 'opacity-60 pointer-events-none' : ''}`}
                     >
                       {assignedModules.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
@@ -214,7 +218,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
                         </div>
                       ) : (
                         assignedModules.map((module, index) => (
-                          <Draggable key={module.id} draggableId={module.id.toString()} index={index}>
+                          <Draggable key={module.id} draggableId={module.id.toString()} index={index} isDragDisabled={isMutationLoading}>
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}

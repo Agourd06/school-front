@@ -1,20 +1,30 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import { useStudents, useDeleteStudent } from '../../hooks/useStudents';
-import type { ListState, SearchParams } from '../../types/api';
+import type { ListState } from '../../types/api';
+import type { GetAllStudentsParams } from '../../api/students';
 import { StudentModal } from '../../components/modals';
+import StatusBadge from '../../components/StatusBadge';
+import { STATUS_OPTIONS } from '../../constants/status';
 
 const StudentsSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
     data: [], loading: false, error: null,
     pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrevious: false },
-    filters: { search: '' },
+    filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'student' | null; data?: any }>({ type: null });
 
-  const params: SearchParams = { page: state.pagination.page, limit: state.pagination.limit, search: state.filters.search || undefined };
-  const { data: response, isLoading, error } = useStudents(params as any);
-  React.useEffect(() => { if (response) setState(prev => ({ ...prev, data: response.data, loading: isLoading, error: (error as any)?.message || null, pagination: response.meta })); }, [response, isLoading, error]);
+  const params: GetAllStudentsParams = {
+    page: state.pagination.page,
+    limit: state.pagination.limit,
+    search: state.filters.search || undefined,
+    status: (state.filters as any).status ?? undefined,
+  };
+  const { data: response, isLoading, error } = useStudents(params);
+  React.useEffect(() => {
+    if (response) setState(prev => ({ ...prev, data: response.data, loading: isLoading, error: (error as any)?.message || null, pagination: response.meta }));
+  }, [response, isLoading, error]);
 
   const del = useDeleteStudent();
   const handleDelete = async (id: number) => { if (window.confirm('Delete student?')) await del.mutateAsync(id); };
@@ -41,33 +51,21 @@ const StudentsSection: React.FC = () => {
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
+        onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
         addButtonText="Add Student"
-        searchPlaceholder="Search by name or email..."
-        renderRow={(s: any, onEdit, onDelete) => (
-           <li key={s.id} className="px-4 py-4 sm:px-6">
+        searchPlaceholder="Search by student name..."
+        filterOptions={STATUS_OPTIONS}
+        renderRow={(student: any, onEdit, onDelete, index) => (
+          <li key={student?.id ?? `student-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {s.picture && (
-                  <img
-                    src={(s.picture?.startsWith('http') ? s.picture : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${s.picture?.startsWith('/') ? '' : '/'}${s.picture || ''}`)}
-                    alt="avatar"
-                    className="h-10 w-10 rounded-full object-cover border"
-                  />
-                )}
-                 <p className="text-sm font-medium text-gray-900">{s.first_name} {s.last_name}</p>
-                <p className="text-sm text-gray-500">Email: {s.email}</p>
-                <p className="text-sm text-gray-500">
-                  {(() => {
-                    const classRoom = s.classRoom || s.class_room;
-                    const classLabel = classRoom ? `${classRoom.title || ''}${classRoom.code ? (classRoom.title ? ` (${classRoom.code})` : classRoom.code) : ''}`.trim() : (s.class_room_id ? `ID: ${s.class_room_id}` : 'N/A');
-                    const companyLabel = s.company?.name || s.company_id || 'N/A';
-                    return <>Class: {classLabel} • Company: {companyLabel}</>;
-                  })()}
-                </p>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{student.first_name} {student.last_name}</p>
+                <p className="text-sm text-gray-500">Email: {student.email}</p>
+                <p className="text-sm text-gray-500">Status: <StatusBadge value={student.status} /></p>
               </div>
               <div className="flex space-x-2">
-                <button onClick={() => onEdit(s)} className="text-blue-600 hover:text-blue-900">Edit</button>
-                <button onClick={() => onDelete(s.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                <button onClick={() => onEdit(student)} className="text-blue-600 hover:text-blue-900">Edit</button>
+                <button onClick={() => onDelete(student.id)} className="text-red-600 hover:text-red-900">Delete</button>
               </div>
             </div>
           </li>
