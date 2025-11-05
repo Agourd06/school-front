@@ -3,7 +3,7 @@ import DataTableGeneric from '../../components/DataTableGeneric';
 import { useClassRooms, useUpdateClassRoom } from '../../hooks/useClassRooms';
 import type { ListState } from '../../types/api';
 import type { GetAllClassRoomsParams } from '../../api/classRoom';
-import { ClassRoomModal } from '../../components/modals';
+import { ClassRoomModal, DeleteModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -14,6 +14,7 @@ const ClassRoomsSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'classRoom' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: GetAllClassRoomsParams = {
     page: state.pagination.page,
@@ -25,9 +26,25 @@ const ClassRoomsSection: React.FC = () => {
   React.useEffect(() => { if (response) setState(prev => ({ ...prev, data: response.data, loading: isLoading, error: (error as any)?.message || null, pagination: response.meta })); }, [response, isLoading, error]);
 
   const updater = useUpdateClassRoom();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete class room?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, status: -2 });
+  };
+
+  const requestDelete = (id: number) => {
+    const classRoom = state.data.find((item: any) => item.id === id);
+    if (!classRoom) return;
+    const label = [classRoom.code, classRoom.title].filter(Boolean).join(' — ');
+    setDeleteTarget({ id, name: label || undefined });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const open = (data?: any) => setModal({ type: 'classRoom', data });
@@ -48,7 +65,7 @@ const ClassRoomsSection: React.FC = () => {
         state={state}
         onAdd={() => open(null)}
         onEdit={(item) => open(item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -80,6 +97,15 @@ const ClassRoomsSection: React.FC = () => {
       {modal.type === 'classRoom' && (
         <ClassRoomModal isOpen onClose={close} classRoom={modal.data} />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Classroom"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

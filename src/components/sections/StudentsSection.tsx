@@ -3,7 +3,7 @@ import DataTableGeneric from '../../components/DataTableGeneric';
 import { useStudents, useUpdateStudent } from '../../hooks/useStudents';
 import type { ListState } from '../../types/api';
 import type { GetAllStudentsParams } from '../../api/students';
-import { StudentModal } from '../../components/modals';
+import { StudentModal, DeleteModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -14,6 +14,7 @@ const StudentsSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'student' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: GetAllStudentsParams = {
     page: state.pagination.page,
@@ -27,9 +28,25 @@ const StudentsSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateStudent();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete student?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, data: { status: -2 } });
+  };
+
+  const requestDelete = (id: number) => {
+    const student = state.data.find((item: any) => item.id === id);
+    if (!student) return;
+    const name = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || student.email || undefined;
+    setDeleteTarget({ id, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const open = (data?: any) => setModal({ type: 'student', data });
@@ -50,7 +67,7 @@ const StudentsSection: React.FC = () => {
         state={state}
         onAdd={() => open(null)}
         onEdit={(item) => open(item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -78,6 +95,15 @@ const StudentsSection: React.FC = () => {
       {modal.type === 'student' && (
         <StudentModal isOpen onClose={close} student={modal.data} />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Student"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

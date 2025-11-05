@@ -3,7 +3,7 @@ import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
 import { useSpecializations, useUpdateSpecialization } from '../../hooks/useSpecializations';
 import { usePrograms } from '../../hooks/usePrograms';
-import { SpecializationModal } from '../modals';
+import { SpecializationModal, DeleteModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -16,6 +16,7 @@ const SpecializationsSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'specialization' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
   const [programFilter, setProgramFilter] = React.useState<number | ''>('');
 
   const params: FilterParams & { program_id?: number } = {
@@ -42,9 +43,24 @@ const SpecializationsSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateSpecialization();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete specialization?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, data: { status: -2 } });
+  };
+
+  const requestDelete = (id: number) => {
+    const specialization = state.data.find((item: any) => item.id === id);
+    if (!specialization) return;
+    setDeleteTarget({ id, name: specialization.title });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const open = (data?: any) => setModal({ type: 'specialization', data });
@@ -91,7 +107,7 @@ const SpecializationsSection: React.FC = () => {
         state={state}
         onAdd={() => open(null)}
         onEdit={(item) => open(item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -99,12 +115,17 @@ const SpecializationsSection: React.FC = () => {
         addButtonText="Add Specialization"
         searchPlaceholder="Search by specialization title..."
         filterOptions={STATUS_OPTIONS}
-        renderRow={(spec: any, onEdit, onDelete, index) => (
+        renderRow={(spec: any, onEdit, onDelete, index) => {
+          const programTitle = spec.program?.title
+            || programs.find(p => Number(p.id) === Number(spec.program_id))?.title
+            || '—';
+
+          return (
           <li key={spec?.id ?? `specialization-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{spec.title}</p>
-                <p className="text-sm text-gray-500">Program: {spec.program?.title || programs.find(p => p.id === spec.program_id)?.title || '—'}</p>
+                <p className="text-sm text-gray-500">Program: {programTitle}</p>
                 <p className="text-sm text-gray-500">Status: <StatusBadge value={spec.status} /></p>
               </div>
               <div className="flex space-x-2">
@@ -113,12 +134,22 @@ const SpecializationsSection: React.FC = () => {
               </div>
             </div>
           </li>
-        )}
+          );
+        }}
       />
 
       {modal.type === 'specialization' && (
         <SpecializationModal isOpen onClose={close} specialization={modal.data} />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Specialization"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

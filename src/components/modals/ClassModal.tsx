@@ -26,6 +26,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem }) =
     school_year_period_id: '' as number | string | '',
     status: 1,
   });
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
 
@@ -132,6 +133,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem }) =
       school_year_id: Number(form.school_year_id),
       school_year_period_id: Number(form.school_year_period_id),
     };
+        
     try {
       if (isEditing) {
         await updateMutation.mutateAsync({ id: classItem.id, data: payload });

@@ -7,7 +7,7 @@ import { useSpecializations } from '../../hooks/useSpecializations';
 import { useLevels } from '../../hooks/useLevels';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
-import { ClassModal } from '../modals';
+import { ClassModal, DeleteModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import SearchSelect from '../inputs/SearchSelect';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
@@ -22,6 +22,7 @@ const ClassesSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'class' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const [programFilter, setProgramFilter] = React.useState<number | ''>('');
   const [specializationFilter, setSpecializationFilter] = React.useState<number | ''>('');
@@ -103,9 +104,24 @@ const ClassesSection: React.FC = () => {
   );
 
   const updater = useUpdateClass();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete class?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, data: { status: -2 } });
+  };
+
+  const requestDelete = (id: number) => {
+    const classItem = state.data.find((item: any) => item.id === id);
+    if (!classItem) return;
+    setDeleteTarget({ id, name: classItem.title });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const openModal = (data?: any) => setModal({ type: 'class', data });
@@ -236,7 +252,7 @@ const ClassesSection: React.FC = () => {
         state={state}
         onAdd={() => openModal(null)}
         onEdit={(item) => openModal(item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -268,6 +284,15 @@ const ClassesSection: React.FC = () => {
       {modal.type === 'class' && (
         <ClassModal isOpen onClose={closeModal} classItem={modal.data} />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Class"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

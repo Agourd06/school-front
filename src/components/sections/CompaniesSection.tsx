@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
 import { useCompanies, useUpdateCompany } from '../../hooks/useCompanies';
-import { CompanyModal } from '../modals';
+import { CompanyModal, DeleteModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -15,6 +15,7 @@ const CompaniesSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'company' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: FilterParams = {
     page: state.pagination.page,
@@ -38,9 +39,24 @@ const CompaniesSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateCompany();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete company?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, status: -2 });
+  };
+
+  const requestDelete = (id: number) => {
+    const company = state.data.find((item: any) => item.id === id);
+    if (!company) return;
+    setDeleteTarget({ id, name: company.name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const open = (data?: any) => setModal({ type: 'company', data });
@@ -65,7 +81,7 @@ const CompaniesSection: React.FC = () => {
         state={state}
         onAdd={() => open(null)}
         onEdit={(item) => open(item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -95,6 +111,15 @@ const CompaniesSection: React.FC = () => {
       {modal.type === 'company' && (
         <CompanyModal isOpen onClose={close} company={modal.data} />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Company"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

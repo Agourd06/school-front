@@ -6,16 +6,18 @@ interface BaseModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  className?: string;
+  contentClassName?: string;
 }
 
-const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children }) => {
+const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children, className, contentClassName }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-gray-600 bg-opacity-50 ">
       <div className="absolute inset-0 p-2 sm:p-4 flex items-center justify-center">
-        <div className="w-[96vw] max-w-none bg-white border rounded-md shadow-lg p-4 sm:p-6 max-h-[92vh] overflow-y-auto">
-          <div className="mt-1">
+        <div className={`w-[96vw] max-w-none bg-white border rounded-md shadow-lg p-4 sm:p-6 max-h-[92vh] overflow-y-auto ${className ?? ''}`}>
+          <div className={`mt-1 ${contentClassName ?? ''}`}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-medium text-gray-900">{title}</h3>
             <button

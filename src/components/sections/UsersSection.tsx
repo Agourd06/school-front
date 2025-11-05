@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import { useUsers, useUpdateUser } from '../../hooks/useUsers';
 import type { FilterParams, ListState } from '../../types/api';
-import { UserModal } from '../../components/modals';
+import { UserModal, DeleteModal } from '../../components/modals';
 import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
 
@@ -15,6 +15,7 @@ const UsersSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'user' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: FilterParams = {
     page: state.pagination.page,
@@ -37,9 +38,24 @@ const UsersSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateUser();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete user?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, status: -2 });
+  };
+
+  const requestDelete = (id: number) => {
+    const user = state.data.find((item: any) => item.id === id);
+    if (!user) return;
+    setDeleteTarget({ id, name: user.username || user.email || undefined });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const openModal = (data?: any) => setModal({ type: 'user', data });
@@ -64,7 +80,7 @@ const UsersSection: React.FC = () => {
         state={state}
         onAdd={() => openModal(null)}
         onEdit={(item) => openModal(item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -99,6 +115,15 @@ const UsersSection: React.FC = () => {
       {modal.type === 'user' && (
         <UserModal isOpen onClose={closeModal} user={modal.data} />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete User"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

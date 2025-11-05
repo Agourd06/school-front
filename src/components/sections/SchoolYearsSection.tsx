@@ -4,6 +4,7 @@ import { useSchoolYears, useUpdateSchoolYear } from '../../hooks/useSchoolYears'
 import type { GetAllSchoolYearsParams } from '../../api/schoolYear';
 import type { ListState } from '../../types/api';
 import SchoolYearModal from '../../components/modals/SchoolYearModal';
+import { DeleteModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -14,6 +15,7 @@ const SchoolYearsSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'schoolYear' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: GetAllSchoolYearsParams = { page: state.pagination.page, limit: state.pagination.limit, search: state.filters.search || undefined, status: (state.filters as any).status === null ? undefined : (state.filters as any).status } as any;
   const { data: response, isLoading, error } = useSchoolYears(params);
@@ -37,9 +39,24 @@ const SchoolYearsSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateSchoolYear();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete school year?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, status: -2 });
+  };
+
+  const requestDelete = (id: number) => {
+    const schoolYear = state.data.find((item: any) => item.id === id);
+    if (!schoolYear) return;
+    setDeleteTarget({ id, name: schoolYear.title });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const open = (data?: any) => setModal({ type: 'schoolYear', data });
@@ -60,7 +77,7 @@ const SchoolYearsSection: React.FC = () => {
         state={state}
         onAdd={() => open(null)}
         onEdit={(item) => open(item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -89,6 +106,15 @@ const SchoolYearsSection: React.FC = () => {
       {modal.type === 'schoolYear' && (
         <SchoolYearModal isOpen onClose={close} schoolYear={modal.data} />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete School Year"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

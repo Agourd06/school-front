@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import { useCourses, useUpdateCourse } from '../../hooks/useCourses';
 import type { FilterParams, ListState } from '../../types/api';
-import { CourseModal, DescriptionModal, ModuleAssignmentModal } from '../../components/modals';
+import { CourseModal, DescriptionModal, ModuleAssignmentModal, DeleteModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -13,6 +13,7 @@ const CoursesSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'course' | 'description' | 'assign-modules' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: FilterParams = { page: state.pagination.page, limit: state.pagination.limit, search: state.filters.search || undefined, status: (state.filters as any).status };
   const { data: response, isLoading, error } = useCourses(params);
@@ -23,9 +24,24 @@ const CoursesSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateCourse();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete course?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, status: -2 });
+  };
+
+  const requestDelete = (id: number) => {
+    const course = state.data.find((item: any) => item.id === id);
+    if (!course) return;
+    setDeleteTarget({ id, name: course.title });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const open = (type: 'course' | 'description' | 'assign-modules', data?: any) => setModal({ type, data });
@@ -46,7 +62,7 @@ const CoursesSection: React.FC = () => {
         state={state}
         onAdd={() => open('course', null)}
         onEdit={(item) => open('course', item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -64,7 +80,7 @@ const CoursesSection: React.FC = () => {
                 <p className="text-sm text-gray-500">Status: <StatusBadge value={course.status} /></p>
               </div>
               <div className="flex space-x-2">
-                <button onClick={() => open('description', course)} className="text-green-600 hover:text-green-900">View Description</button>
+                <button onClick={() => open('description', course)} className="text-green-600 hover:text-green-900">Details</button>
                 <button onClick={() => open('assign-modules', course)} className="text-purple-600 hover:text-purple-900">Manage Modules</button>
                 <button onClick={() => onEdit(course)} className="text-blue-600 hover:text-blue-900">Edit</button>
                 <button onClick={() => onDelete(course.id)} className="text-red-600 hover:text-red-900">Delete</button>
@@ -94,6 +110,15 @@ const CoursesSection: React.FC = () => {
           courseTitle={modal.data?.title}
         />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Course"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

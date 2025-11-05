@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import { useModules, useUpdateModule } from '../../hooks/useModules';
 import type { FilterParams, ListState } from '../../types/api';
-import { ModuleModal, DescriptionModal, CourseAssignmentModal } from '../../components/modals';
+import { ModuleModal, DescriptionModal, CourseAssignmentModal, DeleteModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -13,6 +13,7 @@ const ModulesSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'module' | 'description' | 'assign-courses' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: FilterParams = { page: state.pagination.page, limit: state.pagination.limit, search: state.filters.search || undefined, status: (state.filters as any).status };
   const { data: response, isLoading, error } = useModules(params);
@@ -23,9 +24,24 @@ const ModulesSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateModule();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete module?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, status: -2 });
+  };
+
+  const requestDelete = (id: number) => {
+    const module = state.data.find((item: any) => item.id === id);
+    if (!module) return;
+    setDeleteTarget({ id, name: module.title });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const open = (type: 'module' | 'description' | 'assign-courses', data?: any) => setModal({ type, data });
@@ -46,7 +62,7 @@ const ModulesSection: React.FC = () => {
         state={state}
         onAdd={() => open('module', null)}
         onEdit={(item) => open('module', item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -61,10 +77,16 @@ const ModulesSection: React.FC = () => {
                 <p className="text-sm font-medium text-gray-900">{module.title}</p>
                 <p className="text-sm text-gray-500">Volume: {module.volume || 'N/A'}</p>
                 <p className="text-sm text-gray-500">Coefficient: {module.coefficient || 'N/A'}</p>
+                {module.description && (
+                  <p className="text-sm text-gray-500">
+                    {module.description.replace(/<[^>]+>/g, '').slice(0, 120)}
+                    {module.description.replace(/<[^>]+>/g, '').length > 120 ? '…' : ''}
+                  </p>
+                )}
                 <p className="text-sm text-gray-500">Status: <StatusBadge value={module.status} /></p>
               </div>
               <div className="flex space-x-2">
-                <button onClick={() => open('description', module)} className="text-green-600 hover:text-green-900">View Description</button>
+                <button onClick={() => open('description', module)} className="text-green-600 hover:text-green-900">Details</button>
                 <button onClick={() => open('assign-courses', module)} className="text-purple-600 hover:text-purple-900">Manage Courses</button>
                 <button onClick={() => onEdit(module)} className="text-blue-600 hover:text-blue-900">Edit</button>
                 <button onClick={() => onDelete(module.id)} className="text-red-600 hover:text-red-900">Delete</button>
@@ -83,6 +105,15 @@ const ModulesSection: React.FC = () => {
       {modal.type === 'assign-courses' && (
         <CourseAssignmentModal isOpen onClose={close} moduleId={modal.data?.id} moduleTitle={modal.data?.title} />
       )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Module"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };

@@ -16,6 +16,7 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
     program_id: '' as number | string | '',
     status: 1,
   });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
 
@@ -43,6 +44,7 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
     setForm(prev => ({ ...prev, [name]: name === 'status' ? Number(value) : (name === 'program_id' ? (value ? Number(value) : '') : value) }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };

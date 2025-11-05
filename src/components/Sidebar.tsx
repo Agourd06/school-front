@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         }`}
         style={{ height: 'calc(100vh - 4rem)' }}
       >
-        <div className="p-6">
+        <div className="p-6 h-full flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-gray-900">Edusol</h2>
             {/* Close button on mobile */}
@@ -130,7 +130,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
           </div>
 
           {/* Parameters Section */}
-          <div className="mb-6">
+          <div className="mb-6 flex-1 overflow-y-auto pr-2">
             <button
               onClick={toggleParameters}
               className="w-full text-left px-4 py-3 rounded-lg font-medium transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -178,7 +178,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
 
             {/* Dropdown Content */}
             {isParametersOpen && (
-              <div className="ml-8 mt-2 space-y-2">
+              <div className="ml-8 mt-2 space-y-2 pb-8">
                 <button
                   onClick={() => onTabChange("companies")}
                   className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${

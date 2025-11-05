@@ -4,7 +4,7 @@ import type { FilterParams, ListState } from '../../types/api';
 import { useLevels, useUpdateLevel } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
-import { LevelModal } from '../modals';
+import { LevelModal, DeleteModal, DescriptionModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -16,7 +16,8 @@ const LevelsSection: React.FC = () => {
     pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrevious: false },
     filters: { search: '', status: undefined },
   });
-  const [modal, setModal] = React.useState<{ type: 'level' | null; data?: any }>({ type: null });
+  const [modal, setModal] = React.useState<{ type: 'level' | 'description' | null; data?: any }>({ type: null });
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
   const [programFilter, setProgramFilter] = React.useState<number | ''>('');
   const [specializationFilter, setSpecializationFilter] = React.useState<number | ''>('');
 
@@ -47,12 +48,28 @@ const LevelsSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateLevel();
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Delete level?')) return;
+  const performDelete = async (id: number) => {
     await updater.mutateAsync({ id, data: { status: -2 } });
   };
 
+  const requestDelete = (id: number) => {
+    const level = state.data.find((item: any) => item.id === id);
+    if (!level) return;
+    setDeleteTarget({ id, name: level.title });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await performDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const open = (data?: any) => setModal({ type: 'level', data });
+  const openDescription = (data?: any) => setModal({ type: 'description', data });
   const close = () => setModal({ type: null });
 
   const handleSearch = useCallback((q: string) => {
@@ -78,6 +95,17 @@ const LevelsSection: React.FC = () => {
     const numeric = value ? Number(value) : '';
     setSpecializationFilter(numeric);
     setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
+  };
+
+  const stripHtml = (input?: string) => {
+    if (!input) return '';
+    return input.replace(/<[^>]+>/g, '');
+  };
+
+  const getDescriptionPreview = (input?: string) => {
+    const text = stripHtml(input);
+    if (!text) return '';
+    return text.length > 120 ? `${text.slice(0, 120)}…` : text;
   };
 
   return (
@@ -117,7 +145,7 @@ const LevelsSection: React.FC = () => {
         state={state}
         onAdd={() => open(null)}
         onEdit={(item) => open(item)}
-        onDelete={handleDelete}
+        onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
@@ -133,9 +161,15 @@ const LevelsSection: React.FC = () => {
                 <p className="text-sm text-gray-500">Specialization: {lvl.specialization?.title || specializations.find(s => s.id === lvl.specialization_id)?.title || '—'}</p>
                 <p className="text-sm text-gray-500">Program: {lvl.specialization?.program?.title || programs.find(p => p.id === (lvl.specialization?.program?.id || lvl.specialization?.program_id))?.title || programs.find(p => p.id === programFilter)?.title || '—'}</p>
                 <p className="text-sm text-gray-500">Level: {lvl.level ?? '—'}</p>
+                {getDescriptionPreview(lvl.description) && (
+                  <p className="text-sm text-gray-500">{getDescriptionPreview(lvl.description)}</p>
+                )}
                 <p className="text-sm text-gray-500">Status: <StatusBadge value={lvl.status} /></p>
               </div>
               <div className="flex space-x-2">
+                {stripHtml(lvl.description) && (
+                  <button onClick={() => openDescription(lvl)} className="text-green-600 hover:text-green-900">Details</button>
+                )}
                 <button onClick={() => onEdit(lvl)} className="text-blue-600 hover:text-blue-900">Edit</button>
                 <button onClick={() => onDelete(lvl.id)} className="text-red-600 hover:text-red-900">Delete</button>
               </div>
@@ -147,6 +181,24 @@ const LevelsSection: React.FC = () => {
       {modal.type === 'level' && (
         <LevelModal isOpen onClose={close} level={modal.data} />
       )}
+      {modal.type === 'description' && (
+        <DescriptionModal
+          isOpen
+          onClose={close}
+          title={modal.data?.title}
+          description={modal.data?.description}
+          type="level"
+        />
+      )}
+
+      <DeleteModal
+        isOpen={!!deleteTarget}
+        title="Delete Level"
+        entityName={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        isLoading={updater.isPending}
+      />
     </>
   );
 };
