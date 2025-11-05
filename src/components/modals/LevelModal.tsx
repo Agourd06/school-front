@@ -4,6 +4,7 @@ import { useCreateLevel, useUpdateLevel } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { STATUS_OPTIONS, DEFAULT_COMPANY_ID } from '../../constants/status';
+import RichTextEditor from '../RichTextEditor';
 
 interface LevelModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
     setFormError('');
   }, [level, isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm(prev => ({
       ...prev,
@@ -148,13 +149,14 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            name="description"
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <RichTextEditor
             value={form.description}
-            onChange={handleChange}
-            rows={3}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            onChange={(html) => {
+              setForm(prev => ({ ...prev, description: html }));
+            }}
+            placeholder="Describe the level..."
+            rows={5}
           />
         </div>
 

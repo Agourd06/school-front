@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateClassRoom, useUpdateClassRoom } from '../../hooks/useClassRooms';
 import { useCompanies } from '../../hooks/useCompanies';
@@ -16,7 +16,8 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
 
   const createMutation = useCreateClassRoom();
   const updateMutation = useUpdateClassRoom();
-  const { data: companies } = useCompanies();
+  const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any);
+  const companies = useMemo(() => ((companiesResp as any)?.data ?? []) as any[], [companiesResp]);
 
   const isEditing = !!classRoom;
 
@@ -94,11 +95,11 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
             onChange={handleChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
-            <option value={-2}>Deleted (-2)</option>
-            <option value={-1}>Archived (-1)</option>
-            <option value={0}>Disabled (0)</option>
-            <option value={1}>Active (1)</option>
-            <option value={2}>Pending (2)</option>
+            <option value={-2}>Deleted </option>
+            <option value={-1}>Archived </option>
+            <option value={0}>Disabled </option>
+            <option value={1}>Active </option>
+            <option value={2}>Pending </option>
           </select>
         </div>
 
@@ -134,7 +135,7 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="">No company</option>
-            {companies?.map((c: any) => (
+            {companies.map((c: any) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>

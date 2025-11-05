@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar';
 
 export type DashboardTab =
   | 'users'
+  | 'companies'
   | 'programs'
   | 'specializations'
   | 'levels'
@@ -20,6 +21,7 @@ export type DashboardTab =
   | 'studentDiplomes';
 
 const UsersSection = React.lazy(() => import('../components/sections/UsersSection'));
+const CompaniesSection = React.lazy(() => import('../components/sections/CompaniesSection'));
 const ProgramsSection = React.lazy(() => import('../components/sections/ProgramsSection'));
 const SpecializationsSection = React.lazy(() => import('../components/sections/SpecializationsSection'));
 const LevelsSection = React.lazy(() => import('../components/sections/LevelsSection'));
@@ -38,6 +40,7 @@ const StudentDiplomesSection = React.lazy(() => import('../components/sections/S
 
 const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC>> = {
   users: UsersSection,
+  companies: CompaniesSection,
   programs: ProgramsSection,
   specializations: SpecializationsSection,
   levels: LevelsSection,

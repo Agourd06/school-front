@@ -58,11 +58,11 @@ const StudentLinkTypeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
         <div>
           <label className="block text-sm font-medium text-gray-700">Status</label>
           <select value={status} onChange={(e) => setStatus(Number(e.target.value))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-            <option value={-2}>Deleted (-2)</option>
-            <option value={-1}>Archived (-1)</option>
-            <option value={0}>Disabled (0)</option>
-            <option value={1}>Active (1)</option>
-            <option value={2}>Pending (2)</option>
+            <option value={-2}>Deleted </option>
+            <option value={-1}>Archived </option>
+            <option value={0}>Disabled </option>
+            <option value={1}>Active </option>
+            <option value={2}>Pending </option>
           </select>
         </div>
         <div className="flex justify-end space-x-3 pt-2">

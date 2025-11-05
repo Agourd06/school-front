@@ -20,6 +20,8 @@ interface SearchSelectProps {
   components?: SelectProps['components'];
   isLoading?: boolean;
   error?: string | null;
+  onSearchChange?: (query: string) => void;
+  noOptionsMessage?: string | ((query: string) => string);
 }
 
 const SearchSelect: React.FC<SearchSelectProps> = ({
@@ -34,14 +36,17 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
   components,
   isLoading,
   error,
+  onSearchChange,
+  noOptionsMessage,
 }) => {
   const [query, setQuery] = React.useState('');
 
   const filteredOptions = React.useMemo(() => {
+    if (onSearchChange) return options;
     const lower = query.trim().toLowerCase();
     if (!lower) return options;
     return options.filter((opt) => opt.label.toLowerCase().includes(lower));
-  }, [options, query]);
+  }, [options, query, onSearchChange]);
 
   const selectedOption = React.useMemo(
     () => options.find((opt) => String(opt.value) === String(value)) || null,
@@ -59,7 +64,10 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
           options={filteredOptions}
           components={components}
           onInputChange={(val, meta) => {
-            if (meta.action === 'input-change') setQuery(val);
+            if (meta.action === 'input-change') {
+              setQuery(val);
+              onSearchChange?.(val);
+            }
             return val;
           }}
           placeholder={placeholder}
@@ -74,7 +82,11 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
           styles={{
             menu: (base) => ({ ...base, zIndex: 50 }),
           }}
-          noOptionsMessage={() => (query ? 'No results found' : 'Type to search')}
+          noOptionsMessage={() => {
+            if (typeof noOptionsMessage === 'function') return noOptionsMessage(query);
+            if (typeof noOptionsMessage === 'string') return noOptionsMessage;
+            return query ? 'No results found' : 'Type to search';
+          }}
         />
         {error && <div className="mt-1 text-sm text-red-600">{error}</div>}
       </div>

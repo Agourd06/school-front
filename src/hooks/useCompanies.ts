@@ -1,11 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { companyApi } from '../api/company';
-import type { UpdateCompanyRequest } from '../api/company';
+import type { UpdateCompanyRequest, GetCompaniesParams } from '../api/company';
 
-export const useCompanies = () => {
+export const useCompanies = (params: GetCompaniesParams = {}) => {
   return useQuery({
-    queryKey: ['companies'],
-    queryFn: companyApi.getAll,
+    queryKey: ['companies', params],
+    queryFn: () => companyApi.getAll(params),
+    placeholderData: keepPreviousData,
   });
 };
 

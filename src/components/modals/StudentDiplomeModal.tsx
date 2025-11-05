@@ -28,10 +28,11 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
   const [file1, setFile1] = useState<File | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [studentSearch, setStudentSearch] = useState('');
 
   const createMut = useCreateStudentDiplome();
   const updateMut = useUpdateStudentDiplome();
-  const { data: studentsResp, isLoading: studentsLoading, error: studentsError } = useStudents({ page: 1, limit: 200 } as any);
+  const { data: studentsResp, isLoading: studentsLoading, error: studentsError } = useStudents({ page: 1, limit: 20, search: studentSearch ? studentSearch.trim() : undefined } as any);
   const studentOptions = useMemo(
     () => ((studentsResp as any)?.data || []).map((s: any) => ({
       value: s.id,
@@ -62,6 +63,7 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
       setFile2(null);
     }
     setErrors({});
+    setStudentSearch('');
   }, [item, isOpen]);
 
   const validate = () => {
@@ -153,6 +155,8 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
               options={studentOptions}
               isLoading={studentsLoading}
               error={studentsError ? 'Failed to load students' : null}
+              onSearchChange={(query) => setStudentSearch(query)}
+              noOptionsMessage={(query) => (query ? 'No students found' : 'Type to search students')}
             />
             {errors.student_id && <p className="text-sm text-red-600">{errors.student_id}</p>}
           </div>

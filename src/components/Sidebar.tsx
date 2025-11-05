@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 interface SidebarProps {
   activeTab:
     | "users"
+    | "companies"
     | "programs"
     | "specializations"
     | "levels"
@@ -21,6 +22,7 @@ interface SidebarProps {
   onTabChange: (
     tab:
       | "users"
+      | "companies"
       | "programs"
       | "specializations"
       | "levels"
@@ -177,6 +179,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
             {/* Dropdown Content */}
             {isParametersOpen && (
               <div className="ml-8 mt-2 space-y-2">
+                <button
+                  onClick={() => onTabChange("companies")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "companies"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+                    </svg>
+                    Companies
+                  </div>
+                </button>
+
                 <button
                   onClick={() => onTabChange("programs")}
                   className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${

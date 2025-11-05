@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCreateSchoolYear, useUpdateSchoolYear } from '../../hooks/useSchoolYears';
 import { useCompanies } from '../../hooks/useCompanies';
 import BaseModal from './BaseModal';
@@ -32,7 +32,8 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
 
   const createSchoolYear = useCreateSchoolYear();
   const updateSchoolYear = useUpdateSchoolYear();
-  const { data: companies, isLoading: companiesLoading } = useCompanies();
+  const { data: companiesResp, isLoading: companiesLoading } = useCompanies({ page: 1, limit: 100 } as any);
+  const companies = useMemo(() => ((companiesResp as any)?.data ?? []) as any[], [companiesResp]);
 
   const isEditing = !!schoolYear;
 
@@ -189,7 +190,7 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
               <option value={0} disabled>
                 Select a company
               </option>
-              {companies?.map(company => (
+              {companies.map(company => (
                 <option key={company.id} value={company.id}>
                   {company.name}
                 </option>
