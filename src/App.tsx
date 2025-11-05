@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import Navbar from './components/Navbar';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 const App: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -38,6 +39,10 @@ const App: React.FC = () => {
         <Route 
           path="/forgot-password" 
           element={<Navigate to="/auth?mode=forgot-password" />} 
+        />
+        <Route 
+          path="/reset-password" 
+          element={<ResetPasswordPage />} 
         />
         <Route 
           path="/dashboard" 

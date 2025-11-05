@@ -100,14 +100,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (username: string, email: string, password: string, role: 'user' | 'admin' = 'user') => {
     try {
       setIsLoading(true);
-      console.log('Registering user:', { username, email, role });
-      const data = await authApi.register({ username, email, password, role });
-      console.log('Registration response:', data);
+      await authApi.register({ username, email, password, role });
       // Note: Registration doesn't return a token, user needs to login
       // setToken(data.token);
       // setUser(data.user);
       // localStorage.setItem('token', data.token);
       // localStorage.setItem('user', JSON.stringify(data.user));
+      await login(email, password);
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
