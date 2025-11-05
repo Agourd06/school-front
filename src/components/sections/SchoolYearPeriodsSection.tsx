@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import useSchoolYearPeriods, { useDeleteSchoolYearPeriod } from '../../hooks/useSchoolYearPeriods';
+import useSchoolYearPeriods, { useUpdateSchoolYearPeriod } from '../../hooks/useSchoolYearPeriods';
 import type { FilterParams, ListState } from '../../types/api';
 import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
@@ -35,8 +35,11 @@ const SchoolYearPeriodsSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteSchoolYearPeriod();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete period?')) await del.mutateAsync(id); };
+  const updater = useUpdateSchoolYearPeriod();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete period?')) return;
+    await updater.mutateAsync({ id, status: -2 });
+  };
 
   const open = (data?: any) => setModal({ type: 'period', data });
   const close = () => setModal({ type: null });

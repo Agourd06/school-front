@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
-import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
+import { usePrograms, useUpdateProgram } from '../../hooks/usePrograms';
 import { ProgramModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
@@ -36,9 +36,10 @@ const ProgramsSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteProgram();
+  const updater = useUpdateProgram();
   const handleDelete = async (id: number) => {
-    if (window.confirm('Delete program?')) await del.mutateAsync(id);
+    if (!window.confirm('Delete program?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
   };
 
   const open = (data?: any) => setModal({ type: 'program', data });

@@ -4,6 +4,7 @@ import { useCreateSchoolYearPeriod, useUpdateSchoolYearPeriod } from '../../hook
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import type { GetAllSchoolYearsParams } from '../../api/schoolYear';
 import { validateRequired, validateDateOrder, validateSelectRequired } from './validations';
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
 
 interface SchoolYearPeriodModalProps {
   isOpen: boolean;
@@ -119,8 +120,9 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
             value={status}
             onChange={(e) => setStatus(Number(e.target.value))}
           >
-            <option value={1}>Active</option>
-            <option value={0}>Inactive</option>
+            {STATUS_OPTIONS_FORM.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
           </select>
         </div>
 

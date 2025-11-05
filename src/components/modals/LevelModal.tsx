@@ -3,7 +3,7 @@ import BaseModal from './BaseModal';
 import { useCreateLevel, useUpdateLevel } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
-import { STATUS_OPTIONS, DEFAULT_COMPANY_ID } from '../../constants/status';
+import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
 import RichTextEditor from '../RichTextEditor';
 
 interface LevelModalProps {
@@ -179,7 +179,7 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             >
-              {STATUS_OPTIONS.map(opt => (
+              {STATUS_OPTIONS_FORM.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>

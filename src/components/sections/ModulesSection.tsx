@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import { useModules, useDeleteModule } from '../../hooks/useModules';
+import { useModules, useUpdateModule } from '../../hooks/useModules';
 import type { FilterParams, ListState } from '../../types/api';
 import { ModuleModal, DescriptionModal, CourseAssignmentModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
@@ -22,8 +22,11 @@ const ModulesSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteModule();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete module?')) await del.mutateAsync(id); };
+  const updater = useUpdateModule();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete module?')) return;
+    await updater.mutateAsync({ id, status: -2 });
+  };
 
   const open = (type: 'module' | 'description' | 'assign-courses', data?: any) => setModal({ type, data });
   const close = () => setModal({ type: null });

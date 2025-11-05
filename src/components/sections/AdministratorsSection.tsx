@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import { useAdministrators, useDeleteAdministrator } from '../../hooks/useAdministrators';
+import { useAdministrators, useUpdateAdministrator } from '../../hooks/useAdministrators';
 import type { ListState } from '../../types/api';
 import type { GetAllAdministratorsParams } from '../../api/administrators';
 import AdministratorModal from '../../components/modals/AdministratorModal';
@@ -24,8 +24,11 @@ const AdministratorsSection: React.FC = () => {
   const { data: response, isLoading, error } = useAdministrators(params);
   React.useEffect(() => { if (response) setState(prev => ({ ...prev, data: response.data, loading: isLoading, error: (error as any)?.message || null, pagination: response.meta })); }, [response, isLoading, error]);
 
-  const del = useDeleteAdministrator();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete administrator?')) await del.mutateAsync(id); };
+  const updater = useUpdateAdministrator();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete administrator?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
+  };
 
   const open = (data?: any) => setModal({ type: 'administrator', data });
   const close = () => setModal({ type: null });

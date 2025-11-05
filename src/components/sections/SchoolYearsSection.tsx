@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import { useSchoolYears, useDeleteSchoolYear } from '../../hooks/useSchoolYears';
+import { useSchoolYears, useUpdateSchoolYear } from '../../hooks/useSchoolYears';
 import type { GetAllSchoolYearsParams } from '../../api/schoolYear';
 import type { ListState } from '../../types/api';
 import SchoolYearModal from '../../components/modals/SchoolYearModal';
@@ -36,8 +36,11 @@ const SchoolYearsSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteSchoolYear();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete school year?')) await del.mutateAsync(id); };
+  const updater = useUpdateSchoolYear();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete school year?')) return;
+    await updater.mutateAsync({ id, status: -2 });
+  };
 
   const open = (data?: any) => setModal({ type: 'schoolYear', data });
   const close = () => setModal({ type: null });

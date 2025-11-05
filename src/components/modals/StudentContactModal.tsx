@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateStudentContact, useUpdateStudentContact } from '../../hooks/useStudentContacts';
 import { useStudentLinkTypes } from '../../hooks/useStudentLinkTypes';
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
 
 interface Props {
   isOpen: boolean;
@@ -62,7 +63,14 @@ const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
 
   const handleChange = (ev: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = ev.target;
-    setForm(prev => ({ ...prev, [name]: name === 'studentlinktypeId' ? (value ? String(value) : '') : value }));
+    setForm(prev => ({
+      ...prev,
+      [name]: name === 'studentlinktypeId'
+        ? (value ? String(value) : '')
+        : name === 'status'
+          ? Number(value)
+          : value,
+    }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
@@ -128,11 +136,9 @@ const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700">Status</label>
             <select name="status" value={form.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-              <option value={-2}>Deleted (-2)</option>
-              <option value={-1}>Archived (-1)</option>
-              <option value={0}>Disabled (0)</option>
-              <option value={1}>Active (1)</option>
-              <option value={2}>Pending (2)</option>
+              {STATUS_OPTIONS_FORM.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
         </div>

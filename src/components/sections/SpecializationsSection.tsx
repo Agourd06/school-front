@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
-import { useSpecializations, useDeleteSpecialization } from '../../hooks/useSpecializations';
+import { useSpecializations, useUpdateSpecialization } from '../../hooks/useSpecializations';
 import { usePrograms } from '../../hooks/usePrograms';
 import { SpecializationModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
@@ -41,9 +41,10 @@ const SpecializationsSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteSpecialization();
+  const updater = useUpdateSpecialization();
   const handleDelete = async (id: number) => {
-    if (window.confirm('Delete specialization?')) await del.mutateAsync(id);
+    if (!window.confirm('Delete specialization?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
   };
 
   const open = (data?: any) => setModal({ type: 'specialization', data });

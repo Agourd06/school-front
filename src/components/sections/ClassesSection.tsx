@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
-import { useClasses, useDeleteClass } from '../../hooks/useClasses';
+import { useClasses, useUpdateClass } from '../../hooks/useClasses';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { useLevels } from '../../hooks/useLevels';
@@ -102,9 +102,10 @@ const ClassesSection: React.FC = () => {
     [periods]
   );
 
-  const del = useDeleteClass();
+  const updater = useUpdateClass();
   const handleDelete = async (id: number) => {
-    if (window.confirm('Delete class?')) await del.mutateAsync(id);
+    if (!window.confirm('Delete class?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
   };
 
   const openModal = (data?: any) => setModal({ type: 'class', data });

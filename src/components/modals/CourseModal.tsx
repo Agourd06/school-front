@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useCreateCourse, useUpdateCourse } from "../../hooks/useCourses";
 import BaseModal from "./BaseModal";
 import RichTextEditor from "../RichTextEditor";
+import { STATUS_OPTIONS_FORM } from "../../constants/status";
 
 interface Course {
   id: number;
@@ -237,11 +238,11 @@ const CourseModal: React.FC<CourseModalProps> = ({
             onChange={handleChange}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
-            <option value={1}>Active</option>
-            <option value={2}>Pending</option>
-            <option value={0}>Disabled</option>
-            <option value={-1}>Archived</option>
-            <option value={-2}>Deleted</option>
+            {STATUS_OPTIONS_FORM.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
         </div>
 

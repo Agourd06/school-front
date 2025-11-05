@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { ListState } from '../../types/api';
 import type { GetAllStudentDiplomeParams } from '../../api/studentDiplome';
-import { useStudentDiplomes, useDeleteStudentDiplome } from '../../hooks/useStudentDiplomes';
+import { useStudentDiplomes, useUpdateStudentDiplome } from '../../hooks/useStudentDiplomes';
 import { StudentDiplomeModal, StudentDiplomeDetailsModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
@@ -37,8 +37,11 @@ const StudentDiplomesSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteStudentDiplome();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete diplome?')) await del.mutateAsync(id); };
+  const updater = useUpdateStudentDiplome();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete diplome?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
+  };
 
   const open = (data?: any) => setModal({ type: 'sd', data });
   const close = () => setModal({ type: null });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateStudentLinkType, useUpdateStudentLinkType } from '../../hooks/useStudentLinkTypes';
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
 
 interface Props {
   isOpen: boolean;
@@ -58,11 +59,9 @@ const StudentLinkTypeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
         <div>
           <label className="block text-sm font-medium text-gray-700">Status</label>
           <select value={status} onChange={(e) => setStatus(Number(e.target.value))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-            <option value={-2}>Deleted </option>
-            <option value={-1}>Archived </option>
-            <option value={0}>Disabled </option>
-            <option value={1}>Active </option>
-            <option value={2}>Pending </option>
+            {STATUS_OPTIONS_FORM.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
           </select>
         </div>
         <div className="flex justify-end space-x-3 pt-2">

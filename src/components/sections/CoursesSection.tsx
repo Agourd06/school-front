@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import { useCourses, useDeleteCourse } from '../../hooks/useCourses';
+import { useCourses, useUpdateCourse } from '../../hooks/useCourses';
 import type { FilterParams, ListState } from '../../types/api';
 import { CourseModal, DescriptionModal, ModuleAssignmentModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
@@ -22,8 +22,11 @@ const CoursesSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteCourse();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete course?')) await del.mutateAsync(id); };
+  const updater = useUpdateCourse();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete course?')) return;
+    await updater.mutateAsync({ id, status: -2 });
+  };
 
   const open = (type: 'course' | 'description' | 'assign-modules', data?: any) => setModal({ type, data });
   const close = () => setModal({ type: null });

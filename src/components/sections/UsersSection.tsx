@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import { useUsers, useDeleteUser } from '../../hooks/useUsers';
+import { useUsers, useUpdateUser } from '../../hooks/useUsers';
 import type { FilterParams, ListState } from '../../types/api';
 import { UserModal } from '../../components/modals';
 import { STATUS_OPTIONS } from '../../constants/status';
@@ -36,9 +36,10 @@ const UsersSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteUser();
+  const updater = useUpdateUser();
   const handleDelete = async (id: number) => {
-    if (window.confirm('Delete user?')) await del.mutateAsync(id);
+    if (!window.confirm('Delete user?')) return;
+    await updater.mutateAsync({ id, status: -2 });
   };
 
   const openModal = (data?: any) => setModal({ type: 'user', data });

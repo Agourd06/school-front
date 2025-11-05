@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
-import { useLevels, useDeleteLevel } from '../../hooks/useLevels';
+import { useLevels, useUpdateLevel } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { LevelModal } from '../modals';
@@ -46,9 +46,10 @@ const LevelsSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteLevel();
+  const updater = useUpdateLevel();
   const handleDelete = async (id: number) => {
-    if (window.confirm('Delete level?')) await del.mutateAsync(id);
+    if (!window.confirm('Delete level?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
   };
 
   const open = (data?: any) => setModal({ type: 'level', data });
@@ -81,7 +82,35 @@ const LevelsSection: React.FC = () => {
 
   return (
     <>
-  
+
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Filter by Program</label>
+          <select
+            value={programFilter}
+            onChange={(e) => handleProgramFilter(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="">All programs</option>
+            {programs.map(program => (
+              <option key={program.id} value={program.id}>{program.title}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Filter by Specialization</label>
+          <select
+            value={specializationFilter}
+            onChange={(e) => handleSpecializationFilter(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="">All specializations</option>
+            {specializations.map(spec => (
+              <option key={spec.id} value={spec.id}>{spec.title}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <DataTableGeneric
         title="Levels"

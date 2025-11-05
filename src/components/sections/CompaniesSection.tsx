@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
-import { useCompanies, useDeleteCompany } from '../../hooks/useCompanies';
+import { useCompanies, useUpdateCompany } from '../../hooks/useCompanies';
 import { CompanyModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
@@ -37,9 +37,10 @@ const CompaniesSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteCompany();
+  const updater = useUpdateCompany();
   const handleDelete = async (id: number) => {
-    if (window.confirm('Delete company?')) await del.mutateAsync(id);
+    if (!window.confirm('Delete company?')) return;
+    await updater.mutateAsync({ id, status: -2 });
   };
 
   const open = (data?: any) => setModal({ type: 'company', data });

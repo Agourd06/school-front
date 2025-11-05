@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { ListState } from '../../types/api';
 import type { GetAllStudentLinkTypeParams } from '../../api/studentLinkType';
-import { useStudentLinkTypes, useDeleteStudentLinkType } from '../../hooks/useStudentLinkTypes';
+import { useStudentLinkTypes, useUpdateStudentLinkType } from '../../hooks/useStudentLinkTypes';
 import { StudentLinkTypeModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
@@ -37,8 +37,11 @@ const StudentLinkTypesSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteStudentLinkType();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete type?')) await del.mutateAsync(id); };
+  const updater = useUpdateStudentLinkType();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete type?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
+  };
 
   const open = (data?: any) => setModal({ type: 'slt', data });
   const close = () => setModal({ type: null });

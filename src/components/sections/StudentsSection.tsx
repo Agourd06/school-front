@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import { useStudents, useDeleteStudent } from '../../hooks/useStudents';
+import { useStudents, useUpdateStudent } from '../../hooks/useStudents';
 import type { ListState } from '../../types/api';
 import type { GetAllStudentsParams } from '../../api/students';
 import { StudentModal } from '../../components/modals';
@@ -26,8 +26,11 @@ const StudentsSection: React.FC = () => {
     if (response) setState(prev => ({ ...prev, data: response.data, loading: isLoading, error: (error as any)?.message || null, pagination: response.meta }));
   }, [response, isLoading, error]);
 
-  const del = useDeleteStudent();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete student?')) await del.mutateAsync(id); };
+  const updater = useUpdateStudent();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete student?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
+  };
 
   const open = (data?: any) => setModal({ type: 'student', data });
   const close = () => setModal({ type: null });

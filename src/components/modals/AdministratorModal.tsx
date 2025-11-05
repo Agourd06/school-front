@@ -3,6 +3,7 @@ import BaseModal from './BaseModal';
 import { useCreateAdministrator, useUpdateAdministrator } from '../../hooks/useAdministrators';
 import { useClassRooms } from '../../hooks/useClassRooms';
 import { validateRequired } from './validations';
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
 
 interface AdministratorModalProps {
   isOpen: boolean;
@@ -64,7 +65,14 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: (name === 'company_id' || name === 'class_room_id') ? (value ? Number(value) : '') : value }));
+    setForm(prev => ({
+      ...prev,
+      [name]: (name === 'company_id' || name === 'class_room_id')
+        ? (value ? Number(value) : '')
+        : name === 'status'
+          ? Number(value)
+          : value,
+    }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
@@ -193,11 +201,9 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
           <div>
             <label className="block text-sm font-medium text-gray-700">Status</label>
             <select name="status" value={form.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-              <option value={-2}>Deleted </option>
-              <option value={-1}>Archived </option>
-              <option value={0}>Disabled </option>
-              <option value={1}>Active </option>
-              <option value={2}>Pending </option>
+              {STATUS_OPTIONS_FORM.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
           <div>

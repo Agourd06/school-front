@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import { useClassRooms, useDeleteClassRoom } from '../../hooks/useClassRooms';
+import { useClassRooms, useUpdateClassRoom } from '../../hooks/useClassRooms';
 import type { ListState } from '../../types/api';
 import type { GetAllClassRoomsParams } from '../../api/classRoom';
 import { ClassRoomModal } from '../../components/modals';
@@ -24,8 +24,11 @@ const ClassRoomsSection: React.FC = () => {
   const { data: response, isLoading, error } = useClassRooms(params);
   React.useEffect(() => { if (response) setState(prev => ({ ...prev, data: response.data, loading: isLoading, error: (error as any)?.message || null, pagination: response.meta })); }, [response, isLoading, error]);
 
-  const del = useDeleteClassRoom();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete class room?')) await del.mutateAsync(id); };
+  const updater = useUpdateClassRoom();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete class room?')) return;
+    await updater.mutateAsync({ id, status: -2 });
+  };
 
   const open = (data?: any) => setModal({ type: 'classRoom', data });
   const close = () => setModal({ type: null });

@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { ListState } from '../../types/api';
 import type { GetAllStudentContactParams } from '../../api/studentContact';
-import { useStudentContacts, useDeleteStudentContact } from '../../hooks/useStudentContacts';
+import { useStudentContacts, useUpdateStudentContact } from '../../hooks/useStudentContacts';
 import { StudentContactModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
@@ -35,8 +35,11 @@ const StudentContactsSection: React.FC = () => {
     }
   }, [response, isLoading, error]);
 
-  const del = useDeleteStudentContact();
-  const handleDelete = async (id: number) => { if (window.confirm('Delete contact?')) await del.mutateAsync(id); };
+  const updater = useUpdateStudentContact();
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Delete contact?')) return;
+    await updater.mutateAsync({ id, data: { status: -2 } });
+  };
 
   const open = (data?: any) => setModal({ type: 'sc', data });
   const close = () => setModal({ type: null });
