@@ -15,6 +15,8 @@ interface Module {
   coefficient?: number;
   status: number;
   company_id?: number;
+  tri?: number;
+  assignment_created_at?: string;
 }
 
 export interface Course {
@@ -29,6 +31,8 @@ export interface Course {
   updated_at?: string;
   company?: Company;
   modules?: Module[];
+  tri?: number;
+  assignment_created_at?: string;
 }
 
 export interface CreateCourseRequest {
@@ -47,6 +51,7 @@ export interface UpdateCourseRequest {
   coefficient?: number;
   status?: number;
   company_id?: number;
+  module_ids?: number[];
 }
 
 const fetchCourses = async (params: FilterParams = {}): Promise<PaginatedResponse<Course>> => {

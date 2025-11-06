@@ -3,7 +3,7 @@ import DataTableGeneric from '../../components/DataTableGeneric';
 import { useStudents, useUpdateStudent } from '../../hooks/useStudents';
 import type { ListState } from '../../types/api';
 import type { GetAllStudentsParams } from '../../api/students';
-import { StudentModal, DeleteModal } from '../../components/modals';
+import { StudentModal, StudentOnboardingModal, DeleteModal } from '../../components/modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -14,6 +14,7 @@ const StudentsSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'student' | null; data?: any }>({ type: null });
+  const [onboardingOpen, setOnboardingOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: GetAllStudentsParams = {
@@ -65,7 +66,7 @@ const StudentsSection: React.FC = () => {
       <DataTableGeneric
         title="Students"
         state={state}
-        onAdd={() => open(null)}
+        onAdd={() => setOnboardingOpen(true)}
         onEdit={(item) => open(item)}
         onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
@@ -94,6 +95,13 @@ const StudentsSection: React.FC = () => {
 
       {modal.type === 'student' && (
         <StudentModal isOpen onClose={close} student={modal.data} />
+      )}
+
+      {onboardingOpen && (
+        <StudentOnboardingModal
+          isOpen
+          onClose={() => setOnboardingOpen(false)}
+        />
       )}
 
       <DeleteModal

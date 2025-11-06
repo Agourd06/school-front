@@ -3,15 +3,15 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import BaseModal from './BaseModal';
 import { useCourseAssignments } from '../../hooks/useCourseAssignments';
 import { useAddCourseToModule, useRemoveCourseFromModule } from '../../hooks/useIndividualAssignments';
+import type { Course as CourseEntity } from '../../api/course';
 
 // Import DropResult type separately
 import type { DropResult } from '@hello-pangea/dnd';
 
-interface Course {
-  id: number;
-  title: string;
-}
-
+type AssignmentCourse = CourseEntity & {
+  tri?: number;
+  assignment_created_at?: string;
+};
 
 interface CourseAssignmentModalProps {
   isOpen: boolean;
@@ -26,8 +26,8 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   moduleId,
   moduleTitle
 }) => {
-  const [assignedCourses, setAssignedCourses] = useState<Course[]>([]);
-  const [unassignedCourses, setUnassignedCourses] = useState<Course[]>([]);
+  const [assignedCourses, setAssignedCourses] = useState<AssignmentCourse[]>([]);
+  const [unassignedCourses, setUnassignedCourses] = useState<AssignmentCourse[]>([]);
   const [isMutationLoading, setIsMutationLoading] = useState(false);
 
   // React Query hooks
@@ -36,12 +36,37 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   const removeCourseFromModule = useRemoveCourseFromModule();
 
   // Initialize local state when data changes
+  const normalizeAssigned = (items: AssignmentCourse[] = []) =>
+    items
+      .slice()
+      .sort((a, b) => (a.tri ?? Number.MAX_SAFE_INTEGER) - (b.tri ?? Number.MAX_SAFE_INTEGER))
+      .map((item, index) => ({ ...item, tri: index }));
+
   useEffect(() => {
     if (courseAssignments) {
-      setAssignedCourses(courseAssignments.assigned || []);
+      setAssignedCourses(normalizeAssigned(courseAssignments.assigned || []));
       setUnassignedCourses(courseAssignments.unassigned || []);
     }
   }, [courseAssignments]);
+
+  const formatTimestamp = (value?: string) => {
+    if (!value) return '—';
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(value));
+    } catch (e) {
+      return value;
+    }
+  };
+
+  const updateAssignedState = (updater: (current: AssignmentCourse[]) => AssignmentCourse[]) => {
+    setAssignedCourses(prev => normalizeAssigned(updater(prev)));
+  };
 
 
   // Handle drag end
@@ -69,12 +94,32 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
     // Optimistically update the UI first
     if (source.droppableId === 'assigned' && destination.droppableId === 'unassigned') {
       // Moving from assigned to unassigned
-      setAssignedCourses(prev => prev.filter(c => c.id !== courseId));
+      updateAssignedState(prev => prev.filter(c => c.id !== courseId));
       setUnassignedCourses(prev => [...prev, course]);
     } else if (source.droppableId === 'unassigned' && destination.droppableId === 'assigned') {
       // Moving from unassigned to assigned
       setUnassignedCourses(prev => prev.filter(c => c.id !== courseId));
-      setAssignedCourses(prev => [...prev, course]);
+      updateAssignedState(prev => [...prev, { ...course, assignment_created_at: new Date().toISOString() }]);
+    } else if (source.droppableId === 'assigned' && destination.droppableId === 'assigned') {
+      updateAssignedState(prev => {
+        const next = prev.slice();
+        const [moved] = next.splice(source.index, 1);
+        if (moved) {
+          next.splice(destination.index, 0, moved);
+        }
+        return next;
+      });
+      return;
+    } else if (source.droppableId === 'unassigned' && destination.droppableId === 'unassigned') {
+      setUnassignedCourses(prev => {
+        const next = prev.slice();
+        const [moved] = next.splice(source.index, 1);
+        if (moved) {
+          next.splice(destination.index, 0, moved);
+        }
+        return next;
+      });
+      return;
     }
 
     // Immediately call the API using individual endpoints
@@ -96,11 +141,11 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
     } catch (error) {
       // Rollback UI changes on error
       if (source.droppableId === 'assigned' && destination.droppableId === 'unassigned') {
-        setAssignedCourses(prev => [...prev, course]);
+        updateAssignedState(prev => [...prev, course]);
         setUnassignedCourses(prev => prev.filter(c => c.id !== courseId));
       } else if (source.droppableId === 'unassigned' && destination.droppableId === 'assigned') {
         setUnassignedCourses(prev => [...prev, course]);
-        setAssignedCourses(prev => prev.filter(c => c.id !== courseId));
+        updateAssignedState(prev => prev.filter(c => c.id !== courseId));
       }
       console.error('Failed to update course assignment:', error);
     } finally {
@@ -228,11 +273,17 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                                   snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
                                 }`}
                               >
-                                <div className="flex items-center">
-                                  <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                  </svg>
-                                  <span className="text-sm font-medium text-gray-900">{course.title}</span>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center">
+                                    <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">{course.title}</p>
+                                      <p className="text-xs text-gray-500">Added: {formatTimestamp(course.assignment_created_at)}</p>
+                                    </div>
+                                  </div>
+                                  <span className="ml-3 text-xs font-semibold text-gray-500">#{(course.tri ?? index) + 1}</span>
                                 </div>
                               </div>
                             )}

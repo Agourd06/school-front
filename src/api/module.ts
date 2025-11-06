@@ -16,6 +16,8 @@ interface Course {
   coefficient?: number;
   status: number;
   company_id?: number;
+  tri?: number;
+  assignment_created_at?: string;
 }
 
 export interface Module {
@@ -30,6 +32,8 @@ export interface Module {
   updated_at?: string;
   company?: Company;
   courses?: Course[];
+  tri?: number;
+  assignment_created_at?: string;
 }
 
 export interface CreateModuleRequest {
@@ -48,6 +52,7 @@ export interface UpdateModuleRequest {
   coefficient?: number;
   status?: number;
   company_id?: number;
+  course_ids?: number[];
 }
 
 export const moduleApi = {
