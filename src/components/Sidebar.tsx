@@ -8,6 +8,7 @@ interface SidebarProps {
     | "specializations"
     | "levels"
     | "classes"
+    | "classStudents"
     | "courses"
     | "modules"
     | "schoolYears"
@@ -27,6 +28,7 @@ interface SidebarProps {
       | "specializations"
       | "levels"
       | "classes"
+      | "classStudents"
       | "courses"
       | "modules"
       | "schoolYears"
@@ -256,6 +258,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 11h16M4 16h10" />
                     </svg>
                     Classes
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => onTabChange("classStudents")}
+                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                    activeTab === "classStudents"
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-4-4h-1m0 6H7m10 0v-2a4 4 0 00-4-4m-6 6H2v-2a4 4 0 014-4h1m0 6v-2a4 4 0 014-4m0 0a4 4 0 100-8 4 4 0 000 8zm6 0a4 4 0 100-8 4 4 0 000 8z" />
+                    </svg>
+                    Class Assignments
                   </div>
                 </button>
 

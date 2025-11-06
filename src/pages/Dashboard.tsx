@@ -14,6 +14,7 @@ export type DashboardTab =
   | 'schoolYearPeriods'
   | 'classRooms'
   | 'students'
+  | 'classStudents'
   | 'teachers'
   | 'administrators'
   | 'studentLinkTypes'
@@ -32,6 +33,7 @@ const SchoolYearsSection = React.lazy(() => import('../components/sections/Schoo
 const SchoolYearPeriodsSection = React.lazy(() => import('../components/sections/SchoolYearPeriodsSection'));
 const ClassRoomsSection = React.lazy(() => import('../components/sections/ClassRoomsSection'));
 const StudentsSection = React.lazy(() => import('../components/sections/StudentsSection'));
+const ClassStudentsSection = React.lazy(() => import('../components/sections/ClassStudentsSection'));
 const TeachersSection = React.lazy(() => import('../components/sections/TeachersSection'));
 const AdministratorsSection = React.lazy(() => import('../components/sections/AdministratorsSection'));
 const StudentLinkTypesSection = React.lazy(() => import('../components/sections/StudentLinkTypesSection'));
@@ -51,6 +53,7 @@ const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC
   schoolYearPeriods: SchoolYearPeriodsSection,
   classRooms: ClassRoomsSection,
   students: StudentsSection,
+  classStudents: ClassStudentsSection,
   teachers: TeachersSection,
   administrators: AdministratorsSection,
   studentLinkTypes: StudentLinkTypesSection,
@@ -70,7 +73,6 @@ const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
       <div className="flex-1 ml-64">
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
             <Suspense fallback={<div className="rounded-md border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500">Loading section…</div>}>
               <SectionComponent />
             </Suspense>

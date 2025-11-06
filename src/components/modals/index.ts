@@ -20,4 +20,5 @@ export { default as SpecializationModal } from './SpecializationModal';
 export { default as LevelModal } from './LevelModal';
 export { default as ClassModal } from './ClassModal';
 export { default as AdministratorModal } from './AdministratorModal';
+export { default as ClassStudentModal } from './ClassStudentModal';
 

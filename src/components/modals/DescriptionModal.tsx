@@ -15,7 +15,8 @@ interface DescriptionModalProps {
     | 'student diplome'
     | 'student contact'
     | 'level'
-    | 'class';
+    | 'class'
+    | 'class assignment';
 }
 
 const DescriptionModal: React.FC<DescriptionModalProps> = ({
