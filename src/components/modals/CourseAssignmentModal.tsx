@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import BaseModal from './BaseModal';
 import { useCourseAssignments } from '../../hooks/useCourseAssignments';
-import { useAddCourseToModule, useRemoveCourseFromModule } from '../../hooks/useIndividualAssignments';
+import { useAddCourseToModule, useRemoveCourseFromModule, useReorderCourseInModule } from '../../hooks/useIndividualAssignments';
 import type { Course as CourseEntity } from '../../api/course';
 
 // Import DropResult type separately
@@ -29,11 +29,16 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   const [assignedCourses, setAssignedCourses] = useState<AssignmentCourse[]>([]);
   const [unassignedCourses, setUnassignedCourses] = useState<AssignmentCourse[]>([]);
   const [isMutationLoading, setIsMutationLoading] = useState(false);
+  const [loadingItemId, setLoadingItemId] = useState<number | null>(null);
 
   // React Query hooks
-  const { data: courseAssignments, isLoading, error } = useCourseAssignments(moduleId);
+  const { data: courseAssignments, isLoading, error, refetch: refetchAssignments } = useCourseAssignments(moduleId);
   const addCourseToModule = useAddCourseToModule();
   const removeCourseFromModule = useRemoveCourseFromModule();
+  const reorderCourseInModule = useReorderCourseInModule();
+
+  // Check if any mutation is pending
+  const isAnyMutationPending = addCourseToModule.isPending || removeCourseFromModule.isPending || reorderCourseInModule.isPending;
 
   // Initialize local state when data changes
   const normalizeAssigned = (items: AssignmentCourse[] = []) =>
@@ -101,6 +106,14 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       setUnassignedCourses(prev => prev.filter(c => c.id !== courseId));
       updateAssignedState(prev => [...prev, { ...course, assignment_created_at: new Date().toISOString() }]);
     } else if (source.droppableId === 'assigned' && destination.droppableId === 'assigned') {
+      // Reordering within assigned list - update tri values
+      // Only reorder if the relationship exists (course is already assigned)
+      const existingCourse = assignedCourses.find(c => c.id === courseId);
+      if (!existingCourse) {
+        console.warn('Cannot reorder: course not found in assigned list');
+        return;
+      }
+
       updateAssignedState(prev => {
         const next = prev.slice();
         const [moved] = next.splice(source.index, 1);
@@ -109,6 +122,33 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
         }
         return next;
       });
+      
+      // Call API to update tri value
+      try {
+        setIsMutationLoading(true);
+        setLoadingItemId(courseId);
+        await reorderCourseInModule.mutateAsync({
+          courseId: courseId, // The course being reordered
+          moduleId: moduleId,  // The module it belongs to
+          tri: destination.index,
+        });
+        // Wait a bit for cache invalidation to propagate, then refetch
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await refetchAssignments();
+      } catch (error: any) {
+        console.error('Failed to reorder course:', error);
+        // Rollback on error - reload from server
+        if (courseAssignments) {
+          setAssignedCourses(normalizeAssigned(courseAssignments.assigned || []));
+        }
+        // Show error message if it's a 404 (relationship not found)
+        if (error?.response?.status === 404) {
+          alert('Cannot reorder: Course-module relationship not found. Please refresh and try again.');
+        }
+      } finally {
+        setIsMutationLoading(false);
+        setLoadingItemId(null);
+      }
       return;
     } else if (source.droppableId === 'unassigned' && destination.droppableId === 'unassigned') {
       setUnassignedCourses(prev => {
@@ -125,6 +165,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
     // Immediately call the API using individual endpoints
     try {
       setIsMutationLoading(true);
+      setLoadingItemId(courseId);
       if (source.droppableId === 'assigned' && destination.droppableId === 'unassigned') {
         // Remove course from module
         await removeCourseFromModule.mutateAsync({
@@ -138,7 +179,10 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
           courseId
         });
       }
-    } catch (error) {
+      // Wait a bit for cache invalidation to propagate, then refetch
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await refetchAssignments();
+    } catch (error: any) {
       // Rollback UI changes on error
       if (source.droppableId === 'assigned' && destination.droppableId === 'unassigned') {
         updateAssignedState(prev => [...prev, course]);
@@ -148,8 +192,19 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
         updateAssignedState(prev => prev.filter(c => c.id !== courseId));
       }
       console.error('Failed to update course assignment:', error);
+      
+      // Show user-friendly error message
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to update assignment';
+      if (error?.response?.status === 404) {
+        alert('Relationship not found. Please refresh and try again.');
+      } else if (error?.response?.status === 409) {
+        alert('This course is already assigned to this module.');
+      } else {
+        alert(`Error: ${errorMessage}`);
+      }
     } finally {
       setIsMutationLoading(false);
+      setLoadingItemId(null);
     }
   };
 
@@ -206,34 +261,42 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                         snapshot.isDraggingOver
                           ? 'border-blue-400 bg-blue-50'
                           : 'border-gray-300 bg-gray-50'
-                      } ${isMutationLoading ? 'opacity-60 pointer-events-none' : ''}`}
+                      } ${isAnyMutationPending ? 'opacity-60 pointer-events-none' : ''}`}
                     >
                       {unassignedCourses.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
                           No available courses
                         </div>
                       ) : (
-                        unassignedCourses.map((course, index) => (
-                          <Draggable key={course.id} draggableId={course.id.toString()} index={index} isDragDisabled={isMutationLoading}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`mb-2 p-3 bg-white border border-gray-200 rounded-md shadow-sm cursor-move transition-shadow ${
-                                  snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
-                                }`}
-                              >
-                                <div className="flex items-center">
-                                  <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                  </svg>
-                                  <span className="text-sm font-medium text-gray-900">{course.title}</span>
+                        unassignedCourses.map((course, index) => {
+                          const isItemLoading = loadingItemId === course.id;
+                          return (
+                            <Draggable key={course.id} draggableId={course.id.toString()} index={index} isDragDisabled={isAnyMutationPending}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`mb-2 p-3 bg-white border border-gray-200 rounded-md shadow-sm cursor-move transition-shadow relative ${
+                                    snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                                  } ${isItemLoading ? 'opacity-50' : ''}`}
+                                >
+                                  {isItemLoading && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-md">
+                                      <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center">
+                                    <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                    <span className="text-sm font-medium text-gray-900">{course.title}</span>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))
+                              )}
+                            </Draggable>
+                          );
+                        })
                       )}
                       {provided.placeholder}
                     </div>
@@ -255,40 +318,48 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                         snapshot.isDraggingOver
                           ? 'border-green-400 bg-green-50'
                           : 'border-gray-300 bg-gray-50'
-                      } ${isMutationLoading ? 'opacity-60 pointer-events-none' : ''}`}
+                      } ${isAnyMutationPending ? 'opacity-60 pointer-events-none' : ''}`}
                     >
                       {assignedCourses.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
                           No assigned courses
                         </div>
                       ) : (
-                        assignedCourses.map((course, index) => (
-                          <Draggable key={course.id} draggableId={course.id.toString()} index={index} isDragDisabled={isMutationLoading}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                className={`mb-2 p-3 bg-white border border-gray-200 rounded-md shadow-sm cursor-move transition-shadow ${
-                                  snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                                    </svg>
-                                    <div>
-                                      <p className="text-sm font-medium text-gray-900">{course.title}</p>
-                                      <p className="text-xs text-gray-500">Added: {formatTimestamp(course.assignment_created_at)}</p>
+                        assignedCourses.map((course, index) => {
+                          const isItemLoading = loadingItemId === course.id;
+                          return (
+                            <Draggable key={course.id} draggableId={course.id.toString()} index={index} isDragDisabled={isAnyMutationPending}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`mb-2 p-3 bg-white border border-gray-200 rounded-md shadow-sm cursor-move transition-shadow relative ${
+                                    snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                                  } ${isItemLoading ? 'opacity-50' : ''}`}
+                                >
+                                  {isItemLoading && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-md z-10">
+                                      <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
                                     </div>
+                                  )}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                      </svg>
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">{course.title}</p>
+                                        <p className="text-xs text-gray-500">Added: {formatTimestamp(course.assignment_created_at)}</p>
+                                      </div>
+                                    </div>
+                                    <span className="ml-3 text-xs font-semibold text-gray-500">#{(course.tri ?? index) + 1}</span>
                                   </div>
-                                  <span className="ml-3 text-xs font-semibold text-gray-500">#{(course.tri ?? index) + 1}</span>
                                 </div>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))
+                              )}
+                            </Draggable>
+                          );
+                        })
                       )}
                       {provided.placeholder}
                     </div>

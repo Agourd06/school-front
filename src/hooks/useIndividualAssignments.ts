@@ -1,65 +1,51 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { moduleApi } from '../api/module';
-import { courseApi } from '../api/course';
+import { useMutation } from '@tanstack/react-query';
+import { useCreateModuleCourse, useDeleteModuleCourse, useUpdateModuleCourse } from './useModuleCourse';
 
-// Individual course assignment operations
-export const useAddCourseToModule = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ moduleId, courseId }: { moduleId: number; courseId: number }) =>
-      moduleApi.addCourseToModule(moduleId, courseId),
-    onSuccess: (_, variables) => {
-      // Invalidate course assignments for this module
-      queryClient.invalidateQueries({ queryKey: ['courseAssignments', variables.moduleId] });
-      // Also invalidate modules list to reflect changes
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-    },
-  });
-};
-
-export const useRemoveCourseFromModule = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ moduleId, courseId }: { moduleId: number; courseId: number }) =>
-      moduleApi.removeCourseFromModule(moduleId, courseId),
-    onSuccess: (_, variables) => {
-      // Invalidate course assignments for this module
-      queryClient.invalidateQueries({ queryKey: ['courseAssignments', variables.moduleId] });
-      // Also invalidate modules list to reflect changes
-      queryClient.invalidateQueries({ queryKey: ['modules'] });
-    },
-  });
-};
-
-// Individual module assignment operations
+// Wrapper hooks that match the expected interface from modals
 export const useAddModuleToCourse = () => {
-  const queryClient = useQueryClient();
+  const createMutation = useCreateModuleCourse();
   
   return useMutation({
     mutationFn: ({ courseId, moduleId }: { courseId: number; moduleId: number }) =>
-      courseApi.addModuleToCourse(courseId, moduleId),
-    onSuccess: (_, variables) => {
-      // Invalidate module assignments for this course
-      queryClient.invalidateQueries({ queryKey: ['moduleAssignments', variables.courseId] });
-      // Also invalidate courses list to reflect changes
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
-    },
+      createMutation.mutateAsync({ module_id: moduleId, course_id: courseId }),
   });
 };
 
 export const useRemoveModuleFromCourse = () => {
-  const queryClient = useQueryClient();
+  const deleteMutation = useDeleteModuleCourse();
   
   return useMutation({
     mutationFn: ({ courseId, moduleId }: { courseId: number; moduleId: number }) =>
-      courseApi.removeModuleFromCourse(courseId, moduleId),
-    onSuccess: (_, variables) => {
-      // Invalidate module assignments for this course
-      queryClient.invalidateQueries({ queryKey: ['moduleAssignments', variables.courseId] });
-      // Also invalidate courses list to reflect changes
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
-    },
+      deleteMutation.mutateAsync({ moduleId, courseId }),
   });
 };
+
+export const useAddCourseToModule = () => {
+  const createMutation = useCreateModuleCourse();
+  
+  return useMutation({
+    mutationFn: ({ moduleId, courseId }: { moduleId: number; courseId: number }) =>
+      createMutation.mutateAsync({ module_id: moduleId, course_id: courseId }),
+  });
+};
+
+export const useRemoveCourseFromModule = () => {
+  const deleteMutation = useDeleteModuleCourse();
+  
+  return useMutation({
+    mutationFn: ({ moduleId, courseId }: { moduleId: number; courseId: number }) =>
+      deleteMutation.mutateAsync({ moduleId, courseId }),
+  });
+};
+
+export const useReorderModuleInCourse = () => {
+  const updateMutation = useUpdateModuleCourse();
+  
+  return useMutation({
+    mutationFn: ({ courseId, moduleId, tri }: { courseId: number; moduleId: number; tri: number }) =>
+      updateMutation.mutateAsync({ moduleId, courseId, data: { tri } }),
+  });
+};
+
+// Alias for reordering course in module (same API endpoint, different perspective)
+export const useReorderCourseInModule = useReorderModuleInCourse;

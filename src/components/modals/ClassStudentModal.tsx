@@ -21,6 +21,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   assignment?: ClassStudentAssignment | null;
+  classId?: number | null;
 }
 
 type StudentLite = {
@@ -39,7 +40,7 @@ type AssignedStudent = {
   createdAt?: string;
 };
 
-const makeStudentLite = (fallbackId: number, student?: Partial<Student> | MinimalStudent | null): StudentLite => ({
+const makeStudentLite = (fallbackId: number, student?: Partial<Student> | MinimalStudent | StudentLite | null): StudentLite => ({
   id: student?.id ?? fallbackId,
   first_name: student?.first_name ?? null,
   last_name: student?.last_name ?? null,
@@ -56,7 +57,7 @@ const sortStudentsByLabel = (a: StudentLite, b: StudentLite) => getStudentLabel(
 
 const MAX_FETCH_LIMIT = 100;
 
-const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment }) => {
+const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, classId }) => {
   const [selectedClassId, setSelectedClassId] = useState<number | ''>('');
   const [assignedStudents, setAssignedStudents] = useState<AssignedStudent[]>([]);
   const [unassignedStudents, setUnassignedStudents] = useState<StudentLite[]>([]);
@@ -115,7 +116,9 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment }) => 
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedClassId(assignment?.class_id ?? '');
+      // Use classId prop if provided, otherwise use assignment's class_id
+      const initialClassId = classId ?? assignment?.class_id;
+      setSelectedClassId(initialClassId ?? '');
       setAssignedFilter('');
       setUnassignedFilter('');
       setAssignedSearch('');
@@ -125,7 +128,7 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment }) => 
       setAssignedStudents([]);
       setUnassignedStudents([]);
     }
-  }, [isOpen, assignment]);
+  }, [isOpen, assignment, classId]);
 
   useEffect(() => {
     if (!isOpen || !selectedClassId || !assignedQuery.data) {

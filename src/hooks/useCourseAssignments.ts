@@ -1,11 +1,62 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useCoursesForModule } from './useModuleCourse';
+import { courseApi } from '../api/course';
 import { moduleApi } from '../api/module';
+import type { Course } from '../api/course';
+
+// Transform ModuleCourse to the expected format
+const transformModuleCourseToCourse = (mc: any): Course & { tri?: number; assignment_created_at?: string } => ({
+  id: mc.course.id,
+  title: mc.course.title,
+  tri: mc.tri,
+  assignment_created_at: mc.created_at,
+  status: 1, // Default status
+  description: undefined,
+  volume: undefined,
+  coefficient: undefined,
+  company_id: undefined,
+});
 
 export const useCourseAssignments = (moduleId: number) => {
+  const coursesForModule = useCoursesForModule(moduleId, { limit: 100 });
+  const allCourses = useQuery({
+    queryKey: ['courses', { limit: 100 }],
+    queryFn: () => courseApi.getAll({ limit: 100 }),
+    staleTime: 0, // Always consider stale to ensure fresh data
+  });
+
   return useQuery({
     queryKey: ['courseAssignments', moduleId],
-    queryFn: () => moduleApi.getCourseAssignments(moduleId),
-    enabled: !!moduleId,
+    queryFn: async () => {
+      const assignedData = coursesForModule.data;
+      const allCoursesData = allCourses.data;
+
+      if (!assignedData || !allCoursesData) {
+        return { assigned: [], unassigned: [] };
+      }
+
+      // Transform assigned courses from ModuleCourse format
+      const assigned = (assignedData.data || []).map(transformModuleCourseToCourse);
+
+      // Find unassigned courses (those not in assigned list)
+      const assignedIds = new Set(assigned.map(c => c.id));
+      const unassigned = (allCoursesData.data || [])
+        .filter((c: Course) => !assignedIds.has(c.id) && c.status !== -2)
+        .map((c: Course) => ({
+          id: c.id,
+          title: c.title,
+          status: c.status,
+          description: c.description,
+          volume: c.volume,
+          coefficient: c.coefficient,
+          company_id: c.company_id,
+        }));
+
+      return { assigned, unassigned };
+    },
+    enabled: !!moduleId && coursesForModule.data !== undefined && allCourses.data !== undefined,
+    staleTime: 0, // Always consider stale to ensure fresh data after mutations
+    refetchOnMount: true, // Refetch when component mounts
   });
 };
 
