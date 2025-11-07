@@ -25,8 +25,6 @@ export interface MinimalCompany {
 
 export interface ClassStudentAssignment {
   id: number;
-  title: string;
-  description?: string | null;
   status: number;
   tri: number;
   class_id: number;
@@ -40,8 +38,6 @@ export interface ClassStudentAssignment {
 }
 
 export interface CreateClassStudentRequest {
-  title: string;
-  description?: string;
   class_id: number;
   student_id: number;
   company_id?: number;
@@ -128,7 +124,7 @@ export const classStudentApi = {
     if (body.tri === undefined || body.tri === null) body.tri = 1;
     if (body.tri < 1) body.tri = 1;
     if (body.status === undefined || body.status === null) body.status = 1;
-    if (!body.company_id) body.company_id = DEFAULT_COMPANY_ID;
+    if (body.company_id === undefined || body.company_id === null) body.company_id = DEFAULT_COMPANY_ID;
 
     const { data } = await api.post('/class-student', body);
     return data;

@@ -15,6 +15,7 @@ export type DashboardTab =
   | 'classRooms'
   | 'students'
   | 'classStudents'
+  | 'planning'
   | 'teachers'
   | 'administrators'
   | 'studentLinkTypes'
@@ -34,6 +35,7 @@ const SchoolYearPeriodsSection = React.lazy(() => import('../components/sections
 const ClassRoomsSection = React.lazy(() => import('../components/sections/ClassRoomsSection'));
 const StudentsSection = React.lazy(() => import('../components/sections/StudentsSection'));
 const ClassStudentsSection = React.lazy(() => import('../components/sections/ClassStudentsSection'));
+const PlanningSection = React.lazy(() => import('../components/sections/PlanningSection'));
 const TeachersSection = React.lazy(() => import('../components/sections/TeachersSection'));
 const AdministratorsSection = React.lazy(() => import('../components/sections/AdministratorsSection'));
 const StudentLinkTypesSection = React.lazy(() => import('../components/sections/StudentLinkTypesSection'));
@@ -54,6 +56,7 @@ const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC
   classRooms: ClassRoomsSection,
   students: StudentsSection,
   classStudents: ClassStudentsSection,
+  planning: PlanningSection,
   teachers: TeachersSection,
   administrators: AdministratorsSection,
   studentLinkTypes: StudentLinkTypesSection,

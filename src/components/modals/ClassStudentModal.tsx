@@ -1,16 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { useQuery } from '@tanstack/react-query';
 import BaseModal from './BaseModal';
 import { useClasses } from '../../hooks/useClasses';
 import { useStudents } from '../../hooks/useStudents';
-import { useCompanies } from '../../hooks/useCompanies';
 import {
   useCreateClassStudent,
-  useUpdateClassStudent,
+  useDeleteClassStudent,
 } from '../../hooks/useClassStudents';
-import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
-import type { ClassStudentAssignment } from '../../api/classStudent';
-import RichTextEditor from '../RichTextEditor';
+import {
+  classStudentApi,
+  type ClassStudentAssignment,
+  type MinimalStudent,
+} from '../../api/classStudent';
+import type { Student } from '../../api/students';
+import type { DropResult } from '@hello-pangea/dnd';
 
 interface Props {
   isOpen: boolean;
@@ -18,36 +23,54 @@ interface Props {
   assignment?: ClassStudentAssignment | null;
 }
 
-type FormState = {
-  title: string;
-  description: string;
-  class_id: number | '';
-  student_id: number | '';
-  company_id: number | '';
-  status: number;
-  tri: number | '';
+type StudentLite = {
+  id: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  status?: number | null;
 };
 
-const INITIAL_FORM: FormState = {
-  title: '',
-  description: '',
-  class_id: '',
-  student_id: '',
-  company_id: DEFAULT_COMPANY_ID,
-  status: 1,
-  tri: 1,
+type AssignedStudent = {
+  assignmentId: number;
+  student: StudentLite;
+  tri: number;
+  status: number;
+  createdAt?: string;
 };
+
+const makeStudentLite = (fallbackId: number, student?: Partial<Student> | MinimalStudent | null): StudentLite => ({
+  id: student?.id ?? fallbackId,
+  first_name: student?.first_name ?? null,
+  last_name: student?.last_name ?? null,
+  email: student?.email ?? null,
+  status: student?.status ?? null,
+});
+
+const getStudentLabel = (student: StudentLite) => {
+  const fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim();
+  return fullName || student.email || `Student #${student.id}`;
+};
+
+const sortStudentsByLabel = (a: StudentLite, b: StudentLite) => getStudentLabel(a).localeCompare(getStudentLabel(b));
+
+const MAX_FETCH_LIMIT = 100;
 
 const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment }) => {
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedClassId, setSelectedClassId] = useState<number | ''>('');
+  const [assignedStudents, setAssignedStudents] = useState<AssignedStudent[]>([]);
+  const [unassignedStudents, setUnassignedStudents] = useState<StudentLite[]>([]);
+  const [assignedFilter, setAssignedFilter] = useState<number | ''>('');
+  const [unassignedFilter, setUnassignedFilter] = useState<number | ''>('');
+  const [assignedSearch, setAssignedSearch] = useState('');
+  const [unassignedSearch, setUnassignedSearch] = useState('');
+  const [feedback, setFeedback] = useState<string | null>(null);
 
   const createMut = useCreateClassStudent();
-  const updateMut = useUpdateClassStudent();
+  const deleteMut = useDeleteClassStudent();
 
-  const { data: classesResp, isLoading: classesLoading } = useClasses({ page: 1, limit: 100 } as any);
-  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: 100 } as any);
-  const { data: companiesResp, isLoading: companiesLoading } = useCompanies({ page: 1, limit: 100 } as any);
+  const { data: classesResp, isLoading: classesLoading } = useClasses({ page: 1, limit: MAX_FETCH_LIMIT } as any);
+  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: MAX_FETCH_LIMIT } as any);
 
   const classOptions: SearchSelectOption[] = useMemo(
     () =>
@@ -60,242 +83,405 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment }) => 
     [classesResp]
   );
 
-  const studentOptions: SearchSelectOption[] = useMemo(
-    () =>
-      (((studentsResp as any)?.data) || [])
-        .filter((stu: any) => stu?.status !== -2)
-        .map((stu: any) => {
-          const fullName = `${stu.first_name ?? ''} ${stu.last_name ?? ''}`.trim();
-          return {
-            value: stu.id,
-            label: fullName || stu.email || `Student #${stu.id}`,
-          };
-        }),
-    [studentsResp]
-  );
+  const classLabelMap = useMemo(() => {
+    const map = new Map<number, string>();
+    classOptions.forEach((opt) => {
+      map.set(Number(opt.value), opt.label);
+    });
+    return map;
+  }, [classOptions]);
 
-  const companyOptions: SearchSelectOption[] = useMemo(
-    () =>
-      (((companiesResp as any)?.data) || [])
-        .filter((company: any) => company?.status !== -2)
-        .map((company: any) => ({
-          value: company.id,
-          label: company.title || company.name || `Company #${company.id}`,
-        })),
-    [companiesResp]
-  );
+  const selectedClassLabel = selectedClassId === '' ? null : classLabelMap.get(Number(selectedClassId));
 
-  const isEditing = !!assignment;
+  const studentsMap = useMemo(() => {
+    const map = new Map<number, StudentLite>();
+    (((studentsResp as any)?.data) || []).forEach((stu: Student) => {
+      map.set(stu.id, makeStudentLite(stu.id, stu));
+    });
+    return map;
+  }, [studentsResp]);
+
+  const assignedQuery = useQuery({
+    queryKey: ['classStudents', 'byClass', selectedClassId || 'none'],
+    queryFn: () => classStudentApi.getAll({ class_id: Number(selectedClassId), limit: MAX_FETCH_LIMIT }),
+    enabled: typeof selectedClassId === 'number' && selectedClassId > 0 && isOpen,
+  });
+
+  const allAssignmentsQuery = useQuery({
+    queryKey: ['classStudents', 'all'],
+    queryFn: () => classStudentApi.getAll({ page: 1, limit: MAX_FETCH_LIMIT }),
+    enabled: isOpen,
+  });
 
   useEffect(() => {
-    if (assignment) {
-      setForm({
-        title: assignment.title ?? '',
-        description: assignment.description ?? '',
-        class_id: assignment.class_id ?? '',
-        student_id: assignment.student_id ?? '',
-        company_id: assignment.company_id ?? DEFAULT_COMPANY_ID,
-        status: typeof assignment.status === 'number' ? assignment.status : 1,
-        tri: assignment.tri ?? 1,
-      });
+    if (isOpen) {
+      setSelectedClassId(assignment?.class_id ?? '');
+      setAssignedFilter('');
+      setUnassignedFilter('');
+      setAssignedSearch('');
+      setUnassignedSearch('');
+      setFeedback(null);
     } else {
-      setForm(INITIAL_FORM);
+      setAssignedStudents([]);
+      setUnassignedStudents([]);
     }
-    setErrors({});
-  }, [assignment, isOpen]);
+  }, [isOpen, assignment]);
 
-  const validate = () => {
-    const nextErrors: Record<string, string> = {};
-    if (!form.title.trim()) nextErrors.title = 'Title is required';
-    if (form.class_id === '' || Number(form.class_id) <= 0) nextErrors.class_id = 'Class is required';
-    if (form.student_id === '' || Number(form.student_id) <= 0) nextErrors.student_id = 'Student is required';
-    if (form.tri === '' || Number(form.tri) < 1) nextErrors.tri = 'Tri must be at least 1';
-    return nextErrors;
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === 'status' ? Number(value) : name === 'tri' ? (value === '' ? '' : Number(value)) : value,
-    }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
-  };
-
-  const handleSelectChange = (name: keyof FormState) => (val: number | '' | string) => {
-    setForm((prev) => ({
-      ...prev,
-      [name]: val === '' ? '' : Number(val),
-    }));
-    if (errors[name as string]) setErrors((prev) => ({ ...prev, [name as string]: '' }));
-  };
-
-  const handleDescriptionChange = (content: string) => {
-    setForm((prev) => ({
-      ...prev,
-      description: content,
-    }));
-    if (errors.description) setErrors((prev) => ({ ...prev, description: '' }));
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length) {
-      setErrors(validationErrors);
+  useEffect(() => {
+    if (!isOpen || !selectedClassId || !assignedQuery.data) {
+      if (!selectedClassId) {
+        setAssignedStudents([]);
+      }
       return;
     }
 
-    const basePayload = {
-      title: form.title.trim(),
-      description: form.description.trim() || undefined,
-      class_id: Number(form.class_id),
-      student_id: Number(form.student_id),
-      company_id: form.company_id === '' ? undefined : Number(form.company_id),
-      status: form.status,
-      tri: form.tri === '' ? 1 : Number(form.tri),
-    };
+    const assignments = assignedQuery.data?.data || [];
+    const next = assignments
+      .filter((item) => item.status !== -2 && item.student_id)
+      .map((item) => {
+        const fallback = studentsMap.get(item.student_id);
+        return {
+          assignmentId: item.id,
+          student: makeStudentLite(item.student_id, item.student ?? fallback ?? { id: item.student_id }),
+          tri: item.tri ?? 1,
+          status: item.status,
+          createdAt: item.created_at,
+        } as AssignedStudent;
+      })
+      .sort((a, b) => (a.tri ?? 0) - (b.tri ?? 0));
+
+    setAssignedStudents(next);
+  }, [assignedQuery.data, selectedClassId, studentsMap, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const assignments = allAssignmentsQuery.data?.data || [];
+    const assignedIds = new Set<number>();
+    assignments.forEach((item) => {
+      if (item.status !== -2 && item.student_id) {
+        assignedIds.add(item.student_id);
+      }
+    });
+
+    const students = (((studentsResp as any)?.data) || [])
+      .filter((stu: Student) => stu?.status !== -2)
+      .filter((stu: Student) => !assignedIds.has(stu.id))
+      .map((stu: Student) => makeStudentLite(stu.id, stu))
+      .sort(sortStudentsByLabel);
+
+    setUnassignedStudents(students);
+  }, [allAssignmentsQuery.data, studentsResp, isOpen]);
+
+  const assignedFilterOptions: SearchSelectOption[] = useMemo(
+    () =>
+      assignedStudents.map((item) => ({
+        value: item.student.id,
+        label: getStudentLabel(item.student),
+      })),
+    [assignedStudents]
+  );
+
+  const unassignedFilterOptions: SearchSelectOption[] = useMemo(
+    () =>
+      unassignedStudents.map((item) => ({
+        value: item.id,
+        label: getStudentLabel(item),
+      })),
+    [unassignedStudents]
+  );
+
+  const assignedSearchLower = assignedSearch.trim().toLowerCase();
+  const unassignedSearchLower = unassignedSearch.trim().toLowerCase();
+
+  const filteredAssigned = useMemo(() => {
+    return assignedStudents.filter((item) => {
+      if (assignedFilter !== '' && item.student.id !== Number(assignedFilter)) return false;
+      if (!assignedSearchLower) return true;
+      return getStudentLabel(item.student).toLowerCase().includes(assignedSearchLower);
+    });
+  }, [assignedStudents, assignedFilter, assignedSearchLower]);
+
+  const filteredUnassigned = useMemo(() => {
+    return unassignedStudents.filter((item) => {
+      if (unassignedFilter !== '' && item.id !== Number(unassignedFilter)) return false;
+      if (!unassignedSearchLower) return true;
+      return getStudentLabel(item).toLowerCase().includes(unassignedSearchLower);
+    });
+  }, [unassignedStudents, unassignedFilter, unassignedSearchLower]);
+
+  const isMutationLoading = createMut.isPending || deleteMut.isPending;
+  const isAssignedLoading = assignedQuery.isLoading || assignedQuery.isFetching;
+  const isUnassignedLoading = studentsLoading || allAssignmentsQuery.isLoading;
+
+  const handleAssign = async (studentId: number) => {
+    if (!selectedClassId || typeof selectedClassId !== 'number') {
+      setFeedback('Select a class first to assign students.');
+      return;
+    }
+
+    const student = unassignedStudents.find((item) => item.id === studentId);
+    if (!student) return;
+    if (assignedStudents.some((item) => item.student.id === studentId)) return;
 
     try {
-      if (isEditing && assignment) {
-        const updatePayload: Record<string, any> = {
-          title: basePayload.title,
-          description: basePayload.description,
-          class_id: basePayload.class_id,
-          status: basePayload.status,
-          tri: basePayload.tri,
-          company_id: basePayload.company_id,
-        };
+      const response = await createMut.mutateAsync({
+        class_id: Number(selectedClassId),
+        student_id: studentId,
+        status: 1,
+        tri: assignedStudents.length + 1,
+      });
 
-        if (assignment.student_id !== basePayload.student_id) {
-          updatePayload.student_id = basePayload.student_id;
-        }
+      const assignedStudent: AssignedStudent = {
+        assignmentId: response.id,
+        student: makeStudentLite(studentId, response.student ?? student),
+        tri: response.tri ?? assignedStudents.length + 1,
+        status: response.status,
+        createdAt: response.created_at,
+      };
 
-        await updateMut.mutateAsync({ id: assignment.id, data: updatePayload });
-      } else {
-        await createMut.mutateAsync(basePayload);
-      }
-
-      onClose();
+      setAssignedStudents((prev) => [...prev, assignedStudent].sort((a, b) => a.tri - b.tri));
+      setUnassignedStudents((prev) => prev.filter((item) => item.id !== studentId));
+      setAssignedFilter('');
+      setAssignedSearch('');
+      setFeedback(null);
     } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || 'Failed to save assignment';
-      setErrors((prev) => ({ ...prev, form: message }));
+      const message = err?.response?.data?.message || err?.message || 'Failed to assign student';
+      setFeedback(message);
     }
   };
 
-  const isSubmitting = createMut.isPending || updateMut.isPending;
+  const handleUnassign = async (assignmentId: number) => {
+    const target = assignedStudents.find((item) => item.assignmentId === assignmentId);
+    if (!target) return;
+
+    try {
+      await deleteMut.mutateAsync(assignmentId);
+      setAssignedStudents((prev) => prev
+        .filter((item) => item.assignmentId !== assignmentId)
+        .map((item, index) => ({ ...item, tri: index + 1 }))
+      );
+      setUnassignedStudents((prev) => {
+        if (prev.some((item) => item.id === target.student.id)) return prev;
+        return [...prev, target.student].sort(sortStudentsByLabel);
+      });
+      setUnassignedFilter('');
+      setUnassignedSearch('');
+      setFeedback(null);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Failed to unassign student';
+      setFeedback(message);
+    }
+  };
+
+  const handleDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId) return;
+
+    const studentId = Number(draggableId);
+    if (!studentId) return;
+
+    if (source.droppableId === 'unassigned' && destination.droppableId === 'assigned') {
+      await handleAssign(studentId);
+    } else if (source.droppableId === 'assigned' && destination.droppableId === 'unassigned') {
+      const target = assignedStudents.find((item) => item.student.id === studentId);
+      if (target) {
+        await handleUnassign(target.assignmentId);
+      }
+    }
+  };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Assignment' : 'Add Assignment'}>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {errors.form && <div className="text-sm text-red-600">{errors.form}</div>}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              name="title"
-              value={form.title}
-              onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              name="status"
-              value={form.status}
-              onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-            >
-              {STATUS_OPTIONS_FORM.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Manage Class Students">
+      <div className="p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SearchSelect
             label="Class"
-            value={form.class_id}
-            onChange={handleSelectChange('class_id')}
+            value={selectedClassId}
+            onChange={(value) => {
+              if (value === '') {
+                setSelectedClassId('');
+                return;
+              }
+              setSelectedClassId(Number(value));
+            }}
             options={classOptions}
             placeholder="Select class"
+            isClearable
             isLoading={classesLoading}
-            error={errors.class_id}
           />
-
           <SearchSelect
-            label="Student"
-            value={form.student_id}
-            onChange={handleSelectChange('student_id')}
-            options={studentOptions}
-            placeholder="Select student"
-            isLoading={studentsLoading}
-            error={errors.student_id}
-            disabled={isEditing}
+            label="Assigned filter"
+            value={assignedFilter}
+            onChange={(value) => setAssignedFilter(value === '' ? '' : Number(value))}
+            options={assignedFilterOptions}
+            placeholder="Filter assigned"
+            isClearable
+            onSearchChange={setAssignedSearch}
+            noOptionsMessage={(query) => (query ? 'No assigned students match' : 'No assigned students')}
+          />
+          <SearchSelect
+            label="Unassigned filter"
+            value={unassignedFilter}
+            onChange={(value) => setUnassignedFilter(value === '' ? '' : Number(value))}
+            options={unassignedFilterOptions}
+            placeholder="Filter unassigned"
+            isClearable
+            onSearchChange={setUnassignedSearch}
+            noOptionsMessage={(query) => (query ? 'No students match' : 'No unassigned students')}
           />
         </div>
-        {isEditing && (
-          <p className="text-xs text-gray-500">Student cannot be changed when editing an assignment.</p>
+
+        {feedback && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">{feedback}</div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <SearchSelect
-            label="Company"
-            value={form.company_id ?? ''}
-            onChange={handleSelectChange('company_id')}
-            options={companyOptions}
-            placeholder="Select company"
-            isLoading={companiesLoading}
-            isClearable
-          />
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Tri</label>
-            <input
-              type="number"
-              name="tri"
-              value={form.tri === '' ? '' : form.tri}
-              onChange={handleInputChange}
-              min={1}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-            />
-            {errors.tri && <p className="text-sm text-red-600">{errors.tri}</p>}
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Assigned Students</h3>
+                  <p className="text-sm text-gray-500">
+                    {selectedClassLabel ? `Class: ${selectedClassLabel}` : 'Select a class to view assignments'}
+                  </p>
+                </div>
+                <span className="text-sm text-gray-500">{filteredAssigned.length}</span>
+              </div>
+              <Droppable droppableId="assigned" isDropDisabled={!selectedClassId || isMutationLoading}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`min-h-[320px] p-4 border-2 border-dashed rounded-lg transition-colors ${
+                      snapshot.isDraggingOver
+                        ? 'border-blue-400 bg-blue-50'
+                        : 'border-gray-300 bg-gray-50'
+                    } ${(isAssignedLoading || !selectedClassId) ? 'opacity-70' : ''}`}
+                  >
+                    {!selectedClassId ? (
+                      <div className="text-center text-gray-500 py-12">Select a class to manage assignments.</div>
+                    ) : isAssignedLoading ? (
+                      <div className="text-center text-gray-500 py-12">Loading assigned students...</div>
+                    ) : filteredAssigned.length === 0 ? (
+                      <div className="text-center text-gray-500 py-12">No students assigned.</div>
+                    ) : (
+                      filteredAssigned.map((item, index) => (
+                        <Draggable
+                          key={`assigned-${item.student.id}`}
+                          draggableId={item.student.id.toString()}
+                          index={index}
+                          isDragDisabled={isMutationLoading}
+                        >
+                          {(dragProvided, dragSnapshot) => (
+                            <div
+                              ref={dragProvided.innerRef}
+                              {...dragProvided.draggableProps}
+                              {...dragProvided.dragHandleProps}
+                              className={`mb-3 p-3 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-between ${
+                                dragSnapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                              }`}
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{getStudentLabel(item.student)}</p>
+                                {item.student.email && (
+                                  <p className="text-xs text-gray-500">{item.student.email}</p>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleUnassign(item.assignmentId)}
+                                className="text-sm text-red-600 hover:text-red-800"
+                                disabled={isMutationLoading}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))
+                    )}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Unassigned Students</h3>
+                  <p className="text-sm text-gray-500">Students not assigned to any class.</p>
+                </div>
+                <span className="text-sm text-gray-500">{filteredUnassigned.length}</span>
+              </div>
+              <Droppable droppableId="unassigned" isDropDisabled={isMutationLoading}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`min-h-[320px] p-4 border-2 border-dashed rounded-lg transition-colors ${
+                      snapshot.isDraggingOver
+                        ? 'border-green-400 bg-green-50'
+                        : 'border-gray-300 bg-gray-50'
+                    } ${isUnassignedLoading ? 'opacity-70' : ''}`}
+                  >
+                    {isUnassignedLoading ? (
+                      <div className="text-center text-gray-500 py-12">Loading students...</div>
+                    ) : filteredUnassigned.length === 0 ? (
+                      <div className="text-center text-gray-500 py-12">No available students.</div>
+                    ) : (
+                      filteredUnassigned.map((item, index) => (
+                        <Draggable
+                          key={`unassigned-${item.id}`}
+                          draggableId={item.id.toString()}
+                          index={index}
+                          isDragDisabled={isMutationLoading || !selectedClassId}
+                        >
+                          {(dragProvided, dragSnapshot) => (
+                            <div
+                              ref={dragProvided.innerRef}
+                              {...dragProvided.draggableProps}
+                              {...dragProvided.dragHandleProps}
+                              className={`mb-3 p-3 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-between ${
+                                dragSnapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                              }`}
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{getStudentLabel(item)}</p>
+                                {item.email && <p className="text-xs text-gray-500">{item.email}</p>}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleAssign(item.id)}
+                                className="text-sm text-blue-600 hover:text-blue-800"
+                                disabled={isMutationLoading || !selectedClassId}
+                              >
+                                Assign
+                              </button>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))
+                    )}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
           </div>
-        </div>
+        </DragDropContext>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <RichTextEditor
-            value={form.description}
-            onChange={handleDescriptionChange}
-            placeholder="Describe the assignment..."
-            rows={6}
-          />
-        </div>
-
-        <div className="flex justify-end space-x-3 pt-2">
+        <div className="flex justify-end pt-4 border-t border-gray-200">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-            disabled={isSubmitting}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+            Close
           </button>
         </div>
-      </form>
+      </div>
     </BaseModal>
   );
 };
