@@ -4,7 +4,7 @@ import { useCreateLevel, useUpdateLevel } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
-import RichTextEditor from '../RichTextEditor';
+import RichTextEditor from '../inputs/RichTextEditor';
 
 interface LevelModalProps {
   isOpen: boolean;

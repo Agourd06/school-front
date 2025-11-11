@@ -9,7 +9,6 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 const App: React.FC = () => {
   const { user, isLoading } = useAuth();
   
-  console.log('App render - user:', user, 'isLoading:', isLoading);
 
   if (isLoading) {
     return (

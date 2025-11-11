@@ -7,15 +7,16 @@ import { useLevels } from '../../hooks/useLevels';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
-import RichTextEditor from '../RichTextEditor';
+import RichTextEditor from '../inputs/RichTextEditor';
 
 interface ClassModalProps {
   isOpen: boolean;
   onClose: () => void;
   classItem?: any | null;
+  descriptionPosition?: 'top' | 'bottom';
 }
 
-const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem }) => {
+const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem, descriptionPosition = 'top' }) => {
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -146,6 +147,18 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem }) =
     }
   };
 
+  const descriptionEditor = (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+      <RichTextEditor
+        value={form.description}
+        onChange={(html) => setForm(prev => ({ ...prev, description: html }))}
+        placeholder="Describe the class..."
+        rows={10}
+      />
+    </div>
+  );
+
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Class' : 'Add Class'}>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,8 +181,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem }) =
               name="status"
               value={form.status}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            >
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
               {STATUS_OPTIONS_FORM.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
@@ -177,15 +189,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem }) =
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <RichTextEditor
-            value={form.description}
-            onChange={(html) => setForm(prev => ({ ...prev, description: html }))}
-            placeholder="Describe the class..."
-            rows={5}
-          />
-        </div>
+        {descriptionPosition === 'top' && descriptionEditor}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -268,6 +272,8 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem }) =
           </select>
           {errors.school_year_period_id && <p className="mt-1 text-sm text-red-600">{errors.school_year_period_id}</p>}
         </div>
+
+        {descriptionPosition === 'bottom' && descriptionEditor}
 
         <div className="flex justify-end space-x-3 pt-4">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">Cancel</button>

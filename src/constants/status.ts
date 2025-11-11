@@ -1,9 +1,9 @@
 export const STATUS_OPTIONS = [
-  { value: 0, label: 'Disabled ' },
-  { value: 1, label: 'Active ' },
-  { value: 2, label: 'Pending ' },
-  { value: -1, label: 'Archived ' },
-  { value: -2, label: 'Deleted ' },
+  { value: 0, label: 'Disabled' },
+  { value: 1, label: 'Active' },
+  { value: 2, label: 'Pending' },
+  { value: -1, label: 'Archived' },
+  { value: -2, label: 'Deleted' },
 ];
 
 export const STATUS_OPTIONS_FORM = STATUS_OPTIONS.filter(option => option.value !== -2);

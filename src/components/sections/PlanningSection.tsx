@@ -12,6 +12,7 @@ import { useClassRooms } from '../../hooks/useClassRooms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { useCompanies } from '../../hooks/useCompanies';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
+import { usePlanningSessionTypes, useCreatePlanningSessionType } from '../../hooks/usePlanningSessionTypes';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import PlanningWeekView from '../planning/PlanningWeekView';
 import {
@@ -19,6 +20,7 @@ import {
   DEFAULT_PLANNING_STATUS,
   type PlanningStatus,
 } from '../../constants/planning';
+import PlanningSessionTypeModal, { type PlanningSessionTypeFormValues } from '../modals/PlanningSessionTypeModal';
 
 interface PlanningFilters {
   status: PlanningStatus | '';
@@ -26,6 +28,7 @@ interface PlanningFilters {
   class_room_id: number | '';
   teacher_id: number | '';
   specialization_id: number | '';
+  planning_session_type_id: number | '';
 }
 
 interface PlanningState {
@@ -48,6 +51,7 @@ interface FormState {
   date_day: string;
   hour_start: string;
   hour_end: string;
+  planning_session_type_id: number | '';
   teacher_id: number | '';
   specialization_id: number | '';
   class_id: number | '';
@@ -75,12 +79,16 @@ interface FormSectionProps {
   roomOptions: SearchSelectOption[];
   companyOptions: SearchSelectOption[];
   periodOptions: SearchSelectOption[];
+  sessionTypeOptions: SearchSelectOption[];
   periodsLoading: boolean;
   teachersLoading: boolean;
   specsLoading: boolean;
   classesLoading: boolean;
   roomsLoading: boolean;
   companiesLoading: boolean;
+  sessionTypesLoading: boolean;
+  onOpenSessionTypeModal: () => void;
+  isCreatingSessionType: boolean;
 }
 
 const INITIAL_PAGINATION = {
@@ -104,11 +112,21 @@ const formatISODate = (date: Date) => date.toISOString().split('T')[0];
 
 const normalizeTimeFormat = (time: string) => time?.split(':').slice(0, 2).join(':') || '';
 
+const extractErrorMessage = (err: any): string => {
+  if (!err) return 'Unexpected error';
+  const dataMessage = err?.response?.data?.message;
+  if (Array.isArray(dataMessage)) return dataMessage.join(', ');
+  if (typeof dataMessage === 'string') return dataMessage;
+  if (typeof err.message === 'string') return err.message;
+  return 'Unexpected error';
+};
+
 const INITIAL_FORM = (weekStart: Date): FormState => ({
   period: '',
   date_day: formatISODate(weekStart),
   hour_start: '08:00',
   hour_end: '10:00',
+  planning_session_type_id: '',
   teacher_id: '',
   specialization_id: '',
   class_id: '',
@@ -136,12 +154,16 @@ const FormSection: React.FC<FormSectionProps> = ({
   roomOptions,
   companyOptions,
   periodOptions,
+  sessionTypeOptions,
   periodsLoading,
   teachersLoading,
   specsLoading,
   classesLoading,
   roomsLoading,
   companiesLoading,
+  sessionTypesLoading,
+  onOpenSessionTypeModal,
+  isCreatingSessionType,
 }) => {
   const statusOptions = PLANNING_STATUS_OPTIONS;
 
@@ -176,7 +198,28 @@ const FormSection: React.FC<FormSectionProps> = ({
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700">Session Type</label>
+              <button
+                type="button"
+                onClick={onOpenSessionTypeModal}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                disabled={isCreatingSessionType}
+              >
+                {isCreatingSessionType ? 'Creating…' : 'New type'}
+              </button>
+            </div>
+            <SearchSelect
+              value={form.planning_session_type_id}
+              onChange={handleSelectChange('planning_session_type_id')}
+              options={sessionTypeOptions}
+              placeholder="Select session type"
+              isLoading={sessionTypesLoading}
+              error={formErrors.planning_session_type_id}
+            />
+          </div>
           <SearchSelect
             label="Period"
             value={form.period}
@@ -339,7 +382,14 @@ const PlanningSection: React.FC = () => {
     loading: false,
     error: null,
     pagination: INITIAL_PAGINATION,
-    filters: { status: '', class_id: '', class_room_id: '', teacher_id: '', specialization_id: '' },
+    filters: {
+      status: '',
+      class_id: '',
+      class_room_id: '',
+      teacher_id: '',
+      specialization_id: '',
+      planning_session_type_id: '',
+    },
   });
   const [selectedEntry, setSelectedEntry] = useState<PlanningStudentEntry | null>(null);
   const [form, setForm] = useState<FormState>(() => INITIAL_FORM(currentWeekStart));
@@ -347,6 +397,8 @@ const PlanningSection: React.FC = () => {
   const [formAlert, setFormAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [conflictSlot, setConflictSlot] = useState<{ date_day: string; hour_start: string; hour_end: string } | null>(null);
   const [showForm, setShowForm] = useState(true);
+  const [showSessionTypeModal, setShowSessionTypeModal] = useState(false);
+  const [sessionTypeModalError, setSessionTypeModalError] = useState<string | null>(null);
 
   // 🧠 useMemo for stable query params
   const params = useMemo(() => {
@@ -361,6 +413,7 @@ const PlanningSection: React.FC = () => {
     if (f.class_room_id) p.class_room_id = +f.class_room_id;
     if (f.teacher_id) p.teacher_id = +f.teacher_id;
     if (f.specialization_id) p.specialization_id = +f.specialization_id;
+    if (f.planning_session_type_id) p.planning_session_type_id = +f.planning_session_type_id;
     return p;
   }, [state.filters, state.pagination.page, state.pagination.limit]);
 
@@ -399,6 +452,12 @@ const PlanningSection: React.FC = () => {
   const { data: specs, isLoading: specsLoading } = useSpecializations({ page: 1, limit: 100 } as any);
   const { data: companies, isLoading: companiesLoading } = useCompanies({ page: 1, limit: 100 } as any);
   const { data: periods, isLoading: periodsLoading } = useSchoolYearPeriods({ page: 1, limit: 100 } as any);
+  const {
+    data: sessionTypesResp,
+    isLoading: sessionTypesLoading,
+    refetch: refetchSessionTypes,
+  } = usePlanningSessionTypes({ page: 1, limit: 100, status: 'active' });
+  const createSessionTypeMut = useCreatePlanningSessionType();
 
   const mapOptions = (data: any[], labelKey: string): SearchSelectOption[] =>
     (data || [])
@@ -420,6 +479,28 @@ const PlanningSection: React.FC = () => {
   const specializationOptions = useMemo(() => mapOptions(specs?.data || [], 'title'), [specs]);
   const companyOptions = useMemo(() => mapOptions(companies?.data || [], 'title'), [companies]);
   const periodOptions = useMemo(() => mapOptions(periods?.data || [], 'title'), [periods]);
+  const sessionTypeOptions = useMemo(
+    () =>
+      (sessionTypesResp?.data || []).map((type) => ({
+        value: type.id,
+        label: type.type ? `${type.title} (${type.type})` : type.title || `Type #${type.id}`,
+      })),
+    [sessionTypesResp]
+  );
+  const periodLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    periodOptions.forEach((option) => {
+      map[String(option.value)] = option.label;
+    });
+    return map;
+  }, [periodOptions]);
+  const getPeriodLabel = useCallback(
+    (entry: PlanningStudentEntry) => {
+      const key = entry.period !== undefined && entry.period !== null ? String(entry.period) : '';
+      return periodLabelMap[key] ?? entry.period ?? '';
+    },
+    [periodLabelMap]
+  );
   const statusFilterOptions = useMemo(() => PLANNING_STATUS_OPTIONS.map((item) => ({ value: item.value, label: item.label })), []);
 
   // 🧭 Filter by current week
@@ -461,6 +542,7 @@ const PlanningSection: React.FC = () => {
       date_day: entry.date_day,
       hour_start: normalizeTimeFormat(entry.hour_start),
       hour_end: normalizeTimeFormat(entry.hour_end),
+      planning_session_type_id: entry.planning_session_type_id,
       teacher_id: entry.teacher_id ?? '',
       specialization_id: entry.specialization_id ?? '',
       class_id: entry.class_id ?? '',
@@ -482,6 +564,55 @@ const PlanningSection: React.FC = () => {
     });
   }, []);
 
+  const handleWeekDateSelect = useCallback((isoDate: string) => {
+    if (!isoDate) return;
+    const selected = new Date(isoDate);
+    if (Number.isNaN(selected.getTime())) return;
+    setCurrentWeekStart(getMonday(selected));
+  }, []);
+
+  const handleOpenSessionTypeModal = useCallback(() => {
+    setSessionTypeModalError(null);
+    setShowSessionTypeModal(true);
+  }, []);
+
+  const handleCloseSessionTypeModal = useCallback(() => {
+    setShowSessionTypeModal(false);
+    setSessionTypeModalError(null);
+  }, []);
+
+  const handleCreateSessionType = useCallback(
+    async (values: PlanningSessionTypeFormValues) => {
+      setSessionTypeModalError(null);
+      try {
+        const result = await createSessionTypeMut.mutateAsync({
+          ...values,
+          coefficient: values.coefficient ?? undefined,
+          company_id: values.company_id ?? null,
+        });
+        await refetchSessionTypes();
+        if (result.status === 'active') {
+          setForm((prev) => ({
+            ...prev,
+            planning_session_type_id: result.id,
+          }));
+          setFormErrors((prev) => ({ ...prev, planning_session_type_id: '' }));
+          setFormAlert({ type: 'success', message: 'Session type created and selected.' });
+        } else {
+          setFormAlert({
+            type: 'success',
+            message: 'Session type created. Activate it to use when scheduling sessions.',
+          });
+        }
+      } catch (err: any) {
+        const message = extractErrorMessage(err);
+        setSessionTypeModalError(message);
+        throw err;
+      }
+    },
+    [createSessionTypeMut, refetchSessionTypes]
+  );
+
   // 🧩 Mutations
   const createMut = useCreatePlanningStudent();
   const updateMut = useUpdatePlanningStudent();
@@ -490,6 +621,7 @@ const PlanningSection: React.FC = () => {
   const validateForm = () => {
     const e: Record<string, string> = {};
     if (!form.period) e.period = 'Period is required';
+    if (form.planning_session_type_id === '') e.planning_session_type_id = 'Session type is required';
     if (!form.date_day) e.date_day = 'Date is required';
     if (!form.hour_start) e.hour_start = 'Start time is required';
     if (!form.hour_end) e.hour_end = 'End time is required';
@@ -519,6 +651,7 @@ const PlanningSection: React.FC = () => {
       specialization_id: +form.specialization_id,
       class_id: +form.class_id,
       class_room_id: +form.class_room_id,
+      planning_session_type_id: +form.planning_session_type_id,
       company_id: form.company_id === '' ? undefined : +form.company_id,
       status: form.status,
     };
@@ -615,7 +748,7 @@ const PlanningSection: React.FC = () => {
 
       {/* Filters */}
       <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <SearchSelect
             label="Status"
             value={state.filters.status}
@@ -660,6 +793,15 @@ const PlanningSection: React.FC = () => {
             isClearable
             isLoading={specsLoading}
           />
+          <SearchSelect
+            label="Session Type"
+            value={state.filters.planning_session_type_id}
+            onChange={handleFilterChange('planning_session_type_id')}
+            options={sessionTypeOptions}
+            placeholder="All session types"
+            isClearable
+            isLoading={sessionTypesLoading}
+          />
         </div>
         {state.error && (
           <div className="mt-4 px-3 py-2 bg-red-50 border border-red-200 text-sm text-red-700 rounded-md">
@@ -690,12 +832,16 @@ const PlanningSection: React.FC = () => {
             roomOptions={roomOptions}
             companyOptions={companyOptions}
             periodOptions={periodOptions}
+            sessionTypeOptions={sessionTypeOptions}
             periodsLoading={periodsLoading}
             teachersLoading={teachersLoading}
             specsLoading={specsLoading}
             classesLoading={classesLoading}
             roomsLoading={roomsLoading}
             companiesLoading={companiesLoading}
+            sessionTypesLoading={sessionTypesLoading}
+            onOpenSessionTypeModal={handleOpenSessionTypeModal}
+            isCreatingSessionType={createSessionTypeMut.isPending}
           />
         )}
 
@@ -709,6 +855,8 @@ const PlanningSection: React.FC = () => {
             onNextWeek={() => handleWeekChange(7)}
             onToday={() => setCurrentWeekStart(getMonday(new Date()))}
             onSelectEntry={handleSelectEntry}
+            onSelectDate={handleWeekDateSelect}
+            getPeriodLabel={getPeriodLabel}
           />
           
           {/* Floating Action Button - Show when form is hidden */}
@@ -727,6 +875,15 @@ const PlanningSection: React.FC = () => {
           )}
         </div>
       </div>
+
+      <PlanningSessionTypeModal
+        isOpen={showSessionTypeModal}
+        onClose={handleCloseSessionTypeModal}
+        onSubmit={handleCreateSessionType}
+        isSubmitting={createSessionTypeMut.isPending}
+        companyOptions={companyOptions}
+        serverError={sessionTypeModalError}
+      />
     </div>
   );
 };

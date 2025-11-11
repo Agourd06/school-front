@@ -1,6 +1,7 @@
 import api from './axios';
 import type { PaginatedResponse, PaginationParams } from '../types/api';
 import type { PlanningStatus } from '../constants/planning';
+import type { PlanningSessionType } from './planningSessionType';
 
 export interface PlanningTeacher {
   id: number;
@@ -39,12 +40,14 @@ export interface PlanningStudentEntry {
   specialization_id: number;
   class_id: number;
   class_room_id: number;
+  planning_session_type_id: number;
   company_id?: number | null;
   teacher?: PlanningTeacher | null;
   specialization?: PlanningSpecialization | null;
   class?: PlanningClass | null;
   classRoom?: PlanningClassRoom | null;
   company?: PlanningCompany | null;
+  planningSessionType?: PlanningSessionType | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -55,6 +58,7 @@ export interface PlanningStudentPayload {
   specialization_id: number;
   class_id: number;
   class_room_id: number;
+  planning_session_type_id: number;
   date_day: string;
   hour_start: string;
   hour_end: string;
@@ -70,6 +74,7 @@ export interface GetPlanningStudentParams extends PaginationParams {
   class_room_id?: number;
   teacher_id?: number;
   specialization_id?: number;
+  planning_session_type_id?: number;
   order?: 'ASC' | 'DESC';
 }
 
@@ -118,6 +123,7 @@ const buildQueryString = (params: GetPlanningStudentParams = {}): string => {
   if (params.class_room_id) qp.append('class_room_id', String(params.class_room_id));
   if (params.teacher_id) qp.append('teacher_id', String(params.teacher_id));
   if (params.specialization_id) qp.append('specialization_id', String(params.specialization_id));
+  if (params.planning_session_type_id) qp.append('planning_session_type_id', String(params.planning_session_type_id));
   if (params.order) qp.append('order', params.order);
 
   const qs = qp.toString();
@@ -127,30 +133,29 @@ const buildQueryString = (params: GetPlanningStudentParams = {}): string => {
 export const planningStudentApi = {
   async getAll(params: GetPlanningStudentParams = {}): Promise<PaginatedResponse<PlanningStudentEntry>> {
     const qs = buildQueryString(params);
-    const { data } = await api.get(`/planning-student${qs}`);
+    const { data } = await api.get(`/students-plannings${qs}`);
     return toPaginated(data);
   },
 
   async getById(id: number): Promise<PlanningStudentEntry> {
-    const { data } = await api.get(`/planning-student/${id}`);
+    const { data } = await api.get(`/students-plannings/${id}`);
     return data;
   },
 
   async create(payload: PlanningStudentPayload): Promise<PlanningStudentEntry> {
-    const { data } = await api.post('/planning-student', payload);
+    const { data } = await api.post('/students-plannings', payload);
     return data;
   },
 
   async update(id: number, payload: UpdatePlanningStudentPayload): Promise<PlanningStudentEntry> {
-    const { data } = await api.patch(`/planning-student/${id}`, payload);
+    const { data } = await api.patch(`/students-plannings/${id}`, payload);
     return data;
   },
 
   async delete(id: number): Promise<void> {
-    await api.delete(`/planning-student/${id}`);
+    await api.delete(`/students-plannings/${id}`);
   },
 };
 
 export default planningStudentApi;
-
 

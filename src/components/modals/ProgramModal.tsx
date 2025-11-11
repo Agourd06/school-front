@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateProgram, useUpdateProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
-import RichTextEditor from '../RichTextEditor';
+import RichTextEditor from '../inputs/RichTextEditor';
 
 interface ProgramModalProps {
   isOpen: boolean;

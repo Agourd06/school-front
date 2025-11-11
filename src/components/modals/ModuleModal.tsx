@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useCreateModule, useUpdateModule } from "../../hooks/useModules";
 import BaseModal from "./BaseModal";
-import RichTextEditor from "../RichTextEditor";
+import RichTextEditor from "../inputs/RichTextEditor";
 import { STATUS_OPTIONS_FORM } from "../../constants/status";
 
 interface Module {

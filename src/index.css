@@ -33,3 +33,58 @@
   margin-bottom: 0.75rem !important;
   padding-left: 1.5rem !important;
 }
+
+.rt-content-card {
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  padding: 0.75rem;
+}
+
+.rt-content-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 0.35rem;
+}
+
+.rt-content-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.rt-content {
+  color: #1f2937;
+}
+
+.rt-content p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.rt-content ul,
+.rt-content ol {
+  margin-bottom: 0.75rem;
+  margin-left: 1.5rem;
+}
+
+.rt-content ul {
+  list-style-type: disc;
+}
+
+.rt-content ol {
+  list-style-type: decimal;
+}
+
+.rt-content li {
+  margin-bottom: 0.35rem;
+}
+
+.rt-content br {
+  content: '';
+  display: block;
+  margin-top: 0.35rem;
+}

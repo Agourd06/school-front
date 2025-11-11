@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
 import { useClasses, useUpdateClass } from '../../hooks/useClasses';
@@ -11,7 +11,8 @@ import { ClassModal, DeleteModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import SearchSelect from '../inputs/SearchSelect';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
-import { STATUS_OPTIONS } from '../../constants/status';
+import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import BaseModal from '../modals/BaseModal';
 
 const ClassesSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -23,6 +24,7 @@ const ClassesSection: React.FC = () => {
   });
   const [modal, setModal] = React.useState<{ type: 'class' | null; data?: any }>({ type: null });
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
+  const [descriptionModal, setDescriptionModal] = useState<{ title: string; content: string } | null>(null);
 
   const [programFilter, setProgramFilter] = React.useState<number | ''>('');
   const [specializationFilter, setSpecializationFilter] = React.useState<number | ''>('');
@@ -139,39 +141,85 @@ const ClassesSection: React.FC = () => {
     });
   }, []);
 
-  const handleProgramFilter = (value: string) => {
-    const numeric = value ? Number(value) : '';
-    setProgramFilter(numeric);
-    setSpecializationFilter('');
-    setLevelFilter('');
-    setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
+  const openDetailsModal = (cls: any) => {
+    const programTitle = cls.program?.title || programs.find((p) => p.id === cls.program_id)?.title || '—';
+    const specializationTitle =
+      cls.specialization?.title || specializations.find((s) => s.id === cls.specialization_id)?.title || '—';
+    const levelTitle = cls.level?.title || levels.find((l) => l.id === cls.level_id)?.title || '—';
+    const schoolYearTitle =
+      cls.schoolYear?.title || schoolYears.find((y) => y.id === cls.school_year_id)?.title || '—';
+    const periodTitle =
+      cls.schoolYearPeriod?.title || periods.find((p) => p.id === cls.school_year_period_id)?.title || '—';
+    const statusLabel = STATUS_VALUE_LABEL[Number(cls.status)] || String(cls.status ?? '—');
+
+    setDescriptionModal({
+      title: cls.title || `Class #${cls.id}`,
+      content: `
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="rt-content-card">
+              <p class="rt-content-label">Program</p>
+              <p class="rt-content-value">${programTitle}</p>
+            </div>
+            <div class="rt-content-card">
+              <p class="rt-content-label">Specialization</p>
+              <p class="rt-content-value">${specializationTitle}</p>
+            </div>
+            <div class="rt-content-card">
+              <p class="rt-content-label">Level</p>
+              <p class="rt-content-value">${levelTitle}</p>
+            </div>
+            <div class="rt-content-card">
+              <p class="rt-content-label">School Year</p>
+              <p class="rt-content-value">${schoolYearTitle}</p>
+            </div>
+            <div class="rt-content-card">
+              <p class="rt-content-label">Period</p>
+              <p class="rt-content-value">${periodTitle}</p>
+            </div>
+            <div class="rt-content-card">
+              <p class="rt-content-label">Status</p>
+              <p class="rt-content-value">${statusLabel}</p>
+            </div>
+          </div>
+          ${
+            cls.description
+              ? `
+            <div>
+              <p class="rt-content-label">Description</p>
+              <div class="rt-content">
+                ${cls.description}
+              </div>
+            </div>
+          `
+              : ''
+          }
+          <div class="flex flex-wrap gap-4 text-xs text-gray-400">
+            ${
+              cls.created_at
+                ? `<span>Created: ${new Date(cls.created_at).toLocaleDateString(undefined, {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}</span>`
+                : ''
+            }
+            ${
+              cls.updated_at
+                ? `<span>Updated: ${new Date(cls.updated_at).toLocaleDateString(undefined, {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}</span>`
+                : ''
+            }
+          </div>
+        </div>
+      `,
+    });
   };
 
-  const handleSpecializationFilter = (value: string) => {
-    const numeric = value ? Number(value) : '';
-    setSpecializationFilter(numeric);
-    setLevelFilter('');
-    setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
-  };
-
-  const handleLevelFilter = (value: string) => {
-    const numeric = value ? Number(value) : '';
-    setLevelFilter(numeric);
-    setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
-  };
-
-  const handleSchoolYearFilter = (value: string) => {
-    const numeric = value ? Number(value) : '';
-    setSchoolYearFilter(numeric);
-    setPeriodFilter('');
-    setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
-  };
-
-  const handlePeriodFilter = (value: string) => {
-    const numeric = value ? Number(value) : '';
-    setPeriodFilter(numeric);
-    setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
-  };
+  const closeDescriptionModal = () => setDescriptionModal(null);
 
   return (
     <>
@@ -260,29 +308,92 @@ const ClassesSection: React.FC = () => {
         addButtonText="Add Class"
         searchPlaceholder="Search by class title..."
         filterOptions={STATUS_OPTIONS}
-        renderRow={(cls: any, onEdit, onDelete, index) => (
-          <li key={cls?.id ?? `class-${index}`} className="px-4 py-4 sm:px-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{cls.title}</p>
-                <p className="text-sm text-gray-500">Program: {cls.program?.title || programs.find(p => p.id === cls.program_id)?.title || '—'}</p>
-                <p className="text-sm text-gray-500">Specialization: {cls.specialization?.title || specializations.find(s => s.id === cls.specialization_id)?.title || '—'}</p>
-                <p className="text-sm text-gray-500">Level: {cls.level?.title || levels.find(l => l.id === cls.level_id)?.title || '—'}</p>
-                <p className="text-sm text-gray-500">School Year: {cls.schoolYear?.title || schoolYears.find(y => y.id === cls.school_year_id)?.title || '—'}</p>
-                <p className="text-sm text-gray-500">Period: {cls.schoolYearPeriod?.title || periods.find(p => p.id === cls.school_year_period_id)?.title || '—'}</p>
-                <p className="text-sm text-gray-500">Status: <StatusBadge value={cls.status} /></p>
+        renderRow={(cls: any, onEdit, onDelete, index) => {
+          const programTitle = cls.program?.title || programs.find(p => p.id === cls.program_id)?.title || '—';
+          const specializationTitle =
+            cls.specialization?.title || specializations.find(s => s.id === cls.specialization_id)?.title || '—';
+          const levelTitle = cls.level?.title || levels.find(l => l.id === cls.level_id)?.title || '—';
+          const schoolYearTitle = cls.schoolYear?.title || schoolYears.find(y => y.id === cls.school_year_id)?.title || '—';
+          const periodTitle = cls.schoolYearPeriod?.title || periods.find(p => p.id === cls.school_year_period_id)?.title || '—';
+          const statusLabel = STATUS_VALUE_LABEL[Number(cls.status)] || String(cls.status ?? '—');
+
+          return (
+            <li
+              key={cls?.id ?? `class-${index}`}
+              className="px-4 py-4 sm:px-6"
+            >
+              <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-lg font-semibold text-gray-900">{cls.title || `Class #${cls.id}`}</h3>
+                      <StatusBadge value={cls.status} />
+                    </div>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {cls.code ? (
+                        <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
+                          {cls.code}
+                        </span>
+                      ) : null}
+                    </p>
+                    <div className="mt-3 grid grid-cols-1 gap-3 text-xs text-gray-500 sm:grid-cols-2">
+                      <span>Program: <span className="font-medium text-gray-900">{programTitle}</span></span>
+                      <span>Specialization: <span className="font-medium text-gray-900">{specializationTitle}</span></span>
+                      <span>Level: <span className="font-medium text-gray-900">{levelTitle}</span></span>
+                      <span>School Year: <span className="font-medium text-gray-900">{schoolYearTitle}</span></span>
+                      <span>Period: <span className="font-medium text-gray-900">{periodTitle}</span></span>
+                      <span>Status: <span className="font-medium text-gray-900">{statusLabel}</span></span>
+                    </div>
+                    <p className="mt-3 text-xs text-gray-400">
+                      Last updated{' '}
+                      {cls.updated_at
+                        ? new Date(cls.updated_at).toLocaleDateString(undefined, {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })
+                        : cls.created_at
+                        ? new Date(cls.created_at).toLocaleDateString(undefined, {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => onEdit(cls)}
+                      className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(cls.id)}
+                      className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                    {cls.description && (
+                      <button
+                        type="button"
+                        onClick={() => openDetailsModal(cls)}
+                        className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                      >
+                        Details
+                      </button>
+                    )}
+                  </div>
+                </div>
+
               </div>
-              <div className="flex space-x-2">
-                <button onClick={() => onEdit(cls)} className="text-blue-600 hover:text-blue-900">Edit</button>
-                <button onClick={() => onDelete(cls.id)} className="text-red-600 hover:text-red-900">Delete</button>
-              </div>
-            </div>
-          </li>
-        )}
+            </li>
+          );
+        }}
       />
 
       {modal.type === 'class' && (
-        <ClassModal isOpen onClose={closeModal} classItem={modal.data} />
+        <ClassModal isOpen onClose={closeModal} classItem={modal.data} descriptionPosition="bottom" />
       )}
 
       <DeleteModal
@@ -293,6 +404,20 @@ const ClassesSection: React.FC = () => {
         onConfirm={handleConfirmDelete}
         isLoading={updater.isPending}
       />
+
+      {descriptionModal && (
+        <BaseModal
+          isOpen
+          onClose={closeDescriptionModal}
+          title={descriptionModal.title}
+          className="sm:max-w-4xl"
+          contentClassName="space-y-4"
+        >
+          <div className="rt-content max-h-[70vh] overflow-y-auto">
+            <div dangerouslySetInnerHTML={{ __html: descriptionModal.content || '<p>No details available.</p>' }} />
+          </div>
+        </BaseModal>
+      )}
     </>
   );
 };

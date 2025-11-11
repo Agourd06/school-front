@@ -16,11 +16,16 @@ export type DashboardTab =
   | 'students'
   | 'classStudents'
   | 'planning'
+  | 'studentReports'
+  | 'studentPresence'
+  | 'planningSessionTypes'
   | 'teachers'
   | 'administrators'
   | 'studentLinkTypes'
   | 'studentContacts'
-  | 'studentDiplomes';
+  | 'studentDiplomes'
+  | 'levelPricings'
+  | 'studentPayments';
 
 const UsersSection = React.lazy(() => import('../components/sections/UsersSection'));
 const CompaniesSection = React.lazy(() => import('../components/sections/CompaniesSection'));
@@ -36,11 +41,16 @@ const ClassRoomsSection = React.lazy(() => import('../components/sections/ClassR
 const StudentsSection = React.lazy(() => import('../components/sections/StudentsSection'));
 const ClassStudentsSection = React.lazy(() => import('../components/sections/ClassStudentsSection'));
 const PlanningSection = React.lazy(() => import('../components/sections/PlanningSection'));
+const StudentReportsSection = React.lazy(() => import('../components/sections/StudentReportsSection'));
+const StudentPresenceSection = React.lazy(() => import('../components/sections/StudentPresenceSection'));
+const PlanningSessionTypesSection = React.lazy(() => import('../components/sections/PlanningSessionTypesSection'));
 const TeachersSection = React.lazy(() => import('../components/sections/TeachersSection'));
 const AdministratorsSection = React.lazy(() => import('../components/sections/AdministratorsSection'));
 const StudentLinkTypesSection = React.lazy(() => import('../components/sections/StudentLinkTypesSection'));
 const StudentContactsSection = React.lazy(() => import('../components/sections/StudentContactsSection'));
 const StudentDiplomesSection = React.lazy(() => import('../components/sections/StudentDiplomesSection'));
+const LevelPricingsSection = React.lazy(() => import('../components/sections/LevelPricingsSection'));
+const StudentPaymentsSection = React.lazy(() => import('../components/sections/StudentPaymentsSection'));
 
 const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC>> = {
   users: UsersSection,
@@ -57,11 +67,16 @@ const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC
   students: StudentsSection,
   classStudents: ClassStudentsSection,
   planning: PlanningSection,
+  studentReports: StudentReportsSection,
+  studentPresence: StudentPresenceSection,
+  planningSessionTypes: PlanningSessionTypesSection,
   teachers: TeachersSection,
   administrators: AdministratorsSection,
   studentLinkTypes: StudentLinkTypesSection,
   studentContacts: StudentContactsSection,
   studentDiplomes: StudentDiplomesSection,
+  levelPricings: LevelPricingsSection,
+  studentPayments: StudentPaymentsSection,
 };
 
 const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {

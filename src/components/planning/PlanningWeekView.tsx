@@ -11,6 +11,8 @@ interface PlanningWeekViewProps {
   onNextWeek: () => void;
   onToday: () => void;
   onSelectEntry: (entry: PlanningStudentEntry) => void;
+  onSelectDate: (isoDate: string) => void;
+  getPeriodLabel?: (entry: PlanningStudentEntry) => string;
 }
 
 const formatDateLabel = (date: Date) =>
@@ -35,6 +37,18 @@ const formatTeacherName = (entry: PlanningStudentEntry) => {
   return full || `Teacher #${entry.teacher_id}`;
 };
 
+const formatSessionType = (entry: PlanningStudentEntry) =>
+  entry.planningSessionType?.title || `Type #${entry.planning_session_type_id}`;
+
+const formatSessionTypeMeta = (entry: PlanningStudentEntry) => {
+  const parts: string[] = [];
+  if (entry.planningSessionType?.type) parts.push(entry.planningSessionType.type);
+  if (entry.planningSessionType?.coefficient !== undefined && entry.planningSessionType?.coefficient !== null) {
+    parts.push(`Coef ${entry.planningSessionType.coefficient}`);
+  }
+  return parts.join(' • ');
+};
+
 const getISODate = (date: Date) => date.toISOString().split('T')[0];
 
 const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
@@ -46,6 +60,8 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
   onNextWeek,
   onToday,
   onSelectEntry,
+  onSelectDate,
+  getPeriodLabel,
 }) => {
   const [hoveredEntryId, setHoveredEntryId] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -139,6 +155,13 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          <input
+            type="date"
+            value={getISODate(weekStart)}
+            onChange={(e) => onSelectDate(e.target.value)}
+            className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="Jump to week"
+          />
           <button
             type="button"
             onClick={onPrevWeek}
@@ -180,6 +203,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                 ) : (
                   <div className="space-y-2">
                     {day.entries.map((entry) => {
+                      const periodLabel = getPeriodLabel?.(entry) ?? entry.period;
                       const isConflict =
                         conflictSlot &&
                         conflictSlot.date_day === entry.date_day &&
@@ -204,7 +228,10 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                 {formatTimeRange(entry.hour_start, entry.hour_end)}
                               </span>
                             </div>
-                            <p className="text-xs text-gray-700 line-clamp-1 leading-tight mb-0.5">{entry.period}</p>
+                            <p className="text-xs text-gray-700 line-clamp-1 leading-tight mb-0.5">{periodLabel}</p>
+                            <p className="text-xs text-gray-600 line-clamp-1 leading-tight mb-0.5">
+                              {formatSessionType(entry)}
+                            </p>
                             <p className="text-xs text-gray-500 line-clamp-1 leading-tight">
                               {formatTeacherName(entry)}
                             </p>
@@ -244,7 +271,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <p className="text-base font-semibold text-gray-800">{entry.period}</p>
+                                      <p className="text-base font-semibold text-gray-800">{periodLabel}</p>
                                       <PlanningStatusBadge status={entry.status} />
                                     </div>
                                   </div>
@@ -281,6 +308,21 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
 
                                 {/* Details Grid */}
                               <div className="grid grid-cols-1 gap-4">
+                                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex-shrink-0">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
+                                    </svg>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Session Type</p>
+                                    <p className="text-base text-gray-900 font-semibold">{formatSessionType(entry)}</p>
+                                    {formatSessionTypeMeta(entry) && (
+                                      <p className="text-xs text-gray-500 mt-0.5">{formatSessionTypeMeta(entry)}</p>
+                                    )}
+                                  </div>
+                                </div>
+
                                 <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
