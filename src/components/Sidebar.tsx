@@ -25,7 +25,9 @@ interface SidebarProps {
     | "administrators"
     | "studentLinkTypes"
     | "studentContacts"
-    | "studentDiplomes";
+    | "studentDiplomes"
+    | "attestations"
+    | "studentAttestations";
   onTabChange: (
     tab:
       | "users"
@@ -52,6 +54,8 @@ interface SidebarProps {
       | "studentLinkTypes"
       | "studentContacts"
       | "studentDiplomes"
+      | "attestations"
+      | "studentAttestations"
   ) => void;
 }
 
@@ -100,7 +104,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         { tab: 'classes', label: 'Classes' },
         { tab: 'classStudents', label: 'Class Students' },
         { tab: 'classRooms', label: 'Class Rooms' },
-        { tab: 'planning', label: 'Planning' },
+        // { tab: 'planning', label: 'Planning' },
         { tab: 'planningSessionTypes', label: 'Planning Session Types' },
       ],
     },
@@ -122,6 +126,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         { tab: 'studentLinkTypes', label: 'Student Link Types' },
         { tab: 'studentContacts', label: 'Student Contacts' },
         { tab: 'studentDiplomes', label: 'Student Diplomes' },
+        { tab: 'attestations', label: 'Attestations' },
+        { tab: 'studentAttestations', label: 'Student Attestations' },
       ],
     },
     {

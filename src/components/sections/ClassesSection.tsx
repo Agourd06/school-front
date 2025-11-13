@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
-import { useClasses, useUpdateClass } from '../../hooks/useClasses';
+import { useClasses, useDeleteClass } from '../../hooks/useClasses';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { useLevels } from '../../hooks/useLevels';
@@ -12,7 +12,16 @@ import StatusBadge from '../../components/StatusBadge';
 import SearchSelect from '../inputs/SearchSelect';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
-import BaseModal from '../modals/BaseModal';
+import DescriptionModal from '../modals/DescriptionModal';
+
+const extractErrorMessage = (err: any): string => {
+  if (!err) return 'Unexpected error';
+  const dataMessage = err?.response?.data?.message;
+  if (Array.isArray(dataMessage)) return dataMessage.join(', ');
+  if (typeof dataMessage === 'string') return dataMessage;
+  if (typeof err.message === 'string') return err.message;
+  return 'Unexpected error';
+};
 
 const ClassesSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -24,7 +33,8 @@ const ClassesSection: React.FC = () => {
   });
   const [modal, setModal] = React.useState<{ type: 'class' | null; data?: any }>({ type: null });
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
-  const [descriptionModal, setDescriptionModal] = useState<{ title: string; content: string } | null>(null);
+  const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [programFilter, setProgramFilter] = React.useState<number | ''>('');
   const [specializationFilter, setSpecializationFilter] = React.useState<number | ''>('');
@@ -52,7 +62,7 @@ const ClassesSection: React.FC = () => {
     student_id: undefined, // Removed student_id from params
   };
 
-  const { data: response, isLoading, error } = useClasses(params as any);
+  const { data: response, isLoading, error, refetch: refetchClasses } = useClasses(params as any);
 
   React.useEffect(() => {
     if (response) {
@@ -105,24 +115,26 @@ const ClassesSection: React.FC = () => {
     [periods]
   );
 
-  const updater = useUpdateClass();
-  const performDelete = async (id: number) => {
-    await updater.mutateAsync({ id, data: { status: -2 } });
-  };
+  const deleteClassMut = useDeleteClass();
 
   const requestDelete = (id: number) => {
     const classItem = state.data.find((item: any) => item.id === id);
     if (!classItem) return;
     setDeleteTarget({ id, name: classItem.title });
+    setAlert(null);
   };
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
+    setAlert(null);
     try {
-      await performDelete(deleteTarget.id);
+      await deleteClassMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-    } catch (err) {
-      console.error(err);
+      setAlert({ type: 'success', message: 'Class deleted successfully.' });
+      refetchClasses();
+    } catch (err: any) {
+      const message = extractErrorMessage(err);
+      setAlert({ type: 'error', message });
     }
   };
 
@@ -142,84 +154,19 @@ const ClassesSection: React.FC = () => {
   }, []);
 
   const openDetailsModal = (cls: any) => {
-    const programTitle = cls.program?.title || programs.find((p) => p.id === cls.program_id)?.title || '—';
-    const specializationTitle =
-      cls.specialization?.title || specializations.find((s) => s.id === cls.specialization_id)?.title || '—';
-    const levelTitle = cls.level?.title || levels.find((l) => l.id === cls.level_id)?.title || '—';
-    const schoolYearTitle =
-      cls.schoolYear?.title || schoolYears.find((y) => y.id === cls.school_year_id)?.title || '—';
-    const periodTitle =
-      cls.schoolYearPeriod?.title || periods.find((p) => p.id === cls.school_year_period_id)?.title || '—';
-    const statusLabel = STATUS_VALUE_LABEL[Number(cls.status)] || String(cls.status ?? '—');
-
     setDescriptionModal({
       title: cls.title || `Class #${cls.id}`,
-      content: `
-        <div class="space-y-6">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="rt-content-card">
-              <p class="rt-content-label">Program</p>
-              <p class="rt-content-value">${programTitle}</p>
-            </div>
-            <div class="rt-content-card">
-              <p class="rt-content-label">Specialization</p>
-              <p class="rt-content-value">${specializationTitle}</p>
-            </div>
-            <div class="rt-content-card">
-              <p class="rt-content-label">Level</p>
-              <p class="rt-content-value">${levelTitle}</p>
-            </div>
-            <div class="rt-content-card">
-              <p class="rt-content-label">School Year</p>
-              <p class="rt-content-value">${schoolYearTitle}</p>
-            </div>
-            <div class="rt-content-card">
-              <p class="rt-content-label">Period</p>
-              <p class="rt-content-value">${periodTitle}</p>
-            </div>
-            <div class="rt-content-card">
-              <p class="rt-content-label">Status</p>
-              <p class="rt-content-value">${statusLabel}</p>
-            </div>
-          </div>
-          ${
-            cls.description
-              ? `
-            <div>
-              <p class="rt-content-label">Description</p>
-              <div class="rt-content">
-                ${cls.description}
-              </div>
-            </div>
-          `
-              : ''
-          }
-          <div class="flex flex-wrap gap-4 text-xs text-gray-400">
-            ${
-              cls.created_at
-                ? `<span>Created: ${new Date(cls.created_at).toLocaleDateString(undefined, {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })}</span>`
-                : ''
-            }
-            ${
-              cls.updated_at
-                ? `<span>Updated: ${new Date(cls.updated_at).toLocaleDateString(undefined, {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                  })}</span>`
-                : ''
-            }
-          </div>
-        </div>
-      `,
+      description: cls.description || '<p class="text-gray-500 italic">No description available</p>',
     });
   };
 
   const closeDescriptionModal = () => setDescriptionModal(null);
+
+  useEffect(() => {
+    if (!alert) return;
+    const timeout = window.setTimeout(() => setAlert(null), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [alert]);
 
   return (
     <>
@@ -295,6 +242,18 @@ const ClassesSection: React.FC = () => {
         />
       </div>
 
+      {alert && (
+        <div
+          className={`mb-4 rounded-md border px-4 py-2 text-sm ${
+            alert.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-700'
+              : 'border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
+          {alert.message}
+        </div>
+      )}
+
       <DataTableGeneric
         title="Classes"
         state={state}
@@ -363,6 +322,13 @@ const ClassesSection: React.FC = () => {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
+                      type="button"
+                      onClick={() => openDetailsModal(cls)}
+                      className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-sm font-medium text-green-600 hover:bg-green-50"
+                    >
+                      Details
+                    </button>
+                    <button
                       onClick={() => onEdit(cls)}
                       className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50"
                     >
@@ -374,15 +340,6 @@ const ClassesSection: React.FC = () => {
                     >
                       Delete
                     </button>
-                    {cls.description && (
-                      <button
-                        type="button"
-                        onClick={() => openDetailsModal(cls)}
-                        className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-                      >
-                        Details
-                      </button>
-                    )}
                   </div>
                 </div>
 
@@ -402,21 +359,17 @@ const ClassesSection: React.FC = () => {
         entityName={deleteTarget?.name}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
-        isLoading={updater.isPending}
+        isLoading={deleteClassMut.isPending}
       />
 
       {descriptionModal && (
-        <BaseModal
+        <DescriptionModal
           isOpen
           onClose={closeDescriptionModal}
           title={descriptionModal.title}
-          className="sm:max-w-4xl"
-          contentClassName="space-y-4"
-        >
-          <div className="rt-content max-h-[70vh] overflow-y-auto">
-            <div dangerouslySetInnerHTML={{ __html: descriptionModal.content || '<p>No details available.</p>' }} />
-          </div>
-        </BaseModal>
+          description={descriptionModal.description}
+          type="class"
+        />
       )}
     </>
   );

@@ -115,6 +115,8 @@ const StudentPaymentModal: React.FC<StudentPaymentModalProps> = ({
       e.payment = 'Payment must be a number';
     } else if (paymentValue < 0) {
       e.payment = 'Payment must be 0 or greater';
+    } else if (!Number.isNaN(amountValue) && paymentValue > amountValue) {
+      e.payment = 'Payment cannot exceed the total amount';
     }
     if (!form.date) {
       e.date = 'Date is required';

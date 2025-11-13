@@ -31,7 +31,12 @@ export const useUpdateSchoolYear = () => {
   return useMutation({
     mutationFn: ({ id, ...data }: UpdateSchoolYearRequest & { id: number }) =>
       schoolYearApi.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['schoolYears'] }),
+    onSuccess: (data, variables) => {
+      // Invalidate all schoolYears queries to force refetch
+      qc.invalidateQueries({ queryKey: ['schoolYears'] });
+      // Also invalidate the specific schoolYear to ensure fresh data
+      qc.invalidateQueries({ queryKey: ['schoolYears', variables.id] });
+    },
   });
 };
 

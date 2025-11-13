@@ -25,7 +25,9 @@ export type DashboardTab =
   | 'studentContacts'
   | 'studentDiplomes'
   | 'levelPricings'
-  | 'studentPayments';
+  | 'studentPayments'
+  | 'attestations'
+  | 'studentAttestations';
 
 const UsersSection = React.lazy(() => import('../components/sections/UsersSection'));
 const CompaniesSection = React.lazy(() => import('../components/sections/CompaniesSection'));
@@ -51,6 +53,8 @@ const StudentContactsSection = React.lazy(() => import('../components/sections/S
 const StudentDiplomesSection = React.lazy(() => import('../components/sections/StudentDiplomesSection'));
 const LevelPricingsSection = React.lazy(() => import('../components/sections/LevelPricingsSection'));
 const StudentPaymentsSection = React.lazy(() => import('../components/sections/StudentPaymentsSection'));
+const AttestationsSection = React.lazy(() => import('../components/sections/AttestationsSection'));
+const StudentAttestationsSection = React.lazy(() => import('../components/sections/StudentAttestationsSection'));
 
 const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC>> = {
   users: UsersSection,
@@ -77,6 +81,8 @@ const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC
   studentDiplomes: StudentDiplomesSection,
   levelPricings: LevelPricingsSection,
   studentPayments: StudentPaymentsSection,
+  attestations: AttestationsSection,
+  studentAttestations: StudentAttestationsSection,
 };
 
 const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {

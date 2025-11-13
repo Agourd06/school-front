@@ -15,6 +15,7 @@ import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { usePlanningSessionTypes, useCreatePlanningSessionType } from '../../hooks/usePlanningSessionTypes';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import PlanningWeekView from '../planning/PlanningWeekView';
+import PlanningMonthView from '../planning/PlanningMonthView';
 import {
   PLANNING_STATUS_OPTIONS,
   DEFAULT_PLANNING_STATUS,
@@ -376,7 +377,12 @@ const FormSection: React.FC<FormSectionProps> = ({
 };
 
 const PlanningSection: React.FC = () => {
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getMonday(new Date()));
+  const [currentMonthStart, setCurrentMonthStart] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [state, setState] = useState<PlanningState>({
     data: [],
     loading: false,
@@ -515,6 +521,17 @@ const PlanningSection: React.FC = () => {
     return state.data.filter((e) => e.date_day >= startISO && e.date_day <= endISO);
   }, [state.data, currentWeekStart]);
 
+  // 🧭 Filter by current month
+  const monthEntries = useMemo(() => {
+    const year = currentMonthStart.getFullYear();
+    const month = currentMonthStart.getMonth();
+    const start = new Date(year, month, 1);
+    const end = new Date(year, month + 1, 0);
+    const startISO = formatISODate(start);
+    const endISO = formatISODate(end);
+    return state.data.filter((e) => e.date_day >= startISO && e.date_day <= endISO);
+  }, [state.data, currentMonthStart]);
+
   // 🔁 Handlers
   const resetForm = useCallback(() => {
     setSelectedEntry(null);
@@ -569,6 +586,27 @@ const PlanningSection: React.FC = () => {
     const selected = new Date(isoDate);
     if (Number.isNaN(selected.getTime())) return;
     setCurrentWeekStart(getMonday(selected));
+  }, []);
+
+  const handleMonthChange = useCallback((offset: number) => {
+    setCurrentMonthStart((prev) => {
+      const next = new Date(prev);
+      next.setMonth(prev.getMonth() + offset);
+      return next;
+    });
+  }, []);
+
+  const handleMonthDateSelect = useCallback((isoDate: string) => {
+    if (!isoDate) return;
+    const selected = new Date(isoDate);
+    if (Number.isNaN(selected.getTime())) return;
+    setCurrentMonthStart(new Date(selected.getFullYear(), selected.getMonth(), 1));
+  }, []);
+
+  const handleToday = useCallback(() => {
+    const today = new Date();
+    setCurrentWeekStart(getMonday(today));
+    setCurrentMonthStart(new Date(today.getFullYear(), today.getMonth(), 1));
   }, []);
 
   const handleOpenSessionTypeModal = useCallback(() => {
@@ -711,37 +749,64 @@ const PlanningSection: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Class Planning</h1>
-            <p className="text-sm text-gray-500">Schedule and manage weekly sessions.</p>
+            <p className="text-sm text-gray-500">Schedule and manage sessions.</p>
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <button
-              type="button"
-              onClick={() => setShowForm(!showForm)}
-              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm ${
-                showForm
-                  ? 'text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                  : 'text-white bg-blue-600 border-2 border-blue-600 hover:bg-blue-700 hover:border-blue-700 hover:shadow-md'
-              }`}
-              aria-label={showForm ? 'Hide form to view full schedule' : 'Show form to add or edit sessions'}
-              title={showForm ? 'Hide form (Ctrl+F)' : 'Show form (Ctrl+F)'}
-            >
-              {showForm ? (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span>Hide Form</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Show Form</span>
-                </>
-              )}
-            </button>
-            <span className="text-xs text-gray-400 hidden sm:inline">Press Ctrl+F to toggle</span>
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('week')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  viewMode === 'week'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Week
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('month')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  viewMode === 'month'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Month
+              </button>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={() => setShowForm(!showForm)}
+                className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm ${
+                  showForm
+                    ? 'text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                    : 'text-white bg-blue-600 border-2 border-blue-600 hover:bg-blue-700 hover:border-blue-700 hover:shadow-md'
+                }`}
+                aria-label={showForm ? 'Hide form to view full schedule' : 'Show form to add or edit sessions'}
+                title={showForm ? 'Hide form (Ctrl+F)' : 'Show form (Ctrl+F)'}
+              >
+                {showForm ? (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Hide Form</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Show Form</span>
+                  </>
+                )}
+              </button>
+              <span className="text-xs text-gray-400 hidden sm:inline">Press Ctrl+F to toggle</span>
+            </div>
           </div>
         </div>
       </div>
@@ -846,18 +911,33 @@ const PlanningSection: React.FC = () => {
         )}
 
         <div className="relative">
-          <PlanningWeekView
-            weekStart={currentWeekStart}
-            entries={weekEntries}
-            isLoading={state.loading}
-            conflictSlot={conflictSlot}
-            onPrevWeek={() => handleWeekChange(-7)}
-            onNextWeek={() => handleWeekChange(7)}
-            onToday={() => setCurrentWeekStart(getMonday(new Date()))}
-            onSelectEntry={handleSelectEntry}
-            onSelectDate={handleWeekDateSelect}
-            getPeriodLabel={getPeriodLabel}
-          />
+          {viewMode === 'week' ? (
+            <PlanningWeekView
+              weekStart={currentWeekStart}
+              entries={weekEntries}
+              isLoading={state.loading}
+              conflictSlot={conflictSlot}
+              onPrevWeek={() => handleWeekChange(-7)}
+              onNextWeek={() => handleWeekChange(7)}
+              onToday={handleToday}
+              onSelectEntry={handleSelectEntry}
+              onSelectDate={handleWeekDateSelect}
+              getPeriodLabel={getPeriodLabel}
+            />
+          ) : (
+            <PlanningMonthView
+              monthStart={currentMonthStart}
+              entries={monthEntries}
+              isLoading={state.loading}
+              conflictSlot={conflictSlot}
+              onPrevMonth={() => handleMonthChange(-1)}
+              onNextMonth={() => handleMonthChange(1)}
+              onToday={handleToday}
+              onSelectEntry={handleSelectEntry}
+              onSelectDate={handleMonthDateSelect}
+              getPeriodLabel={getPeriodLabel}
+            />
+          )}
           
           {/* Floating Action Button - Show when form is hidden */}
           {!showForm && (

@@ -14,14 +14,13 @@ export type Teacher = {
   nationality?: string;
   picture?: string;
   company_id?: number;
+  company?: {
+    id: number;
+    name?: string | null;
+  } | null;
   class_room_id?: number;
   status?: number;
-  classRoom?: {
-    id: number;
-    code: string;
-    title: string;
-    capacity: number;
-  } | null;
+
   class_room?: {
     id: number;
     code: string;

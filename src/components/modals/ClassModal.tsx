@@ -8,6 +8,7 @@ import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
+import DescriptionModal from './DescriptionModal';
 
 interface ClassModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem, des
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
+  const [isDescriptionPreviewOpen, setIsDescriptionPreviewOpen] = useState(false);
 
   const createMutation = useCreateClass();
   const updateMutation = useUpdateClass();
@@ -149,7 +151,16 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem, des
 
   const descriptionEditor = (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <label className="block text-sm font-medium text-gray-700 mb-0">Description</label>
+        <button
+          type="button"
+          onClick={() => setIsDescriptionPreviewOpen(true)}
+          className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        >
+          View details
+        </button>
+      </div>
       <RichTextEditor
         value={form.description}
         onChange={(html) => setForm(prev => ({ ...prev, description: html }))}
@@ -280,6 +291,15 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem, des
           <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{isEditing ? 'Update' : 'Create'}</button>
         </div>
       </form>
+      {isDescriptionPreviewOpen && (
+        <DescriptionModal
+          isOpen
+          onClose={() => setIsDescriptionPreviewOpen(false)}
+          title={form.title || classItem?.title || ''}
+          description={form.description}
+          type="class"
+        />
+      )}
     </BaseModal>
   );
 };

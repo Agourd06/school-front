@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  useTeachers,
-  useDeleteTeacher,
-} from '../../hooks/useTeachers';
+  useAttestations,
+  useCreateAttestation,
+  useUpdateAttestation,
+  useDeleteAttestation,
+} from '../../hooks/useAttestations';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
-import TeacherModal from '../modals/TeacherModal';
+import AttestationModal from '../modals/AttestationModal';
 import DeleteModal from '../modals/DeleteModal';
-import StatusBadge from '../../components/StatusBadge';
-import type { Teacher } from '../../api/teachers';
-import { STATUS_OPTIONS } from '../../constants/status';
+import BaseModal from '../modals/BaseModal';
+import type { Attestation } from '../../api/attestation';
+import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
 const EMPTY_META = {
   page: 1,
@@ -25,6 +27,14 @@ const statusFilterOptions: SearchSelectOption[] = [
   ...STATUS_OPTIONS.filter((opt) => opt.value !== -2).map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
+const statusStyles: Record<number, string> = {
+  2: 'bg-yellow-100 text-yellow-800',
+  1: 'bg-green-100 text-green-800',
+  0: 'bg-gray-200 text-gray-700',
+  [-1]: 'bg-purple-100 text-purple-700',
+  [-2]: 'bg-red-100 text-red-700',
+};
+
 const extractErrorMessage = (err: any): string => {
   if (!err) return 'Unexpected error';
   const dataMessage = err?.response?.data?.message;
@@ -34,9 +44,7 @@ const extractErrorMessage = (err: any): string => {
   return 'Unexpected error';
 };
 
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-const TeachersSection: React.FC = () => {
+const AttestationsSection: React.FC = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
@@ -44,8 +52,9 @@ const TeachersSection: React.FC = () => {
   });
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Teacher | null>(null);
+  const [editingAttestation, setEditingAttestation] = useState<Attestation | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Attestation | null>(null);
+  const [detailsAttestation, setDetailsAttestation] = useState<Attestation | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const params = useMemo(
@@ -64,30 +73,32 @@ const TeachersSection: React.FC = () => {
   );
 
   const {
-    data: teachersResp,
+    data: attestationsResp,
     isLoading,
     error,
-    refetch: refetchTeachers,
-  } = useTeachers(params);
+    refetch: refetchAttestations,
+  } = useAttestations(params);
 
-  const teachers = teachersResp?.data ?? [];
-  const meta = teachersResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
+  const attestations = attestationsResp?.data ?? [];
+  const meta = attestationsResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
-  const deleteTeacherMut = useDeleteTeacher();
+  const createAttestationMut = useCreateAttestation();
+  const updateAttestationMut = useUpdateAttestation();
+  const deleteAttestationMut = useDeleteAttestation();
 
   const openCreateModal = () => {
-    setEditingTeacher(null);
+    setEditingAttestation(null);
     setModalOpen(true);
   };
 
-  const openEditModal = (teacher: Teacher) => {
-    setEditingTeacher(teacher);
+  const openEditModal = (attestation: Attestation) => {
+    setEditingAttestation(attestation);
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setModalOpen(false);
-    setEditingTeacher(null);
+    setEditingAttestation(null);
   };
 
   const handleFilterChange = (field: keyof typeof filters) => (value: number | string | '') => {
@@ -106,22 +117,30 @@ const TeachersSection: React.FC = () => {
 
   const handleModalClose = () => {
     closeModal();
-    refetchTeachers();
+    refetchAttestations();
   };
 
-  const requestDelete = (teacher: Teacher) => {
-    setDeleteTarget(teacher);
+  const requestDelete = (attestation: Attestation) => {
+    setDeleteTarget(attestation);
     setAlert(null);
+  };
+
+  const openDetailsModal = (attestation: Attestation) => {
+    setDetailsAttestation(attestation);
+  };
+
+  const closeDetailsModal = () => {
+    setDetailsAttestation(null);
   };
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     setAlert(null);
     try {
-      await deleteTeacherMut.mutateAsync(deleteTarget.id);
+      await deleteAttestationMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'Teacher deleted successfully.' });
-      refetchTeachers();
+      setAlert({ type: 'success', message: 'Attestation deleted successfully.' });
+      refetchAttestations();
     } catch (err: any) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
@@ -134,38 +153,13 @@ const TeachersSection: React.FC = () => {
     return () => window.clearTimeout(timeout);
   }, [alert]);
 
-  const getTeacherName = (teacher: Teacher) => {
-    return `${teacher.first_name ?? ''} ${teacher.last_name ?? ''}`.trim() || teacher.email || `Teacher #${teacher.id}`;
-  };
-
-  const getClassRoomLabel = (teacher: Teacher) => {
-    const classRoom =  teacher.class_room;
-    if (classRoom) {
-      const title = classRoom.title || '';
-      const code = classRoom.code || '';
-      if (title && code) return `${title} (${code})`;
-      return title || code || 'N/A';
-    }
-    return teacher.class_room_id ? `ID: ${teacher.class_room_id}` : 'N/A';
-  };
-
-  const getCompanyLabel = (teacher: Teacher) => {
-    return teacher.company?.name || (teacher.company_id ? `ID: ${teacher.company_id}` : 'N/A');
-  };
-
-  const getPictureUrl = (picture?: string) => {
-    if (!picture) return null;
-    if (picture.startsWith('http')) return picture;
-    return `${apiBase}${picture.startsWith('/') ? '' : '/'}${picture}`;
-  };
-
   return (
     <div className="space-y-6">
       <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Teachers</h1>
-            <p className="text-sm text-gray-500">Manage teachers and their information.</p>
+            <h1 className="text-xl font-semibold text-gray-900">Attestations</h1>
+            <p className="text-sm text-gray-500">Manage attestations and their associated companies.</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -176,7 +170,7 @@ const TeachersSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Teacher
+              Add Attestation
             </button>
           </div>
         </div>
@@ -213,7 +207,7 @@ const TeachersSection: React.FC = () => {
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by name or email..."
+              placeholder="Search by attestation title or description..."
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -226,13 +220,11 @@ const TeachersSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Teacher
+                  Title
                 </th>
+                
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Contact
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Class & Company
+                  Company
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
@@ -245,62 +237,55 @@ const TeachersSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading teachers…
+                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
+                    Loading attestations…
                   </td>
                 </tr>
-              ) : teachers.length === 0 ? (
+              ) : attestations.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No teachers found.
+                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
+                    No attestations found.
                   </td>
                 </tr>
               ) : (
-                teachers.map((teacher) => {
-                  const pictureUrl = getPictureUrl(teacher.picture);
+                attestations.map((att) => {
+                  const statusValue = typeof att.statut === 'number' ? att.statut : 0;
+                  const companyName = att.company?.name || `Company #${att.companyid}`;
                   return (
-                    <tr key={teacher.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        <div className="flex items-center gap-3">
-                          {pictureUrl && (
-                            <img
-                              src={pictureUrl}
-                              alt="avatar"
-                              className="h-10 w-10 rounded-full object-cover border"
-                            />
-                          )}
-                          <div>
-                            <div>{teacher.first_name} {teacher.last_name}</div>
-                          </div>
-                        </div>
-                      </td>
+                    <tr key={att.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{att.title}</td>
+                      
+                      <td className="px-4 py-3 text-sm text-gray-700">{companyName}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div>{teacher.email}</div>
-                          {teacher.phone && <div className="text-xs text-gray-500">{teacher.phone}</div>}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div>Class: {getClassRoomLabel(teacher)}</div>
-                          <div className="text-xs text-gray-500">Company: {getCompanyLabel(teacher)}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        <StatusBadge value={teacher.status} />
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            statusStyles[statusValue] ?? 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {STATUS_VALUE_LABEL[statusValue] ?? `Status ${statusValue}`}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
+                          {att.description && (
+                            <button
+                              type="button"
+                              onClick={() => openDetailsModal(att)}
+                              className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                            >
+                              Details
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => openEditModal(teacher)}
+                            onClick={() => openEditModal(att)}
                             className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                           >
                             Edit
                           </button>
                           <button
                             type="button"
-                            onClick={() => requestDelete(teacher)}
+                            onClick={() => requestDelete(att)}
                             className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
                           >
                             Delete
@@ -327,18 +312,66 @@ const TeachersSection: React.FC = () => {
         />
       </div>
 
-      <TeacherModal isOpen={modalOpen} onClose={handleModalClose} teacher={editingTeacher ?? undefined} />
+      <AttestationModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        attestation={editingAttestation ?? undefined}
+      />
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete Teacher"
-        entityName={deleteTarget ? getTeacherName(deleteTarget) : undefined}
+        title="Delete Attestation"
+        entityName={deleteTarget?.title}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
-        isLoading={deleteTeacherMut.isPending}
+        isLoading={deleteAttestationMut.isPending}
       />
+
+      {detailsAttestation && (
+        <BaseModal
+          isOpen
+          onClose={closeDetailsModal}
+          title={`Attestation Details: ${detailsAttestation.title}`}
+          className="sm:max-w-4xl"
+          contentClassName="space-y-4"
+        >
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Title</h3>
+              <p className="text-gray-700">{detailsAttestation.title}</p>
+            </div>
+            {detailsAttestation.company && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">Company</h3>
+                <p className="text-gray-700">{detailsAttestation.company.name}</p>
+              </div>
+            )}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Status</h3>
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  statusStyles[typeof detailsAttestation.statut === 'number' ? detailsAttestation.statut : 0] ?? 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {STATUS_VALUE_LABEL[typeof detailsAttestation.statut === 'number' ? detailsAttestation.statut : 0] ?? 'Unknown'}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Description</h3>
+              <div className="rt-content border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-[60vh] overflow-y-auto">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: detailsAttestation.description || '<p class="text-gray-500 italic">No description available</p>',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </BaseModal>
+      )}
     </div>
   );
 };
 
-export default TeachersSection;
+export default AttestationsSection;
+

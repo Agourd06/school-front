@@ -22,11 +22,9 @@ export type Administrator = {
     title: string;
     capacity: number;
   } | null;
-  class_room?: {
+  company?: {
     id: number;
-    code: string;
-    title: string;
-    capacity: number;
+    name?: string | null;
   } | null;
   created_at: string;
   updated_at: string;

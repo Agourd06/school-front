@@ -145,7 +145,7 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Type Code</label>
+          <label className="block text-sm font-medium text-gray-700">Type</label>
           <input
             type="text"
             value={form.type}

@@ -47,7 +47,7 @@ const DescriptionModal: React.FC<DescriptionModalProps> = ({
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Description</h3>
           <div 
-            className="prose max-w-none text-gray-700 border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-96 overflow-y-auto"
+            className="rt-content border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-96 overflow-y-auto"
             dangerouslySetInnerHTML={{ 
               __html: description || '<p class="text-gray-500 italic">No description available</p>' 
             }}

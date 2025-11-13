@@ -4,15 +4,7 @@ import { useCompanies } from '../../hooks/useCompanies';
 import BaseModal from './BaseModal';
 import { validateRequired, validateDateOrder } from './validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
-
-interface SchoolYear {
-  id: number;
-  title: string;
-  start_date: string;
-  end_date: string;
-  status: number;
-  company: { id: number; name: string };
-}
+import type { SchoolYear } from '../../api/schoolYear';
 
 interface SchoolYearModalProps {
   isOpen: boolean;
@@ -37,26 +29,42 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
   const companies = useMemo(() => ((companiesResp as any)?.data ?? []) as any[], [companiesResp]);
 
   const isEditing = !!schoolYear;
+  const schoolYearIdRef = React.useRef<number | null>(null);
+  const isInitializedRef = React.useRef(false);
 
   useEffect(() => {
-    if (schoolYear) {
-      setFormData({
-        title: schoolYear.title || '',
-        start_date: schoolYear.start_date || '',
-        end_date: schoolYear.end_date || '',
-        status: schoolYear.status || 1,
-        companyId: schoolYear.company?.id || 0,
-      });
-    } else {
-      setFormData({
-        title: '',
-        start_date: '',
-        end_date: '',
-        status: 1,
-        companyId: 0,
-      });
+    if (!isOpen) {
+      // Reset refs when modal closes
+      schoolYearIdRef.current = null;
+      isInitializedRef.current = false;
+      return;
     }
-    setErrors({});
+
+    // Only reset form when schoolYear actually changes (different ID) or when first opening
+    const currentId = schoolYear?.id ?? null;
+    if (!isInitializedRef.current || currentId !== schoolYearIdRef.current) {
+      schoolYearIdRef.current = currentId;
+      isInitializedRef.current = true;
+      
+      if (schoolYear) {
+        setFormData({
+          title: schoolYear.title || '',
+          start_date: schoolYear.start_date || '',
+          end_date: schoolYear.end_date || '',
+          status: schoolYear.status || 1,
+          companyId: schoolYear.company?.id || 0,
+        });
+      } else {
+        setFormData({
+          title: '',
+          start_date: '',
+          end_date: '',
+          status: 1,
+          companyId: 0,
+        });
+      }
+      setErrors({});
+    }
   }, [schoolYear, isOpen]);
 
   const validateForm = () => {
@@ -81,23 +89,31 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
     if (!validateForm()) return;
 
     try {
+      // Always send all fields explicitly, including companyId
+      const payload = {
+        title: formData.title.trim(),
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        status: Number(formData.status),
+        companyId: Number(formData.companyId),
+      };
+      
+      console.log('Submitting with companyId:', formData.companyId, 'Payload:', payload);
+      console.log('Current schoolYear companyId:', schoolYear?.company?.id);
+      
       if (isEditing && schoolYear) {
-        await updateSchoolYear.mutateAsync({
+        const response = await updateSchoolYear.mutateAsync({
           id: schoolYear.id,
-          title: formData.title,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          status: formData.status,
-          companyId: formData.companyId,
+          title: payload.title,
+          start_date: payload.start_date,
+          end_date: payload.end_date,
+          status: payload.status,
+          companyId: payload.companyId, // Explicitly include companyId
         });
+        console.log('Update response:', response);
       } else {
-        await createSchoolYear.mutateAsync({
-          title: formData.title,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          status: formData.status,
-          companyId: formData.companyId,
-        });
+        const response = await createSchoolYear.mutateAsync(payload);
+        console.log('Create response:', response);
       }
       onClose();
     } catch (error) {
@@ -108,9 +124,13 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    const newValue = name === 'status' || name === 'companyId' ? Number(value) : value;
+    
+    console.log('Form change:', name, 'old value:', formData[name as keyof typeof formData], 'new value:', newValue);
+    
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'status' || name === 'companyId' ? Number(value) : value,
+      [name]: newValue,
     }));
 
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
@@ -184,15 +204,17 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
             <select
               id="companyId"
               name="companyId"
-              value={formData.companyId}
+              value={formData.companyId || ''}
               onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                errors.companyId ? 'border-red-300' : 'border-gray-300'
+              }`}
             >
-              <option value={0} disabled>
+              <option value="" disabled>
                 Select a company
               </option>
               {companies.map(company => (
-                <option key={company.id} value={company.id}>
+                <option key={company.id} value={String(company.id)}>
                   {company.name}
                 </option>
               ))}

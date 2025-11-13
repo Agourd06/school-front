@@ -55,10 +55,25 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
     e.preventDefault();
     if (!validate()) return;
     try {
+      // Save HTML as-is so it can be displayed with formatting
+      const descriptionToSave = form.description.trim() || undefined;
       if (isEditing) {
-        await updateMutation.mutateAsync({ id: program.id, data: { ...form, company_id: DEFAULT_COMPANY_ID } });
+        await updateMutation.mutateAsync({
+          id: program.id,
+          data: {
+            title: form.title.trim(),
+            description: descriptionToSave,
+            status: form.status,
+            company_id: DEFAULT_COMPANY_ID,
+          },
+        });
       } else {
-        await createMutation.mutateAsync({ ...form, company_id: DEFAULT_COMPANY_ID });
+        await createMutation.mutateAsync({
+          title: form.title.trim(),
+          description: descriptionToSave,
+          status: form.status,
+          company_id: DEFAULT_COMPANY_ID,
+        });
       }
       onClose();
     } catch (err: any) {
@@ -82,16 +97,6 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <RichTextEditor
-            value={form.description}
-            onChange={(html) => setForm(prev => ({ ...prev, description: html }))}
-            placeholder="Describe the program..."
-            rows={6}
-          />
-        </div>
-
-        <div>
           <label className="block text-sm font-medium text-gray-700">Status</label>
           <select
             name="status"
@@ -103,6 +108,16 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <RichTextEditor
+            value={form.description}
+            onChange={(html) => setForm(prev => ({ ...prev, description: html }))}
+            placeholder="Describe the program..."
+            rows={6}
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

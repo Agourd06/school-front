@@ -80,9 +80,11 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    // Save HTML as-is so it can be displayed with formatting
+    const descriptionToSave = form.description.trim() || undefined;
     const payload = {
       title: form.title,
-      description: form.description || undefined,
+      description: descriptionToSave,
       level: form.level ? Number(form.level) : undefined,
       specialization_id: Number(form.specialization_id),
       status: form.status,
@@ -148,18 +150,6 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
           {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <RichTextEditor
-            value={form.description}
-            onChange={(html) => {
-              setForm(prev => ({ ...prev, description: html }));
-            }}
-            placeholder="Describe the level..."
-            rows={5}
-          />
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Level number</label>
@@ -184,6 +174,18 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
               ))}
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <RichTextEditor
+            value={form.description}
+            onChange={(html) => {
+              setForm(prev => ({ ...prev, description: html }));
+            }}
+            placeholder="Describe the level..."
+            rows={5}
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

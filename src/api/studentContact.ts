@@ -10,6 +10,7 @@ export interface StudentContact {
   adress?: string;
   city?: string;
   country?: string;
+  student_id?: number;
   studentlinktypeId?: number | string;
   status?: number;
   created_at?: string;
@@ -25,6 +26,7 @@ export interface CreateStudentContactRequest {
   adress?: string;
   city?: string;
   country?: string;
+  student_id?: number;
   studentlinktypeId?: number | string;
   company_id?: number;
   status?: number; // -2,-1,0,1,2

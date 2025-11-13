@@ -94,33 +94,30 @@ const CourseModal: React.FC<CourseModalProps> = ({
     if (!validateForm()) return;
 
     try {
-      console.log("Submitting course form:", { isEditing, formData });
+      // Save HTML as-is so it can be displayed with formatting
+      const descriptionToSave = formData.description.trim() || undefined;
 
       if (isEditing) {
-        console.log("Updating course with data:", formData);
         await updateCourse.mutateAsync({
           id: course.id,
           title: formData.title,
-          description: formData.description || undefined,
+          description: descriptionToSave,
           volume: formData.volume ? Number(formData.volume) : undefined,
           coefficient: formData.coefficient
             ? Number(formData.coefficient)
             : undefined,
           status: formData.status,
         });
-        console.log("Course updated successfully");
       } else {
-        console.log("Creating course with data:", formData);
         await createCourse.mutateAsync({
           title: formData.title,
-          description: formData.description || undefined,
+          description: descriptionToSave,
           volume: formData.volume ? Number(formData.volume) : undefined,
           coefficient: formData.coefficient
             ? Number(formData.coefficient)
             : undefined,
           status: formData.status,
         });
-        console.log("Course created successfully");
       }
 
       onClose();

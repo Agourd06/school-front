@@ -94,33 +94,30 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
     if (!validateForm()) return;
 
     try {
-      console.log("Submitting module form:", { isEditing, formData });
+      // Save HTML as-is so it can be displayed with formatting
+      const descriptionToSave = formData.description.trim() || undefined;
 
       if (isEditing) {
-        console.log("Updating module with data:", formData);
         await updateModule.mutateAsync({
           id: module.id,
           title: formData.title,
-          description: formData.description || undefined,
+          description: descriptionToSave,
           volume: formData.volume ? Number(formData.volume) : undefined,
           coefficient: formData.coefficient
             ? Number(formData.coefficient)
             : undefined,
           status: formData.status,
         });
-        console.log("Module updated successfully");
       } else {
-        console.log("Creating module with data:", formData);
         await createModule.mutateAsync({
           title: formData.title,
-          description: formData.description || undefined,
+          description: descriptionToSave,
           volume: formData.volume ? Number(formData.volume) : undefined,
           coefficient: formData.coefficient
             ? Number(formData.coefficient)
             : undefined,
           status: formData.status,
         });
-        console.log("Module created successfully");
       }
 
       onClose();
