@@ -1,6 +1,6 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
-import { DEFAULT_COMPANY_ID } from '../constants/status';
+import { getCompanyId } from '../utils/companyId';
 
 export interface Attestation {
   id: number;
@@ -20,7 +20,7 @@ export interface CreateAttestationRequest {
   title: string;
   description?: string;
   statut?: number;
-  companyid: number;
+  companyid?: number; // Optional - backend sets it from authenticated user
 }
 
 export type UpdateAttestationRequest = Partial<CreateAttestationRequest>;
@@ -57,7 +57,7 @@ const toPaginated = (raw: any): PaginatedResponse<Attestation> => {
 };
 
 export interface GetAttestationsParams extends FilterParams {
-  companyid?: number;
+  // companyid is automatically filtered by backend from JWT, no need to send it
 }
 
 export const attestationApi = {
@@ -67,7 +67,7 @@ export const attestationApi = {
     if (params.limit) qp.append('limit', String(params.limit));
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
     if (params.status !== undefined && params.status !== null) qp.append('statut', String(params.status));
-    if (params.companyid) qp.append('companyid', String(params.companyid));
+    // companyid is automatically filtered by backend from JWT token, no need to send it
     const qs = qp.toString();
     const url = qs ? `/attestation?${qs}` : '/attestation';
     const response = await api.get(url);
@@ -80,22 +80,26 @@ export const attestationApi = {
   },
 
   async create(payload: CreateAttestationRequest): Promise<Attestation> {
+    // Ensure companyid is set from authenticated user (backend will also set it, but we include it for consistency)
+    const companyId = getCompanyId();
     const body = {
       statut: 1,
-      companyid: DEFAULT_COMPANY_ID,
+      companyid: companyId,
       ...payload,
     };
     if (body.statut === undefined || body.statut === null) body.statut = 1;
-    if (!body.companyid) body.companyid = DEFAULT_COMPANY_ID;
+    if (!body.companyid) body.companyid = companyId;
     const { data } = await api.post('/attestation', body);
     return data;
   },
 
   async update(id: number, payload: UpdateAttestationRequest): Promise<Attestation> {
+    // Ensure companyid is set from authenticated user (backend will verify it matches)
+    const companyId = getCompanyId();
     const body = {
       ...payload,
     };
-    if (!('companyid' in body)) (body as any).companyid = DEFAULT_COMPANY_ID;
+    if (!('companyid' in body)) (body as any).companyid = companyId;
     const { data } = await api.patch(`/attestation/${id}`, body);
     return data;
   },

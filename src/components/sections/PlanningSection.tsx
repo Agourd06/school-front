@@ -10,21 +10,22 @@ import { useClasses } from '../../hooks/useClasses';
 import { useTeachers } from '../../hooks/useTeachers';
 import { useClassRooms } from '../../hooks/useClassRooms';
 import { useSpecializations } from '../../hooks/useSpecializations';
-import { useCompanies } from '../../hooks/useCompanies';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
+import { useSchoolYears } from '../../hooks/useSchoolYears';
+// import { useCompanies } from '../../hooks/useCompanies'; // Removed - company is auto-set from authenticated user
 import { usePlanningSessionTypes, useCreatePlanningSessionType } from '../../hooks/usePlanningSessionTypes';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import PlanningWeekView from '../planning/PlanningWeekView';
 import PlanningMonthView from '../planning/PlanningMonthView';
 import {
-  PLANNING_STATUS_OPTIONS,
+  PLANNING_STATUS_OPTIONS_FORM,
   DEFAULT_PLANNING_STATUS,
   type PlanningStatus,
 } from '../../constants/planning';
 import PlanningSessionTypeModal, { type PlanningSessionTypeFormValues } from '../modals/PlanningSessionTypeModal';
 
 interface PlanningFilters {
-  status: PlanningStatus | '';
+  status: PlanningStatus | '' | 'all';
   class_id: number | '';
   class_room_id: number | '';
   teacher_id: number | '';
@@ -48,16 +49,16 @@ interface PlanningState {
 }
 
 interface FormState {
+  school_year_id: number | '';
   period: string;
   date_day: string;
   hour_start: string;
   hour_end: string;
-  planning_session_type_id: number | '';
-  teacher_id: number | '';
-  specialization_id: number | '';
   class_id: number | '';
+  specialization_id: number | '';
+  teacher_id: number | '';
   class_room_id: number | '';
-  company_id: number | '';
+  planning_session_type_id: number | '';
   status: PlanningStatus;
 }
 
@@ -78,15 +79,15 @@ interface FormSectionProps {
   specializationOptions: SearchSelectOption[];
   classOptions: SearchSelectOption[];
   roomOptions: SearchSelectOption[];
-  companyOptions: SearchSelectOption[];
   periodOptions: SearchSelectOption[];
   sessionTypeOptions: SearchSelectOption[];
+  yearOptions: SearchSelectOption[];
   periodsLoading: boolean;
   teachersLoading: boolean;
   specsLoading: boolean;
   classesLoading: boolean;
   roomsLoading: boolean;
-  companiesLoading: boolean;
+  yearsLoading: boolean;
   sessionTypesLoading: boolean;
   onOpenSessionTypeModal: () => void;
   isCreatingSessionType: boolean;
@@ -113,6 +114,22 @@ const formatISODate = (date: Date) => date.toISOString().split('T')[0];
 
 const normalizeTimeFormat = (time: string) => time?.split(':').slice(0, 2).join(':') || '';
 
+// Generate time options from 06:00 to 00:00 (24:00) with 15-minute intervals
+const generateTimeOptions = (): string[] => {
+  const options: string[] = [];
+  // From 06:00 to 23:45
+  for (let hour = 6; hour < 24; hour++) {
+    for (const minute of [0, 15, 30, 45]) {
+      options.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+    }
+  }
+  // Add 00:00 (midnight)
+  options.push('00:00');
+  return options;
+};
+
+const TIME_OPTIONS = generateTimeOptions();
+
 const extractErrorMessage = (err: any): string => {
   if (!err) return 'Unexpected error';
   const dataMessage = err?.response?.data?.message;
@@ -123,16 +140,16 @@ const extractErrorMessage = (err: any): string => {
 };
 
 const INITIAL_FORM = (weekStart: Date): FormState => ({
+  school_year_id: '',
   period: '',
   date_day: formatISODate(weekStart),
-  hour_start: '08:00',
-  hour_end: '10:00',
-  planning_session_type_id: '',
-  teacher_id: '',
-  specialization_id: '',
+  hour_start: '06:00',
+  hour_end: '07:00',
   class_id: '',
+  specialization_id: '',
+  teacher_id: '',
   class_room_id: '',
-  company_id: '',
+  planning_session_type_id: '',
   status: DEFAULT_PLANNING_STATUS,
 });
 
@@ -153,20 +170,21 @@ const FormSection: React.FC<FormSectionProps> = ({
   specializationOptions,
   classOptions,
   roomOptions,
-  companyOptions,
   periodOptions,
   sessionTypeOptions,
+  yearOptions,
   periodsLoading,
   teachersLoading,
   specsLoading,
   classesLoading,
   roomsLoading,
-  companiesLoading,
+  yearsLoading,
   sessionTypesLoading,
   onOpenSessionTypeModal,
   isCreatingSessionType,
 }) => {
-  const statusOptions = PLANNING_STATUS_OPTIONS;
+  const statusOptions = PLANNING_STATUS_OPTIONS_FORM;
+  const timeSelectOptions: SearchSelectOption[] = TIME_OPTIONS.map((time) => ({ value: time, label: time }));
 
   return (
     <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
@@ -199,158 +217,165 @@ const FormSection: React.FC<FormSectionProps> = ({
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <div>
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">Session Type</label>
-              <button
-                type="button"
-                onClick={onOpenSessionTypeModal}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-800"
-                disabled={isCreatingSessionType}
-              >
-                {isCreatingSessionType ? 'Creating…' : 'New type'}
-              </button>
-            </div>
+        {/* Time & Date Section */}
+        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Schedule</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <SearchSelect
-              value={form.planning_session_type_id}
-              onChange={handleSelectChange('planning_session_type_id')}
-              options={sessionTypeOptions}
-              placeholder="Select session type"
-              isLoading={sessionTypesLoading}
-              error={formErrors.planning_session_type_id}
+              label="School Year *"
+              value={form.school_year_id}
+              onChange={handleSelectChange('school_year_id')}
+              options={yearOptions}
+              placeholder="Select school year"
+              isLoading={yearsLoading}
+              error={formErrors.school_year_id}
             />
-          </div>
-          <SearchSelect
-            label="Period"
-            value={form.period}
-            onChange={(value) => {
-              setForm((prev) => ({ ...prev, period: value === '' ? '' : String(value) }));
-              if (formErrors.period) setFormErrors((prev) => ({ ...prev, period: '' }));
-            }}
-            options={periodOptions}
-            placeholder="Select period"
-            isLoading={periodsLoading}
-            error={formErrors.period}
-          />
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-              value={form.status}
-              onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as PlanningStatus }))}
-            >
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Date</label>
-            <input
-              type="date"
-              className={`mt-1 block w-full px-3 py-2 border rounded-md ${
-                formErrors.date_day ? 'border-red-300' : 'border-gray-300'
-              }`}
-              value={form.date_day}
-              onChange={(e) => {
-                setForm((prev) => ({ ...prev, date_day: e.target.value }));
-                if (formErrors.date_day) setFormErrors((prev) => ({ ...prev, date_day: '' }));
+            <SearchSelect
+              label="Period *"
+              value={form.period}
+              onChange={(value) => {
+                setForm((prev) => ({ ...prev, period: value === '' ? '' : String(value) }));
+                if (formErrors.period) setFormErrors((prev) => ({ ...prev, period: '' }));
               }}
+              options={periodOptions}
+              placeholder="Select period"
+              isLoading={periodsLoading}
+              error={formErrors.period}
+              disabled={!form.school_year_id}
             />
-            {formErrors.date_day && <p className="mt-1 text-xs text-red-600">{formErrors.date_day}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Start</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
               <input
-                type="time"
-                className={`mt-1 block w-full px-3 py-2 border rounded-md ${
-                  formErrors.hour_start ? 'border-red-300' : 'border-gray-300'
+                type="date"
+                className={`block w-full px-3 py-2 text-sm border rounded-md ${
+                  formErrors.date_day ? 'border-red-300' : 'border-gray-300'
                 }`}
-                value={form.hour_start}
+                value={form.date_day}
                 onChange={(e) => {
-                  setForm((prev) => ({ ...prev, hour_start: e.target.value }));
+                  setForm((prev) => ({ ...prev, date_day: e.target.value }));
+                  if (formErrors.date_day) setFormErrors((prev) => ({ ...prev, date_day: '' }));
+                }}
+              />
+              {formErrors.date_day && <p className="mt-1 text-xs text-red-600">{formErrors.date_day}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Hour *</label>
+              <SearchSelect
+                value={form.hour_start}
+                onChange={(value) => {
+                  setForm((prev) => ({ ...prev, hour_start: value === '' ? '' : String(value) }));
                   if (formErrors.hour_start) setFormErrors((prev) => ({ ...prev, hour_start: '' }));
                 }}
+                options={timeSelectOptions}
+                placeholder="Start time"
+                error={formErrors.hour_start}
               />
-              {formErrors.hour_start && <p className="mt-1 text-xs text-red-600">{formErrors.hour_start}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">End</label>
-              <input
-                type="time"
-                className={`mt-1 block w-full px-3 py-2 border rounded-md ${
-                  formErrors.hour_end ? 'border-red-300' : 'border-gray-300'
-                }`}
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Hour *</label>
+              <SearchSelect
                 value={form.hour_end}
-                onChange={(e) => {
-                  setForm((prev) => ({ ...prev, hour_end: e.target.value }));
+                onChange={(value) => {
+                  setForm((prev) => ({ ...prev, hour_end: value === '' ? '' : String(value) }));
                   if (formErrors.hour_end) setFormErrors((prev) => ({ ...prev, hour_end: '' }));
                 }}
+                options={timeSelectOptions}
+                placeholder="End time"
+                error={formErrors.hour_end}
               />
-              {formErrors.hour_end && <p className="mt-1 text-xs text-red-600">{formErrors.hour_end}</p>}
             </div>
           </div>
         </div>
 
-        <SearchSelect
-          label="Teacher"
-          value={form.teacher_id}
-          onChange={handleSelectChange('teacher_id')}
-          options={teacherOptions}
-          placeholder="Select teacher"
-          isLoading={teachersLoading}
-          error={formErrors.teacher_id}
-        />
-
-        <SearchSelect
-          label="Specialization"
-          value={form.specialization_id}
-          onChange={handleSelectChange('specialization_id')}
-          options={specializationOptions}
-          placeholder="Select specialization"
-          isLoading={specsLoading}
-          error={formErrors.specialization_id}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SearchSelect
-            label="Class"
-            value={form.class_id}
-            onChange={handleSelectChange('class_id')}
-            options={classOptions}
-            placeholder="Select class"
-            isLoading={classesLoading}
-            error={formErrors.class_id}
-          />
-          <SearchSelect
-            label="Classroom"
-            value={form.class_room_id}
-            onChange={handleSelectChange('class_room_id')}
-            options={roomOptions}
-            placeholder="Select classroom"
-            isLoading={roomsLoading}
-            error={formErrors.class_room_id}
-          />
+        {/* Class & Resources Section */}
+        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Class & Resources</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <SearchSelect
+              label="Class *"
+              value={form.class_id}
+              onChange={handleSelectChange('class_id')}
+              options={classOptions}
+              placeholder="Select class"
+              isLoading={classesLoading}
+              error={formErrors.class_id}
+            />
+            <SearchSelect
+              label="Specialization *"
+              value={form.specialization_id}
+              onChange={handleSelectChange('specialization_id')}
+              options={specializationOptions}
+              placeholder="Auto-selected"
+              isLoading={specsLoading}
+              error={formErrors.specialization_id}
+              disabled={true}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <SearchSelect
+              label="Teacher *"
+              value={form.teacher_id}
+              onChange={handleSelectChange('teacher_id')}
+              options={teacherOptions}
+              placeholder="Select teacher"
+              isLoading={teachersLoading}
+              error={formErrors.teacher_id}
+            />
+            <SearchSelect
+              label="Classroom *"
+              value={form.class_room_id}
+              onChange={handleSelectChange('class_room_id')}
+              options={roomOptions}
+              placeholder="Select classroom"
+              isLoading={roomsLoading}
+              error={formErrors.class_room_id}
+            />
+          </div>
         </div>
 
-        <SearchSelect
-          label="Company"
-          value={form.company_id}
-          onChange={(value) =>
-            setForm((prev) => ({ ...prev, company_id: value === '' ? '' : Number(value) }))
-          }
-          options={companyOptions}
-          placeholder="Optional company"
-          isClearable
-          isLoading={companiesLoading}
-        />
+        {/* Session Type & Status Section */}
+        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Session Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">Session Type *</label>
+                <button
+                  type="button"
+                  onClick={onOpenSessionTypeModal}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                  disabled={isCreatingSessionType}
+                >
+                  {isCreatingSessionType ? 'Creating…' : 'New type'}
+                </button>
+              </div>
+              <SearchSelect
+                value={form.planning_session_type_id}
+                onChange={handleSelectChange('planning_session_type_id')}
+                options={sessionTypeOptions}
+                placeholder="Select session type"
+                isLoading={sessionTypesLoading}
+                error={formErrors.planning_session_type_id}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                value={form.status}
+                onChange={(e) => setForm((prev) => ({ ...prev, status: Number(e.target.value) as PlanningStatus }))}
+              >
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
 
         <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
           {selectedEntry && (
@@ -389,7 +414,7 @@ const PlanningSection: React.FC = () => {
     error: null,
     pagination: INITIAL_PAGINATION,
     filters: {
-      status: '',
+      status: 'all',
       class_id: '',
       class_room_id: '',
       teacher_id: '',
@@ -414,7 +439,17 @@ const PlanningSection: React.FC = () => {
       order: 'ASC',
     };
     const f = state.filters;
-    if (f.status) p.status = f.status;
+    if (f.status) {
+      if (typeof f.status === 'number') {
+        p.status = f.status;
+      } else if (f.status === 'all') {
+        // Don't filter by status - show all
+      } else if (f.status !== '') {
+        // String representation of number
+        const statusNum = Number(f.status);
+        if (!isNaN(statusNum)) p.status = statusNum as PlanningStatus;
+      }
+    }
     if (f.class_id) p.class_id = +f.class_id;
     if (f.class_room_id) p.class_room_id = +f.class_room_id;
     if (f.teacher_id) p.teacher_id = +f.teacher_id;
@@ -456,8 +491,13 @@ const PlanningSection: React.FC = () => {
   const { data: teachers, isLoading: teachersLoading } = useTeachers({ page: 1, limit: 100 } as any);
   const { data: rooms, isLoading: roomsLoading } = useClassRooms({ page: 1, limit: 100 } as any);
   const { data: specs, isLoading: specsLoading } = useSpecializations({ page: 1, limit: 100 } as any);
-  const { data: companies, isLoading: companiesLoading } = useCompanies({ page: 1, limit: 100 } as any);
-  const { data: periods, isLoading: periodsLoading } = useSchoolYearPeriods({ page: 1, limit: 100 } as any);
+  const { data: schoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 } as any);
+  // const { data: companies } = useCompanies({ page: 1, limit: 100 } as any); // Removed - company is auto-set from authenticated user
+  const { data: periods, isLoading: periodsLoading } = useSchoolYearPeriods({
+    page: 1,
+    limit: 100,
+    schoolYearId: form.school_year_id === '' ? undefined : Number(form.school_year_id),
+  } as any);
   const {
     data: sessionTypesResp,
     isLoading: sessionTypesLoading,
@@ -469,6 +509,15 @@ const PlanningSection: React.FC = () => {
     (data || [])
       .filter((i) => i?.status !== -2)
       .map((i) => ({ value: i.id, label: i[labelKey] || `#${i.id}` }));
+
+  // Create a map of class ID to class data for quick lookup
+  const classesMap = useMemo(() => {
+    const map = new Map<number, any>();
+    (classes?.data || []).forEach((cls: any) => {
+      map.set(cls.id, cls);
+    });
+    return map;
+  }, [classes]);
 
   const classOptions = useMemo(() => mapOptions(classes?.data || [], 'title'), [classes]);
   const teacherOptions = useMemo(
@@ -483,8 +532,9 @@ const PlanningSection: React.FC = () => {
   );
   const roomOptions = useMemo(() => mapOptions(rooms?.data || [], 'title'), [rooms]);
   const specializationOptions = useMemo(() => mapOptions(specs?.data || [], 'title'), [specs]);
-  const companyOptions = useMemo(() => mapOptions(companies?.data || [], 'title'), [companies]);
+  const yearOptions = useMemo(() => mapOptions(schoolYears?.data || [], 'title'), [schoolYears]);
   const periodOptions = useMemo(() => mapOptions(periods?.data || [], 'title'), [periods]);
+  // const companyOptions removed - company is auto-set from authenticated user
   const sessionTypeOptions = useMemo(
     () =>
       (sessionTypesResp?.data || []).map((type) => ({
@@ -507,9 +557,12 @@ const PlanningSection: React.FC = () => {
     },
     [periodLabelMap]
   );
-  const statusFilterOptions = useMemo(() => PLANNING_STATUS_OPTIONS.map((item) => ({ value: item.value, label: item.label })), []);
+  const statusFilterOptions = useMemo(() => [
+    { value: 'all', label: 'All statuses' },
+    ...PLANNING_STATUS_OPTIONS_FORM.map((item) => ({ value: String(item.value), label: item.label })),
+  ], []);
 
-  // 🧭 Filter by current week
+  // 🧭 Filter by current week (excluding deleted items with status -2)
   const weekEntries = useMemo(() => {
     const start = new Date(currentWeekStart);
     start.setHours(0, 0, 0, 0);
@@ -518,10 +571,14 @@ const PlanningSection: React.FC = () => {
     end.setDate(start.getDate() + 4);
     end.setHours(23, 59, 59, 999);
     const endISO = formatISODate(end);
-    return state.data.filter((e) => e.date_day >= startISO && e.date_day <= endISO);
+    return state.data.filter((e) => {
+      // Filter out deleted items (status -2)
+      if (typeof e.status === 'number' && e.status === -2) return false;
+      return e.date_day >= startISO && e.date_day <= endISO;
+    });
   }, [state.data, currentWeekStart]);
 
-  // 🧭 Filter by current month
+  // 🧭 Filter by current month (excluding deleted items with status -2)
   const monthEntries = useMemo(() => {
     const year = currentMonthStart.getFullYear();
     const month = currentMonthStart.getMonth();
@@ -529,7 +586,11 @@ const PlanningSection: React.FC = () => {
     const end = new Date(year, month + 1, 0);
     const startISO = formatISODate(start);
     const endISO = formatISODate(end);
-    return state.data.filter((e) => e.date_day >= startISO && e.date_day <= endISO);
+    return state.data.filter((e) => {
+      // Filter out deleted items (status -2)
+      if (typeof e.status === 'number' && e.status === -2) return false;
+      return e.date_day >= startISO && e.date_day <= endISO;
+    });
   }, [state.data, currentMonthStart]);
 
   // 🔁 Handlers
@@ -555,16 +616,16 @@ const PlanningSection: React.FC = () => {
   const handleSelectEntry = useCallback((entry: PlanningStudentEntry) => {
     setSelectedEntry(entry);
     setForm({
+      school_year_id: entry.school_year_id ?? '',
       period: entry.period ?? '',
       date_day: entry.date_day,
       hour_start: normalizeTimeFormat(entry.hour_start),
       hour_end: normalizeTimeFormat(entry.hour_end),
-      planning_session_type_id: entry.planning_session_type_id,
-      teacher_id: entry.teacher_id ?? '',
-      specialization_id: entry.specialization_id ?? '',
       class_id: entry.class_id ?? '',
+      specialization_id: entry.specialization_id ?? '',
+      teacher_id: entry.teacher_id ?? '',
       class_room_id: entry.class_room_id ?? '',
-      company_id: entry.company_id ?? '',
+      planning_session_type_id: entry.planning_session_type_id,
       status: entry.status ?? DEFAULT_PLANNING_STATUS,
     });
     setFormErrors({});
@@ -626,7 +687,7 @@ const PlanningSection: React.FC = () => {
         const result = await createSessionTypeMut.mutateAsync({
           ...values,
           coefficient: values.coefficient ?? undefined,
-          company_id: values.company_id ?? null,
+          // company_id is automatically set by the API from authenticated user
         });
         await refetchSessionTypes();
         if (result.status === 'active') {
@@ -658,16 +719,17 @@ const PlanningSection: React.FC = () => {
 
   const validateForm = () => {
     const e: Record<string, string> = {};
+    if (form.school_year_id === '') e.school_year_id = 'School year is required';
     if (!form.period) e.period = 'Period is required';
-    if (form.planning_session_type_id === '') e.planning_session_type_id = 'Session type is required';
     if (!form.date_day) e.date_day = 'Date is required';
     if (!form.hour_start) e.hour_start = 'Start time is required';
     if (!form.hour_end) e.hour_end = 'End time is required';
     if (form.hour_start >= form.hour_end) e.hour_end = 'End must be after start';
-    if (form.teacher_id === '') e.teacher_id = 'Teacher is required';
-    if (form.specialization_id === '') e.specialization_id = 'Specialization is required';
     if (form.class_id === '') e.class_id = 'Class is required';
+    if (form.specialization_id === '') e.specialization_id = 'Specialization is required';
+    if (form.teacher_id === '') e.teacher_id = 'Teacher is required';
     if (form.class_room_id === '') e.class_room_id = 'Classroom is required';
+    if (form.planning_session_type_id === '') e.planning_session_type_id = 'Session type is required';
     return e;
   };
 
@@ -690,7 +752,7 @@ const PlanningSection: React.FC = () => {
       class_id: +form.class_id,
       class_room_id: +form.class_room_id,
       planning_session_type_id: +form.planning_session_type_id,
-      company_id: form.company_id === '' ? undefined : +form.company_id,
+      school_year_id: form.school_year_id === '' ? undefined : +form.school_year_id,
       status: form.status,
     };
 
@@ -733,14 +795,28 @@ const PlanningSection: React.FC = () => {
   const isDeleting = deleteMut.isPending;
 
   const handleSelectChange = useCallback((name: keyof FormState) => (value: number | '' | string) => {
-    setForm((prev) => ({
-      ...prev,
-      [name]: value === '' ? '' : Number(value),
-    }));
+    setForm((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value === '' ? '' : Number(value),
+      };
+      // Auto-select specialization when class is selected
+      if (name === 'class_id' && value !== '') {
+        const selectedClass = classesMap.get(Number(value));
+        if (selectedClass?.specialization_id) {
+          updated.specialization_id = selectedClass.specialization_id;
+        }
+      }
+      // Clear period when school year changes
+      if (name === 'school_year_id') {
+        updated.period = '';
+      }
+      return updated;
+    });
     if (formErrors[name as string]) {
       setFormErrors((prevErrors) => ({ ...prevErrors, [name as string]: '' }));
     }
-  }, [formErrors]);
+  }, [formErrors, classesMap]);
 
   return (
     <div className="space-y-6">
@@ -817,10 +893,10 @@ const PlanningSection: React.FC = () => {
           <SearchSelect
             label="Status"
             value={state.filters.status}
-            onChange={handleFilterChange('status')}
+            onChange={(value) => handleFilterChange('status')(value === 'all' ? '' : value)}
             options={statusFilterOptions}
             placeholder="All statuses"
-            isClearable
+            isClearable={false}
           />
           <SearchSelect
             label="Class"
@@ -895,15 +971,15 @@ const PlanningSection: React.FC = () => {
             specializationOptions={specializationOptions}
             classOptions={classOptions}
             roomOptions={roomOptions}
-            companyOptions={companyOptions}
             periodOptions={periodOptions}
             sessionTypeOptions={sessionTypeOptions}
+            yearOptions={yearOptions}
             periodsLoading={periodsLoading}
             teachersLoading={teachersLoading}
             specsLoading={specsLoading}
             classesLoading={classesLoading}
             roomsLoading={roomsLoading}
-            companiesLoading={companiesLoading}
+            yearsLoading={yearsLoading}
             sessionTypesLoading={sessionTypesLoading}
             onOpenSessionTypeModal={handleOpenSessionTypeModal}
             isCreatingSessionType={createSessionTypeMut.isPending}
@@ -961,7 +1037,6 @@ const PlanningSection: React.FC = () => {
         onClose={handleCloseSessionTypeModal}
         onSubmit={handleCreateSessionType}
         isSubmitting={createSessionTypeMut.isPending}
-        companyOptions={companyOptions}
         serverError={sessionTypeModalError}
       />
     </div>

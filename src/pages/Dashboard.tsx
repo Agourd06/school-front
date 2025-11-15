@@ -1,5 +1,8 @@
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import { SchoolYearProvider, useSchoolYear } from '../context/SchoolYearContext';
+import { ProgramProvider, useProgram } from '../context/ProgramContext';
+import { SpecializationProvider, useSpecialization } from '../context/SpecializationContext';
 
 export type DashboardTab =
   | 'users'
@@ -85,10 +88,25 @@ const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC
   studentAttestations: StudentAttestationsSection,
 };
 
-const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
+const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab || 'users');
+  const { setNavigateToPeriods } = useSchoolYear();
+  const { setNavigateToSpecializations } = useProgram();
+  const { setNavigateToLevels } = useSpecialization();
 
   const SectionComponent = useMemo(() => sectionComponents[activeTab], [activeTab]);
+
+  useEffect(() => {
+    setNavigateToPeriods(() => {
+      setActiveTab('schoolYearPeriods');
+    });
+    setNavigateToSpecializations(() => {
+      setActiveTab('specializations');
+    });
+    setNavigateToLevels(() => {
+      setActiveTab('levels');
+    });
+  }, [setNavigateToPeriods, setNavigateToSpecializations, setNavigateToLevels]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -104,6 +122,18 @@ const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+const Dashboard: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
+  return (
+    <SchoolYearProvider>
+      <ProgramProvider>
+        <SpecializationProvider>
+          <DashboardContent initialTab={initialTab} />
+        </SpecializationProvider>
+      </ProgramProvider>
+    </SchoolYearProvider>
   );
 };
 

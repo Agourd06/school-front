@@ -1,4 +1,5 @@
 import api from './axios';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export type ClassRoom = {
   id: number;
@@ -26,7 +27,7 @@ export type GetAllClassRoomsParams = {
   page?: number;
   limit?: number;
   search?: string;
-  company_id?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
   status?: number;
 };
 
@@ -35,7 +36,7 @@ export type CreateClassRoomRequest = {
   title: string;
   capacity: number;
   status?: number;
-  company_id?: number;
+  company_id?: number; // Optional - backend sets it from authenticated user
 };
 
 export type UpdateClassRoomRequest = Partial<CreateClassRoomRequest>;
@@ -46,7 +47,7 @@ export const classRoomApi = {
     if (params.page) qp.append('page', params.page.toString());
     if (params.limit) qp.append('limit', params.limit.toString());
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
-    if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
+    // company_id is automatically filtered by backend from JWT token, no need to send it
     if (typeof params.status === 'number') qp.append('status', String(params.status));
     const qs = qp.toString();
     const url = qs ? `/class-rooms?${qs}` : '/class-rooms';
@@ -60,12 +61,16 @@ export const classRoomApi = {
   },
 
   async create(data: CreateClassRoomRequest): Promise<ClassRoom> {
-    const response = await api.post('/class-rooms', data);
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    const body = ensureCompanyId(data);
+    const response = await api.post('/class-rooms', body);
     return response.data;
   },
 
   async update(id: number, data: UpdateClassRoomRequest): Promise<ClassRoom> {
-    const response = await api.patch(`/class-rooms/${id}`, data);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const body = ensureCompanyId(data);
+    const response = await api.patch(`/class-rooms/${id}`, body);
     return response.data;
   },
 

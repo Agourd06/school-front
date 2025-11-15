@@ -1,4 +1,5 @@
 import api from './axios';
+import { getCompanyId } from '../utils/companyId';
 
 export interface SchoolYear {
   id: number;
@@ -6,6 +7,7 @@ export interface SchoolYear {
   start_date: string;
   end_date: string;
   status: number;
+  lifecycle_status?: 'planned' | 'ongoing' | 'completed';
   company?: {
     id: number;
     name: string;
@@ -37,6 +39,7 @@ export interface GetAllSchoolYearsParams {
   limit?: number;
   search?: string;
   status?: number;
+  lifecycle_status?: 'planned' | 'ongoing' | 'completed';
 }
 
 export interface CreateSchoolYearRequest {
@@ -44,7 +47,8 @@ export interface CreateSchoolYearRequest {
   start_date: string;
   end_date: string;
   status: number;
-  companyId: number;
+  companyId?: number; // Optional - backend sets it from authenticated user
+  lifecycle_status?: 'planned' | 'ongoing' | 'completed';
 }
 
 export interface UpdateSchoolYearRequest {
@@ -52,7 +56,8 @@ export interface UpdateSchoolYearRequest {
   start_date?: string;
   end_date?: string;
   status?: number;
-  companyId?: number;
+  companyId?: number; // Optional - backend sets it from authenticated user
+  lifecycle_status?: 'planned' | 'ongoing' | 'completed';
 }
 
 export const schoolYearApi = {
@@ -66,6 +71,7 @@ export const schoolYearApi = {
       queryParams.append('title', s);
     }
     if (params?.status !== undefined) queryParams.append('status', params.status.toString());
+    if (params?.lifecycle_status) queryParams.append('lifecycle_status', params.lifecycle_status);
 
     const qs = queryParams.toString();
     const url = qs ? `/school-years?${qs}` : '/school-years';
@@ -98,12 +104,24 @@ export const schoolYearApi = {
   },
 
   async create(data: CreateSchoolYearRequest) {
-    const response = await api.post('/school-years', data);
+    // Ensure companyId is set from authenticated user (backend will also set it, but we include it for consistency)
+    const companyId = getCompanyId();
+    const body = {
+      ...data,
+      companyId, // Backend uses camelCase for companyId
+    };
+    const response = await api.post('/school-years', body);
     return response.data;
   },
 
   async update(id: number, data: UpdateSchoolYearRequest) {
-    const response = await api.patch(`/school-years/${id}`, data);
+    // Ensure companyId is set from authenticated user (backend will verify it matches)
+    const companyId = getCompanyId();
+    const body = {
+      ...data,
+      companyId, // Backend uses camelCase for companyId
+    };
+    const response = await api.patch(`/school-years/${id}`, body);
     return response.data;
   },
 

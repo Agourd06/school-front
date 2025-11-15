@@ -11,6 +11,7 @@ import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
 import type { StudentDiplome } from '../../api/studentDiplome';
 import { STATUS_OPTIONS } from '../../constants/status';
+import { getFileUrl } from '../../utils/apiConfig';
 
 const EMPTY_META = {
   page: 1,
@@ -20,8 +21,6 @@ const EMPTY_META = {
   hasNext: false,
   hasPrevious: false,
 };
-
-const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
 
 const statusFilterOptions: SearchSelectOption[] = [
   { value: 'all', label: 'All statuses' },
@@ -295,14 +294,14 @@ const StudentDiplomesSection: React.FC = () => {
                       <div className="flex items-center gap-2">
                         {diplome.diplome_picture_1 && (
                           <img
-                            src={`${apiBase}${diplome.diplome_picture_1}`}
+                            src={getFileUrl(diplome.diplome_picture_1)}
                             alt="diplome 1"
                             className="h-10 w-10 rounded object-cover border"
                           />
                         )}
                         {diplome.diplome_picture_2 && (
                           <img
-                            src={`${apiBase}${diplome.diplome_picture_2}`}
+                            src={getFileUrl(diplome.diplome_picture_2)}
                             alt="diplome 2"
                             className="h-10 w-10 rounded object-cover border"
                           />

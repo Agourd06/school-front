@@ -1,6 +1,6 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
-import { DEFAULT_COMPANY_ID } from '../constants/status';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface MinimalStudent {
   id: number;
@@ -40,7 +40,7 @@ export interface ClassStudentAssignment {
 export interface CreateClassStudentRequest {
   class_id: number;
   student_id: number;
-  company_id?: number;
+  company_id?: number; // Optional - backend sets it from authenticated user
   status?: number;
   tri?: number;
 }
@@ -50,7 +50,7 @@ export type UpdateClassStudentRequest = Partial<CreateClassStudentRequest>;
 export interface GetClassStudentParams extends FilterParams {
   class_id?: number;
   student_id?: number;
-  company_id?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
 const toPaginated = (raw: any): PaginatedResponse<ClassStudentAssignment> => {
@@ -96,7 +96,7 @@ const buildQueryString = (params: GetClassStudentParams = {}): string => {
   if (params.status !== undefined && params.status !== null) qp.append('status', String(params.status));
   if (typeof params.class_id === 'number') qp.append('class_id', String(params.class_id));
   if (typeof params.student_id === 'number') qp.append('student_id', String(params.student_id));
-  if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
+  // company_id is automatically filtered by backend from JWT token, no need to send it
   const qs = qp.toString();
   return qs ? `?${qs}` : '';
 };
@@ -114,24 +114,24 @@ export const classStudentApi = {
   },
 
   async create(payload: CreateClassStudentRequest): Promise<ClassStudentAssignment> {
-    const body: CreateClassStudentRequest = {
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    const body = ensureCompanyId({
       status: 1,
       tri: 1,
-      company_id: DEFAULT_COMPANY_ID,
       ...payload,
-    };
+    });
 
-    if (body.tri === undefined || body.tri === null) body.tri = 1;
-    if (body.tri < 1) body.tri = 1;
-    if (body.status === undefined || body.status === null) body.status = 1;
-    if (body.company_id === undefined || body.company_id === null) body.company_id = DEFAULT_COMPANY_ID;
+    if (body.tri === undefined || body.tri === null) (body as any).tri = 1;
+    if ((body as any).tri < 1) (body as any).tri = 1;
+    if (body.status === undefined || body.status === null) (body as any).status = 1;
 
     const { data } = await api.post('/class-student', body);
     return data;
   },
 
   async update(id: number, payload: UpdateClassStudentRequest): Promise<ClassStudentAssignment> {
-    const body: UpdateClassStudentRequest = { ...payload };
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const body = ensureCompanyId(payload);
     const { data } = await api.patch(`/class-student/${id}`, body);
     return data;
   },

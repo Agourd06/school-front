@@ -1,6 +1,6 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
-import { DEFAULT_COMPANY_ID } from '../constants/status';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface Specialization {
   id: number;
@@ -20,7 +20,7 @@ export interface CreateSpecializationRequest {
   title: string;
   program_id: number;
   status?: number;
-  company_id?: number;
+  company_id?: number; // Optional - backend sets it from authenticated user
 }
 
 export type UpdateSpecializationRequest = Partial<CreateSpecializationRequest>;
@@ -58,7 +58,7 @@ const toPaginated = (raw: any): PaginatedResponse<Specialization> => {
 
 export interface GetSpecializationsParams extends FilterParams {
   program_id?: number;
-  company_id?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
 export const specializationApi = {
@@ -69,7 +69,7 @@ export const specializationApi = {
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
     if (params.status !== undefined && params.status !== null) qp.append('status', String(params.status));
     if (params.program_id) qp.append('program_id', String(params.program_id));
-    if (params.company_id) qp.append('company_id', String(params.company_id));
+    // company_id is automatically filtered by backend from JWT token, no need to send it
     const qs = qp.toString();
     const url = qs ? `/specializations?${qs}` : '/specializations';
     const response = await api.get(url);
@@ -82,22 +82,21 @@ export const specializationApi = {
   },
 
   async create(payload: CreateSpecializationRequest): Promise<Specialization> {
-    const body = {
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    // Backend will verify the program belongs to the same company
+    const body = ensureCompanyId({
       status: 1,
-      company_id: DEFAULT_COMPANY_ID,
       ...payload,
-    };
-    if (body.status === undefined || body.status === null) body.status = 1;
-    if (!body.company_id) body.company_id = DEFAULT_COMPANY_ID;
+    });
+    if (body.status === undefined || body.status === null) (body as any).status = 1;
     const { data } = await api.post('/specializations', body);
     return data;
   },
 
   async update(id: number, payload: UpdateSpecializationRequest): Promise<Specialization> {
-    const body = {
-      ...payload,
-    };
-    if (!('company_id' in body)) (body as any).company_id = DEFAULT_COMPANY_ID;
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    // If updating program_id, backend will verify the new program belongs to the same company
+    const body = ensureCompanyId(payload);
     const { data } = await api.patch(`/specializations/${id}`, body);
     return data;
   },

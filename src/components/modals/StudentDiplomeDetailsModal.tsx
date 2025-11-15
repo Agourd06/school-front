@@ -1,13 +1,12 @@
 import React from 'react';
 import BaseModal from './BaseModal';
+import { getFileUrl } from '../../utils/apiConfig';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   item: any;
 }
-
-const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
 
 const DetailRow: React.FC<{ label: string; value?: React.ReactNode }> = ({ label, value }) => (
   <div className="flex text-sm"><span className="w-32 text-gray-500">{label}</span><span className="text-gray-900">{value || '—'}</span></div>
@@ -30,10 +29,10 @@ const StudentDiplomeDetailsModal: React.FC<Props> = ({ isOpen, onClose, item }) 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {item.diplome_picture_1 && (
-            <img src={`${apiBase}${item.diplome_picture_1}`} alt="diplome 1" className="w-full max-h-[70vh] object-contain border rounded" />
+            <img src={getFileUrl(item.diplome_picture_1)} alt="diplome 1" className="w-full max-h-[70vh] object-contain border rounded" />
           )}
           {item.diplome_picture_2 && (
-            <img src={`${apiBase}${item.diplome_picture_2}`} alt="diplome 2" className="w-full max-h-[70vh] object-contain border rounded" />
+            <img src={getFileUrl(item.diplome_picture_2)} alt="diplome 2" className="w-full max-h-[70vh] object-contain border rounded" />
           )}
           {!item.diplome_picture_1 && !item.diplome_picture_2 && (
             <div className="text-sm text-gray-500">No images uploaded.</div>

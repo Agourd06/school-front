@@ -14,7 +14,7 @@ export interface StudentPaymentFormValues {
   date: string;
   mode: string;
   reference: string;
-  company_id: number | '';
+  // company_id is automatically set by the API from authenticated user
   status: StudentPaymentStatus;
 }
 
@@ -28,7 +28,7 @@ interface StudentPaymentModalProps {
   schoolYearOptions: SearchSelectOption[];
   levelOptions: SearchSelectOption[];
   levelPricingOptions: SearchSelectOption[];
-  companyOptions: SearchSelectOption[];
+  // companyOptions removed - company is auto-set from authenticated user
   modeOptions?: string[];
   serverError?: string | null;
 }
@@ -43,7 +43,6 @@ const DEFAULT_FORM: StudentPaymentFormValues = {
   date: '',
   mode: '',
   reference: '',
-  company_id: '',
   status: 2,
 };
 
@@ -64,7 +63,7 @@ const StudentPaymentModal: React.FC<StudentPaymentModalProps> = ({
   schoolYearOptions,
   levelOptions,
   levelPricingOptions,
-  companyOptions,
+  // companyOptions removed - company is auto-set from authenticated user
   modeOptions = ['Cash', 'Card', 'Transfer', 'Check'],
   serverError,
 }) => {
@@ -84,7 +83,6 @@ const StudentPaymentModal: React.FC<StudentPaymentModalProps> = ({
         date: initialData.date ?? '',
         mode: initialData.mode ?? '',
         reference: initialData.reference ?? '',
-        company_id: initialData.company_id ?? '',
         status: normalizedStatus,
       });
     } else {
@@ -159,7 +157,6 @@ const StudentPaymentModal: React.FC<StudentPaymentModalProps> = ({
   const schoolYearValue = useMemo(() => form.school_year_id ?? '', [form.school_year_id]);
   const levelValue = useMemo(() => form.level_id ?? '', [form.level_id]);
   const levelPricingValue = useMemo(() => form.level_pricing_id ?? '', [form.level_pricing_id]);
-  const companyValue = useMemo(() => form.company_id ?? '', [form.company_id]);
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -255,13 +252,6 @@ const StudentPaymentModal: React.FC<StudentPaymentModalProps> = ({
             options={filteredLevelPricingOptions}
             placeholder="All pricing plans"
             isClearable
-          />
-          <SearchSelect
-            label="Company (optional)"
-            value={companyValue}
-            onChange={handleSelectChange('company_id')}
-            options={companyOptions}
-            placeholder="Select company"
           />
         </div>
 

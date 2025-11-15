@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateSchoolYearPeriod, useUpdateSchoolYearPeriod } from '../../hooks/useSchoolYearPeriods';
-import { useSchoolYears } from '../../hooks/useSchoolYears';
+import { useSchoolYears, useSchoolYear } from '../../hooks/useSchoolYears';
 import type { GetAllSchoolYearsParams } from '../../api/schoolYear';
 import { validateRequired, validateDateOrder, validateSelectRequired } from './validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
@@ -10,22 +10,37 @@ interface SchoolYearPeriodModalProps {
   isOpen: boolean;
   onClose: () => void;
   period?: any | null;
+  initialSchoolYearId?: number;
 }
 
-const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, onClose, period }) => {
+const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, onClose, period, initialSchoolYearId }) => {
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [status, setStatus] = useState<number>(1);
   const [schoolYearId, setSchoolYearId] = useState<number | ''>('');
+  const [lifecycleStatus, setLifecycleStatus] = useState<'planned' | 'ongoing' | 'completed'>('planned');
 
   const params: GetAllSchoolYearsParams = useMemo(() => ({ limit: 100, page: 1 }), []);
   const { data: yearsData } = useSchoolYears(params);
+  const { data: selectedSchoolYear } = useSchoolYear(initialSchoolYearId || 0);
 
   const createMutation = useCreateSchoolYearPeriod();
   const updateMutation = useUpdateSchoolYearPeriod();
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const formatDateWithMonthDay = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const isSchoolYearLocked = !period && !!initialSchoolYearId;
 
   useEffect(() => {
     if (period) {
@@ -34,14 +49,16 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
       setEndDate(period.end_date || '');
       setStatus(typeof period.status === 'number' ? period.status : 1);
       setSchoolYearId(period.schoolYearId || period.schoolYear?.id || '');
+      setLifecycleStatus(period.lifecycle_status || 'planned');
     } else {
       setTitle('');
       setStartDate('');
       setEndDate('');
       setStatus(1);
-      setSchoolYearId('');
+      setSchoolYearId(initialSchoolYearId ?? '');
+      setLifecycleStatus('planned');
     }
-  }, [period, isOpen]);
+  }, [period, isOpen, initialSchoolYearId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +82,7 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
       start_date: startDate,
       end_date: endDate,
       status,
+      lifecycle_status: lifecycleStatus,
     };
 
     if (period?.id) {
@@ -78,6 +96,35 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={period ? 'Edit Period' : 'Add Period'}>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* School Year - moved to top */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">School Year</label>
+          {isSchoolYearLocked && selectedSchoolYear ? (
+            <div className="mt-1 p-3 bg-gray-50 border border-gray-300 rounded-md">
+              <div className="text-sm font-medium text-gray-900">{selectedSchoolYear.title}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {formatDateWithMonthDay(selectedSchoolYear.start_date)} - {formatDateWithMonthDay(selectedSchoolYear.end_date)}
+              </div>
+            </div>
+          ) : (
+            <select
+              className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                isSchoolYearLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+              }`}
+              value={schoolYearId}
+              onChange={(e) => setSchoolYearId(e.target.value ? Number(e.target.value) : '')}
+              disabled={isSchoolYearLocked}
+              required
+            >
+              <option value="">Select a school year</option>
+              {(yearsData?.data || []).map((y: any) => (
+                <option key={y.id} value={y.id}>{y.title}</option>
+              ))}
+            </select>
+          )}
+          {errors.schoolYearId && <p className="mt-1 text-sm text-red-600">{errors.schoolYearId}</p>}
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">Title</label>
           <input
@@ -127,19 +174,16 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({ isOpen, o
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">School Year</label>
+          <label className="block text-sm font-medium text-gray-700">Lifecycle Status</label>
           <select
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            value={schoolYearId}
-            onChange={(e) => setSchoolYearId(e.target.value ? Number(e.target.value) : '')}
-            required
+            value={lifecycleStatus}
+            onChange={(e) => setLifecycleStatus(e.target.value as 'planned' | 'ongoing' | 'completed')}
           >
-            <option value="">Select a school year</option>
-            {(yearsData?.data || []).map((y: any) => (
-              <option key={y.id} value={y.id}>{y.title}</option>
-            ))}
+            <option value="planned">Planned</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
           </select>
-          {errors.schoolYearId && <p className="mt-1 text-sm text-red-600">{errors.schoolYearId}</p>}
         </div>
 
         {(errors.start_date || errors.end_date || errors.date) && (

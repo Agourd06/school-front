@@ -4,6 +4,7 @@ import Pagination from '../Pagination';
 import { ProgramModal, DeleteModal, DescriptionModal } from '../modals';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import { useProgram } from '../../context/ProgramContext';
 
 const EMPTY_META = {
   page: 1,
@@ -39,6 +40,7 @@ const getDescriptionPreview = (input?: string) => {
 };
 
 const ProgramsSection: React.FC = () => {
+  const { setSelectedProgramId, navigateToSpecializations } = useProgram();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({ status: 'all', search: '' });
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -128,6 +130,18 @@ const ProgramsSection: React.FC = () => {
     const timeout = window.setTimeout(() => setAlert(null), 5000);
     return () => window.clearTimeout(timeout);
   }, [alert]);
+
+  const handleRowClick = (program: any, e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('td:last-child')) {
+      return;
+    }
+    setSelectedProgramId(program.id);
+    if (navigateToSpecializations) {
+      navigateToSpecializations();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -220,7 +234,11 @@ const ProgramsSection: React.FC = () => {
                   const statusValue = typeof program.status === 'number' ? program.status : 0;
                   const hasDescription = !!stripHtml(program.description ?? '');
                   return (
-                    <tr key={program.id} className="hover:bg-gray-50">
+                    <tr
+                      key={program.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={(e) => handleRowClick(program, e)}
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{program.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span
@@ -233,10 +251,30 @@ const ProgramsSection: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProgramId(program.id);
+                              if (navigateToSpecializations) {
+                                navigateToSpecializations();
+                              }
+                            }}
+                            className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                            title="View specializations"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Specializations
+                          </button>
                           {hasDescription && (
                             <button
                               type="button"
-                              onClick={() => openDescriptionModal(program)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDescriptionModal(program);
+                              }}
                               className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50"
                             >
                               Details
@@ -244,14 +282,20 @@ const ProgramsSection: React.FC = () => {
                           )}
                           <button
                             type="button"
-                            onClick={() => openEditModal(program)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(program);
+                            }}
                             className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                           >
                             Edit
                           </button>
                           <button
                             type="button"
-                            onClick={() => requestDelete(program)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              requestDelete(program);
+                            }}
                             className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
                           >
                             Delete

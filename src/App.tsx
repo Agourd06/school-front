@@ -41,22 +41,19 @@ const App: React.FC = () => {
         />
         <Route 
           path="/reset-password" 
-          element={<ResetPasswordPage />} 
+          element={user ? <Navigate to="/dashboard" /> : <ResetPasswordPage />} 
         />
         <Route 
           path="/dashboard" 
           element={user ? <Dashboard /> : <Navigate to="/auth" />} 
         />
         <Route 
-          path="/teachers" 
-          element={user ? <Dashboard initialTab="teachers" /> : <Navigate to="/auth" />} 
-        />
-        <Route 
-          path="/administrators" 
-          element={user ? <Dashboard initialTab="administrators" /> : <Navigate to="/auth" />} 
-        />
-        <Route 
           path="/" 
+          element={<Navigate to={user ? "/dashboard" : "/auth"} />} 
+        />
+        {/* Catch-all route for undefined paths */}
+        <Route 
+          path="*" 
           element={<Navigate to={user ? "/dashboard" : "/auth"} />} 
         />
         </Routes>

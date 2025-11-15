@@ -1,6 +1,6 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
-import { DEFAULT_COMPANY_ID } from '../constants/status';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface Program {
   id: number;
@@ -17,7 +17,7 @@ export interface CreateProgramRequest {
   title: string;
   description?: string;
   status?: number;
-  company_id?: number;
+  company_id?: number; // Optional - backend sets it from authenticated user
 }
 
 export type UpdateProgramRequest = Partial<CreateProgramRequest>;
@@ -72,22 +72,19 @@ export const programApi = {
   },
 
   async create(payload: CreateProgramRequest): Promise<Program> {
-    const body = {
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    const body = ensureCompanyId({
       status: 1,
-      company_id: DEFAULT_COMPANY_ID,
       ...payload,
-    };
-    if (body.status === undefined || body.status === null) body.status = 1;
-    if (!body.company_id) body.company_id = DEFAULT_COMPANY_ID;
+    });
+    if (body.status === undefined || body.status === null) (body as any).status = 1;
     const { data } = await api.post('/programs', body);
     return data;
   },
 
   async update(id: number, payload: UpdateProgramRequest): Promise<Program> {
-    const body = {
-      ...payload,
-    };
-    if (!('company_id' in body)) (body as any).company_id = DEFAULT_COMPANY_ID;
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const body = ensureCompanyId(payload);
     const { data } = await api.patch(`/programs/${id}`, body);
     return data;
   },

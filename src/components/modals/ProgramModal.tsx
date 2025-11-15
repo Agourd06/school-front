@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateProgram, useUpdateProgram } from '../../hooks/usePrograms';
-import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 
 interface ProgramModalProps {
@@ -64,7 +64,7 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
             title: form.title.trim(),
             description: descriptionToSave,
             status: form.status,
-            company_id: DEFAULT_COMPANY_ID,
+            // company_id is automatically set by the API from authenticated user
           },
         });
       } else {
@@ -72,7 +72,7 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
           title: form.title.trim(),
           description: descriptionToSave,
           status: form.status,
-          company_id: DEFAULT_COMPANY_ID,
+          // company_id is automatically set by the API from authenticated user
         });
       }
       onClose();

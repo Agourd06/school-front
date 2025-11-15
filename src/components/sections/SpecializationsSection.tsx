@@ -5,13 +5,15 @@ import {
   useUpdateSpecialization,
   useDeleteSpecialization,
 } from '../../hooks/useSpecializations';
-import { usePrograms } from '../../hooks/usePrograms';
+import { usePrograms, useProgram as useProgramById } from '../../hooks/usePrograms';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import SpecializationModal from '../modals/SpecializationModal';
 import DeleteModal from '../modals/DeleteModal';
 import type { Specialization } from '../../api/specialization';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import { useProgram } from '../../context/ProgramContext';
+import { useSpecialization as useSpecializationContext } from '../../context/SpecializationContext';
 
 const EMPTY_META = {
   page: 1,
@@ -45,6 +47,9 @@ const extractErrorMessage = (err: any): string => {
 };
 
 const SpecializationsSection: React.FC = () => {
+  const { selectedProgramId, clearSelectedProgram } = useProgram();
+  const { setSelectedSpecializationId, navigateToLevels } = useSpecializationContext();
+  const { data: selectedProgram } = useProgramById(selectedProgramId || 0);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
@@ -68,10 +73,10 @@ const SpecializationsSection: React.FC = () => {
           : filters.status !== ''
           ? Number(filters.status)
           : undefined,
-      program_id: filters.program ? Number(filters.program) : undefined,
+      program_id: selectedProgramId ? selectedProgramId : (filters.program ? Number(filters.program) : undefined),
       search: filters.search.trim() || undefined,
     }),
-    [filters, pagination]
+    [filters, pagination, selectedProgramId]
   );
 
   const {
@@ -161,6 +166,18 @@ const SpecializationsSection: React.FC = () => {
     return () => window.clearTimeout(timeout);
   }, [alert]);
 
+  const handleRowClick = (specialization: Specialization, e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('td:last-child')) {
+      return;
+    }
+    setSelectedSpecializationId(specialization.id);
+    if (navigateToLevels) {
+      navigateToLevels();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
@@ -168,6 +185,20 @@ const SpecializationsSection: React.FC = () => {
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Specializations</h1>
             <p className="text-sm text-gray-500">Manage specializations and their associated programs.</p>
+            {selectedProgramId && selectedProgram && (
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-gray-600">
+                  Program: <span className="font-medium text-gray-900">{selectedProgram.title}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={clearSelectedProgram}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Clear filter
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -267,7 +298,11 @@ const SpecializationsSection: React.FC = () => {
                   const statusValue = typeof spec.status === 'number' ? spec.status : 0;
                   const programTitle = spec.program?.title || `Program #${spec.program_id}`;
                   return (
-                    <tr key={spec.id} className="hover:bg-gray-50">
+                    <tr
+                      key={spec.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={(e) => handleRowClick(spec, e)}
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{spec.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{programTitle}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
@@ -283,14 +318,37 @@ const SpecializationsSection: React.FC = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() => openEditModal(spec)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedSpecializationId(spec.id);
+                              if (navigateToLevels) {
+                                navigateToLevels();
+                              }
+                            }}
+                            className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                            title="View levels"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Levels
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(spec);
+                            }}
                             className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                           >
                             Edit
                           </button>
                           <button
                             type="button"
-                            onClick={() => requestDelete(spec)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              requestDelete(spec);
+                            }}
                             className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
                           >
                             Delete
@@ -321,6 +379,7 @@ const SpecializationsSection: React.FC = () => {
         isOpen={modalOpen}
         onClose={handleModalClose}
         specialization={editingSpecialization ?? undefined}
+        initialProgramId={selectedProgramId ?? undefined}
       />
 
       <DeleteModal

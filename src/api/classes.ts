@@ -1,6 +1,6 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
-import { DEFAULT_COMPANY_ID } from '../constants/status';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface ClassEntity {
   id: number;
@@ -26,18 +26,18 @@ export interface CreateClassRequest {
   title: string;
   description?: string;
   status?: number;
-  company_id?: number;
+  company_id?: number; // Optional - backend sets it from authenticated user
   program_id: number;
   specialization_id: number;
   level_id: number;
   school_year_id: number;
-  school_year_period_id: number;
+  school_year_period_id?: number;
 }
 
 export type UpdateClassRequest = Partial<CreateClassRequest>;
 
 export interface GetClassesParams extends FilterParams {
-  company_id?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
   program_id?: number;
   specialization_id?: number;
   level_id?: number;
@@ -84,7 +84,7 @@ export const classesApi = {
     if (params.limit) qp.append('limit', String(params.limit));
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
     if (params.status !== undefined && params.status !== null) qp.append('status', String(params.status));
-    if (params.company_id) qp.append('company_id', String(params.company_id));
+    // company_id is automatically filtered by backend from JWT token, no need to send it
     if (params.program_id) qp.append('program_id', String(params.program_id));
     if (params.specialization_id) qp.append('specialization_id', String(params.specialization_id));
     if (params.level_id) qp.append('level_id', String(params.level_id));
@@ -103,22 +103,19 @@ export const classesApi = {
   },
 
   async create(payload: CreateClassRequest): Promise<ClassEntity> {
-    const body = {
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    const body = ensureCompanyId({
       status: 1,
-      company_id: DEFAULT_COMPANY_ID,
       ...payload,
-    };
-    if (body.status === undefined || body.status === null) body.status = 1;
-    if (!body.company_id) body.company_id = DEFAULT_COMPANY_ID;
+    });
+    if (body.status === undefined || body.status === null) (body as any).status = 1;
     const { data } = await api.post('/classes', body);
     return data;
   },
 
   async update(id: number, payload: UpdateClassRequest): Promise<ClassEntity> {
-    const body: UpdateClassRequest = {
-      ...payload,
-    };
-    if (!('company_id' in body)) (body as any).company_id = DEFAULT_COMPANY_ID;
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const body = ensureCompanyId(payload);
     const { data } = await api.patch(`/classes/${id}`, body);
     return data;
   },

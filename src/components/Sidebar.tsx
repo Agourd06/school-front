@@ -104,7 +104,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         { tab: 'classes', label: 'Classes' },
         { tab: 'classStudents', label: 'Class Students' },
         { tab: 'classRooms', label: 'Class Rooms' },
-        // { tab: 'planning', label: 'Planning' },
+        { tab: 'planning', label: 'Planning' },
         { tab: 'planningSessionTypes', label: 'Planning Session Types' },
       ],
     },
@@ -112,7 +112,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       title: 'School Structure',
       items: [
         { tab: 'schoolYears', label: 'School Years' },
-        { tab: 'schoolYearPeriods', label: 'School Year Periods' },
       ],
     },
     {

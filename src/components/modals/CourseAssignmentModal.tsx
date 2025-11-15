@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import BaseModal from './BaseModal';
+import DescriptionModal from './DescriptionModal';
 import { useCourseAssignments } from '../../hooks/useCourseAssignments';
 import { useAddCourseToModule, useRemoveCourseFromModule, useReorderCourseInModule } from '../../hooks/useIndividualAssignments';
+import { useCourse } from '../../hooks/useCourses';
 import type { Course as CourseEntity } from '../../api/course';
 
 // Import DropResult type separately
@@ -30,12 +32,17 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   const [unassignedCourses, setUnassignedCourses] = useState<AssignmentCourse[]>([]);
   const [isMutationLoading, setIsMutationLoading] = useState(false);
   const [loadingItemId, setLoadingItemId] = useState<number | null>(null);
+  const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
 
   // React Query hooks
   const { data: courseAssignments, isLoading, error, refetch: refetchAssignments } = useCourseAssignments(moduleId);
   const addCourseToModule = useAddCourseToModule();
   const removeCourseFromModule = useRemoveCourseFromModule();
   const reorderCourseInModule = useReorderCourseInModule();
+  
+  // Track which course's details to show
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const { data: selectedCourse } = useCourse(selectedCourseId || 0);
 
   // Check if any mutation is pending
   const isAnyMutationPending = addCourseToModule.isPending || removeCourseFromModule.isPending || reorderCourseInModule.isPending;
@@ -213,9 +220,26 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
     onClose();
   };
 
+  // Handle showing course details
+  const handleShowCourseDetails = (e: React.MouseEvent, courseId: number) => {
+    e.stopPropagation();
+    setSelectedCourseId(courseId);
+  };
+
+  // Show description modal when course data is loaded
+  useEffect(() => {
+    if (selectedCourse && selectedCourseId) {
+      setDescriptionModal({
+        title: selectedCourse.title || `Course #${selectedCourseId}`,
+        description: selectedCourse.description ?? '',
+      });
+      setSelectedCourseId(null); // Reset after showing
+    }
+  }, [selectedCourse, selectedCourseId]);
+
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} title={`Manage Courses for ${moduleTitle}`}>
+    <BaseModal isOpen={isOpen} onClose={handleClose} title={`Manage Courses for Module ( ${moduleTitle} )`}>
       <div className="p-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -287,7 +311,13 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                                     </div>
                                   )}
                                   <div className="flex items-center">
-                                    <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg 
+                                      className="h-4 w-4 text-gray-400 mr-2 cursor-pointer hover:text-blue-600" 
+                                      fill="none" 
+                                      stroke="currentColor" 
+                                      viewBox="0 0 24 24"
+                                      onClick={(e) => handleShowCourseDetails(e, course.id)}
+                                    >
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                     </svg>
                                     <span className="text-sm font-medium text-gray-900">{course.title}</span>
@@ -345,7 +375,13 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                                   )}
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center">
-                                      <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <svg 
+                                        className="h-4 w-4 text-gray-400 mr-2 cursor-pointer hover:text-blue-600" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                        onClick={(e) => handleShowCourseDetails(e, course.id)}
+                                      >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                       </svg>
                                       <div>
@@ -380,6 +416,19 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
           </DragDropContext>
         )}
       </div>
+
+      {descriptionModal && (
+        <DescriptionModal
+          isOpen
+          onClose={() => {
+            setDescriptionModal(null);
+            setSelectedCourseId(null);
+          }}
+          title={descriptionModal.title}
+          description={descriptionModal.description}
+          type="course"
+        />
+      )}
     </BaseModal>
   );
 };

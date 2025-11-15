@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateClassRoom, useUpdateClassRoom } from '../../hooks/useClassRooms';
-import { useCompanies } from '../../hooks/useCompanies';
 import { validateRequired, validatePositiveNumber } from './validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 
@@ -12,13 +11,11 @@ interface ClassRoomModalProps {
 }
 
 const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classRoom }) => {
-  const [form, setForm] = useState({ code: '', title: '', capacity: '', company_id: '' as number | '', status: 1 as number });
+  const [form, setForm] = useState({ code: '', title: '', capacity: '', status: 1 as number });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createMutation = useCreateClassRoom();
   const updateMutation = useUpdateClassRoom();
-  const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any);
-  const companies = useMemo(() => ((companiesResp as any)?.data ?? []) as any[], [companiesResp]);
 
   const isEditing = !!classRoom;
 
@@ -28,11 +25,10 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
         code: classRoom.code || '',
         title: classRoom.title || '',
         capacity: classRoom.capacity != null ? String(classRoom.capacity) : '',
-        company_id: classRoom.company_id ?? '',
         status: typeof classRoom.status === 'number' ? classRoom.status : 1,
       });
     } else {
-      setForm({ code: '', title: '', capacity: '', company_id: '', status: 1 });
+      setForm({ code: '', title: '', capacity: '', status: 1 });
     }
     setErrors({});
   }, [classRoom, isOpen]);
@@ -41,11 +37,9 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
     const { name, value } = e.target;
     setForm(prev => ({
       ...prev,
-      [name]: name === 'company_id'
-        ? (value ? Number(value) : '')
-        : name === 'status'
-          ? Number(value)
-          : value,
+      [name]: name === 'status'
+        ? Number(value)
+        : value,
     }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -69,7 +63,7 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
       code: form.code,
       title: form.title,
       capacity: Number(form.capacity || 0),
-      ...(form.company_id !== '' ? { company_id: Number(form.company_id) } : {}),
+      // company_id is automatically set by the API from authenticated user
       status: Number(form.status),
     };
 
@@ -130,21 +124,6 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({ isOpen, onClose, classR
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.capacity ? 'border-red-300' : 'border-gray-300'}`}
           />
           {errors.capacity && <p className="mt-1 text-sm text-red-600">{errors.capacity}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Company (optional)</label>
-          <select
-            name="company_id"
-            value={form.company_id}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          >
-            <option value="">No company</option>
-            {companies.map((c: any) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

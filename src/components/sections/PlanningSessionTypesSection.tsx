@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import type {
   PlanningSessionType,
   PlanningSessionTypeStatus,
-  PlanningSessionTypeCompany,
 } from '../../api/planningSessionType';
 import {
   usePlanningSessionTypes,
@@ -10,7 +9,6 @@ import {
   useUpdatePlanningSessionType,
   useDeletePlanningSessionType,
 } from '../../hooks/usePlanningSessionTypes';
-import { useCompanies } from '../../hooks/useCompanies';
 import PlanningSessionTypeModal, {
   type PlanningSessionTypeFormValues,
 } from '../modals/PlanningSessionTypeModal';
@@ -47,12 +45,6 @@ const extractErrorMessage = (err: any): string => {
   return 'Unexpected error';
 };
 
-const formatCompany = (company?: PlanningSessionTypeCompany | null, company_id?: number | null) => {
-  if (company) return company.name;
-  if (company_id) return `Company #${company_id}`;
-  return '—';
-};
-
 const PlanningSessionTypesSection: React.FC = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [statusFilter, setStatusFilter] = useState<'all' | PlanningSessionTypeStatus>('all');
@@ -61,16 +53,6 @@ const PlanningSessionTypesSection: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<PlanningSessionType | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
-
-  const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any);
-  const companyOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (companiesResp?.data || []).map((company) => ({
-        value: company.id,
-        label: company.name || `Company #${company.id}`,
-      })),
-    [companiesResp]
-  );
 
   const { data, isLoading, error, refetch } = usePlanningSessionTypes({
     page: pagination.page,
@@ -113,7 +95,7 @@ const PlanningSessionTypesSection: React.FC = () => {
           data: {
             ...values,
             coefficient: values.coefficient ?? undefined,
-            company_id: values.company_id ?? null,
+            // company_id is automatically set by the API from authenticated user
           },
         });
         setAlert({ type: 'success', message: 'Planning session type updated successfully.' });
@@ -121,7 +103,7 @@ const PlanningSessionTypesSection: React.FC = () => {
         await createMut.mutateAsync({
           ...values,
           coefficient: values.coefficient ?? undefined,
-          company_id: values.company_id ?? null,
+          // company_id is automatically set by the API from authenticated user
         });
         setAlert({ type: 'success', message: 'Planning session type created successfully.' });
       }
@@ -225,9 +207,6 @@ const PlanningSessionTypesSection: React.FC = () => {
                   Coefficient
                 </th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Company
-                </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
                 </th>
                 <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -265,7 +244,6 @@ const PlanningSessionTypesSection: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {type.coefficient === null || type.coefficient === undefined ? '—' : Number(type.coefficient).toFixed(2)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{formatCompany(type.company, type.company_id)}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles[type.status]}`}>
                         {type.status === 'active' ? 'Active' : 'Inactive'}
@@ -314,7 +292,6 @@ const PlanningSessionTypesSection: React.FC = () => {
         initialData={selectedType ?? undefined}
         onSubmit={handleSubmit}
         isSubmitting={createMut.isPending || updateMut.isPending}
-        companyOptions={companyOptions}
         serverError={modalError}
       />
 

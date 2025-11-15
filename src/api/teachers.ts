@@ -1,4 +1,5 @@
 import api from './axios';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export type Teacher = {
   id: number;
@@ -46,7 +47,7 @@ export type GetAllTeachersParams = {
   page?: number;
   limit?: number;
   search?: string;
-  company_id?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
   class_room_id?: number;
   status?: number;
 };
@@ -60,7 +61,7 @@ export const teachersApi = {
     if (params.page) qp.append('page', String(params.page));
     if (params.limit) qp.append('limit', String(params.limit));
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
-    if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
+    // company_id is automatically filtered by backend from JWT token, no need to send it
     if (typeof params.class_room_id === 'number') qp.append('class_room_id', String(params.class_room_id));
     if (typeof params.status === 'number') qp.append('status', String(params.status));
     const qs = qp.toString();
@@ -75,12 +76,18 @@ export const teachersApi = {
   },
 
   async create(data: CreateTeacherRequest | FormData): Promise<Teacher> {
-    const response = await api.post('/teachers', data);
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    // Backend will verify class room belongs to the same company (if provided)
+    const payload = ensureCompanyId(data);
+    const response = await api.post('/teachers', payload);
     return response.data;
   },
 
   async update(id: number, data: UpdateTeacherRequest | FormData): Promise<Teacher> {
-    const response = await api.patch(`/teachers/${id}`, data);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    // If updating class_room_id, backend will verify the class room belongs to the same company
+    const payload = ensureCompanyId(data);
+    const response = await api.patch(`/teachers/${id}`, payload);
     return response.data;
   },
 

@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   useSchoolYearPeriods,
-  useCreateSchoolYearPeriod,
-  useUpdateSchoolYearPeriod,
+ 
   useDeleteSchoolYearPeriod,
 } from '../../hooks/useSchoolYearPeriods';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
@@ -11,6 +10,8 @@ import SchoolYearPeriodModal from '../modals/SchoolYearPeriodModal';
 import DeleteModal from '../modals/DeleteModal';
 import type { SchoolYearPeriod } from '../../api/schoolYearPeriod';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import { useSchoolYear } from '../../context/SchoolYearContext';
+import { useSchoolYear as useSchoolYearById } from '../../hooks/useSchoolYears';
 
 const EMPTY_META = {
   page: 1,
@@ -25,6 +26,19 @@ const statusFilterOptions: SearchSelectOption[] = [
   { value: 'all', label: 'All statuses' },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
+
+const lifecycleStatusFilterOptions: SearchSelectOption[] = [
+  { value: 'all', label: 'All lifecycle statuses' },
+  { value: 'planned', label: 'Planned' },
+  { value: 'ongoing', label: 'Ongoing' },
+  { value: 'completed', label: 'Completed' },
+];
+
+const lifecycleStatusStyles: Record<string, string> = {
+  planned: 'bg-blue-100 text-blue-800',
+  ongoing: 'bg-yellow-100 text-yellow-800',
+  completed: 'bg-green-100 text-green-800',
+};
 
 const statusStyles: Record<number, string> = {
   2: 'bg-yellow-100 text-yellow-800',
@@ -44,9 +58,12 @@ const extractErrorMessage = (err: any): string => {
 };
 
 const SchoolYearPeriodsSection: React.FC = () => {
+  const { selectedSchoolYearId } = useSchoolYear();
+  const { data: selectedSchoolYear } = useSchoolYearById(selectedSchoolYearId || 0);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
+    lifecycle_status: 'all',
     search: '',
   });
 
@@ -65,9 +82,12 @@ const SchoolYearPeriodsSection: React.FC = () => {
           : filters.status !== ''
           ? Number(filters.status)
           : undefined,
+      lifecycle_status:
+        filters.lifecycle_status === 'all' ? undefined : (filters.lifecycle_status as 'planned' | 'ongoing' | 'completed' | undefined),
       search: filters.search.trim() || undefined,
+      schoolYearId: selectedSchoolYearId ?? undefined,
     }),
-    [filters, pagination]
+    [filters, pagination, selectedSchoolYearId]
   );
 
   const {
@@ -150,6 +170,16 @@ const SchoolYearPeriodsSection: React.FC = () => {
     }
   };
 
+  const formatDateWithMonthDay = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
@@ -157,19 +187,40 @@ const SchoolYearPeriodsSection: React.FC = () => {
           <div>
             <h1 className="text-xl font-semibold text-gray-900">School Year Periods</h1>
             <p className="text-sm text-gray-500">Manage school year periods and their date ranges.</p>
+            {selectedSchoolYearId && selectedSchoolYear && (
+              <div className="mt-2">
+                <span className="text-sm text-gray-600">
+                  School Year: <span className="font-medium text-gray-900">{selectedSchoolYear.title}</span>
+                  {selectedSchoolYear.start_date && selectedSchoolYear.end_date && (
+                    <span className="text-xs text-gray-500 ml-2">
+                      ({formatDateWithMonthDay(selectedSchoolYear.start_date)} - {formatDateWithMonthDay(selectedSchoolYear.end_date)})
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+            {!selectedSchoolYearId && (
+              <div className="mt-2 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>No school year selected.</strong> Please select a school year from the School Years section to view and manage its periods.
+                </p>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={openCreateModal}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Period
-            </button>
-          </div>
+          {selectedSchoolYearId && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={openCreateModal}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Period
+              </button>
+            </div>
+          )}
         </div>
         {alert && (
           <div
@@ -189,29 +240,38 @@ const SchoolYearPeriodsSection: React.FC = () => {
         )}
       </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <SearchSelect
-            label="Status"
-            value={filters.status}
-            onChange={handleFilterChange('status')}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Search</label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder="Search by period or year title..."
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      {selectedSchoolYearId && (
+        <>
+          <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <SearchSelect
+                label="Status"
+                value={filters.status}
+                onChange={handleFilterChange('status')}
+                options={statusFilterOptions}
+                isClearable={false}
+              />
+              <SearchSelect
+                label="Lifecycle Status"
+                value={filters.lifecycle_status}
+                onChange={handleFilterChange('lifecycle_status')}
+                options={lifecycleStatusFilterOptions}
+                isClearable={false}
+              />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Search</label>
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={handleSearchChange}
+                  placeholder="Search by period or year title..."
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -231,6 +291,9 @@ const SchoolYearPeriodsSection: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Lifecycle Status
+                </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
@@ -239,13 +302,13 @@ const SchoolYearPeriodsSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
                     Loading periods…
                   </td>
                 </tr>
               ) : periods.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
                     No periods found.
                   </td>
                 </tr>
@@ -268,6 +331,15 @@ const SchoolYearPeriodsSection: React.FC = () => {
                           }`}
                         >
                           {STATUS_VALUE_LABEL[statusValue] ?? `Status ${statusValue}`}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
+                            lifecycleStatusStyles[period.lifecycle_status || 'planned'] ?? 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {period.lifecycle_status || 'planned'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
@@ -306,9 +378,18 @@ const SchoolYearPeriodsSection: React.FC = () => {
           onPageSizeChange={(limit) => setPagination({ page: 1, limit })}
           isLoading={isLoading}
         />
-      </div>
+          </div>
+        </>
+      )}
 
-      <SchoolYearPeriodModal isOpen={modalOpen} onClose={handleModalClose} period={editingPeriod ?? undefined} />
+      {selectedSchoolYearId && (
+        <SchoolYearPeriodModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        period={editingPeriod ?? undefined}
+          initialSchoolYearId={selectedSchoolYearId ?? undefined}
+        />
+      )}
 
       <DeleteModal
         isOpen={!!deleteTarget}

@@ -37,6 +37,9 @@ export interface CreateStudentReportDetailPayload {
   course_id: number;
   remarks?: string | null;
   status?: StudentReportDetailStatus;
+  // Note: This entity doesn't have a direct company_id column
+  // Backend filters by course.company_id from the authenticated user's JWT
+  // Backend verifies student report (via student.company_id), teacher, and course all belong to the same company
 }
 
 export type UpdateStudentReportDetailPayload = Partial<CreateStudentReportDetailPayload>;
@@ -46,6 +49,7 @@ export interface GetStudentReportDetailsParams extends PaginationParams {
   teacher_id?: number;
   course_id?: number;
   status?: StudentReportDetailStatus;
+  // company_id is automatically filtered by backend from JWT (via course.company_id), no need to send it
 }
 
 const toPaginated = (raw: any): PaginatedResponse<StudentReportDetail> => {

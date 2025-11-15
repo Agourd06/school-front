@@ -25,7 +25,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
     nationality: '',
     picture: '',
     status: 1 as number,
-    company_id: '' as number | '',
+    // company_id is automatically set by the API from authenticated user
     class_room_id: '' as number | '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -52,12 +52,11 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
         nationality: student.nationality || '',
         picture: student.picture || '',
         status: typeof student.status === 'number' ? student.status : 1,
-        company_id: student.company_id ?? '',
         class_room_id: student.class_room_id ?? '',
       });
     } else {
       setForm({
-        gender: '', first_name: '', last_name: '', birthday: '', email: '', phone: '', address: '', city: '', country: '', nationality: '', picture: '', status: 1, company_id: '', class_room_id: ''
+        gender: '', first_name: '', last_name: '', birthday: '', email: '', phone: '', address: '', city: '', country: '', nationality: '', picture: '', status: 1, class_room_id: ''
       });
     }
     setErrors({});
@@ -67,7 +66,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
     const { name, value } = e.target;
     setForm(prev => ({
       ...prev,
-      [name]: (name === 'company_id' || name === 'class_room_id')
+      [name]: (name === 'class_room_id')
         ? (value ? Number(value) : '')
         : name === 'status'
           ? Number(value)
@@ -115,7 +114,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
     if (form.city) formData.append('city', form.city);
     if (form.country) formData.append('country', form.country);
     if (form.nationality) formData.append('nationality', form.nationality);
-    formData.append('company_id', '1');
+    // company_id is automatically set by the API from authenticated user
     if (form.status != null) formData.append('status', String(form.status));
     if (form.class_room_id !== '') formData.append('class_room_id', String(form.class_room_id));
     if (pictureFile instanceof File) formData.append('picture', pictureFile, pictureFile.name);

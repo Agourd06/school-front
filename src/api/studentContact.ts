@@ -1,4 +1,5 @@
 import api from './axios';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface StudentContact {
   id: number;
@@ -28,7 +29,7 @@ export interface CreateStudentContactRequest {
   country?: string;
   student_id?: number;
   studentlinktypeId?: number | string;
-  company_id?: number;
+  company_id?: number; // Optional - backend sets it from authenticated user
   status?: number; // -2,-1,0,1,2
 }
 
@@ -40,6 +41,7 @@ export interface GetAllStudentContactParams {
   search?: string;
   studentlinktypeId?: number | string;
   status?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
 export const studentContactApi = {
@@ -52,11 +54,17 @@ export const studentContactApi = {
     return data;
   },
   async create(payload: CreateStudentContactRequest): Promise<StudentContact> {
-    const { data } = await api.post('/student-contact', payload);
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    // Backend will verify the student belongs to the same company
+    const body = ensureCompanyId(payload);
+    const { data } = await api.post('/student-contact', body);
     return data;
   },
   async update(id: number, payload: UpdateStudentContactRequest): Promise<StudentContact> {
-    const { data } = await api.patch(`/student-contact/${id}`, payload);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    // If updating student_id, backend will verify the new student belongs to the same company
+    const body = ensureCompanyId(payload);
+    const { data } = await api.patch(`/student-contact/${id}`, body);
     return data;
   },
   async delete(id: number): Promise<void> {

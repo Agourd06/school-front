@@ -7,7 +7,7 @@ import {
 } from '../../hooks/useStudentPresence';
 import { useStudents } from '../../hooks/useStudents';
 import { usePlanningStudents } from '../../hooks/usePlanningStudents';
-import { useCompanies } from '../../hooks/useCompanies';
+// import { useCompanies } from '../../hooks/useCompanies'; // Removed - company is auto-set from authenticated user
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import StudentPresenceModal, { type StudentPresenceFormValues } from '../modals/StudentPresenceModal';
@@ -133,7 +133,7 @@ const StudentPresenceSection: React.FC = () => {
 
   const { data: studentsResp } = useStudents({ page: 1, limit: 100 } as any);
   const { data: planningResp } = usePlanningStudents({ page: 1, limit: 100 } as any);
-  const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any);
+  // const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any); // Removed - company is auto-set from authenticated user
 
   const studentOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -162,14 +162,7 @@ const StudentPresenceSection: React.FC = () => {
     [planningResp]
   );
 
-  const companyOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (companiesResp?.data || []).map((company) => ({
-        value: company.id,
-        label: company.name || `Company #${company.id}`,
-      })),
-    [companiesResp]
-  );
+  // const companyOptions removed - company is auto-set from authenticated user
 
   const openCreatePresence = () => {
     setEditingPresence(null);
@@ -202,13 +195,13 @@ const StudentPresenceSection: React.FC = () => {
 
     const noteValue = values.note.trim() === '' ? -1 : Number(values.note);
 
+    // company_id is automatically set by the API from authenticated user
     const payload = {
       student_planning_id: Number(values.student_planning_id),
       student_id: Number(values.student_id),
       presence: values.presence,
       note: noteValue,
       remarks: values.remarks || undefined,
-      company_id: values.company_id === '' ? undefined : Number(values.company_id),
       status: values.status,
     };
 
@@ -513,7 +506,7 @@ const StudentPresenceSection: React.FC = () => {
         isSubmitting={createPresenceMut.isPending || updatePresenceMut.isPending}
         planningOptions={planningOptions}
         studentOptions={studentOptions}
-        companyOptions={companyOptions}
+        // companyOptions removed - company is auto-set from authenticated user
         serverError={modalError}
       />
 

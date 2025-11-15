@@ -1,13 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
-import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import type { PlanningSessionType, PlanningSessionTypeStatus } from '../../api/planningSessionType';
 
 export interface PlanningSessionTypeFormValues {
   title: string;
   type: string;
   coefficient?: number | null;
-  company_id?: number | null;
+  // company_id is automatically set by the API from authenticated user
   status: PlanningSessionTypeStatus;
 }
 
@@ -17,7 +16,7 @@ interface PlanningSessionTypeModalProps {
   initialData?: PlanningSessionType | null;
   onSubmit: (values: PlanningSessionTypeFormValues) => Promise<void>;
   isSubmitting?: boolean;
-  companyOptions: SearchSelectOption[];
+  // companyOptions removed - company is auto-set from authenticated user
   serverError?: string | null;
 }
 
@@ -25,7 +24,6 @@ const DEFAULT_FORM: PlanningSessionTypeFormValues = {
   title: '',
   type: '',
   coefficient: null,
-  company_id: null,
   status: 'active',
 };
 
@@ -40,7 +38,6 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
   initialData,
   onSubmit,
   isSubmitting,
-  companyOptions,
   serverError,
 }) => {
   const [form, setForm] = useState<PlanningSessionTypeFormValues>(DEFAULT_FORM);
@@ -55,7 +52,6 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
           initialData.coefficient === undefined || initialData.coefficient === null
             ? null
             : Number(initialData.coefficient),
-        company_id: initialData.company_id ?? null,
         status: initialData.status ?? 'active',
       });
     } else {
@@ -64,10 +60,6 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
     setErrors({});
   }, [initialData, isOpen]);
 
-  const selectedCompanyOption = useMemo(() => {
-    if (form.company_id === null || form.company_id === undefined) return '';
-    return form.company_id;
-  }, [form.company_id]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -113,7 +105,7 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
           form.coefficient === null || form.coefficient === undefined || Number.isNaN(Number(form.coefficient))
             ? null
             : Number(form.coefficient),
-        company_id: form.company_id ?? null,
+        // company_id is automatically set by the API from authenticated user
       });
       onClose();
     } catch (err) {
@@ -189,15 +181,6 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
             </select>
           </div>
         </div>
-
-        <SearchSelect
-          label="Company"
-          value={selectedCompanyOption ?? ''}
-          onChange={(value) => handleChange('company_id')(value === '' ? null : Number(value))}
-          options={companyOptions}
-          placeholder="Optional company"
-          isClearable
-        />
 
         {serverError && (
           <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

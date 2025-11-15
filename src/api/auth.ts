@@ -5,6 +5,12 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface Company {
+  id: number;
+  name: string;
+  email?: string | null;
+}
+
 export interface LoginResponse {
   token: string;
   user?: {
@@ -12,6 +18,8 @@ export interface LoginResponse {
     email: string;
     username: string;
     role: string;
+    company_id?: number | null;
+    company?: Company | null;
   };
 }
 

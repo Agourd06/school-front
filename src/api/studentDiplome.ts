@@ -1,4 +1,5 @@
 import api from './axios';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface StudentDiplome {
   id: number;
@@ -26,7 +27,7 @@ export interface CreateStudentDiplomeRequest {
   student_id: number | string;
   diplome_picture_1?: File | null;
   diplome_picture_2?: File | null;
-  company_id?: number | string;
+  company_id?: number | string; // Optional - backend sets it from authenticated user
   status?: number | string; // -2,-1,0,1,2
 }
 
@@ -39,6 +40,7 @@ export interface GetAllStudentDiplomeParams {
   student_id?: number | string;
   annee?: number | string;
   status?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
 const buildFormData = (payload: Partial<CreateStudentDiplomeRequest>) => {
@@ -64,12 +66,18 @@ export const studentDiplomeApi = {
     return data;
   },
   async create(payload: CreateStudentDiplomeRequest): Promise<StudentDiplome> {
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    // Backend will verify the student belongs to the same company
     const fd = buildFormData(payload);
+    ensureCompanyId(fd); // ensureCompanyId handles FormData correctly
     const { data } = await api.post('/student-diplome', fd);
     return data;
   },
   async update(id: number, payload: UpdateStudentDiplomeRequest): Promise<StudentDiplome> {
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    // If updating student_id, backend will verify the new student belongs to the same company
     const fd = buildFormData(payload);
+    ensureCompanyId(fd); // ensureCompanyId handles FormData correctly
     const { data } = await api.patch(`/student-diplome/${id}`, fd);
     return data;
   },

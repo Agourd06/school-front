@@ -2,17 +2,18 @@ import React, { useEffect, useMemo, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateLevel, useUpdateLevel } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
-import { useSpecializations } from '../../hooks/useSpecializations';
-import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
+import { useSpecializations, useSpecialization as useSpecializationById } from '../../hooks/useSpecializations';
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 
 interface LevelModalProps {
   isOpen: boolean;
   onClose: () => void;
   level?: any | null;
+  initialSpecializationId?: number;
 }
 
-const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
+const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initialSpecializationId }) => {
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -30,10 +31,16 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
   const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
   const programs = useMemo(() => ((programsResp as any)?.data || []) as any[], [programsResp]);
 
-  const { data: specializationsResp } = useSpecializations({ page: 1, limit: 100, program_id: form.program_id ? Number(form.program_id) : undefined } as any);
+  const { data: selectedSpecialization } = useSpecializationById(initialSpecializationId || 0);
+  const { data: specializationsResp } = useSpecializations({ 
+    page: 1, 
+    limit: 100, 
+    program_id: form.program_id ? Number(form.program_id) : (selectedSpecialization?.program_id ? selectedSpecialization.program_id : undefined)
+  } as any);
   const specializations = useMemo(() => ((specializationsResp as any)?.data || []) as any[], [specializationsResp]);
 
   const isEditing = !!level;
+  const isSpecializationLocked = !level && !!initialSpecializationId;
 
   useEffect(() => {
     if (level) {
@@ -47,11 +54,18 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
         status: typeof level.status === 'number' ? level.status : 1,
       });
     } else {
-      setForm({ title: '', description: '', level: '', specialization_id: '', program_id: '', status: 1 });
+      setForm({ 
+        title: '', 
+        description: '', 
+        level: '', 
+        specialization_id: initialSpecializationId ?? '', 
+        program_id: selectedSpecialization?.program_id ?? '', 
+        status: 1 
+      });
     }
     setErrors({});
     setFormError('');
-  }, [level, isOpen]);
+  }, [level, isOpen, initialSpecializationId, selectedSpecialization]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -88,7 +102,7 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
       level: form.level ? Number(form.level) : undefined,
       specialization_id: Number(form.specialization_id),
       status: form.status,
-      company_id: DEFAULT_COMPANY_ID,
+      // company_id is automatically set by the API from authenticated user
     };
     try {
       if (isEditing) {
@@ -107,36 +121,49 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level }) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Program</label>
-            <select
-              name="program_id"
-              value={form.program_id}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            >
-              <option value="">All programs</option>
-              {programs.map(program => (
-                <option key={program.id} value={program.id}>{program.title}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Specialization *</label>
-            <select
-              name="specialization_id"
-              value={form.specialization_id}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.specialization_id ? 'border-red-300' : 'border-gray-300'}`}
-            >
-              <option value="">Select specialization</option>
-              {specializations.map(spec => (
-                <option key={spec.id} value={spec.id}>{spec.title}</option>
-              ))}
-            </select>
-            {errors.specialization_id && <p className="mt-1 text-sm text-red-600">{errors.specialization_id}</p>}
-          </div>
+        {/* Specialization - moved to top */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Specialization *</label>
+          {isSpecializationLocked && selectedSpecialization ? (
+            <div className="mt-1 p-3 bg-gray-50 border border-gray-300 rounded-md">
+              <div className="text-sm font-medium text-gray-900">{selectedSpecialization.title}</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Program</label>
+                <select
+                  name="program_id"
+                  value={form.program_id}
+                  onChange={handleChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                >
+                  <option value="">All programs</option>
+                  {programs.map(program => (
+                    <option key={program.id} value={program.id}>{program.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Specialization</label>
+                <select
+                  name="specialization_id"
+                  value={form.specialization_id}
+                  onChange={handleChange}
+                  disabled={isSpecializationLocked}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                    errors.specialization_id ? 'border-red-300' : 'border-gray-300'
+                  } ${isSpecializationLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">Select specialization</option>
+                  {specializations.map(spec => (
+                    <option key={spec.id} value={spec.id}>{spec.title}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+          {errors.specialization_id && <p className="mt-1 text-sm text-red-600">{errors.specialization_id}</p>}
         </div>
 
         <div>

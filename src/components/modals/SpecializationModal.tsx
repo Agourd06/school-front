@@ -1,16 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateSpecialization, useUpdateSpecialization } from '../../hooks/useSpecializations';
-import { usePrograms } from '../../hooks/usePrograms';
-import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
+import { usePrograms, useProgram as useProgramById } from '../../hooks/usePrograms';
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
 
 interface SpecializationModalProps {
   isOpen: boolean;
   onClose: () => void;
   specialization?: any | null;
+  initialProgramId?: number;
 }
 
-const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClose, specialization }) => {
+const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClose, specialization, initialProgramId }) => {
   const [form, setForm] = useState({
     title: '',
     program_id: '' as number | string | '',
@@ -23,10 +24,12 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
   const createMutation = useCreateSpecialization();
   const updateMutation = useUpdateSpecialization();
   const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
+  const { data: selectedProgram } = useProgramById(initialProgramId || 0);
 
   const programs = useMemo(() => ((programsResp as any)?.data || []), [programsResp]);
 
   const isEditing = !!specialization;
+  const isProgramLocked = !specialization && !!initialProgramId;
 
   useEffect(() => {
     if (specialization) {
@@ -36,11 +39,11 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
         status: typeof specialization.status === 'number' ? specialization.status : 1,
       });
     } else {
-      setForm({ title: '', program_id: '', status: 1 });
+      setForm({ title: '', program_id: initialProgramId ?? '', status: 1 });
     }
     setErrors({});
     setFormError('');
-  }, [specialization, isOpen]);
+  }, [specialization, isOpen, initialProgramId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -64,7 +67,7 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
       title: form.title,
       program_id: Number(form.program_id),
       status: form.status,
-      company_id: DEFAULT_COMPANY_ID,
+      // company_id is automatically set by the API from authenticated user
     };
     try {
       if (isEditing) {
@@ -82,6 +85,33 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
     <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Specialization' : 'Add Specialization'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {formError && <p className="text-sm text-red-600">{formError}</p>}
+        
+        {/* Program - moved to top */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Program</label>
+          {isProgramLocked && selectedProgram ? (
+            <div className="mt-1 p-3 bg-gray-50 border border-gray-300 rounded-md">
+              <div className="text-sm font-medium text-gray-900">{selectedProgram.title}</div>
+            </div>
+          ) : (
+            <select
+              name="program_id"
+              value={form.program_id}
+              onChange={handleChange}
+              disabled={isProgramLocked}
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                errors.program_id ? 'border-red-300' : 'border-gray-300'
+              } ${isProgramLocked ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+            >
+              <option value="">Select a program</option>
+              {programs.map((p: any) => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+          )}
+          {errors.program_id && <p className="mt-1 text-sm text-red-600">{errors.program_id}</p>}
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">Title</label>
           <input
@@ -91,22 +121,6 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.title ? 'border-red-300' : 'border-gray-300'}`}
           />
           {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Program</label>
-          <select
-            name="program_id"
-            value={form.program_id}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.program_id ? 'border-red-300' : 'border-gray-300'}`}
-          >
-            <option value="">Select a program</option>
-            {programs.map((p: any) => (
-              <option key={p.id} value={p.id}>{p.title}</option>
-            ))}
-          </select>
-          {errors.program_id && <p className="mt-1 text-sm text-red-600">{errors.program_id}</p>}
         </div>
 
         <div>

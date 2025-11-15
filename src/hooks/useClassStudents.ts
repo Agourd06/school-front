@@ -7,12 +7,16 @@ import {
   type GetClassStudentParams,
 } from '../api/classStudent';
 
-export const useClassStudents = (params: GetClassStudentParams = {}) =>
-  useQuery({
+export const useClassStudents = (params: GetClassStudentParams = {}) => {
+  const hasClassId = params.class_id !== undefined && params.class_id !== null;
+  
+  return useQuery({
     queryKey: ['classStudents', params],
     queryFn: () => classStudentApi.getAll(params),
     placeholderData: keepPreviousData,
+    enabled: hasClassId, // Only fetch when class_id is provided
   });
+};
 
 export const useClassStudent = (id: number) =>
   useQuery({

@@ -1,5 +1,6 @@
 import api from './axios';
 import type { PaginatedResponse, FilterParams } from '../types/api';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 // Forward declarations
 interface Company {
@@ -42,7 +43,7 @@ export interface CreateModuleRequest {
   volume?: number;
   coefficient?: number;
   status?: number;
-  company_id?: number;
+  company_id?: number; // Optional - backend sets it from authenticated user
 }
 
 export interface UpdateModuleRequest {
@@ -98,12 +99,16 @@ export const moduleApi = {
   },
 
   create: async (data: CreateModuleRequest): Promise<Module> => {
-    const response = await api.post('/module', data);
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    const body = ensureCompanyId(data);
+    const response = await api.post('/module', body);
     return response.data;
   },
 
   update: async (id: number, data: UpdateModuleRequest): Promise<Module> => {
-    const response = await api.patch(`/module/${id}`, data);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const body = ensureCompanyId(data);
+    const response = await api.patch(`/module/${id}`, body);
     return response.data;
   },
 

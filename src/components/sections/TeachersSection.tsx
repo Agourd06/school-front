@@ -10,6 +10,7 @@ import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
 import type { Teacher } from '../../api/teachers';
 import { STATUS_OPTIONS } from '../../constants/status';
+import { getFileUrl } from '../../utils/apiConfig';
 
 const EMPTY_META = {
   page: 1,
@@ -33,8 +34,6 @@ const extractErrorMessage = (err: any): string => {
   if (typeof err.message === 'string') return err.message;
   return 'Unexpected error';
 };
-
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const TeachersSection: React.FC = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
@@ -155,8 +154,7 @@ const TeachersSection: React.FC = () => {
 
   const getPictureUrl = (picture?: string) => {
     if (!picture) return null;
-    if (picture.startsWith('http')) return picture;
-    return `${apiBase}${picture.startsWith('/') ? '' : '/'}${picture}`;
+    return getFileUrl(picture);
   };
 
   return (

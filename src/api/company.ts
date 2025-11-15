@@ -1,6 +1,6 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
-import { DEFAULT_COMPANY_ID } from '../constants/status';
+import { getCompanyId } from '../utils/companyId';
 
 // Forward declarations to avoid circular imports
 interface User {
@@ -125,22 +125,24 @@ export const companyApi = {
   },
 
   create: async (data: CreateCompanyRequest): Promise<Company> => {
+    const companyId = getCompanyId();
     const payload = {
       status: 1,
-      company_id: DEFAULT_COMPANY_ID,
+      company_id: companyId,
       ...data,
     };
     if (payload.status === undefined || payload.status === null) (payload as any).status = 1;
-    if (!payload.company_id) (payload as any).company_id = DEFAULT_COMPANY_ID;
+    if (!payload.company_id) (payload as any).company_id = companyId;
     const response = await api.post('/company', payload);
     return response.data;
   },
 
   update: async (id: number, data: UpdateCompanyRequest): Promise<Company> => {
+    const companyId = getCompanyId();
     const payload = {
       ...data,
     };
-    if (!('company_id' in payload)) (payload as any).company_id = DEFAULT_COMPANY_ID;
+    if (!('company_id' in payload)) (payload as any).company_id = companyId;
     const response = await api.patch(`/company/${id}`, payload);
     return response.data;
   },

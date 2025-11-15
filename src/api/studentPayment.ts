@@ -1,5 +1,6 @@
 import api from './axios';
 import type { PaginatedResponse, PaginationParams } from '../types/api';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export type StudentPaymentStatus = -2 | -1 | 0 | 1 | 2;
 
@@ -63,7 +64,7 @@ export interface CreateStudentPaymentPayload {
   date: string;
   mode: string;
   reference?: string | null;
-  company_id?: number | null;
+  company_id?: number | null; // Optional - backend sets it from authenticated user
   status?: StudentPaymentStatus;
 }
 
@@ -78,6 +79,7 @@ export interface GetStudentPaymentParams extends PaginationParams {
   date?: string;
   mode?: string;
   search?: string;
+  // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
 const toPaginated = (raw: any): PaginatedResponse<StudentPayment> => {
@@ -146,16 +148,21 @@ export const studentPaymentApi = {
   },
 
   async create(payload: CreateStudentPaymentPayload): Promise<StudentPayment> {
-    const body = {
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    // Backend will verify student, school year, level, and level pricing all belong to the same company
+    const body = ensureCompanyId({
       status: 2,
       ...payload,
-    };
+    });
     const { data } = await api.post('/student-payments', body);
     return data;
   },
 
   async update(id: number, payload: UpdateStudentPaymentPayload): Promise<StudentPayment> {
-    const { data } = await api.patch(`/student-payments/${id}`, payload);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    // If updating related entities, backend will verify they belong to the same company
+    const body = ensureCompanyId(payload);
+    const { data } = await api.patch(`/student-payments/${id}`, body);
     return data;
   },
 

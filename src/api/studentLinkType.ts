@@ -1,4 +1,5 @@
 import api from './axios';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface StudentLinkType {
   id: number;
@@ -10,7 +11,7 @@ export interface StudentLinkType {
 
 export interface CreateStudentLinkTypeRequest {
   title: string;
-  company_id?: number;
+  company_id?: number; // Optional - backend sets it from authenticated user
   status?: number; // -2,-1,0,1,2
 }
 
@@ -21,6 +22,7 @@ export interface GetAllStudentLinkTypeParams {
   limit?: number;
   search?: string;
   status?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
 export const studentLinkTypeApi = {
@@ -35,12 +37,16 @@ export const studentLinkTypeApi = {
   },
 
   async create(payload: CreateStudentLinkTypeRequest): Promise<StudentLinkType> {
-    const { data } = await api.post('/studentlinktype', payload);
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    const body = ensureCompanyId(payload);
+    const { data } = await api.post('/studentlinktype', body);
     return data;
   },
 
   async update(id: number, payload: UpdateStudentLinkTypeRequest): Promise<StudentLinkType> {
-    const { data } = await api.patch(`/studentlinktype/${id}`, payload);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const body = ensureCompanyId(payload);
+    const { data } = await api.patch(`/studentlinktype/${id}`, body);
     return data;
   },
 

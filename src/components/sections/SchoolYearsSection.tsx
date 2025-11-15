@@ -9,6 +9,7 @@ import SchoolYearModal from '../modals/SchoolYearModal';
 import DeleteModal from '../modals/DeleteModal';
 import type { SchoolYear } from '../../api/schoolYear';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import { useSchoolYear } from '../../context/SchoolYearContext';
 
 const EMPTY_META = {
   page: 1,
@@ -23,6 +24,19 @@ const statusFilterOptions: SearchSelectOption[] = [
   { value: 'all', label: 'All statuses' },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
+
+const lifecycleStatusFilterOptions: SearchSelectOption[] = [
+  { value: 'all', label: 'All lifecycle statuses' },
+  { value: 'planned', label: 'Planned' },
+  { value: 'ongoing', label: 'Ongoing' },
+  { value: 'completed', label: 'Completed' },
+];
+
+const lifecycleStatusStyles: Record<string, string> = {
+  planned: 'bg-blue-100 text-blue-800',
+  ongoing: 'bg-yellow-100 text-yellow-800',
+  completed: 'bg-green-100 text-green-800',
+};
 
 const statusStyles: Record<number, string> = {
   2: 'bg-yellow-100 text-yellow-800',
@@ -42,9 +56,11 @@ const extractErrorMessage = (err: any): string => {
 };
 
 const SchoolYearsSection: React.FC = () => {
+  const { setSelectedSchoolYearId, navigateToPeriods } = useSchoolYear();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
+    lifecycle_status: 'all',
     search: '',
   });
 
@@ -63,6 +79,8 @@ const SchoolYearsSection: React.FC = () => {
           : filters.status !== ''
           ? Number(filters.status)
           : undefined,
+      lifecycle_status:
+        filters.lifecycle_status === 'all' ? undefined : (filters.lifecycle_status as 'planned' | 'ongoing' | 'completed' | undefined),
       search: filters.search.trim() || undefined,
     }),
     [filters, pagination]
@@ -148,6 +166,18 @@ const SchoolYearsSection: React.FC = () => {
     }
   };
 
+  const handleRowClick = (schoolYear: SchoolYear, e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('td:last-child')) {
+      return;
+    }
+    setSelectedSchoolYearId(schoolYear.id);
+    if (navigateToPeriods) {
+      navigateToPeriods();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
@@ -188,12 +218,19 @@ const SchoolYearsSection: React.FC = () => {
       </div>
 
       <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchSelect
             label="Status"
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
+            isClearable={false}
+          />
+          <SearchSelect
+            label="Lifecycle Status"
+            value={filters.lifecycle_status}
+            onChange={handleFilterChange('lifecycle_status')}
+            options={lifecycleStatusFilterOptions}
             isClearable={false}
           />
           <div className="md:col-span-2">
@@ -223,11 +260,12 @@ const SchoolYearsSection: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   End Date
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Company
-                </th>
+             
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Lifecycle Status
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   Actions
@@ -237,13 +275,13 @@ const SchoolYearsSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
                     Loading school years…
                   </td>
                 </tr>
               ) : schoolYears.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
                     No school years found.
                   </td>
                 </tr>
@@ -251,13 +289,15 @@ const SchoolYearsSection: React.FC = () => {
                 schoolYears.map((schoolYear) => {
                   const statusValue = typeof schoolYear.status === 'number' ? schoolYear.status : 0;
                   return (
-                    <tr key={schoolYear.id} className="hover:bg-gray-50">
+                    <tr
+                      key={schoolYear.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={(e) => handleRowClick(schoolYear, e)}
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{schoolYear.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{formatDate(schoolYear.start_date)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{formatDate(schoolYear.end_date)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {schoolYear.company?.name || <span className="text-xs text-gray-400">N/A</span>}
-                      </td>
+                    
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -267,18 +307,50 @@ const SchoolYearsSection: React.FC = () => {
                           {STATUS_VALUE_LABEL[statusValue] ?? `Status ${statusValue}`}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
+                            lifecycleStatusStyles[schoolYear.lifecycle_status || 'planned'] ?? 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {schoolYear.lifecycle_status || 'planned'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() => openEditModal(schoolYear)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedSchoolYearId(schoolYear.id);
+                              if (navigateToPeriods) {
+                                navigateToPeriods();
+                              }
+                            }}
+                            className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                            title="View periods"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Periods
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(schoolYear);
+                            }}
                             className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                           >
                             Edit
                           </button>
                           <button
                             type="button"
-                            onClick={() => requestDelete(schoolYear)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              requestDelete(schoolYear);
+                            }}
                             className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
                           >
                             Delete

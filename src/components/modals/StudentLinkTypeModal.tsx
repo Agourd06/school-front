@@ -33,7 +33,8 @@ const StudentLinkTypeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
       return;
     }
     try {
-      const base = { title, company_id: 1, status } as any;
+      // company_id is automatically set by the API from authenticated user
+      const base = { title, status } as any;
       if (isEditing) await updateMut.mutateAsync({ id: item.id, data: base });
       else await createMut.mutateAsync(base);
       onClose();

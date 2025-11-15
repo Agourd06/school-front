@@ -10,8 +10,7 @@ import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
 import type { Student } from '../../api/students';
 import { STATUS_OPTIONS } from '../../constants/status';
-
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { getFileUrl } from '../../utils/apiConfig';
 
 const EMPTY_META = {
   page: 1,
@@ -152,8 +151,7 @@ const StudentsSection: React.FC = () => {
 
   const getPictureUrl = (picture?: string) => {
     if (!picture) return null;
-    if (picture.startsWith('http')) return picture;
-    return `${apiBase}${picture.startsWith('/') ? '' : '/'}${picture}`;
+    return getFileUrl(picture);
   };
 
   return (

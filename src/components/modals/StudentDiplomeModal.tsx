@@ -4,14 +4,13 @@ import { useCreateStudentDiplome, useUpdateStudentDiplome } from '../../hooks/us
 import SearchSelect from '../inputs/SearchSelect';
 import { useStudents } from '../../hooks/useStudents';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
+import { getFileUrl } from '../../utils/apiConfig';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   item?: any | null;
 }
-
-const apiBase = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
@@ -109,11 +108,11 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
     const eMap = validate();
     if (Object.keys(eMap).length) { setErrors(eMap); return; }
     try {
+      // company_id is automatically set by the API from authenticated user
       const payload: any = {
         ...form,
         annee: form.annee ? String(form.annee) : undefined,
         student_id: form.student_id,
-        company_id: '1',
         status: form.status != null ? String(form.status) : undefined,
       };
       if (file1) payload.diplome_picture_1 = file1;
@@ -196,7 +195,7 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
             <input type="file" accept="image/*" onChange={handleFile('file1')} className="mt-1 block w-full" />
             {errors.diplome_picture_1 && <p className="text-sm text-red-600">{errors.diplome_picture_1}</p>}
             {isEditing && item?.diplome_picture_1 && !file1 && (
-              <img src={`${apiBase}${item.diplome_picture_1}`} alt="current 1" className="mt-2 h-16 w-16 object-cover border rounded" />
+              <img src={getFileUrl(item.diplome_picture_1)} alt="current 1" className="mt-2 h-16 w-16 object-cover border rounded" />
             )}
             {file1 && <p className="text-xs text-gray-500 mt-1">{file1.name}</p>}
           </div>
@@ -205,7 +204,7 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
             <input type="file" accept="image/*" onChange={handleFile('file2')} className="mt-1 block w-full" />
             {errors.diplome_picture_2 && <p className="text-sm text-red-600">{errors.diplome_picture_2}</p>}
             {isEditing && item?.diplome_picture_2 && !file2 && (
-              <img src={`${apiBase}${item.diplome_picture_2}`} alt="current 2" className="mt-2 h-16 w-16 object-cover border rounded" />
+              <img src={getFileUrl(item.diplome_picture_2)} alt="current 2" className="mt-2 h-16 w-16 object-cover border rounded" />
             )}
             {file2 && <p className="text-xs text-gray-500 mt-1">{file2.name}</p>}
           </div>

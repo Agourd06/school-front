@@ -10,7 +10,7 @@ export interface LevelPricingFormValues {
   amount: string;
   occurrences: string;
   every_month: boolean;
-  company_id: number | '';
+  // company_id is automatically set by the API from authenticated user
   status: LevelPricingStatus;
 }
 
@@ -21,7 +21,7 @@ interface LevelPricingModalProps {
   onSubmit: (values: LevelPricingFormValues) => Promise<void>;
   isSubmitting?: boolean;
   levelOptions: SearchSelectOption[];
-  companyOptions: SearchSelectOption[];
+  // companyOptions removed - company is auto-set from authenticated user
   serverError?: string | null;
 }
 
@@ -31,7 +31,6 @@ const DEFAULT_FORM: LevelPricingFormValues = {
   amount: '',
   occurrences: '1',
   every_month: false,
-  company_id: '',
   status: 2,
 };
 
@@ -49,7 +48,6 @@ const LevelPricingModal: React.FC<LevelPricingModalProps> = ({
   onSubmit,
   isSubmitting,
   levelOptions,
-  companyOptions,
   serverError,
 }) => {
   const [form, setForm] = useState<LevelPricingFormValues>(DEFAULT_FORM);
@@ -67,7 +65,6 @@ const LevelPricingModal: React.FC<LevelPricingModalProps> = ({
         amount: initialData.amount ? String(initialData.amount) : '',
         occurrences: initialData.occurrences ? String(initialData.occurrences) : '1',
         every_month: initialData.every_month === 1,
-        company_id: initialData.company_id ?? '',
         status: normalizedStatus,
       });
     } else {
@@ -118,7 +115,6 @@ const LevelPricingModal: React.FC<LevelPricingModalProps> = ({
   };
 
   const levelValue = useMemo(() => form.level_id ?? '', [form.level_id]);
-  const companyValue = useMemo(() => form.company_id ?? '', [form.company_id]);
 
   const handleOccurrencesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -239,13 +235,6 @@ const LevelPricingModal: React.FC<LevelPricingModalProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SearchSelect
-            label="Company (optional)"
-            value={companyValue}
-            onChange={handleSelectChange('company_id')}
-            options={companyOptions}
-            placeholder="Select company"
-          />
           <div className="flex items-center gap-3 pt-6 md:pt-8">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <input

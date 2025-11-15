@@ -2,6 +2,7 @@ import api from './axios';
 import type { PaginatedResponse, PaginationParams } from '../types/api';
 import type { PlanningStatus } from '../constants/planning';
 import type { PlanningSessionType } from './planningSessionType';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface PlanningTeacher {
   id: number;
@@ -42,6 +43,7 @@ export interface PlanningStudentEntry {
   class_room_id: number;
   planning_session_type_id: number;
   company_id?: number | null;
+  school_year_id?: number | null;
   teacher?: PlanningTeacher | null;
   specialization?: PlanningSpecialization | null;
   class?: PlanningClass | null;
@@ -62,7 +64,7 @@ export interface PlanningStudentPayload {
   date_day: string;
   hour_start: string;
   hour_end: string;
-  company_id?: number | null;
+  school_year_id?: number | null;
   status?: PlanningStatus;
 }
 
@@ -76,6 +78,7 @@ export interface GetPlanningStudentParams extends PaginationParams {
   specialization_id?: number;
   planning_session_type_id?: number;
   order?: 'ASC' | 'DESC';
+  // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
 const toPaginated = (raw: any): PaginatedResponse<PlanningStudentEntry> => {
@@ -118,7 +121,7 @@ const buildQueryString = (params: GetPlanningStudentParams = {}): string => {
 
   if (params.page) qp.append('page', String(params.page));
   if (params.limit) qp.append('limit', String(params.limit));
-  if (params.status) qp.append('status', params.status);
+  if (params.status !== undefined && params.status !== null) qp.append('status', String(params.status));
   if (params.class_id) qp.append('class_id', String(params.class_id));
   if (params.class_room_id) qp.append('class_room_id', String(params.class_room_id));
   if (params.teacher_id) qp.append('teacher_id', String(params.teacher_id));
@@ -143,12 +146,18 @@ export const planningStudentApi = {
   },
 
   async create(payload: PlanningStudentPayload): Promise<PlanningStudentEntry> {
-    const { data } = await api.post('/students-plannings', payload);
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    // Backend will verify all related entities (teacher, specialization, class, class room, planning session type, school year) belong to the same company
+    const body = ensureCompanyId(payload);
+    const { data } = await api.post('/students-plannings', body);
     return data;
   },
 
   async update(id: number, payload: UpdatePlanningStudentPayload): Promise<PlanningStudentEntry> {
-    const { data } = await api.patch(`/students-plannings/${id}`, payload);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    // If updating related entities, backend will verify they belong to the same company
+    const body = ensureCompanyId(payload);
+    const { data } = await api.patch(`/students-plannings/${id}`, body);
     return data;
   },
 

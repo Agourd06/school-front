@@ -9,12 +9,12 @@ import { useStudents } from '../../hooks/useStudents';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useLevels } from '../../hooks/useLevels';
 import { useLevelPricings } from '../../hooks/useLevelPricings';
-import { useCompanies } from '../../hooks/useCompanies';
+// import { useCompanies } from '../../hooks/useCompanies'; // Removed - company is auto-set from authenticated user
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import StudentPaymentModal, { type StudentPaymentFormValues } from '../modals/StudentPaymentModal';
 import DeleteModal from '../modals/DeleteModal';
-import type { StudentPayment } from '../../api/studentPayment';
+import type { StudentPayment, StudentPaymentStatus } from '../../api/studentPayment';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
 const EMPTY_META = {
@@ -99,7 +99,7 @@ const StudentPaymentsSection: React.FC = () => {
         filters.status === 'all'
           ? undefined
           : filters.status !== ''
-          ? Number(filters.status)
+          ? (Number(filters.status) as StudentPaymentStatus)
           : undefined,
       student_id: filters.student ? Number(filters.student) : undefined,
       school_year_id: filters.schoolYear ? Number(filters.schoolYear) : undefined,
@@ -130,7 +130,6 @@ const StudentPaymentsSection: React.FC = () => {
   const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 } as any);
   const { data: levelsResp } = useLevels({ page: 1, limit: 100 } as any);
   const { data: levelPricingResp } = useLevelPricings({ page: 1, limit: 100 } as any);
-  const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any);
 
   const studentOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -162,14 +161,7 @@ const StudentPaymentsSection: React.FC = () => {
     [levelsResp]
   );
 
-  const companyOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (companiesResp?.data || []).map((company) => ({
-        value: company.id,
-        label: company.name || `Company #${company.id}`,
-      })),
-    [companiesResp]
-  );
+  // const companyOptions removed - company is auto-set from authenticated user
 
   const levelPricingOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -240,7 +232,7 @@ const StudentPaymentsSection: React.FC = () => {
       date: values.date,
       mode: values.mode.trim(),
       reference: values.reference.trim() || undefined,
-      company_id: values.company_id === '' ? undefined : Number(values.company_id),
+      // company_id is automatically set by the API from authenticated user
       status: values.status,
     };
 
@@ -527,7 +519,7 @@ const StudentPaymentsSection: React.FC = () => {
         schoolYearOptions={schoolYearOptions}
         levelOptions={levelOptions}
         levelPricingOptions={levelPricingOptions}
-        companyOptions={companyOptions}
+        // companyOptions removed - company is auto-set from authenticated user
         serverError={modalError}
       />
 

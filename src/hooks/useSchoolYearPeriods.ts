@@ -4,9 +4,13 @@ import type { CreateSchoolYearPeriodRequest, UpdateSchoolYearPeriodRequest } fro
 import type { FilterParams } from '../types/api';
 
 export const useSchoolYearPeriods = (params: FilterParams = {}) => {
+  const rawParams = params as any;
+  const hasSchoolYearId = rawParams.schoolYearId !== undefined && rawParams.schoolYearId !== null;
+  
   return useQuery({
     queryKey: ['schoolYearPeriods', params],
     queryFn: () => schoolYearPeriodApi.getAll(params),
+    enabled: hasSchoolYearId, // Only fetch when schoolYearId is provided
   });
 };
 

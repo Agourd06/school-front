@@ -1,5 +1,6 @@
 import api from './axios';
 import type { PaginatedResponse, PaginationParams } from '../types/api';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export type PresenceValue = 'present' | 'absent' | 'late' | 'excused';
 export type StudentPresenceStatus = -2 | -1 | 0 | 1 | 2;
@@ -49,7 +50,7 @@ export interface CreateStudentPresencePayload {
   presence?: PresenceValue;
   note?: number;
   remarks?: string | null;
-  company_id?: number | null;
+  company_id?: number | null; // Optional - backend sets it from authenticated user
   status?: StudentPresenceStatus;
 }
 
@@ -59,6 +60,7 @@ export interface GetStudentPresenceParams extends PaginationParams {
   status?: StudentPresenceStatus;
   student_id?: number;
   student_planning_id?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
 const toPaginated = (raw: any): PaginatedResponse<StudentPresence> => {
@@ -122,18 +124,23 @@ export const studentPresenceApi = {
   },
 
   async create(payload: CreateStudentPresencePayload): Promise<StudentPresence> {
-    const body = {
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    // Backend will verify student and student planning belong to the same company
+    const body = ensureCompanyId({
       ...payload,
       presence: payload.presence ?? 'absent',
       note: payload.note ?? -1,
       status: payload.status ?? 2,
-    };
+    });
     const { data } = await api.post('/student-presence', body);
     return data;
   },
 
   async update(id: number, payload: UpdateStudentPresencePayload): Promise<StudentPresence> {
-    const { data } = await api.patch(`/student-presence/${id}`, payload);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    // If updating student or student planning, backend will verify they belong to the same company
+    const body = ensureCompanyId(payload);
+    const { data } = await api.patch(`/student-presence/${id}`, body);
     return data;
   },
 

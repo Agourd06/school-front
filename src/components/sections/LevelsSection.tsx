@@ -6,7 +6,7 @@ import {
   useDeleteLevel,
 } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
-import { useSpecializations } from '../../hooks/useSpecializations';
+import { useSpecializations, useSpecialization as useSpecializationById } from '../../hooks/useSpecializations';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import LevelModal from '../modals/LevelModal';
@@ -14,6 +14,7 @@ import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import type { Level } from '../../api/level';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import { useSpecialization } from '../../context/SpecializationContext';
 
 const EMPTY_META = {
   page: 1,
@@ -58,6 +59,8 @@ const extractErrorMessage = (err: any): string => {
 };
 
 const LevelsSection: React.FC = () => {
+  const { selectedSpecializationId, clearSelectedSpecialization } = useSpecialization();
+  const { data: selectedSpecialization } = useSpecializationById(selectedSpecializationId || 0);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
@@ -82,10 +85,10 @@ const LevelsSection: React.FC = () => {
           : filters.status !== ''
           ? Number(filters.status)
           : undefined,
-      specialization_id: filters.specialization ? Number(filters.specialization) : undefined,
+      specialization_id: selectedSpecializationId ? selectedSpecializationId : (filters.specialization ? Number(filters.specialization) : undefined),
       search: filters.search.trim() || undefined,
     }),
-    [filters, pagination]
+    [filters, pagination, selectedSpecializationId]
   );
 
   const {
@@ -208,6 +211,20 @@ const LevelsSection: React.FC = () => {
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Levels</h1>
             <p className="text-sm text-gray-500">Manage levels and their associated specializations.</p>
+            {selectedSpecializationId && selectedSpecialization && (
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-gray-600">
+                  Specialization: <span className="font-medium text-gray-900">{selectedSpecialization.title}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={clearSelectedSpecialization}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Clear filter
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -386,7 +403,12 @@ const LevelsSection: React.FC = () => {
         />
       </div>
 
-      <LevelModal isOpen={modalOpen} onClose={handleModalClose} level={editingLevel ?? undefined} />
+      <LevelModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        level={editingLevel ?? undefined}
+        initialSpecializationId={selectedSpecializationId ?? undefined}
+      />
 
       {descriptionModal && (
         <DescriptionModal

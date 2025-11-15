@@ -38,6 +38,8 @@ export interface CreateStudentReportPayload {
   mention?: string | null;
   passed?: boolean;
   status?: StudentReportStatus;
+  // Note: This entity doesn't have a direct company_id column
+  // Backend filters by student.company_id from the authenticated user's JWT
 }
 
 export type UpdateStudentReportPayload = Partial<CreateStudentReportPayload>;

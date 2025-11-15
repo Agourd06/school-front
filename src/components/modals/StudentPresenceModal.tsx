@@ -11,7 +11,7 @@ export interface StudentPresenceFormValues {
   presence: PresenceValue;
   note: string;
   remarks: string;
-  company_id: number | '';
+  // company_id is automatically set by the API from authenticated user
   status: StudentPresenceStatus;
 }
 
@@ -23,7 +23,7 @@ interface StudentPresenceModalProps {
   isSubmitting?: boolean;
   planningOptions: SearchSelectOption[];
   studentOptions: SearchSelectOption[];
-  companyOptions: SearchSelectOption[];
+  // companyOptions removed - company is auto-set from authenticated user
   serverError?: string | null;
 }
 
@@ -33,7 +33,6 @@ const DEFAULT_FORM: StudentPresenceFormValues = {
   presence: 'absent',
   note: '-1',
   remarks: '',
-  company_id: '',
   status: 2,
 };
 
@@ -55,7 +54,7 @@ const StudentPresenceModal: React.FC<StudentPresenceModalProps> = ({
   isSubmitting,
   planningOptions,
   studentOptions,
-  companyOptions,
+  // companyOptions removed - company is auto-set from authenticated user
   serverError,
 }) => {
   const [form, setForm] = useState<StudentPresenceFormValues>(DEFAULT_FORM);
@@ -72,7 +71,6 @@ const StudentPresenceModal: React.FC<StudentPresenceModalProps> = ({
         presence: initialData.presence ?? 'absent',
         note: initialData.note !== undefined && initialData.note !== null ? String(initialData.note) : '-1',
         remarks: initialData.remarks ?? '',
-        company_id: initialData.company_id ?? '',
         status: normalizedStatus,
       });
     } else {
@@ -110,12 +108,7 @@ const StudentPresenceModal: React.FC<StudentPresenceModalProps> = ({
     }
   };
 
-  const handleCompanyChange = (value: number | '' | string) => {
-    setForm((prev) => ({
-      ...prev,
-      company_id: value === '' ? '' : Number(value),
-    }));
-  };
+  // handleCompanyChange removed - company is auto-set from authenticated user
 
   const handleStatusChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setForm((prev) => ({
@@ -152,7 +145,6 @@ const StudentPresenceModal: React.FC<StudentPresenceModalProps> = ({
 
   const planningValue = useMemo(() => form.student_planning_id ?? '', [form.student_planning_id]);
   const studentValue = useMemo(() => form.student_id ?? '', [form.student_id]);
-  const companyValue = useMemo(() => form.company_id ?? '', [form.company_id]);
 
   return (
     <BaseModal
@@ -226,16 +218,6 @@ const StudentPresenceModal: React.FC<StudentPresenceModalProps> = ({
             </select>
             {errors.status && <p className="mt-1 text-sm text-red-600">{errors.status}</p>}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SearchSelect
-            label="Company (optional)"
-            value={companyValue}
-            onChange={handleCompanyChange}
-            options={companyOptions}
-            placeholder="Select company"
-          />
         </div>
 
         <div>

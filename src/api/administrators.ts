@@ -1,4 +1,5 @@
 import api from './axios';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export type Administrator = {
   id: number;
@@ -45,7 +46,7 @@ export type GetAllAdministratorsParams = {
   page?: number;
   limit?: number;
   search?: string;
-  company_id?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
   class_room_id?: number;
   status?: number;
 };
@@ -59,7 +60,7 @@ export const administratorsApi = {
     if (params.page) qp.append('page', String(params.page));
     if (params.limit) qp.append('limit', String(params.limit));
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
-    if (typeof params.company_id === 'number') qp.append('company_id', String(params.company_id));
+    // company_id is automatically filtered by backend from JWT token, no need to send it
     if (typeof params.class_room_id === 'number') qp.append('class_room_id', String(params.class_room_id));
     if (typeof params.status === 'number') qp.append('status', String(params.status));
     const qs = qp.toString();
@@ -74,12 +75,16 @@ export const administratorsApi = {
   },
 
   async create(data: CreateAdministratorRequest | FormData): Promise<Administrator> {
-    const response = await api.post('/administrators', data);
+    // Ensure company_id is set from authenticated user
+    const payload = ensureCompanyId(data);
+    const response = await api.post('/administrators', payload);
     return response.data;
   },
 
   async update(id: number, data: UpdateAdministratorRequest | FormData): Promise<Administrator> {
-    const response = await api.patch(`/administrators/${id}`, data);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const payload = ensureCompanyId(data);
+    const response = await api.patch(`/administrators/${id}`, payload);
     return response.data;
   },
 

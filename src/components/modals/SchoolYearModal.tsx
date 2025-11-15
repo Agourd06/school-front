@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCreateSchoolYear, useUpdateSchoolYear } from '../../hooks/useSchoolYears';
-import { useCompanies } from '../../hooks/useCompanies';
 import BaseModal from './BaseModal';
 import { validateRequired, validateDateOrder } from './validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
@@ -18,15 +17,13 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
     start_date: '',
     end_date: '',
     status: 1,
-    companyId: 0,
+    lifecycle_status: 'planned' as 'planned' | 'ongoing' | 'completed',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createSchoolYear = useCreateSchoolYear();
   const updateSchoolYear = useUpdateSchoolYear();
-  const { data: companiesResp, isLoading: companiesLoading } = useCompanies({ page: 1, limit: 100 } as any);
-  const companies = useMemo(() => ((companiesResp as any)?.data ?? []) as any[], [companiesResp]);
 
   const isEditing = !!schoolYear;
   const schoolYearIdRef = React.useRef<number | null>(null);
@@ -52,7 +49,7 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
           start_date: schoolYear.start_date || '',
           end_date: schoolYear.end_date || '',
           status: schoolYear.status || 1,
-          companyId: schoolYear.company?.id || 0,
+          lifecycle_status: (schoolYear.lifecycle_status || 'planned') as 'planned' | 'ongoing' | 'completed',
         });
       } else {
         setFormData({
@@ -60,7 +57,7 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
           start_date: '',
           end_date: '',
           status: 1,
-          companyId: 0,
+          lifecycle_status: 'planned',
         });
       }
       setErrors({});
@@ -78,7 +75,6 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
     if (endErr) newErrors.end_date = endErr;
     const orderErr = validateDateOrder(formData.start_date, formData.end_date, { start: 'start date', end: 'end date' });
     if (!newErrors.start_date && !newErrors.end_date && orderErr) newErrors.end_date = orderErr;
-    if (!formData.companyId || formData.companyId === 0) newErrors.companyId = 'Company is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -89,31 +85,22 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
     if (!validateForm()) return;
 
     try {
-      // Always send all fields explicitly, including companyId
+      // companyId is automatically set by the API from authenticated user
       const payload = {
         title: formData.title.trim(),
         start_date: formData.start_date,
         end_date: formData.end_date,
         status: Number(formData.status),
-        companyId: Number(formData.companyId),
+        lifecycle_status: formData.lifecycle_status,
       };
       
-      console.log('Submitting with companyId:', formData.companyId, 'Payload:', payload);
-      console.log('Current schoolYear companyId:', schoolYear?.company?.id);
-      
       if (isEditing && schoolYear) {
-        const response = await updateSchoolYear.mutateAsync({
+        await updateSchoolYear.mutateAsync({
           id: schoolYear.id,
-          title: payload.title,
-          start_date: payload.start_date,
-          end_date: payload.end_date,
-          status: payload.status,
-          companyId: payload.companyId, // Explicitly include companyId
+          ...payload,
         });
-        console.log('Update response:', response);
       } else {
-        const response = await createSchoolYear.mutateAsync(payload);
-        console.log('Create response:', response);
+        await createSchoolYear.mutateAsync(payload);
       }
       onClose();
     } catch (error) {
@@ -124,9 +111,8 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    const newValue = name === 'status' || name === 'companyId' ? Number(value) : value;
-    
-    console.log('Form change:', name, 'old value:', formData[name as keyof typeof formData], 'new value:', newValue);
+    const newValue = name === 'status' ? Number(value) : 
+                     name === 'lifecycle_status' ? value as 'planned' | 'ongoing' | 'completed' : value;
     
     setFormData(prev => ({
       ...prev,
@@ -195,35 +181,6 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
         </div>
 
         <div>
-          <label htmlFor="companyId" className="block text-sm font-medium text-gray-700">
-            Company
-          </label>
-          {companiesLoading ? (
-            <p>Loading companies...</p>
-          ) : (
-            <select
-              id="companyId"
-              name="companyId"
-              value={formData.companyId || ''}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                errors.companyId ? 'border-red-300' : 'border-gray-300'
-              }`}
-            >
-              <option value="" disabled>
-                Select a company
-              </option>
-              {companies.map(company => (
-                <option key={company.id} value={String(company.id)}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
-          )}
-          {errors.companyId && <p className="mt-1 text-sm text-red-600">{errors.companyId}</p>}
-        </div>
-
-        <div>
           <label htmlFor="status" className="block text-sm font-medium text-gray-700">
             Status
           </label>
@@ -237,6 +194,23 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
             {STATUS_OPTIONS_FORM.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="lifecycle_status" className="block text-sm font-medium text-gray-700">
+            Lifecycle Status
+          </label>
+          <select
+            id="lifecycle_status"
+            name="lifecycle_status"
+            value={formData.lifecycle_status}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="planned">Planned</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
           </select>
         </div>
 

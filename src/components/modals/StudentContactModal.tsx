@@ -106,7 +106,8 @@ const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
     const eMap = validate();
     if (Object.keys(eMap).length) { setErrors(eMap); return; }
     try {
-      const payload = { ...form, company_id: 1 } as any;
+      // company_id is automatically set by the API from authenticated user
+      const payload = { ...form } as any;
       if (payload.studentlinktypeId === '') delete payload.studentlinktypeId;
       if (payload.student_id === '') delete payload.student_id;
       else payload.student_id = Number(payload.student_id);

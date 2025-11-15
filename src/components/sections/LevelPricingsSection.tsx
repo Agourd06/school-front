@@ -6,7 +6,6 @@ import {
   useDeleteLevelPricing,
 } from '../../hooks/useLevelPricings';
 import { useLevels } from '../../hooks/useLevels';
-import { useCompanies } from '../../hooks/useCompanies';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import LevelPricingModal, { type LevelPricingFormValues } from '../modals/LevelPricingModal';
@@ -60,7 +59,6 @@ const LevelPricingsSection: React.FC = () => {
   const [filters, setFilters] = useState({
     status: 'all',
     level: '',
-    company: '',
     search: '',
   });
 
@@ -81,7 +79,7 @@ const LevelPricingsSection: React.FC = () => {
           ? Number(filters.status)
           : undefined,
       level_id: filters.level ? Number(filters.level) : undefined,
-      company_id: filters.company ? Number(filters.company) : undefined,
+      // company_id is automatically filtered by backend from JWT
       search: filters.search.trim() || undefined,
     }),
     [filters, pagination]
@@ -102,7 +100,6 @@ const LevelPricingsSection: React.FC = () => {
   const deletePricingMut = useDeleteLevelPricing();
 
   const { data: levelsResp } = useLevels({ page: 1, limit: 100 } as any);
-  const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any);
 
   const levelOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -113,14 +110,6 @@ const LevelPricingsSection: React.FC = () => {
     [levelsResp]
   );
 
-  const companyOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (companiesResp?.data || []).map((company) => ({
-        value: company.id,
-        label: company.name || `Company #${company.id}`,
-      })),
-    [companiesResp]
-  );
 
   const openCreateModal = () => {
     setEditingPricing(null);
@@ -166,7 +155,7 @@ const LevelPricingsSection: React.FC = () => {
       amount: Number(values.amount),
       occurrences: occurrencesValue,
       every_month: values.every_month ? 1 : 0,
-      company_id: values.company_id === '' ? undefined : Number(values.company_id),
+      // company_id is automatically set by the API from authenticated user
       status: values.status,
     };
 
@@ -248,7 +237,7 @@ const LevelPricingsSection: React.FC = () => {
       </div>
 
       <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchSelect
             label="Status"
             value={filters.status}
@@ -262,14 +251,6 @@ const LevelPricingsSection: React.FC = () => {
             onChange={handleFilterChange('level')}
             options={levelOptions}
             placeholder="All levels"
-            isClearable
-          />
-          <SearchSelect
-            label="Company"
-            value={filters.company}
-            onChange={handleFilterChange('company')}
-            options={companyOptions}
-            placeholder="All companies"
             isClearable
           />
           <div className="md:col-span-2">
@@ -303,9 +284,6 @@ const LevelPricingsSection: React.FC = () => {
                   Monthly
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Company
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -316,13 +294,13 @@ const LevelPricingsSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {pricingLoading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
                     Loading level pricings…
                   </td>
                 </tr>
               ) : pricings.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
                     No level pricing records found.
                   </td>
                 </tr>
@@ -346,9 +324,6 @@ const LevelPricingsSection: React.FC = () => {
                       >
                         {pricing.every_month ? 'Yes' : 'No'}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {pricing.company?.name || (pricing.company_id ? `Company #${pricing.company_id}` : '—')}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <span
@@ -403,7 +378,6 @@ const LevelPricingsSection: React.FC = () => {
         onSubmit={handleSubmit}
         isSubmitting={createPricingMut.isPending || updatePricingMut.isPending}
         levelOptions={levelOptions}
-        companyOptions={companyOptions}
         serverError={modalError}
       />
 

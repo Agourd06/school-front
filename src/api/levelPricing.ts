@@ -1,5 +1,6 @@
 import api from './axios';
 import type { PaginatedResponse, PaginationParams } from '../types/api';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export type LevelPricingStatus = -2 | -1 | 0 | 1 | 2;
 
@@ -34,7 +35,7 @@ export interface CreateLevelPricingPayload {
   amount: number;
   occurrences?: number;
   every_month?: number;
-  company_id?: number | null;
+  company_id?: number | null; // Optional - backend sets it from authenticated user
   status?: LevelPricingStatus;
 }
 
@@ -43,7 +44,7 @@ export type UpdateLevelPricingPayload = Partial<CreateLevelPricingPayload>;
 export interface GetLevelPricingParams extends PaginationParams {
   status?: LevelPricingStatus;
   level_id?: number;
-  company_id?: number;
+  // company_id is automatically filtered by backend from JWT, no need to send it
   search?: string;
 }
 
@@ -89,7 +90,7 @@ const buildQueryString = (params: GetLevelPricingParams = {}): string => {
   if (params.limit) qp.append('limit', String(params.limit));
   if (params.status !== undefined && params.status !== null) qp.append('status', String(params.status));
   if (params.level_id) qp.append('level_id', String(params.level_id));
-  if (params.company_id) qp.append('company_id', String(params.company_id));
+  // company_id is automatically filtered by backend from JWT token, no need to send it
   if (params.search) qp.append('search', params.search);
 
   const qs = qp.toString();
@@ -109,18 +110,21 @@ export const levelPricingApi = {
   },
 
   async create(payload: CreateLevelPricingPayload): Promise<LevelPricing> {
-    const body = {
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    const body = ensureCompanyId({
       occurrences: 1,
       every_month: 0,
       status: 2,
       ...payload,
-    };
+    });
     const { data } = await api.post('/level-pricings', body);
     return data;
   },
 
   async update(id: number, payload: UpdateLevelPricingPayload): Promise<LevelPricing> {
-    const { data } = await api.patch(`/level-pricings/${id}`, payload);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const body = ensureCompanyId(payload);
+    const { data } = await api.patch(`/level-pricings/${id}`, body);
     return data;
   },
 

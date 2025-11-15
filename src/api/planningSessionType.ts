@@ -1,5 +1,6 @@
 import api from './axios';
 import type { PaginatedResponse, PaginationParams } from '../types/api';
+import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export type PlanningSessionTypeStatus = 'active' | 'inactive';
 
@@ -25,7 +26,7 @@ export interface CreatePlanningSessionTypePayload {
   title: string;
   type: string;
   coefficient?: number | null;
-  company_id?: number | null;
+  company_id?: number | null; // Optional - backend sets it from authenticated user
   status?: PlanningSessionTypeStatus;
 }
 
@@ -92,12 +93,16 @@ export const planningSessionTypeApi = {
   },
 
   async create(payload: CreatePlanningSessionTypePayload): Promise<PlanningSessionType> {
-    const { data } = await api.post('/planning-session-types', payload);
+    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    const body = ensureCompanyId(payload);
+    const { data } = await api.post('/planning-session-types', body);
     return data;
   },
 
   async update(id: number, payload: UpdatePlanningSessionTypePayload): Promise<PlanningSessionType> {
-    const { data } = await api.patch(`/planning-session-types/${id}`, payload);
+    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    const body = ensureCompanyId(payload);
+    const { data } = await api.patch(`/planning-session-types/${id}`, body);
     return data;
   },
 

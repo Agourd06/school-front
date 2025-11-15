@@ -3,8 +3,9 @@ import BaseModal from './BaseModal';
 import { useCreateStudentAttestation, useUpdateStudentAttestation } from '../../hooks/useStudentAttestations';
 import { useStudents } from '../../hooks/useStudents';
 import { useAttestations } from '../../hooks/useAttestations';
-import { useCompanies } from '../../hooks/useCompanies';
-import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
+// import { useCompanies } from '../../hooks/useCompanies'; // Removed - company is auto-set from authenticated user
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
+// import { useCompanyId } from '../../hooks/useCompanyId'; // Removed - company is auto-set from authenticated user
 import type { StudentAttestation } from '../../api/studentAttestation';
 
 interface StudentAttestationModalProps {
@@ -14,13 +15,13 @@ interface StudentAttestationModalProps {
 }
 
 const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpen, onClose, studentAttestation }) => {
+  // companyid is automatically set by the API from authenticated user
   const [form, setForm] = useState({
     Idstudent: '' as number | string | '',
     Idattestation: '' as number | string | '',
     dateask: '',
     datedelivery: '',
     Status: 1,
-    companyid: DEFAULT_COMPANY_ID,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -30,11 +31,11 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpe
   const updateMutation = useUpdateStudentAttestation();
   const { data: studentsResp } = useStudents({ page: 1, limit: 100 } as any);
   const { data: attestationsResp } = useAttestations({ page: 1, limit: 100 } as any);
-  const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any);
+  // const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any); // Removed - company is auto-set from authenticated user
 
   const students = useMemo(() => ((studentsResp as any)?.data || []), [studentsResp]);
   const attestations = useMemo(() => ((attestationsResp as any)?.data || []), [attestationsResp]);
-  const companies = useMemo(() => ((companiesResp as any)?.data || []), [companiesResp]);
+  // const companies removed - company is auto-set from authenticated user
 
   const isEditing = !!studentAttestation;
 
@@ -46,7 +47,6 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpe
         dateask: studentAttestation.dateask || '',
         datedelivery: studentAttestation.datedelivery || '',
         Status: typeof studentAttestation.Status === 'number' ? studentAttestation.Status : 1,
-        companyid: studentAttestation.companyid ?? studentAttestation.company?.id ?? DEFAULT_COMPANY_ID,
       });
     } else {
       setForm({ 
@@ -54,8 +54,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpe
         Idattestation: '', 
         dateask: '', 
         datedelivery: '', 
-        Status: 1, 
-        companyid: DEFAULT_COMPANY_ID 
+        Status: 1,
       });
     }
     setErrors({});
@@ -65,7 +64,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpe
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
-    const newValue = name === 'Status' || name === 'Idstudent' || name === 'Idattestation' || name === 'companyid' 
+    const newValue = name === 'Status' || name === 'Idstudent' || name === 'Idattestation'
       ? (value ? Number(value) : '') 
       : value;
 
@@ -116,7 +115,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpe
     const next: Record<string, string> = {};
     if (!form.Idstudent) next.Idstudent = 'Student is required';
     if (!form.Idattestation) next.Idattestation = 'Attestation is required';
-    if (!form.companyid) next.companyid = 'Company is required';
+    // companyid is automatically set by the API from authenticated user
     
     // Validate date relationship
     if (form.dateask && form.datedelivery) {
@@ -141,7 +140,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpe
       dateask: form.dateask || undefined,
       datedelivery: form.datedelivery || undefined,
       Status: form.Status,
-      companyid: form.companyid,
+      // companyid is automatically set by the API from authenticated user
     };
     try {
       if (isEditing) {
@@ -226,22 +225,6 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpe
             />
             {errors.datedelivery && <p className="mt-1 text-sm text-red-600">{errors.datedelivery}</p>}
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Company *</label>
-          <select
-            name="companyid"
-            value={form.companyid}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.companyid ? 'border-red-300' : 'border-gray-300'}`}
-          >
-            <option value="">Select a company</option>
-            {companies.map((c: any) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          {errors.companyid && <p className="mt-1 text-sm text-red-600">{errors.companyid}</p>}
         </div>
 
         <div>

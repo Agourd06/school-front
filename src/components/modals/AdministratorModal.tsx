@@ -115,7 +115,7 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
     if (form.city) formData.append('city', form.city);
     if (form.country) formData.append('country', form.country);
     if (form.nationality) formData.append('nationality', form.nationality);
-    formData.append('company_id', '1');
+    // company_id is automatically set by the API from authenticated user
     if (form.status != null) formData.append('status', String(form.status));
     if (form.class_room_id !== '') formData.append('class_room_id', String(form.class_room_id));
     if (pictureFile instanceof File) formData.append('picture', pictureFile, pictureFile.name);

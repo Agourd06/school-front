@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import BaseModal from './BaseModal';
+import DescriptionModal from './DescriptionModal';
 import { useModuleAssignments } from '../../hooks/useModuleAssignments';
 import { useAddModuleToCourse, useRemoveModuleFromCourse, useReorderModuleInCourse } from '../../hooks/useIndividualAssignments';
+import { useModule } from '../../hooks/useModules';
 import type { Module as ModuleEntity } from '../../api/module';
 
 // Import DropResult type separately
@@ -30,12 +32,17 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
   const [unassignedModules, setUnassignedModules] = useState<AssignmentModule[]>([]);
   const [isMutationLoading, setIsMutationLoading] = useState(false);
   const [loadingItemId, setLoadingItemId] = useState<number | null>(null);
+  const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
 
   // React Query hooks
   const { data: moduleAssignments, isLoading, error, refetch: refetchAssignments } = useModuleAssignments(courseId);
   const addModuleToCourse = useAddModuleToCourse();
   const removeModuleFromCourse = useRemoveModuleFromCourse();
   const reorderModuleInCourse = useReorderModuleInCourse();
+  
+  // Track which module's details to show
+  const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+  const { data: selectedModule } = useModule(selectedModuleId || 0);
 
   // Check if any mutation is pending
   const isAnyMutationPending = addModuleToCourse.isPending || removeModuleFromCourse.isPending || reorderModuleInCourse.isPending;
@@ -213,9 +220,26 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
     onClose();
   };
 
+  // Handle showing module details
+  const handleShowModuleDetails = (e: React.MouseEvent, moduleId: number) => {
+    e.stopPropagation();
+    setSelectedModuleId(moduleId);
+  };
+
+  // Show description modal when module data is loaded
+  useEffect(() => {
+    if (selectedModule && selectedModuleId) {
+      setDescriptionModal({
+        title: selectedModule.title || `Module #${selectedModuleId}`,
+        description: selectedModule.description ?? '',
+      });
+      setSelectedModuleId(null); // Reset after showing
+    }
+  }, [selectedModule, selectedModuleId]);
+
 
   return (
-    <BaseModal isOpen={isOpen} onClose={handleClose} title={`Manage Modules for ${courseTitle}`}>
+    <BaseModal isOpen={isOpen} onClose={handleClose} title={`Manage Modules for Course ( ${courseTitle} )`}>
       <div className="p-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -287,7 +311,13 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
                                     </div>
                                   )}
                                   <div className="flex items-center">
-                                    <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg 
+                                      className="h-4 w-4 text-gray-400 mr-2 cursor-pointer hover:text-blue-600" 
+                                      fill="none" 
+                                      stroke="currentColor" 
+                                      viewBox="0 0 24 24"
+                                      onClick={(e) => handleShowModuleDetails(e, module.id)}
+                                    >
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                     </svg>
                                     <span className="text-sm font-medium text-gray-900">{module.title}</span>
@@ -345,7 +375,13 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
                                   )}
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center">
-                                      <svg className="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <svg 
+                                        className="h-4 w-4 text-gray-400 mr-2 cursor-pointer hover:text-blue-600" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                        onClick={(e) => handleShowModuleDetails(e, module.id)}
+                                      >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                       </svg>
                                       <div>
@@ -380,6 +416,19 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
           </DragDropContext>
         )}
       </div>
+
+      {descriptionModal && (
+        <DescriptionModal
+          isOpen
+          onClose={() => {
+            setDescriptionModal(null);
+            setSelectedModuleId(null);
+          }}
+          title={descriptionModal.title}
+          description={descriptionModal.description}
+          type="module"
+        />
+      )}
     </BaseModal>
   );
 };

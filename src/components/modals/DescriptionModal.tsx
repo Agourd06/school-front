@@ -30,7 +30,7 @@ const DescriptionModal: React.FC<DescriptionModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`${type.charAt(0).toUpperCase() + type.slice(1)} Description${title ? `: ${title}` : ''}`}
+      title={`${type.charAt(0).toUpperCase() + type.slice(1)} Details${title ? `: ${title}` : ''}`}
     >
       <div className="space-y-4">
         <div>

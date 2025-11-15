@@ -2,11 +2,19 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authApi } from '../api/auth';
 
+interface Company {
+  id: number;
+  name: string;
+  email?: string | null;
+}
+
 interface User {
   id: number;
   email: string;
   username: string;
   role: string;
+  company_id?: number | null;
+  company?: Company | null;
 }
 
 interface AuthContextType {
@@ -19,6 +27,7 @@ interface AuthContextType {
   resetPassword: (token: string, password: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
   isLoading: boolean;
+  companyId: number | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,7 +89,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         id: userData.id!,
         email: userData.email,
         username: userData.username,
-        role: userData.role
+        role: userData.role,
+        company_id: userData.company_id ?? null,
+        company: userData.company ?? null,
       };
 
 
@@ -149,6 +160,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const companyId = user?.company_id ?? null;
+
   const value: AuthContextType = {
     user,
     token,
@@ -159,6 +172,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     resetPassword,
     changePassword,
     isLoading,
+    companyId,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

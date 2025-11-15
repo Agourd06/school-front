@@ -1,375 +1,509 @@
-import React, { useMemo, useState } from 'react';
-import StatusBadge from '../../components/StatusBadge';
-import { useClassStudents, useDeleteClassStudent } from '../../hooks/useClassStudents';
-import { ClassStudentModal, DeleteModal } from '../modals';
+import React, { useMemo, useState, useEffect } from 'react';
+import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { useQuery } from '@tanstack/react-query';
+import { useDeleteClassStudent, useCreateClassStudent } from '../../hooks/useClassStudents';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { useClasses } from '../../hooks/useClasses';
 import { useStudents } from '../../hooks/useStudents';
-import { useCompanies } from '../../hooks/useCompanies';
-import type { ClassStudentAssignment, GetClassStudentParams } from '../../api/classStudent';
-import BaseModal from '../modals/BaseModal';
+import { useSchoolYears } from '../../hooks/useSchoolYears';
+import { classStudentApi } from '../../api/classStudent';
+import type { MinimalStudent, GetClassStudentParams } from '../../api/classStudent';
+import type { Student } from '../../api/students';
+import type { DropResult } from '@hello-pangea/dnd';
+import { STATUS_OPTIONS } from '../../constants/status';
+
+type StudentLite = {
+  id: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  status?: number | null;
+};
+
+type AssignedStudent = {
+  assignmentId: number;
+  student: StudentLite;
+  tri: number;
+  status: number;
+  createdAt?: string;
+};
+
+const MAX_FETCH_LIMIT = 100;
+
+const makeStudentLite = (fallbackId: number, student?: Partial<Student> | MinimalStudent | StudentLite | null): StudentLite => ({
+  id: student?.id ?? fallbackId,
+  first_name: student?.first_name ?? null,
+  last_name: student?.last_name ?? null,
+  email: student?.email ?? null,
+  status: student?.status ?? null,
+});
+
+const getStudentLabel = (student: StudentLite) => {
+  const fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim();
+  return fullName || student.email || `Student #${student.id}`;
+};
+
+const sortStudentsByLabel = (a: StudentLite, b: StudentLite) => getStudentLabel(a).localeCompare(getStudentLabel(b));
 
 const ClassStudentsSection: React.FC = () => {
+  const [yearFilter, setYearFilter] = useState<number | ''>('');
   const [classFilter, setClassFilter] = useState<number | ''>('');
-  const [studentFilter, setStudentFilter] = useState<number | ''>('');
-  const [companyFilter, setCompanyFilter] = useState<number | ''>('');
-  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
-  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [detailsClassId, setDetailsClassId] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name?: string } | null>(null);
+  const [statusFilter, setStatusFilter] = useState<number | ''>('');
+  const [assignedStudents, setAssignedStudents] = useState<AssignedStudent[]>([]);
+  const [unassignedStudents, setUnassignedStudents] = useState<StudentLite[]>([]);
+  const [assignedFilter, setAssignedFilter] = useState<number | ''>('');
+  const [unassignedFilter, setUnassignedFilter] = useState<number | ''>('');
+  const [assignedSearch, setAssignedSearch] = useState('');
+  const [unassignedSearch, setUnassignedSearch] = useState('');
+  const [feedback, setFeedback] = useState<string | null>(null);
 
-  // Fetch assignments to group by class (using max allowed limit)
-  const params: GetClassStudentParams = {
-    page: 1,
-    limit: 100, // Max allowed by API
-    class_id: classFilter === '' ? undefined : Number(classFilter),
-    student_id: studentFilter === '' ? undefined : Number(studentFilter),
-    company_id: companyFilter === '' ? undefined : Number(companyFilter),
-  };
+  const createMut = useCreateClassStudent();
+  const deleteMut = useDeleteClassStudent();
 
-  const { data: response, isLoading, error } = useClassStudents(params);
+  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: MAX_FETCH_LIMIT } as any);
+  
+  const studentsMap = useMemo(() => {
+    const map = new Map<number, StudentLite>();
+    (((studentsResp as any)?.data) || []).forEach((stu: Student) => {
+      map.set(stu.id, makeStudentLite(stu.id, stu));
+    });
+    return map;
+  }, [studentsResp]);
 
-  // Group assignments by class_id
-  const classesWithStudents = useMemo(() => {
-    if (!response?.data) return [];
-    
-    const grouped = new Map<number, {
-      class: { id: number; title?: string; status?: number };
-      students: ClassStudentAssignment[];
-    }>();
+  const assignedQuery = useQuery({
+    queryKey: ['classStudents', 'byClass', classFilter || 'none', statusFilter || 'all'],
+    queryFn: () => {
+      const params: GetClassStudentParams = {
+        class_id: Number(classFilter),
+        limit: MAX_FETCH_LIMIT,
+        status: statusFilter === '' ? undefined : Number(statusFilter),
+      };
+      return classStudentApi.getAll(params);
+    },
+    enabled: typeof classFilter === 'number' && classFilter > 0,
+  });
 
-    response.data.forEach((assignment: ClassStudentAssignment) => {
-      const classId = assignment.class_id;
-      if (!grouped.has(classId)) {
-        grouped.set(classId, {
-          class: assignment.class || { id: classId, title: `Class #${classId}` },
-          students: [],
-        });
+  const allAssignmentsQuery = useQuery({
+    queryKey: ['classStudents', 'all'],
+    queryFn: () => classStudentApi.getAll({ page: 1, limit: MAX_FETCH_LIMIT }),
+    enabled: !!classFilter,
+  });
+
+  useEffect(() => {
+    if (!classFilter || !assignedQuery.data) {
+      setAssignedStudents([]);
+      return;
+    }
+
+    const assignments = assignedQuery.data?.data || [];
+    const next = assignments
+      .filter((item) => item.status !== -2 && item.student_id)
+      .map((item) => {
+        const fallback = studentsMap.get(item.student_id);
+        return {
+          assignmentId: item.id,
+          student: makeStudentLite(item.student_id, item.student ?? fallback ?? { id: item.student_id }),
+          tri: item.tri ?? 1,
+          status: item.status,
+          createdAt: item.created_at,
+        } as AssignedStudent;
+      })
+      .sort((a, b) => (a.tri ?? 0) - (b.tri ?? 0));
+
+    setAssignedStudents(next);
+  }, [assignedQuery.data, classFilter, studentsMap]);
+
+  useEffect(() => {
+    if (!classFilter) return;
+    const assignments = allAssignmentsQuery.data?.data || [];
+    const assignedIds = new Set<number>();
+    assignments.forEach((item) => {
+      if (item.status !== -2 && item.student_id) {
+        assignedIds.add(item.student_id);
       }
-      grouped.get(classId)!.students.push(assignment);
     });
 
-    // Sort students by tri, then by name
-    grouped.forEach((group) => {
-      group.students.sort((a, b) => {
-        if (a.tri !== b.tri) return (a.tri ?? 0) - (b.tri ?? 0);
-        const aName = `${a.student?.first_name ?? ''} ${a.student?.last_name ?? ''}`.trim();
-        const bName = `${b.student?.first_name ?? ''} ${b.student?.last_name ?? ''}`.trim();
-        return aName.localeCompare(bName);
-      });
+    const students = (((studentsResp as any)?.data) || [])
+      .filter((stu: Student) => stu?.status !== -2)
+      .filter((stu: Student) => !assignedIds.has(stu.id))
+      .map((stu: Student) => makeStudentLite(stu.id, stu))
+      .sort(sortStudentsByLabel);
+
+    setUnassignedStudents(students);
+  }, [allAssignmentsQuery.data, studentsResp, classFilter]);
+
+  const assignedFilterOptions: SearchSelectOption[] = useMemo(
+    () =>
+      assignedStudents.map((item) => ({
+        value: item.student.id,
+        label: getStudentLabel(item.student),
+      })),
+    [assignedStudents]
+  );
+
+  const unassignedFilterOptions: SearchSelectOption[] = useMemo(
+    () =>
+      unassignedStudents.map((item) => ({
+        value: item.id,
+        label: getStudentLabel(item),
+      })),
+    [unassignedStudents]
+  );
+
+  const assignedSearchLower = assignedSearch.trim().toLowerCase();
+  const unassignedSearchLower = unassignedSearch.trim().toLowerCase();
+
+  const filteredAssigned = useMemo(() => {
+    return assignedStudents.filter((item) => {
+      if (assignedFilter !== '' && item.student.id !== Number(assignedFilter)) return false;
+      if (!assignedSearchLower) return true;
+      return getStudentLabel(item.student).toLowerCase().includes(assignedSearchLower);
     });
+  }, [assignedStudents, assignedFilter, assignedSearchLower]);
 
-    return Array.from(grouped.values()).sort((a, b) => 
-      (a.class.title || `Class #${a.class.id}`).localeCompare(b.class.title || `Class #${b.class.id}`)
-    );
-  }, [response?.data]);
+  const filteredUnassigned = useMemo(() => {
+    return unassignedStudents.filter((item) => {
+      if (unassignedFilter !== '' && item.id !== Number(unassignedFilter)) return false;
+      if (!unassignedSearchLower) return true;
+      return getStudentLabel(item).toLowerCase().includes(unassignedSearchLower);
+    });
+  }, [unassignedStudents, unassignedFilter, unassignedSearchLower]);
 
-  const { data: classesResp, isLoading: classesLoading } = useClasses({ page: 1, limit: 100 } as any);
+  const isMutationLoading = createMut.isPending || deleteMut.isPending;
+  const isAssignedLoading = assignedQuery.isLoading || assignedQuery.isFetching;
+  const isUnassignedLoading = studentsLoading || allAssignmentsQuery.isLoading;
+
+  // Fetch school years
+  const { data: schoolYearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 } as any);
+  const yearOptions: SearchSelectOption[] = useMemo(
+    () => (((schoolYearsResp as any)?.data) || [])
+      .map((year: any) => ({ value: year.id, label: year.title || `Year #${year.id}` })),
+    [schoolYearsResp]
+  );
+
+  // Fetch classes filtered by year
+  const { data: classesResp, isLoading: classesLoading } = useClasses({ 
+    page: 1, 
+    limit: 100,
+    school_year_id: yearFilter === '' ? undefined : Number(yearFilter),
+  } as any);
   const classOptions: SearchSelectOption[] = useMemo(
     () => (((classesResp as any)?.data) || [])
       .filter((cls: any) => cls?.status !== -2)
       .map((cls: any) => ({ value: cls.id, label: cls.title || `Class #${cls.id}` })),
     [classesResp]
   );
-  // classLabelMap removed as it's not used in the new layout
 
-  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: 100 } as any);
-  const studentOptions: SearchSelectOption[] = useMemo(
-    () => (((studentsResp as any)?.data) || [])
-      .filter((stu: any) => stu?.status !== -2)
-      .map((stu: any) => {
-        const fullName = `${stu.first_name ?? ''} ${stu.last_name ?? ''}`.trim();
-        return { value: stu.id, label: fullName || stu.email || `Student #${stu.id}` };
-      }),
-    [studentsResp]
-  );
-  const studentLabelMap = useMemo(() => new Map(studentOptions.map((opt) => [Number(opt.value), opt.label])), [studentOptions]);
+  const handleAssign = async (studentId: number) => {
+    if (!classFilter || typeof classFilter !== 'number') {
+      setFeedback('Select a class first to assign students.');
+      return;
+    }
 
-  const { data: companiesResp, isLoading: companiesLoading } = useCompanies({ page: 1, limit: 100 } as any);
-  const companyOptions: SearchSelectOption[] = useMemo(
-    () => (((companiesResp as any)?.data) || [])
-      .filter((company: any) => company?.status !== -2)
-      .map((company: any) => ({
-        value: company.id,
-        label: company.title || company.name || `Company #${company.id}`,
-      })),
-    [companiesResp]
-  );
-  const companyLabelMap = useMemo(() => new Map(companyOptions.map((opt) => [Number(opt.value), opt.label])), [companyOptions]);
+    const student = unassignedStudents.find((item) => item.id === studentId);
+    if (!student) return;
+    if (assignedStudents.some((item) => item.student.id === studentId)) return;
 
-  const deleteMut = useDeleteClassStudent();
+    try {
+      const response = await createMut.mutateAsync({
+        class_id: Number(classFilter),
+        student_id: studentId,
+        status: 1,
+        tri: assignedStudents.length + 1,
+      });
 
-  const handleDeleteClass = (classId: number) => {
-    const classData = classesWithStudents.find(c => c.class.id === classId);
-    if (!classData) return;
-    const className = classData.class.title || `Class #${classId}`;
-    setDeleteTarget({ id: classId, name: className });
+      const assignedStudent: AssignedStudent = {
+        assignmentId: response.id,
+        student: makeStudentLite(studentId, response.student ?? student),
+        tri: response.tri ?? assignedStudents.length + 1,
+        status: response.status,
+        createdAt: response.created_at,
+      };
+
+      setAssignedStudents((prev) => [...prev, assignedStudent].sort((a, b) => a.tri - b.tri));
+      setUnassignedStudents((prev) => prev.filter((item) => item.id !== studentId));
+      setAssignedFilter('');
+      setAssignedSearch('');
+      setFeedback(null);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Failed to assign student';
+      setFeedback(message);
+    }
   };
 
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
-    // Delete all assignments for this class
-    const classData = classesWithStudents.find(c => c.class.id === deleteTarget.id);
-    if (classData) {
-      try {
-        // Delete all student assignments for this class
-        await Promise.all(
-          classData.students.map(assignment => 
-            deleteMut.mutateAsync(assignment.id)
-          )
-        );
-        setDeleteTarget(null);
-      } catch (err) {
-        console.error(err);
+  const handleUnassign = async (assignmentId: number) => {
+    const target = assignedStudents.find((item) => item.assignmentId === assignmentId);
+    if (!target) return;
+
+    try {
+      await deleteMut.mutateAsync(assignmentId);
+      setAssignedStudents((prev) => prev
+        .filter((item) => item.assignmentId !== assignmentId)
+        .map((item, index) => ({ ...item, tri: index + 1 }))
+      );
+      setUnassignedStudents((prev) => {
+        if (prev.some((item) => item.id === target.student.id)) return prev;
+        return [...prev, target.student].sort(sortStudentsByLabel);
+      });
+      setUnassignedFilter('');
+      setUnassignedSearch('');
+      setFeedback(null);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Failed to unassign student';
+      setFeedback(message);
+    }
+  };
+
+  const handleDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId) return;
+
+    const studentId = Number(draggableId);
+    if (!studentId) return;
+
+    if (source.droppableId === 'unassigned' && destination.droppableId === 'assigned') {
+      await handleAssign(studentId);
+    } else if (source.droppableId === 'assigned' && destination.droppableId === 'unassigned') {
+      const target = assignedStudents.find((item) => item.student.id === studentId);
+      if (target) {
+        await handleUnassign(target.assignmentId);
       }
     }
   };
 
-  const getStudentDisplay = (student: ClassStudentAssignment['student'], studentId: number) => {
-    if (student?.first_name || student?.last_name) {
-      return `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim();
-    }
-    return studentLabelMap.get(studentId) || student?.email || `Student #${studentId}`;
+  // Reset class filter when year changes
+  const handleYearChange = (value: string | number | '') => {
+    setYearFilter(value === '' || value === undefined ? '' : Number(value));
+    setClassFilter(''); // Reset class when year changes
+    setAssignedStudents([]);
+    setUnassignedStudents([]);
   };
+
+  const statusFilterOptions: SearchSelectOption[] = useMemo(
+    () => [
+      { value: '', label: 'All statuses' },
+      ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
+    ],
+    []
+  );
 
   return (
     <>
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h2 className="text-2xl font-bold text-gray-900">Class Assignments</h2>
-          <button
-            onClick={() => {
-              setSelectedClassId(null);
-              setIsManageModalOpen(true);
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Assign Student to Class
-          </button>
+          <p className="text-sm text-gray-500 mt-1">Manage student assignments to classes by year and class.</p>
         </div>
 
         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <SearchSelect
-            label="Filter by Class"
+            label="Filter by Year *"
+            value={yearFilter}
+            onChange={handleYearChange}
+            options={yearOptions}
+            placeholder="Select year"
+            isClearable
+            isLoading={yearsLoading}
+          />
+          <SearchSelect
+            label="Filter by Class *"
             value={classFilter}
-            onChange={(value) => setClassFilter(value === '' ? '' : Number(value))}
+            onChange={(value) => {
+              setClassFilter(value === '' ? '' : Number(value));
+              setAssignedStudents([]);
+              setUnassignedStudents([]);
+            }}
             options={classOptions}
-            placeholder="All classes"
+            placeholder="Select class"
             isClearable
             isLoading={classesLoading}
+            disabled={!yearFilter}
           />
           <SearchSelect
-            label="Filter by Student"
-            value={studentFilter}
-            onChange={(value) => setStudentFilter(value === '' ? '' : Number(value))}
-            options={studentOptions}
-            placeholder="All students"
+            label="Status"
+            value={statusFilter === '' ? '' : String(statusFilter)}
+            onChange={(value) => setStatusFilter(value === '' || value === undefined ? '' : Number(value))}
+            options={statusFilterOptions}
+            placeholder="All statuses"
             isClearable
-            isLoading={studentsLoading}
-          />
-          <SearchSelect
-            label="Filter by Company"
-            value={companyFilter}
-            onChange={(value) => setCompanyFilter(value === '' ? '' : Number(value))}
-            options={companyOptions}
-            placeholder="All companies"
-            isClearable
-            isLoading={companiesLoading}
+            disabled={!classFilter}
           />
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-          <span className="ml-2 text-gray-600">Loading classes...</span>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-red-800">Error loading classes: {(error as any)?.message || 'Unknown error'}</p>
-        </div>
-      ) : classesWithStudents.length === 0 ? (
+      {!yearFilter || !classFilter ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No classes found. Click "Assign Student to Class" to get started.</p>
+          <p className="text-gray-500">Please select a year and class to manage students.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {classesWithStudents.map(({ class: classData, students }) => (
-            <div
-              key={classData.id}
-              className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
-              {/* Class Header */}
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {classData.title || `Class #${classData.id}`}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {students.length} {students.length === 1 ? 'student' : 'students'}
+        <div className="space-y-6">
+          {feedback && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">{feedback}</div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SearchSelect
+              label="Assigned filter"
+              value={assignedFilter}
+              onChange={(value) => setAssignedFilter(value === '' ? '' : Number(value))}
+              options={assignedFilterOptions}
+              placeholder="Filter assigned"
+              isClearable
+              onSearchChange={setAssignedSearch}
+              noOptionsMessage={(query) => (query ? 'No assigned students match' : 'No assigned students')}
+            />
+            <SearchSelect
+              label="Unassigned filter"
+              value={unassignedFilter}
+              onChange={(value) => setUnassignedFilter(value === '' ? '' : Number(value))}
+              options={unassignedFilterOptions}
+              placeholder="Filter unassigned"
+              isClearable
+              onSearchChange={setUnassignedSearch}
+              noOptionsMessage={(query) => (query ? 'No students match' : 'No unassigned students')}
+            />
+          </div>
+
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">Assigned Students</h3>
+                    <p className="text-sm text-gray-500">
+                      {classOptions.find(opt => Number(opt.value) === classFilter)?.label || 'Class'}
                     </p>
                   </div>
-                  <StatusBadge value={classData.status ?? 1} />
+                  <span className="text-sm text-gray-500">{filteredAssigned.length}</span>
                 </div>
+                <Droppable droppableId="assigned" isDropDisabled={!classFilter || isMutationLoading}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`min-h-[320px] p-4 border-2 border-dashed rounded-lg transition-colors ${
+                        snapshot.isDraggingOver
+                          ? 'border-blue-400 bg-blue-50'
+                          : 'border-gray-300 bg-gray-50'
+                      } ${(isAssignedLoading || !classFilter) ? 'opacity-70' : ''}`}
+                    >
+                      {!classFilter ? (
+                        <div className="text-center text-gray-500 py-12">Select a class to manage assignments.</div>
+                      ) : isAssignedLoading ? (
+                        <div className="text-center text-gray-500 py-12">Loading assigned students...</div>
+                      ) : filteredAssigned.length === 0 ? (
+                        <div className="text-center text-gray-500 py-12">No students assigned.</div>
+                      ) : (
+                        filteredAssigned.map((item, index) => (
+                          <Draggable
+                            key={`assigned-${item.student.id}`}
+                            draggableId={item.student.id.toString()}
+                            index={index}
+                            isDragDisabled={isMutationLoading}
+                          >
+                            {(dragProvided, dragSnapshot) => (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                {...dragProvided.dragHandleProps}
+                                className={`mb-3 p-3 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-between ${
+                                  dragSnapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                                }`}
+                              >
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{getStudentLabel(item.student)}</p>
+                                  {item.student.email && (
+                                    <p className="text-xs text-gray-500">{item.student.email}</p>
+                                  )}
+                                  <p className="text-xs text-gray-400 mt-1">Order: #{item.tri}</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUnassign(item.assignmentId)}
+                                  className="text-sm text-red-600 hover:text-red-800"
+                                  disabled={isMutationLoading}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))
+                      )}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
               </div>
 
-              {/* Students Grid */}
-              <div className="p-4">
-                {students.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">No students assigned</p>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {students.slice(0, 6).map((assignment) => {
-                      const studentDisplay = getStudentDisplay(assignment.student, assignment.student_id);
-                      return (
-                        <div
-                          key={assignment.id}
-                          className="p-2 bg-gray-50 rounded-md text-center border border-gray-200 hover:bg-gray-100 transition-colors"
-                          title={studentDisplay}
-                        >
-                          <p className="text-xs font-medium text-gray-900 truncate">
-                            {studentDisplay}
-                          </p>
-                          {assignment.tri !== undefined && (
-                            <p className="text-xs text-gray-500 mt-1">#{assignment.tri + 1}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {students.length > 6 && (
-                      <div className="p-2 bg-blue-50 rounded-md text-center border border-blue-200">
-                        <p className="text-xs font-medium text-blue-900">
-                          +{students.length - 6} more
-                        </p>
-                      </div>
-                    )}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">Unassigned Students</h3>
+                    <p className="text-sm text-gray-500">Students not assigned to any class.</p>
                   </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="p-4 border-t border-gray-200 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => {
-                    setSelectedClassId(classData.id);
-                    setIsManageModalOpen(true);
-                  }}
-                  className="flex-1 px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
-                >
-                  Manage
-                </button>
-                <button
-                  onClick={() => setDetailsClassId(classData.id)}
-                  className="flex-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
-                >
-                  Details
-                </button>
-                <button
-                  onClick={() => handleDeleteClass(classData.id)}
-                  className="px-3 py-2 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
-                  title="Delete all assignments for this class"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                  <span className="text-sm text-gray-500">{filteredUnassigned.length}</span>
+                </div>
+                <Droppable droppableId="unassigned" isDropDisabled={isMutationLoading}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`min-h-[320px] p-4 border-2 border-dashed rounded-lg transition-colors ${
+                        snapshot.isDraggingOver
+                          ? 'border-green-400 bg-green-50'
+                          : 'border-gray-300 bg-gray-50'
+                      } ${isUnassignedLoading ? 'opacity-70' : ''}`}
+                    >
+                      {isUnassignedLoading ? (
+                        <div className="text-center text-gray-500 py-12">Loading students...</div>
+                      ) : filteredUnassigned.length === 0 ? (
+                        <div className="text-center text-gray-500 py-12">No available students.</div>
+                      ) : (
+                        filteredUnassigned.map((item, index) => (
+                          <Draggable
+                            key={`unassigned-${item.id}`}
+                            draggableId={item.id.toString()}
+                            index={index}
+                            isDragDisabled={isMutationLoading || !classFilter}
+                          >
+                            {(dragProvided, dragSnapshot) => (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                {...dragProvided.dragHandleProps}
+                                className={`mb-3 p-3 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-between ${
+                                  dragSnapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                                }`}
+                              >
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{getStudentLabel(item)}</p>
+                                  {item.email && <p className="text-xs text-gray-500">{item.email}</p>}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAssign(item.id)}
+                                  className="text-sm text-blue-600 hover:text-blue-800"
+                                  disabled={isMutationLoading || !classFilter}
+                                >
+                                  Assign
+                                </button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))
+                      )}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
               </div>
             </div>
-          ))}
+          </DragDropContext>
         </div>
       )}
 
-      {/* Manage Class Modal */}
-      {isManageModalOpen && (
-        <ClassStudentModal
-          isOpen
-          onClose={() => {
-            setIsManageModalOpen(false);
-            setSelectedClassId(null);
-          }}
-          classId={selectedClassId}
-        />
-      )}
-
-      {/* Details Modal */}
-      {detailsClassId !== null && (
-        <BaseModal
-          isOpen
-          onClose={() => setDetailsClassId(null)}
-          title={`Class Details: ${classesWithStudents.find(c => c.class.id === detailsClassId)?.class.title || `Class #${detailsClassId}`}`}
-        >
-          <div className="max-h-96 overflow-y-auto">
-            {(() => {
-              const classData = classesWithStudents.find(c => c.class.id === detailsClassId);
-              if (!classData) return null;
-
-              return (
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-2">Class Information</h4>
-                    <div className="bg-gray-50 p-3 rounded-md space-y-1">
-                      <p className="text-sm text-gray-700">
-                        <span className="font-medium">Title:</span> {classData.class.title || 'N/A'}
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        <span className="font-medium">Status:</span> <StatusBadge value={classData.class.status ?? 1} />
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        <span className="font-medium">Total Students:</span> {classData.students.length}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-2">All Students ({classData.students.length})</h4>
-                    <div className="space-y-2">
-                      {classData.students.map((assignment) => {
-                        const studentDisplay = getStudentDisplay(assignment.student, assignment.student_id);
-                        const companyLabel = assignment.company?.title || assignment.company?.name || 
-                          (assignment.company_id ? companyLabelMap.get(assignment.company_id) : '—');
-                        const createdAt = assignment.created_at ? new Date(assignment.created_at).toLocaleString() : null;
-
-                        return (
-                          <div key={assignment.id} className="bg-gray-50 p-3 rounded-md border border-gray-200">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">{studentDisplay}</p>
-                                {assignment.student?.email && (
-                                  <p className="text-xs text-gray-500 mt-1">{assignment.student.email}</p>
-                                )}
-                                <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
-                                  <span>Order: #{assignment.tri !== undefined ? assignment.tri + 1 : '—'}</span>
-                                  {companyLabel !== '—' && <span>• Company: {companyLabel}</span>}
-                                  <span>• Status: <StatusBadge value={assignment.status} /></span>
-                                </div>
-                                {createdAt && (
-                                  <p className="text-xs text-gray-400 mt-1">Assigned: {createdAt}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        </BaseModal>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      <DeleteModal
-        isOpen={!!deleteTarget}
-        title="Delete All Assignments"
-        entityName={deleteTarget?.name ? `all student assignments for ${deleteTarget.name}` : undefined}
-        message={deleteTarget ? `Are you sure you want to remove all students from this class? This action cannot be undone.` : undefined}
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={handleConfirmDelete}
-        isLoading={deleteMut.isPending}
-      />
     </>
   );
 };

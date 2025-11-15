@@ -1,8 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateAttestation, useUpdateAttestation } from '../../hooks/useAttestations';
-import { useCompanies } from '../../hooks/useCompanies';
-import { STATUS_OPTIONS_FORM, DEFAULT_COMPANY_ID } from '../../constants/status';
+import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 import type { Attestation } from '../../api/attestation';
 
@@ -17,7 +16,6 @@ const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, at
     title: '',
     description: '',
     statut: 1,
-    companyid: DEFAULT_COMPANY_ID,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -25,9 +23,6 @@ const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, at
 
   const createMutation = useCreateAttestation();
   const updateMutation = useUpdateAttestation();
-  const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any);
-
-  const companies = useMemo(() => ((companiesResp as any)?.data || []), [companiesResp]);
 
   const isEditing = !!attestation;
 
@@ -37,10 +32,9 @@ const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, at
         title: attestation.title || '',
         description: attestation.description || '',
         statut: typeof attestation.statut === 'number' ? attestation.statut : 1,
-        companyid: attestation.companyid ?? attestation.company?.id ?? DEFAULT_COMPANY_ID,
       });
     } else {
-      setForm({ title: '', description: '', statut: 1, companyid: DEFAULT_COMPANY_ID });
+      setForm({ title: '', description: '', statut: 1 });
     }
     setErrors({});
     setFormError('');
@@ -51,7 +45,7 @@ const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, at
 
     setForm(prev => ({ 
       ...prev, 
-      [name]: name === 'statut' || name === 'companyid' ? Number(value) : value 
+      [name]: name === 'statut' ? Number(value) : value 
     }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -64,7 +58,6 @@ const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, at
   const validate = () => {
     const next: Record<string, string> = {};
     if (!form.title.trim()) next.title = 'Title is required';
-    if (!form.companyid) next.companyid = 'Company is required';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -76,7 +69,7 @@ const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, at
       title: form.title,
       description: form.description || undefined,
       statut: form.statut,
-      companyid: form.companyid,
+      // companyid is automatically set by the API from authenticated user
     };
     try {
       if (isEditing) {
@@ -110,22 +103,6 @@ const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, at
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.title ? 'border-red-300' : 'border-gray-300'}`}
           />
           {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Company *</label>
-          <select
-            name="companyid"
-            value={form.companyid}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.companyid ? 'border-red-300' : 'border-gray-300'}`}
-          >
-            <option value="">Select a company</option>
-            {companies.map((c: any) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          {errors.companyid && <p className="mt-1 text-sm text-red-600">{errors.companyid}</p>}
         </div>
 
         <div>
