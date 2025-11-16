@@ -3,6 +3,7 @@ import BaseModal from './BaseModal';
 import { useCreateSpecialization, useUpdateSpecialization } from '../../hooks/useSpecializations';
 import { usePrograms, useProgram as useProgramById } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
+import RichTextEditor from '../inputs/RichTextEditor';
 
 interface SpecializationModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
     title: '',
     program_id: '' as number | string | '',
     status: 1,
+    description: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -24,12 +26,18 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
   const createMutation = useCreateSpecialization();
   const updateMutation = useUpdateSpecialization();
   const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
-  const { data: selectedProgram } = useProgramById(initialProgramId || 0);
+  
+  // When editing, use the specialization's program ID; when creating, use initialProgramId
+  const programIdForFetch = specialization 
+    ? (specialization.program_id || specialization.program?.id || 0)
+    : (initialProgramId || 0);
+  const { data: selectedProgram } = useProgramById(programIdForFetch);
 
   const programs = useMemo(() => ((programsResp as any)?.data || []), [programsResp]);
 
   const isEditing = !!specialization;
-  const isProgramLocked = !specialization && !!initialProgramId;
+  // Lock program when editing (specialization exists) or when creating with initialProgramId
+  const isProgramLocked = !!specialization || !!initialProgramId;
 
   useEffect(() => {
     if (specialization) {
@@ -37,9 +45,10 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
         title: specialization.title || '',
         program_id: specialization.program_id ?? specialization.program?.id ?? '',
         status: typeof specialization.status === 'number' ? specialization.status : 1,
+        description: specialization.description || '',
       });
     } else {
-      setForm({ title: '', program_id: initialProgramId ?? '', status: 1 });
+      setForm({ title: '', program_id: initialProgramId ?? '', status: 1, description: '' });
     }
     setErrors({});
     setFormError('');
@@ -63,10 +72,13 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    // Save HTML as-is so it can be displayed with formatting
+    const descriptionToSave = form.description.trim() || undefined;
     const payload = {
       title: form.title,
       program_id: Number(form.program_id),
       status: form.status,
+      description: descriptionToSave,
       // company_id is automatically set by the API from authenticated user
     };
     try {
@@ -89,9 +101,11 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
         {/* Program - moved to top */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Program</label>
-          {isProgramLocked && selectedProgram ? (
+          {isProgramLocked && (selectedProgram || specialization?.program) ? (
             <div className="mt-1 p-3 bg-gray-50 border border-gray-300 rounded-md">
-              <div className="text-sm font-medium text-gray-900">{selectedProgram.title}</div>
+              <div className="text-sm font-medium text-gray-900">
+                {selectedProgram?.title || specialization?.program?.title || 'N/A'}
+              </div>
             </div>
           ) : (
             <select
@@ -135,6 +149,18 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({ isOpen, onClo
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <RichTextEditor
+            value={form.description}
+            onChange={(html) => {
+              setForm(prev => ({ ...prev, description: html }));
+            }}
+            placeholder="Describe the specialization..."
+            rows={5}
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">

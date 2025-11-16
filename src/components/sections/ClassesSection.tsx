@@ -233,7 +233,7 @@ const ClassesSection: React.FC = () => {
             setPeriodFilter(numeric);
             setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
           }}
-          placeholder={schoolYearFilter ? 'All periods' : 'Select a school year first'}
+          placeholder={schoolYearFilter ? 'All periods' : ' school year first'}
           options={periodOptions}
           isClearable
           disabled={!schoolYearFilter}

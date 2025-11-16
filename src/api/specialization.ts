@@ -7,6 +7,7 @@ export interface Specialization {
   title: string;
   program_id: number;
   status?: number;
+  description?: string | null;
   company_id?: number;
   created_at?: string;
   updated_at?: string;
@@ -20,6 +21,7 @@ export interface CreateSpecializationRequest {
   title: string;
   program_id: number;
   status?: number;
+  description?: string | null;
   company_id?: number; // Optional - backend sets it from authenticated user
 }
 

@@ -134,7 +134,6 @@ const StudentLinkTypesSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Student Link Types</h1>
@@ -169,9 +168,7 @@ const StudentLinkTypesSection: React.FC = () => {
             {(error as Error).message}
           </div>
         )}
-      </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <SearchSelect
             label="Status"
@@ -191,7 +188,6 @@ const StudentLinkTypesSection: React.FC = () => {
             />
           </div>
         </div>
-      </div>
 
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">

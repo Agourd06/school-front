@@ -821,7 +821,7 @@ const PlanningSection: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
+      
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Class Planning</h1>
@@ -885,10 +885,9 @@ const PlanningSection: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <SearchSelect
             label="Status"
@@ -949,7 +948,7 @@ const PlanningSection: React.FC = () => {
             {state.error}
           </div>
         )}
-      </div>
+      
 
       {/* Main */}
       <div className={`grid gap-6 ${showForm ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>

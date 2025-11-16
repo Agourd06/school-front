@@ -275,7 +275,6 @@ const StudentPresenceSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Student Presence</h1>
@@ -326,9 +325,7 @@ const StudentPresenceSection: React.FC = () => {
             {(presenceError as Error).message}
           </div>
         )}
-      </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchSelect
             label="Status"
@@ -354,7 +351,6 @@ const StudentPresenceSection: React.FC = () => {
             isClearable
           />
         </div>
-      </div>
 
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">

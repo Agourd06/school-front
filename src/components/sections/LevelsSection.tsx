@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   useLevels,
-  useCreateLevel,
-  useUpdateLevel,
   useDeleteLevel,
 } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
-import { useSpecializations, useSpecialization as useSpecializationById } from '../../hooks/useSpecializations';
+import { useSpecializations } from '../../hooks/useSpecializations';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import LevelModal from '../modals/LevelModal';
@@ -43,11 +41,7 @@ const stripHtml = (input?: string | null): string => {
   return input.replace(/<[^>]+>/g, '');
 };
 
-const getDescriptionPreview = (input?: string | null): string => {
-  const text = stripHtml(input);
-  if (!text) return '';
-  return text.length > 120 ? `${text.slice(0, 120)}…` : text;
-};
+
 
 const extractErrorMessage = (err: any): string => {
   if (!err) return 'Unexpected error';
@@ -59,8 +53,7 @@ const extractErrorMessage = (err: any): string => {
 };
 
 const LevelsSection: React.FC = () => {
-  const { selectedSpecializationId, clearSelectedSpecialization } = useSpecialization();
-  const { data: selectedSpecialization } = useSpecializationById(selectedSpecializationId || 0);
+  const { selectedSpecializationId, navigateBackToSpecializations, clearSelectedSpecialization } = useSpecialization();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
@@ -85,7 +78,8 @@ const LevelsSection: React.FC = () => {
           : filters.status !== ''
           ? Number(filters.status)
           : undefined,
-      specialization_id: selectedSpecializationId ? selectedSpecializationId : (filters.specialization ? Number(filters.specialization) : undefined),
+      // Use manual filter if set, otherwise use context filter, otherwise show all
+      specialization_id: filters.specialization ? Number(filters.specialization) : (selectedSpecializationId || undefined),
       search: filters.search.trim() || undefined,
     }),
     [filters, pagination, selectedSpecializationId]
@@ -127,6 +121,16 @@ const LevelsSection: React.FC = () => {
       })),
     [specializationsResp]
   );
+
+  // Sync filter with context when context changes
+  useEffect(() => {
+    if (selectedSpecializationId && !filters.specialization) {
+      setFilters((prev) => ({ ...prev, specialization: String(selectedSpecializationId) }));
+    } else if (!selectedSpecializationId && filters.specialization) {
+      // If context is cleared, clear the filter too
+      setFilters((prev) => ({ ...prev, specialization: '' }));
+    }
+  }, [selectedSpecializationId]);
 
   const openCreateModal = () => {
     setEditingLevel(null);
@@ -206,27 +210,28 @@ const LevelsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Levels</h1>
             <p className="text-sm text-gray-500">Manage levels and their associated specializations.</p>
-            {selectedSpecializationId && selectedSpecialization && (
-              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-gray-600">
-                  Specialization: <span className="font-medium text-gray-900">{selectedSpecialization.title}</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={clearSelectedSpecialization}
-                  className="text-xs text-blue-600 hover:text-blue-800 underline"
-                >
-                  Clear filter
-                </button>
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-3">
+            {selectedSpecializationId && navigateBackToSpecializations && (
+              <button
+                type="button"
+                onClick={() => {
+                  clearSelectedSpecialization();
+                  setFilters((prev) => ({ ...prev, specialization: '' }));
+                  navigateBackToSpecializations();
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Previous
+              </button>
+            )}
             <button
               type="button"
               onClick={openCreateModal}
@@ -255,9 +260,8 @@ const LevelsSection: React.FC = () => {
             {(error as Error).message}
           </div>
         )}
-      </div>
+     
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <SearchSelect
             label="Status"
@@ -294,7 +298,7 @@ const LevelsSection: React.FC = () => {
             />
           </div>
         </div>
-      </div>
+     
 
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">

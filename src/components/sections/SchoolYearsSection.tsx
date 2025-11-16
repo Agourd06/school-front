@@ -180,7 +180,7 @@ const SchoolYearsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
+      
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">School Years</h1>
@@ -215,9 +215,7 @@ const SchoolYearsSection: React.FC = () => {
             {(error as Error).message}
           </div>
         )}
-      </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchSelect
             label="Status"
@@ -244,7 +242,7 @@ const SchoolYearsSection: React.FC = () => {
             />
           </div>
         </div>
-      </div>
+      
 
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -330,9 +328,7 @@ const SchoolYearsSection: React.FC = () => {
                             className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
                             title="View periods"
                           >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
+                          
                             Periods
                           </button>
                           <button

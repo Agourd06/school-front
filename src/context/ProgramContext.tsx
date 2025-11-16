@@ -7,6 +7,8 @@ interface ProgramContextType {
   clearSelectedProgram: () => void;
   navigateToSpecializations?: () => void;
   setNavigateToSpecializations: (fn: () => void) => void;
+  navigateBackToPrograms?: () => void;
+  setNavigateBackToPrograms: (fn: () => void) => void;
 }
 
 const ProgramContext = createContext<ProgramContextType | undefined>(undefined);
@@ -26,6 +28,7 @@ interface ProgramProviderProps {
 export const ProgramProvider: React.FC<ProgramProviderProps> = ({ children }) => {
   const [selectedProgramId, setSelectedProgramIdState] = useState<number | null>(null);
   const [navigateToSpecializations, setNavigateToSpecializationsState] = useState<(() => void) | undefined>(undefined);
+  const [navigateBackToPrograms, setNavigateBackToProgramsState] = useState<(() => void) | undefined>(undefined);
 
   const setSelectedProgramId = useCallback((id: number | null) => {
     setSelectedProgramIdState(id);
@@ -39,6 +42,10 @@ export const ProgramProvider: React.FC<ProgramProviderProps> = ({ children }) =>
     setNavigateToSpecializationsState(() => fn);
   }, []);
 
+  const setNavigateBackToPrograms = useCallback((fn: () => void) => {
+    setNavigateBackToProgramsState(() => fn);
+  }, []);
+
   return (
     <ProgramContext.Provider
       value={{
@@ -47,6 +54,8 @@ export const ProgramProvider: React.FC<ProgramProviderProps> = ({ children }) =>
         clearSelectedProgram,
         navigateToSpecializations,
         setNavigateToSpecializations,
+        navigateBackToPrograms,
+        setNavigateBackToPrograms,
       }}
     >
       {children}

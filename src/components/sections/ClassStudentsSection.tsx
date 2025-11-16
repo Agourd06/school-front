@@ -182,11 +182,14 @@ const ClassStudentsSection: React.FC = () => {
   );
 
   // Fetch classes filtered by year
-  const { data: classesResp, isLoading: classesLoading } = useClasses({ 
-    page: 1, 
+  const classesParams = useMemo(() => ({
+    page: 1,
     limit: 100,
-    school_year_id: yearFilter === '' ? undefined : Number(yearFilter),
-  } as any);
+    school_year_id: yearFilter === '' || yearFilter === undefined || yearFilter === null ? undefined : Number(yearFilter),
+  }), [yearFilter]);
+  
+  const { data: classesResp, isLoading: classesLoading } = useClasses(classesParams);
+  
   const classOptions: SearchSelectOption[] = useMemo(
     () => (((classesResp as any)?.data) || [])
       .filter((cls: any) => cls?.status !== -2)

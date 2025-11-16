@@ -91,11 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     {
       title: 'Academic Setup',
       items: [
-        { tab: 'programs', label: 'Programs' },
-        { tab: 'specializations', label: 'Specializations' },
-        { tab: 'levels', label: 'Levels' },
-        { tab: 'modules', label: 'Modules' },
-        { tab: 'courses', label: 'Courses' },
+  
       ],
     },
     {
@@ -103,19 +99,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       items: [
         { tab: 'classes', label: 'Classes' },
         { tab: 'classStudents', label: 'Class Students' },
-        { tab: 'classRooms', label: 'Class Rooms' },
         { tab: 'planning', label: 'Planning' },
         { tab: 'planningSessionTypes', label: 'Planning Session Types' },
       ],
     },
     {
-      title: 'School Structure',
-      items: [
-        { tab: 'schoolYears', label: 'School Years' },
-      ],
-    },
-    {
-      title: 'Student Info',
+      title: 'Student',
       items: [
         { tab: 'students', label: 'Students' },
         { tab: 'teachers', label: 'Teachers' },
@@ -136,6 +125,54 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         { tab: 'studentPayments', label: 'Student Payments' },
       ],
     },
+    // New parameter groups (empty for now - will replace old ones later)
+    {
+      title: 'Scholarity',
+      items: [],
+    },
+    {
+      title: 'Administration',
+      items: [],
+    },
+    {
+      title: 'Finance',
+      items: [],
+    },
+    {
+      title: 'Direction',
+      items: [],
+    },
+    {
+      title: 'Professeur',
+      items: [],
+    },
+    {
+      title: 'Eleve',
+      items: [],
+    },
+    {
+      title: 'Parent',
+      items: [],
+    },
+    {
+      title: 'Support',
+      items: [
+        { tab: 'schoolYears', label: 'School Years' },
+        { tab: 'classRooms', label: 'Class Rooms' },
+        { tab: 'programs', label: 'Programs' },
+        { tab: 'modules', label: 'Modules' },
+        { tab: 'courses', label: 'Courses' },
+
+      ],
+    },
+
+   
+  
+  
+   
+   
+   
+   
   ];
 
   return (

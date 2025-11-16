@@ -31,7 +31,30 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
   const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
   const programs = useMemo(() => ((programsResp as any)?.data || []) as any[], [programsResp]);
 
-  const { data: selectedSpecialization } = useSpecializationById(initialSpecializationId || 0);
+  // When editing, use the level's specialization ID; when creating, use initialSpecializationId
+  const specializationIdForFetch = level 
+    ? (level.specialization_id || level.specialization?.id || 0)
+    : (initialSpecializationId || 0);
+  const { data: selectedSpecialization } = useSpecializationById(specializationIdForFetch);
+  
+  // Get program data: when editing, use embedded data from level; when creating, use selectedSpecialization's program
+  const programFromLevel = level?.specialization?.program;
+  const programFromSpecialization = selectedSpecialization?.program;
+  const programIdForLookup = level
+    ? (level.specialization?.program?.id || level.specialization?.program_id)
+    : (selectedSpecialization?.program_id);
+  const fetchedProgram = useMemo(() => {
+    // When editing, prefer embedded program data from level
+    if (programFromLevel) return programFromLevel;
+    // When creating, use program from selectedSpecialization
+    if (programFromSpecialization) return programFromSpecialization;
+    // Fallback: find program from programs list
+    if (programIdForLookup) {
+      return programs.find((p: any) => p.id === programIdForLookup);
+    }
+    return null;
+  }, [programFromLevel, programFromSpecialization, programIdForLookup, programs]);
+
   const { data: specializationsResp } = useSpecializations({ 
     page: 1, 
     limit: 100, 
@@ -40,7 +63,9 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
   const specializations = useMemo(() => ((specializationsResp as any)?.data || []) as any[], [specializationsResp]);
 
   const isEditing = !!level;
-  const isSpecializationLocked = !level && !!initialSpecializationId;
+  // Lock program and specialization when editing (level exists) or when creating with initialSpecializationId
+  const isProgramLocked = !!level || !!initialSpecializationId;
+  const isSpecializationLocked = !!level || !!initialSpecializationId;
 
   useEffect(() => {
     if (level) {
@@ -121,12 +146,23 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
       <form onSubmit={handleSubmit} className="space-y-4">
         {formError && <p className="text-sm text-red-600">{formError}</p>}
 
-        {/* Specialization - moved to top */}
+        {/* Program and Specialization - moved to top */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Specialization *</label>
-          {isSpecializationLocked && selectedSpecialization ? (
-            <div className="mt-1 p-3 bg-gray-50 border border-gray-300 rounded-md">
-              <div className="text-sm font-medium text-gray-900">{selectedSpecialization.title}</div>
+          <label className="block text-sm font-medium text-gray-700">Program & Specialization *</label>
+          {isProgramLocked && fetchedProgram && (selectedSpecialization || level?.specialization) ? (
+            <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-3 bg-gray-50 border border-gray-300 rounded-md">
+                <div className="text-xs font-medium text-gray-500 mb-1">Program</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {fetchedProgram?.title || 'N/A'}
+                </div>
+              </div>
+              <div className="p-3 bg-gray-50 border border-gray-300 rounded-md">
+                <div className="text-xs font-medium text-gray-500 mb-1">Specialization</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {selectedSpecialization?.title || level?.specialization?.title || 'N/A'}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -136,7 +172,10 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
                   name="program_id"
                   value={form.program_id}
                   onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  disabled={isProgramLocked}
+                  className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                    isProgramLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+                  }`}
                 >
                   <option value="">All programs</option>
                   {programs.map(program => (

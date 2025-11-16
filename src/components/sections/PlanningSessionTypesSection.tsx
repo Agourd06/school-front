@@ -145,7 +145,7 @@ const PlanningSessionTypesSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
+      
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Planning Session Types</h1>
@@ -190,7 +190,7 @@ const PlanningSessionTypesSection: React.FC = () => {
             {(error as Error).message}
           </div>
         )}
-      </div>
+      
 
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">

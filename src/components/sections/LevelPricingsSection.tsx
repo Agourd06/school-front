@@ -10,7 +10,7 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import LevelPricingModal, { type LevelPricingFormValues } from '../modals/LevelPricingModal';
 import DeleteModal from '../modals/DeleteModal';
-import type { LevelPricing } from '../../api/levelPricing';
+import type { LevelPricing, LevelPricingStatus } from '../../api/levelPricing';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
 const EMPTY_META = {
@@ -76,7 +76,7 @@ const LevelPricingsSection: React.FC = () => {
         filters.status === 'all'
           ? undefined
           : filters.status !== ''
-          ? Number(filters.status)
+          ? (Number(filters.status) as LevelPricingStatus)
           : undefined,
       level_id: filters.level ? Number(filters.level) : undefined,
       // company_id is automatically filtered by backend from JWT
@@ -199,7 +199,6 @@ const LevelPricingsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Level Pricings</h1>
@@ -234,9 +233,8 @@ const LevelPricingsSection: React.FC = () => {
             {(pricingError as Error).message}
           </div>
         )}
-      </div>
+      
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchSelect
             label="Status"
@@ -264,7 +262,6 @@ const LevelPricingsSection: React.FC = () => {
             />
           </div>
         </div>
-      </div>
 
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">

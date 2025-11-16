@@ -91,8 +91,8 @@ const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC
 const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab || 'users');
   const { setNavigateToPeriods } = useSchoolYear();
-  const { setNavigateToSpecializations } = useProgram();
-  const { setNavigateToLevels } = useSpecialization();
+  const { setNavigateToSpecializations, setNavigateBackToPrograms } = useProgram();
+  const { setNavigateToLevels, setNavigateBackToSpecializations } = useSpecialization();
 
   const SectionComponent = useMemo(() => sectionComponents[activeTab], [activeTab]);
 
@@ -106,7 +106,13 @@ const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab 
     setNavigateToLevels(() => {
       setActiveTab('levels');
     });
-  }, [setNavigateToPeriods, setNavigateToSpecializations, setNavigateToLevels]);
+    setNavigateBackToSpecializations(() => {
+      setActiveTab('specializations');
+    });
+    setNavigateBackToPrograms(() => {
+      setActiveTab('programs');
+    });
+  }, [setNavigateToPeriods, setNavigateToSpecializations, setNavigateToLevels, setNavigateBackToSpecializations, setNavigateBackToPrograms]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

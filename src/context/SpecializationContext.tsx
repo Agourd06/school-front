@@ -7,6 +7,8 @@ interface SpecializationContextType {
   clearSelectedSpecialization: () => void;
   navigateToLevels?: () => void;
   setNavigateToLevels: (fn: () => void) => void;
+  navigateBackToSpecializations?: () => void;
+  setNavigateBackToSpecializations: (fn: () => void) => void;
 }
 
 const SpecializationContext = createContext<SpecializationContextType | undefined>(undefined);
@@ -26,6 +28,7 @@ interface SpecializationProviderProps {
 export const SpecializationProvider: React.FC<SpecializationProviderProps> = ({ children }) => {
   const [selectedSpecializationId, setSelectedSpecializationIdState] = useState<number | null>(null);
   const [navigateToLevels, setNavigateToLevelsState] = useState<(() => void) | undefined>(undefined);
+  const [navigateBackToSpecializations, setNavigateBackToSpecializationsState] = useState<(() => void) | undefined>(undefined);
 
   const setSelectedSpecializationId = useCallback((id: number | null) => {
     setSelectedSpecializationIdState(id);
@@ -39,6 +42,10 @@ export const SpecializationProvider: React.FC<SpecializationProviderProps> = ({ 
     setNavigateToLevelsState(() => fn);
   }, []);
 
+  const setNavigateBackToSpecializations = useCallback((fn: () => void) => {
+    setNavigateBackToSpecializationsState(() => fn);
+  }, []);
+
   return (
     <SpecializationContext.Provider
       value={{
@@ -47,6 +54,8 @@ export const SpecializationProvider: React.FC<SpecializationProviderProps> = ({ 
         clearSelectedSpecialization,
         navigateToLevels,
         setNavigateToLevels,
+        navigateBackToSpecializations,
+        setNavigateBackToSpecializations,
       }}
     >
       {children}
