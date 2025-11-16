@@ -8,6 +8,7 @@ import Pagination from '../Pagination';
 import { StudentContactModal } from '../modals';
 import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
+import { EditButton, DeleteButton } from '../ui';
 import type { StudentContact } from '../../api/studentContact';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -257,20 +258,8 @@ const StudentContactsSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(contact)}
-                          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => requestDelete(contact)}
-                          className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <EditButton onClick={() => openEditModal(contact)} />
+                        <DeleteButton onClick={() => requestDelete(contact)} />
                       </div>
                     </td>
                   </tr>

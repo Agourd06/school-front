@@ -13,6 +13,7 @@ import Pagination from '../Pagination';
 import StudentPresenceModal, { type StudentPresenceFormValues } from '../modals/StudentPresenceModal';
 import DeleteModal from '../modals/DeleteModal';
 import BaseModal from '../modals/BaseModal';
+import { EditButton, DeleteButton } from '../ui';
 import type { StudentPresence, StudentPresenceStatus } from '../../api/studentPresence';
 import { STATUS_OPTIONS, STATUS_OPTIONS_FORM, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -459,20 +460,8 @@ const StudentPresenceSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditPresence(presence)}
-                          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(presence)}
-                          className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <EditButton onClick={() => openEditPresence(presence)} />
+                        <DeleteButton onClick={() => setDeleteTarget(presence)} />
                       </div>
                     </td>
                   </tr>

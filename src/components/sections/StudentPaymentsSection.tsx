@@ -14,6 +14,7 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import StudentPaymentModal, { type StudentPaymentFormValues } from '../modals/StudentPaymentModal';
 import DeleteModal from '../modals/DeleteModal';
+import { EditButton, DeleteButton } from '../ui';
 import type { StudentPayment, StudentPaymentStatus } from '../../api/studentPayment';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -469,20 +470,8 @@ const StudentPaymentsSection: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(payment)}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteTarget(payment)}
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          <EditButton onClick={() => openEditModal(payment)} />
+                          <DeleteButton onClick={() => setDeleteTarget(payment)} />
                         </div>
                       </td>
                     </tr>

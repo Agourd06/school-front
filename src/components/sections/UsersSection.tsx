@@ -5,6 +5,7 @@ import type { FilterParams, ListState } from '../../types/api';
 import { UserModal, DeleteModal } from '../../components/modals';
 import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
+import { EditButton, DeleteButton } from '../ui';
 
 const UsersSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -104,8 +105,8 @@ const UsersSection: React.FC = () => {
                 </div>
               </div>
               <div className="flex space-x-2">
-                <button onClick={() => onEdit(user)} className="text-blue-600 hover:text-blue-900">Edit</button>
-                <button onClick={() => onDelete(user.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                <EditButton onClick={() => onEdit(user)} />
+                <DeleteButton onClick={() => onDelete(user.id)} />
               </div>
             </div>
           </li>

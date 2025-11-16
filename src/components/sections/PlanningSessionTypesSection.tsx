@@ -13,6 +13,7 @@ import PlanningSessionTypeModal, {
   type PlanningSessionTypeFormValues,
 } from '../modals/PlanningSessionTypeModal';
 import DeleteModal from '../modals/DeleteModal';
+import { EditButton, DeleteButton } from '../ui';
 import Pagination from '../Pagination';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 
@@ -251,20 +252,8 @@ const PlanningSessionTypesSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(type)}
-                          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(type)}
-                          className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <EditButton onClick={() => handleOpenEdit(type)} />
+                        <DeleteButton onClick={() => setDeleteTarget(type)} />
                       </div>
                     </td>
                   </tr>

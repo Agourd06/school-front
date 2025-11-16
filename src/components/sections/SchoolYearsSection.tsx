@@ -7,6 +7,7 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import SchoolYearModal from '../modals/SchoolYearModal';
 import DeleteModal from '../modals/DeleteModal';
+import { EditButton, DeleteButton } from '../ui';
 import type { SchoolYear } from '../../api/schoolYear';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useSchoolYear } from '../../context/SchoolYearContext';
@@ -331,26 +332,18 @@ const SchoolYearsSection: React.FC = () => {
                           
                             Periods
                           </button>
-                          <button
-                            type="button"
+                          <EditButton
                             onClick={(e) => {
                               e.stopPropagation();
                               openEditModal(schoolYear);
                             }}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
+                          />
+                          <DeleteButton
                             onClick={(e) => {
                               e.stopPropagation();
                               requestDelete(schoolYear);
                             }}
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>

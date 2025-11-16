@@ -8,6 +8,7 @@ import Pagination from '../Pagination';
 import AdministratorModal from '../modals/AdministratorModal';
 import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
+import { EditButton, DeleteButton } from '../ui';
 import type { Administrator } from '../../api/administrators';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
@@ -287,20 +288,8 @@ const AdministratorsSection: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(administrator)}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => requestDelete(administrator)}
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          <EditButton onClick={() => openEditModal(administrator)} />
+                          <DeleteButton onClick={() => requestDelete(administrator)} />
                         </div>
                       </td>
                     </tr>

@@ -11,6 +11,7 @@ import CourseModal from '../modals/CourseModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import ModuleAssignmentModal from '../modals/ModuleAssignmentModal';
+import { EditButton, DeleteButton } from '../ui';
 import type { Course } from '../../api/course';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -319,22 +320,10 @@ const CoursesSection: React.FC = () => {
                             onClick={() => openAssignmentModal(course)}
                             className="inline-flex items-center rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-600 hover:bg-purple-50"
                           >
-                            Manage Modules
+                            Course to module
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(course)}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => requestDelete(course)}
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          <EditButton onClick={() => openEditModal(course)} />
+                          <DeleteButton onClick={() => requestDelete(course)} />
                         </div>
                       </td>
                     </tr>

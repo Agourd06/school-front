@@ -7,6 +7,7 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import { StudentModal, StudentOnboardingModal } from '../modals';
 import DeleteModal from '../modals/DeleteModal';
+import { EditButton, DeleteButton } from '../ui';
 import StatusBadge from '../../components/StatusBadge';
 import type { Student } from '../../api/students';
 import { STATUS_OPTIONS } from '../../constants/status';
@@ -271,20 +272,8 @@ const StudentsSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(student)}
-                          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => requestDelete(student)}
-                          className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <EditButton onClick={() => openEditModal(student)} />
+                        <DeleteButton onClick={() => requestDelete(student)} />
                       </div>
                     </td>
                   </tr>

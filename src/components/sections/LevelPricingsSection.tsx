@@ -10,6 +10,7 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import LevelPricingModal, { type LevelPricingFormValues } from '../modals/LevelPricingModal';
 import DeleteModal from '../modals/DeleteModal';
+import { EditButton, DeleteButton } from '../ui';
 import type { LevelPricing, LevelPricingStatus } from '../../api/levelPricing';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -333,20 +334,8 @@ const LevelPricingsSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(pricing)}
-                          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(pricing)}
-                          className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <EditButton onClick={() => openEditModal(pricing)} />
+                        <DeleteButton onClick={() => setDeleteTarget(pricing)} />
                       </div>
                     </td>
                   </tr>

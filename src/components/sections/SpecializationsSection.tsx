@@ -11,6 +11,7 @@ import Pagination from '../Pagination';
 import SpecializationModal from '../modals/SpecializationModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
+import { EditButton, DeleteButton } from '../ui';
 import type { Specialization } from '../../api/specialization';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
@@ -371,26 +372,18 @@ const SpecializationsSection: React.FC = () => {
                               Details
                             </button>
                           )}
-                          <button
-                            type="button"
+                          <EditButton
                             onClick={(e) => {
                               e.stopPropagation();
                               openEditModal(spec);
                             }}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
+                          />
+                          <DeleteButton
                             onClick={(e) => {
                               e.stopPropagation();
                               requestDelete(spec);
                             }}
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>

@@ -6,8 +6,13 @@ export const useAddModuleToCourse = () => {
   const createMutation = useCreateModuleCourse();
   
   return useMutation({
-    mutationFn: ({ courseId, moduleId }: { courseId: number; moduleId: number }) =>
-      createMutation.mutateAsync({ module_id: moduleId, course_id: courseId }),
+    mutationFn: ({ courseId, moduleId, volume, coefficient }: { courseId: number; moduleId: number; volume?: number | null; coefficient?: number | null }) =>
+      createMutation.mutateAsync({ 
+        module_id: moduleId, 
+        course_id: courseId,
+        volume: volume ?? null,
+        coefficient: coefficient ?? null,
+      }),
   });
 };
 
@@ -24,8 +29,13 @@ export const useAddCourseToModule = () => {
   const createMutation = useCreateModuleCourse();
   
   return useMutation({
-    mutationFn: ({ moduleId, courseId }: { moduleId: number; courseId: number }) =>
-      createMutation.mutateAsync({ module_id: moduleId, course_id: courseId }),
+    mutationFn: ({ moduleId, courseId, volume, coefficient }: { moduleId: number; courseId: number; volume?: number | null; coefficient?: number | null }) =>
+      createMutation.mutateAsync({ 
+        module_id: moduleId, 
+        course_id: courseId,
+        volume: volume ?? null,
+        coefficient: coefficient ?? null,
+      }),
   });
 };
 

@@ -184,6 +184,8 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
             Volume (optional)
           </label>
           <input
+                    disabled={true}
+
             type="number"
             id="volume"
             name="volume"
@@ -206,7 +208,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
             Coefficient (optional)
           </label>
           <input
-            type="number"
+            type="text"
             step="0.1"
             id="coefficient"
             name="coefficient"

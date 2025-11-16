@@ -106,8 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     {
       title: 'Student',
       items: [
-        { tab: 'students', label: 'Students' },
-        { tab: 'teachers', label: 'Teachers' },
+       
         { tab: 'administrators', label: 'Administrators' },
         { tab: 'studentReports', label: 'Student Reports' },
         { tab: 'studentPresence', label: 'Student Presence' },
@@ -132,7 +131,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     },
     {
       title: 'Administration',
-      items: [],
+      items: [
+        { tab: 'students', label: 'Students' },
+        { tab: 'teachers', label: 'Teachers' },
+      ],
     },
     {
       title: 'Finance',

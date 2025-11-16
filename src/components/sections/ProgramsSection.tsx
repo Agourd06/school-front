@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import { ProgramModal, DeleteModal, DescriptionModal } from '../modals';
+import { EditButton, DeleteButton } from '../ui';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
@@ -275,26 +276,18 @@ const ProgramsSection: React.FC = () => {
                               Details
                             </button>
                           )}
-                          <button
-                            type="button"
+                          <EditButton
                             onClick={(e) => {
                               e.stopPropagation();
                               openEditModal(program);
                             }}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
+                          />
+                          <DeleteButton
                             onClick={(e) => {
                               e.stopPropagation();
                               requestDelete(program);
                             }}
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          />
                         </div>
                       </td>
                     </tr>

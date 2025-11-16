@@ -9,6 +9,7 @@ import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { ClassModal, DeleteModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
+import { EditButton, DeleteButton } from '../ui';
 import SearchSelect from '../inputs/SearchSelect';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
@@ -328,18 +329,8 @@ const ClassesSection: React.FC = () => {
                     >
                       Details
                     </button>
-                    <button
-                      onClick={() => onEdit(cls)}
-                      className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(cls.id)}
-                      className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
+                    <EditButton onClick={() => onEdit(cls)} />
+                    <DeleteButton onClick={() => onDelete(cls.id)} />
                   </div>
                 </div>
 

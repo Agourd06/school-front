@@ -22,6 +22,7 @@ import StudentReportModal, { type StudentReportFormValues } from '../modals/Stud
 import StudentReportDetailModal, { type StudentReportDetailFormValues } from '../modals/StudentReportDetailModal';
 import DeleteModal from '../modals/DeleteModal';
 import BaseModal from '../modals/BaseModal';
+import { EditButton, DeleteButton } from '../ui';
 import type { StudentReport, StudentReportStatus } from '../../api/studentReport';
 import type { StudentReportDetail } from '../../api/studentReportDetail';
 import { STATUS_OPTIONS, STATUS_OPTIONS_FORM, STATUS_VALUE_LABEL } from '../../constants/status';
@@ -586,20 +587,8 @@ const StudentReportsSection: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditReport(report)}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteReportTarget(report)}
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          <EditButton onClick={() => openEditReport(report)} />
+                          <DeleteButton onClick={() => setDeleteReportTarget(report)} />
                           <button
                             type="button"
                             onClick={() => handleSelectReport(report)}
@@ -760,20 +749,8 @@ const StudentReportsSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditDetail(detail)}
-                          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteDetailTarget(detail)}
-                          className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <EditButton onClick={() => openEditDetail(detail)} />
+                        <DeleteButton onClick={() => setDeleteDetailTarget(detail)} />
                       </div>
                     </td>
                   </tr>

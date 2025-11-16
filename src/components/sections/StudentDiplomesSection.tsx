@@ -9,6 +9,7 @@ import Pagination from '../Pagination';
 import { StudentDiplomeModal, StudentDiplomeDetailsModal } from '../modals';
 import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
+import { EditButton, DeleteButton } from '../ui';
 import type { StudentDiplome } from '../../api/studentDiplome';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
@@ -319,20 +320,8 @@ const StudentDiplomesSection: React.FC = () => {
                         >
                           Details
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(diplome)}
-                          className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => requestDelete(diplome)}
-                          className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        <EditButton onClick={() => openEditModal(diplome)} />
+                        <DeleteButton onClick={() => requestDelete(diplome)} />
                       </div>
                     </td>
                   </tr>

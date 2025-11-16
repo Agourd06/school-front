@@ -5,6 +5,7 @@ import { useCompanies, useUpdateCompany } from '../../hooks/useCompanies';
 import { CompanyModal, DeleteModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
+import { EditButton, DeleteButton } from '../ui';
 
 const CompaniesSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<any>>({
@@ -100,8 +101,8 @@ const CompaniesSection: React.FC = () => {
                 <p className="text-sm text-gray-500">Status: <StatusBadge value={company.status} /></p>
               </div>
               <div className="flex space-x-2">
-                <button onClick={() => onEdit(company)} className="text-blue-600 hover:text-blue-900">Edit</button>
-                <button onClick={() => onDelete(company.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                <EditButton onClick={() => onEdit(company)} />
+                <DeleteButton onClick={() => onDelete(company.id)} />
               </div>
             </div>
           </li>

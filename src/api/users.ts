@@ -32,6 +32,7 @@ export interface UpdateUserRequest {
   username?: string;
   email?: string;
   role?: 'user' | 'admin';
+  status?: number;
   company_id?: number;
 }
 

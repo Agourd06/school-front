@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 interface BaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title: string | ReactNode;
   children: ReactNode;
   className?: string;
   contentClassName?: string;

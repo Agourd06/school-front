@@ -4,15 +4,19 @@ import { moduleApi } from '../api/module';
 import type { Module } from '../api/module';
 
 // Transform ModuleCourse to the expected format
-const transformModuleCourseToModule = (mc: any): Module & { tri?: number; assignment_created_at?: string } => ({
+// Note: volume and coefficient come from the module-course relationship table (course-specific values)
+// These are NOT the original module's volume/coefficient, but values specific to this course-module assignment
+const transformModuleCourseToModule = (mc: any): Module & { tri?: number; assignment_created_at?: string; assignment_volume?: number | null; assignment_coefficient?: number | null } => ({
   id: mc.module.id,
   title: mc.module.title,
   tri: mc.tri,
   assignment_created_at: mc.created_at,
   status: 1, // Default status
   description: undefined,
-  volume: undefined,
-  coefficient: undefined,
+  volume: mc.volume ?? undefined, // Volume from module-course relationship table (course-specific)
+  coefficient: mc.coefficient ?? undefined, // Coefficient from module-course relationship table (course-specific)
+  assignment_volume: mc.volume ?? null, // Store assignment-specific volume from module-course table
+  assignment_coefficient: mc.coefficient ?? null, // Store assignment-specific coefficient from module-course table
   company_id: undefined,
 });
 

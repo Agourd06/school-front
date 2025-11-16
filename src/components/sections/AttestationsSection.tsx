@@ -10,6 +10,7 @@ import Pagination from '../Pagination';
 import AttestationModal from '../modals/AttestationModal';
 import DeleteModal from '../modals/DeleteModal';
 import BaseModal from '../modals/BaseModal';
+import { EditButton, DeleteButton } from '../ui';
 import type { Attestation } from '../../api/attestation';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -274,20 +275,8 @@ const AttestationsSection: React.FC = () => {
                               Details
                             </button>
                           )}
-                          <button
-                            type="button"
-                            onClick={() => openEditModal(att)}
-                            className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => requestDelete(att)}
-                            className="inline-flex items-center rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          <EditButton onClick={() => openEditModal(att)} />
+                          <DeleteButton onClick={() => requestDelete(att)} />
                         </div>
                       </td>
                     </tr>
