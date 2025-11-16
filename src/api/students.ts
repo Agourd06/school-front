@@ -95,6 +95,78 @@ export const studentsApi = {
   async delete(id: number): Promise<void> {
     await api.delete(`/students/${id}`);
   },
+
+  /**
+   * Get student with all related data (diploma, contact, linkType) in one request
+   * This endpoint returns singular objects (not arrays) for diploma, contact, and linkType
+   * Returns null for diploma, contact, or linkType if they don't exist
+   */
+  async getDetails(id: number): Promise<{
+    student: Student;
+    diploma: {
+      id: number;
+      title: string;
+      school: string;
+      diplome?: string;
+      annee?: number;
+      country?: string;
+      city?: string;
+      diplome_picture_1?: string;
+      diplome_picture_2?: string;
+      student_id: number;
+      status?: number;
+      company_id?: number;
+      created_at: string;
+      updated_at: string;
+    } | null;
+    contact: {
+      id: number;
+      firstname: string;
+      lastname: string;
+      birthday?: string;
+      email?: string;
+      phone?: string;
+      adress?: string;
+      city?: string;
+      country?: string;
+      student_id: number;
+      studentlinktypeId?: number;
+      status?: number;
+      company_id?: number;
+      created_at: string;
+      updated_at: string;
+      studentLinkType?: {
+        id: number;
+        title: string;
+        status?: number;
+        company_id?: number;
+        student_id?: number;
+        created_at: string;
+        updated_at: string;
+      } | null;
+    } | null;
+    linkType: {
+      id: number;
+      title: string;
+      status?: number;
+      company_id?: number;
+      student_id?: number;
+      created_at: string;
+      updated_at: string;
+    } | null;
+  }> {
+    console.log('🔍 Fetching student details for ID:', id);
+    const response = await api.get(`/students/${id}/details`);
+    console.log('📥 API Raw Response:', response);
+    console.log('📦 API Response Data:', response.data);
+    console.log('🔑 API Response Data Keys:', Object.keys(response.data || {}));
+    console.log('👤 Student ID in response:', response.data?.student?.id);
+    console.log('📞 API Contact:', response.data?.contact);
+    console.log('🔗 API LinkType:', response.data?.linkType);
+    console.log('✅ Contact exists?', response.data?.contact !== null && response.data?.contact !== undefined);
+    console.log('✅ LinkType exists?', response.data?.linkType !== null && response.data?.linkType !== undefined);
+    return response.data;
+  },
 };
 
 export default studentsApi;

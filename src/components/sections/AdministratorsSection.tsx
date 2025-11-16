@@ -194,7 +194,7 @@ const AdministratorsSection: React.FC = () => {
             {(error as Error).message}
           </div>
         )}
-      
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <SearchSelect
@@ -213,8 +213,8 @@ const AdministratorsSection: React.FC = () => {
               placeholder="Search by name or email..."
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
         </div>
+      </div>
       
 
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">

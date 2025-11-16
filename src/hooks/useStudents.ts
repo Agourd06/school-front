@@ -42,4 +42,16 @@ export const useDeleteStudent = () => {
   });
 };
 
+/**
+ * Get student with all related data (diploma, contact, linkType) in one request
+ * Returns singular objects (not arrays) - null if they don't exist
+ */
+export const useStudentDetails = (id: number) => {
+  return useQuery({
+    queryKey: ['students', id, 'details'],
+    queryFn: () => studentsApi.getDetails(id),
+    enabled: !!id,
+  });
+};
+
 export default useStudents;
