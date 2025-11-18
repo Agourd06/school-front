@@ -98,8 +98,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       title: 'Class Management',
       items: [
         { tab: 'classes', label: 'Classes' },
-        { tab: 'classStudents', label: 'Class Students' },
-        { tab: 'planning', label: 'Planning' },
         { tab: 'planningSessionTypes', label: 'Planning Session Types' },
       ],
     },
@@ -127,13 +125,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     // New parameter groups (empty for now - will replace old ones later)
     {
       title: 'Scholarity',
-      items: [],
+      items: [
+        { tab: 'planning', label: 'Planning' },
+
+      ],
     },
     {
       title: 'Administration',
       items: [
         { tab: 'students', label: 'Students' },
         { tab: 'teachers', label: 'Teachers' },
+        { tab: 'classStudents', label: 'Class Students' },
+
       ],
     },
     {

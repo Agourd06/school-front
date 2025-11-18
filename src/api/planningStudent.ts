@@ -30,6 +30,11 @@ export interface PlanningCompany {
   name?: string | null;
 }
 
+export interface PlanningCourse {
+  id: number;
+  title?: string | null;
+}
+
 export interface PlanningStudentEntry {
   id: number;
   period: string;
@@ -42,6 +47,7 @@ export interface PlanningStudentEntry {
   class_id: number;
   class_room_id: number;
   planning_session_type_id: number;
+  course_id: number;
   company_id?: number | null;
   school_year_id?: number | null;
   teacher?: PlanningTeacher | null;
@@ -50,6 +56,7 @@ export interface PlanningStudentEntry {
   classRoom?: PlanningClassRoom | null;
   company?: PlanningCompany | null;
   planningSessionType?: PlanningSessionType | null;
+  course?: PlanningCourse | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -61,6 +68,7 @@ export interface PlanningStudentPayload {
   class_id: number;
   class_room_id: number;
   planning_session_type_id: number;
+  course_id: number;
   date_day: string;
   hour_start: string;
   hour_end: string;
@@ -77,6 +85,7 @@ export interface GetPlanningStudentParams extends PaginationParams {
   teacher_id?: number;
   specialization_id?: number;
   planning_session_type_id?: number;
+  course_id?: number;
   order?: 'ASC' | 'DESC';
   // company_id is automatically filtered by backend from JWT, no need to send it
 }
@@ -127,6 +136,7 @@ const buildQueryString = (params: GetPlanningStudentParams = {}): string => {
   if (params.teacher_id) qp.append('teacher_id', String(params.teacher_id));
   if (params.specialization_id) qp.append('specialization_id', String(params.specialization_id));
   if (params.planning_session_type_id) qp.append('planning_session_type_id', String(params.planning_session_type_id));
+  if (params.course_id) qp.append('course_id', String(params.course_id));
   if (params.order) qp.append('order', params.order);
 
   const qs = qp.toString();

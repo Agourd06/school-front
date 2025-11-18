@@ -221,7 +221,7 @@ const StudentsSection: React.FC = () => {
                   Name
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Email
+                  Gender / Phone
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
@@ -266,7 +266,14 @@ const StudentsSection: React.FC = () => {
                           </div>
                         </div>
                       </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{student.email}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      <div className="font-medium text-gray-900 capitalize">
+                        {student.gender || '—'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {student.phone || '—'}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <StatusBadge value={student.status} />
                     </td>

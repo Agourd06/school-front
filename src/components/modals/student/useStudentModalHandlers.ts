@@ -37,6 +37,7 @@ interface UseStudentModalHandlersProps {
   setCurrentLinkType: (linkType: any | null) => void;
   refetchStudentDetails: () => Promise<any>;
   onStepComplete: (nextStep: number) => void;
+  onFinish: () => void;
 }
 
 export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => {
@@ -72,6 +73,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     setCurrentLinkType,
     refetchStudentDetails,
     onStepComplete,
+    onFinish,
   } = props;
 
   const updateStudentMut = useUpdateStudent();
@@ -312,6 +314,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       }
 
       await refetchStudentDetails();
+      onFinish();
     } catch (err: any) {
       const message = err?.response?.data?.message || 'Failed to save link type';
       setLinkTypeError(message);

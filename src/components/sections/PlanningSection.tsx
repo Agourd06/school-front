@@ -1,5 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PlanningStudentEntry, GetPlanningStudentParams } from '../../api/planningStudent';
+import type { ClassEntity } from '../../api/classes';
+import type { Course } from '../../api/course';
 import {
   usePlanningStudents,
   useCreatePlanningStudent,
@@ -12,6 +14,7 @@ import { useClassRooms } from '../../hooks/useClassRooms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
+import { useCourses } from '../../hooks/useCourses';
 // import { useCompanies } from '../../hooks/useCompanies'; // Removed - company is auto-set from authenticated user
 import { usePlanningSessionTypes, useCreatePlanningSessionType } from '../../hooks/usePlanningSessionTypes';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
@@ -31,6 +34,7 @@ interface PlanningFilters {
   teacher_id: number | '';
   specialization_id: number | '';
   planning_session_type_id: number | '';
+  course_id: number | '';
 }
 
 interface PlanningState {
@@ -59,6 +63,7 @@ interface FormState {
   teacher_id: number | '';
   class_room_id: number | '';
   planning_session_type_id: number | '';
+  course_id: number | '';
   status: PlanningStatus;
 }
 
@@ -81,16 +86,19 @@ interface FormSectionProps {
   roomOptions: SearchSelectOption[];
   periodOptions: SearchSelectOption[];
   sessionTypeOptions: SearchSelectOption[];
+  courseOptions: SearchSelectOption[];
   yearOptions: SearchSelectOption[];
   periodsLoading: boolean;
   teachersLoading: boolean;
-  specsLoading: boolean;
   classesLoading: boolean;
   roomsLoading: boolean;
   yearsLoading: boolean;
   sessionTypesLoading: boolean;
+  coursesLoading: boolean;
   onOpenSessionTypeModal: () => void;
   isCreatingSessionType: boolean;
+  classDetails: ClassEntity | null;
+  courseDetails: Course | null;
 }
 
 const INITIAL_PAGINATION = {
@@ -150,8 +158,119 @@ const INITIAL_FORM = (weekStart: Date): FormState => ({
   teacher_id: '',
   class_room_id: '',
   planning_session_type_id: '',
+  course_id: '',
   status: DEFAULT_PLANNING_STATUS,
 });
+
+interface InfoPopoverTriggerProps {
+  isOpen: boolean;
+  disabled?: boolean;
+  onToggle: (open: boolean) => void;
+  openLabel?: string;
+  closeLabel?: string;
+  widthClass?: string;
+  children: React.ReactNode;
+}
+
+const InfoPopoverTrigger: React.FC<InfoPopoverTriggerProps> = ({
+  isOpen,
+  disabled,
+  onToggle,
+  openLabel = 'View info',
+  closeLabel = 'Hide info',
+  widthClass = 'w-72',
+  children,
+}) => {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleClick = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        onToggle(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [isOpen, onToggle]);
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onToggle(!isOpen)}
+        className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold transition-colors ${
+          disabled
+            ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+            : isOpen
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-blue-200 text-blue-600 hover:border-blue-400 hover:text-blue-700'
+        }`}
+      >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.065 7-9.542 7s-8.268-2.943-9.542-7z" />
+        </svg>
+        {isOpen ? closeLabel : openLabel}
+      </button>
+      {!disabled && isOpen && (
+        <div
+          className={`absolute right-0 z-50 mt-2 ${widthClass} rounded-3xl border border-blue-100 bg-white p-5 shadow-2xl ring-1 ring-black/5`}
+        >
+          <div className="pointer-events-none absolute -top-3 right-10 h-5 w-5 rotate-45 border border-blue-100 bg-white shadow-sm ring-1 ring-black/5" />
+          <div className="relative z-10">{children}</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface DetailCardProps {
+  title: string;
+  badge?: string;
+  items: Array<{ label: string; value?: React.ReactNode }>;
+  description?: React.ReactNode;
+}
+
+const DetailCard: React.FC<DetailCardProps> = ({ title, badge, items, description }) => {
+  const formattedDescription = React.useMemo(() => {
+    if (!description) return null;
+    if (typeof description !== 'string') return description;
+    return description
+      .split('<br>')
+      .map((paragraph, idx) => (
+        <p key={idx} className="mb-2 last:mb-0">
+          {paragraph.replace(/<[^>]*>?/gm, '').trim()}
+        </p>
+      ));
+  }, [description]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold uppercase tracking-wide text-blue-500">Details</p>
+        {badge && (
+          <span className="rounded-full bg-blue-50 px-3 py-0.5 text-xs font-semibold text-blue-700">{badge}</span>
+        )}
+      </div>
+      <p className="mt-2 text-base font-semibold text-blue-900">{title}</p>
+      <dl className="mt-3 space-y-2 text-sm text-blue-900">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center justify-between rounded-lg bg-blue-50/70 px-3 py-1.5">
+            <dt className="text-xs uppercase text-blue-500">{item.label}</dt>
+            <dd className="font-medium text-right text-blue-900">{item.value ?? '—'}</dd>
+          </div>
+        ))}
+      </dl>
+      {formattedDescription && (
+        <div className="mt-4 max-h-48 overflow-y-auto rounded-2xl bg-blue-50/70 px-4 py-3 text-xs text-blue-800 leading-relaxed shadow-inner">
+          {formattedDescription}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const FormSection: React.FC<FormSectionProps> = ({
   form,
@@ -172,19 +291,44 @@ const FormSection: React.FC<FormSectionProps> = ({
   roomOptions,
   periodOptions,
   sessionTypeOptions,
+  courseOptions,
   yearOptions,
   periodsLoading,
   teachersLoading,
-  specsLoading,
   classesLoading,
   roomsLoading,
   yearsLoading,
   sessionTypesLoading,
+  coursesLoading,
   onOpenSessionTypeModal,
   isCreatingSessionType,
+  classDetails,
+  courseDetails,
 }) => {
   const statusOptions = PLANNING_STATUS_OPTIONS_FORM;
   const timeSelectOptions: SearchSelectOption[] = TIME_OPTIONS.map((time) => ({ value: time, label: time }));
+  const [showClassDetails, setShowClassDetails] = useState(false);
+  const [showCourseDetails, setShowCourseDetails] = useState(false);
+  const canSelectClass = Boolean(form.school_year_id && form.period);
+
+  useEffect(() => {
+    if (!classDetails) {
+      setShowClassDetails(false);
+    }
+  }, [classDetails]);
+  useEffect(() => {
+    if (!courseDetails) {
+      setShowCourseDetails(false);
+    }
+  }, [courseDetails]);
+
+  const specializationDisplay = useMemo(() => {
+    if (classDetails?.specialization?.title) return classDetails.specialization.title;
+    const option = specializationOptions.find((opt) => Number(opt.value) === form.specialization_id);
+    if (option) return option.label;
+    if (form.specialization_id) return `Specialization #${form.specialization_id}`;
+    return '';
+  }, [classDetails, specializationOptions, form.specialization_id]);
 
   return (
     <div className="bg-white shadow rounded-lg border border-gray-200 p-6">
@@ -234,7 +378,12 @@ const FormSection: React.FC<FormSectionProps> = ({
               label="Period *"
               value={form.period}
               onChange={(value) => {
-                setForm((prev) => ({ ...prev, period: value === '' ? '' : String(value) }));
+                setForm((prev) => ({
+                  ...prev,
+                  period: value === '' ? '' : String(value),
+                  class_id: '',
+                  specialization_id: '',
+                }));
                 if (formErrors.period) setFormErrors((prev) => ({ ...prev, period: '' }));
               }}
               options={periodOptions}
@@ -293,25 +442,60 @@ const FormSection: React.FC<FormSectionProps> = ({
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Class & Resources</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <SearchSelect
-              label="Class *"
-              value={form.class_id}
-              onChange={handleSelectChange('class_id')}
-              options={classOptions}
-              placeholder="Select class"
-              isLoading={classesLoading}
-              error={formErrors.class_id}
-            />
-            <SearchSelect
-              label="Specialization *"
-              value={form.specialization_id}
-              onChange={handleSelectChange('specialization_id')}
-              options={specializationOptions}
-              placeholder="Auto-selected"
-              isLoading={specsLoading}
-              error={formErrors.specialization_id}
-              disabled={true}
-            />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">Class *</label>
+                <InfoPopoverTrigger
+                  disabled={!form.class_id || !classDetails}
+                  isOpen={showClassDetails}
+                  onToggle={setShowClassDetails}
+                  openLabel="View info"
+                  closeLabel="Hide info"
+                  widthClass="w-[22rem]"
+                >
+                  {classDetails && (
+                    <DetailCard
+                      title={classDetails.title}
+                      badge={classDetails.status === 1 ? 'Active' : 'Draft'}
+                      items={[
+                        { label: 'Program', value: classDetails.program?.title || '—' },
+                        { label: 'Specialization', value: classDetails.specialization?.title || '—' },
+                        { label: 'Level', value: classDetails.level?.title || '—' },
+                        { label: 'School Year', value: classDetails.schoolYear?.title || '—' },
+                      ]}
+                      description={classDetails.description}
+                    />
+                  )}
+                </InfoPopoverTrigger>
+              </div>
+              <SearchSelect
+                value={form.class_id}
+                onChange={handleSelectChange('class_id')}
+                options={classOptions}
+                placeholder={canSelectClass ? 'Select class' : 'Select year and period first'}
+                isLoading={classesLoading}
+                error={formErrors.class_id}
+                disabled={!canSelectClass}
+              />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-700">Specialization</p>
+                <span className="text-xs text-gray-400">Auto-selected</span>
+              </div>
+              <div
+                className={`rounded-lg border px-3 py-2 text-sm  ${
+                  specializationDisplay
+                    ? 'bg-white text-gray-900 border-gray-200'
+                    : 'bg-gray-100 text-gray-400 border-gray-200'
+                }`}
+              >
+                {specializationDisplay || 'Select a class to view specialization'}
+              </div>
+              {formErrors.specialization_id && (
+                <p className="text-xs text-red-600">{formErrors.specialization_id}</p>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <SearchSelect
@@ -361,21 +545,60 @@ const FormSection: React.FC<FormSectionProps> = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
-                value={form.status}
-                onChange={(e) => setForm((prev) => ({ ...prev, status: Number(e.target.value) as PlanningStatus }))}
-              >
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">Course *</label>
+                <InfoPopoverTrigger
+                  disabled={!form.course_id || !courseDetails}
+                  isOpen={showCourseDetails}
+                  onToggle={setShowCourseDetails}
+                  widthClass="w-[22rem]"
+                >
+                  {courseDetails && (
+                    <DetailCard
+                      title={courseDetails.title}
+                      badge={courseDetails.status === 1 ? 'Active' : 'Draft'}
+                      items={[
+                        { label: 'Volume', value: courseDetails.volume ?? '—' },
+                        { label: 'Coefficient', value: courseDetails.coefficient ?? '—' },
+                        { label: 'Modules', value: courseDetails.modules?.length ?? 0 },
+                        {
+                          label: 'Updated',
+                          value: courseDetails.updated_at
+                            ? new Date(courseDetails.updated_at).toLocaleDateString()
+                            : '—',
+                        },
+                      ]}
+                      description={courseDetails.description}
+                    />
+                  )}
+                </InfoPopoverTrigger>
+              </div>
+              <SearchSelect
+                value={form.course_id}
+                onChange={handleSelectChange('course_id')}
+                options={courseOptions}
+                placeholder="Select course"
+                isLoading={coursesLoading}
+                error={formErrors.course_id}
+              />
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+              value={form.status}
+              onChange={(e) => setForm((prev) => ({ ...prev, status: Number(e.target.value) as PlanningStatus }))}
+            >
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
 
         <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
           {selectedEntry && (
@@ -420,6 +643,7 @@ const PlanningSection: React.FC = () => {
       teacher_id: '',
       specialization_id: '',
       planning_session_type_id: '',
+      course_id: '',
     },
   });
   const [selectedEntry, setSelectedEntry] = useState<PlanningStudentEntry | null>(null);
@@ -455,6 +679,7 @@ const PlanningSection: React.FC = () => {
     if (f.teacher_id) p.teacher_id = +f.teacher_id;
     if (f.specialization_id) p.specialization_id = +f.specialization_id;
     if (f.planning_session_type_id) p.planning_session_type_id = +f.planning_session_type_id;
+    if (f.course_id) p.course_id = +f.course_id;
     return p;
   }, [state.filters, state.pagination.page, state.pagination.limit]);
 
@@ -492,6 +717,7 @@ const PlanningSection: React.FC = () => {
   const { data: rooms, isLoading: roomsLoading } = useClassRooms({ page: 1, limit: 100 } as any);
   const { data: specs, isLoading: specsLoading } = useSpecializations({ page: 1, limit: 100 } as any);
   const { data: schoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 } as any);
+  const { data: coursesResp, isLoading: coursesLoading } = useCourses({ page: 1, limit: 100 } as any);
   // const { data: companies } = useCompanies({ page: 1, limit: 100 } as any); // Removed - company is auto-set from authenticated user
   const { data: periods, isLoading: periodsLoading } = useSchoolYearPeriods({
     page: 1,
@@ -520,6 +746,22 @@ const PlanningSection: React.FC = () => {
   }, [classes]);
 
   const classOptions = useMemo(() => mapOptions(classes?.data || [], 'title'), [classes]);
+  const formClassOptions = useMemo(() => {
+    const yearId = form.school_year_id ? Number(form.school_year_id) : null;
+    const periodId = form.period ? Number(form.period) : null;
+    if (!yearId || !periodId) return [];
+
+    return (classes?.data || [])
+      .filter((cls: ClassEntity) => {
+        if (yearId && cls.school_year_id !== yearId) return false;
+        if (periodId && cls.school_year_period_id !== periodId) return false;
+        return true;
+      })
+      .map((cls: ClassEntity) => ({
+        value: cls.id,
+        label: cls.title || `Class #${cls.id}`,
+      }));
+  }, [classes, form.school_year_id, form.period]);
   const teacherOptions = useMemo(
     () =>
       (teachers?.data || [])
@@ -543,6 +785,31 @@ const PlanningSection: React.FC = () => {
       })),
     [sessionTypesResp]
   );
+  const courseOptions = useMemo(
+    () =>
+      (coursesResp?.data || [])
+        .filter((course: any) => course?.status !== -2)
+        .map((course: Course) => ({
+          value: course.id,
+          label: course.title || `Course #${course.id}`,
+        })),
+    [coursesResp]
+  );
+  const coursesMap = useMemo(() => {
+    const map = new Map<number, Course>();
+    (coursesResp?.data || []).forEach((course: Course) => {
+      map.set(course.id, course);
+    });
+    return map;
+  }, [coursesResp]);
+  const selectedClassDetails = useMemo<ClassEntity | null>(() => {
+    if (!form.class_id) return null;
+    return classesMap.get(Number(form.class_id)) ?? null;
+  }, [form.class_id, classesMap]);
+  const selectedCourseDetails = useMemo<Course | null>(() => {
+    if (!form.course_id) return null;
+    return coursesMap.get(Number(form.course_id)) ?? null;
+  }, [form.course_id, coursesMap]);
   const periodLabelMap = useMemo(() => {
     const map: Record<string, string> = {};
     periodOptions.forEach((option) => {
@@ -626,6 +893,7 @@ const PlanningSection: React.FC = () => {
       teacher_id: entry.teacher_id ?? '',
       class_room_id: entry.class_room_id ?? '',
       planning_session_type_id: entry.planning_session_type_id,
+      course_id: entry.course_id ?? '',
       status: entry.status ?? DEFAULT_PLANNING_STATUS,
     });
     setFormErrors({});
@@ -730,6 +998,7 @@ const PlanningSection: React.FC = () => {
     if (form.teacher_id === '') e.teacher_id = 'Teacher is required';
     if (form.class_room_id === '') e.class_room_id = 'Classroom is required';
     if (form.planning_session_type_id === '') e.planning_session_type_id = 'Session type is required';
+    if (form.course_id === '') e.course_id = 'Course is required';
     return e;
   };
 
@@ -752,6 +1021,7 @@ const PlanningSection: React.FC = () => {
       class_id: +form.class_id,
       class_room_id: +form.class_room_id,
       planning_session_type_id: +form.planning_session_type_id,
+      course_id: +form.course_id,
       school_year_id: form.school_year_id === '' ? undefined : +form.school_year_id,
       status: form.status,
     };
@@ -810,6 +1080,12 @@ const PlanningSection: React.FC = () => {
       // Clear period when school year changes
       if (name === 'school_year_id') {
         updated.period = '';
+        updated.class_id = '';
+        updated.specialization_id = '';
+      }
+      if (name === 'period') {
+        updated.class_id = '';
+        updated.specialization_id = '';
       }
       return updated;
     });
@@ -942,6 +1218,15 @@ const PlanningSection: React.FC = () => {
             isClearable
             isLoading={sessionTypesLoading}
           />
+          <SearchSelect
+            label="Course"
+            value={state.filters.course_id}
+            onChange={handleFilterChange('course_id')}
+            options={courseOptions}
+            placeholder="All courses"
+            isClearable
+            isLoading={coursesLoading}
+          />
         </div>
         {state.error && (
           <div className="mt-4 px-3 py-2 bg-red-50 border border-red-200 text-sm text-red-700 rounded-md">
@@ -968,20 +1253,23 @@ const PlanningSection: React.FC = () => {
             setFormErrors={setFormErrors}
             teacherOptions={teacherOptions}
             specializationOptions={specializationOptions}
-            classOptions={classOptions}
+            classOptions={formClassOptions}
             roomOptions={roomOptions}
             periodOptions={periodOptions}
             sessionTypeOptions={sessionTypeOptions}
+            courseOptions={courseOptions}
             yearOptions={yearOptions}
             periodsLoading={periodsLoading}
             teachersLoading={teachersLoading}
-            specsLoading={specsLoading}
             classesLoading={classesLoading}
             roomsLoading={roomsLoading}
             yearsLoading={yearsLoading}
             sessionTypesLoading={sessionTypesLoading}
+            coursesLoading={coursesLoading}
             onOpenSessionTypeModal={handleOpenSessionTypeModal}
             isCreatingSessionType={createSessionTypeMut.isPending}
+            classDetails={selectedClassDetails}
+            courseDetails={selectedCourseDetails}
           />
         )}
 

@@ -416,7 +416,7 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, class
                   <h3 className="text-lg font-medium text-gray-900">Unassigned Students</h3>
                   <p className="text-sm text-gray-500">Students not assigned to any class.</p>
                 </div>
-                <span className="text-sm text-gray-500">{filteredUnassigned.length}</span>
+                <span className="text-sm text-red-600">{filteredUnassigned.length}</span>
               </div>
               <Droppable droppableId="unassigned" isDropDisabled={isMutationLoading}>
                 {(provided, snapshot) => (

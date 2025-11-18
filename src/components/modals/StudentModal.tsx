@@ -6,6 +6,7 @@ import StudentStep from './student/StudentStep';
 import DiplomeStep from './student/DiplomeStep';
 import ContactStep from './student/ContactStep';
 import LinkTypeStep from './student/LinkTypeStep';
+import StepProgress from './student/StepProgress';
 import { STEPS } from './student/constants';
 import type { Student } from '../../api/students';
 
@@ -96,6 +97,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
     setCurrentLinkType: setCurrentLinkTypeFn,
     refetchStudentDetails,
     onStepComplete: (nextStep: number) => setStepIndex(nextStep),
+    onFinish: onClose,
   });
 
   // Reset form when modal closes
@@ -199,29 +201,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Edit Student">
       <div className="space-y-6">
-        <div className="flex flex-wrap gap-3">
-          {STEPS.map((step, index) => {
-            const isActive = index === stepIndex;
-            const isCompleted = index < stepIndex;
-            return (
-              <div
-                key={step.key}
-                className={`flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : isCompleted
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                <span className="mr-2 inline-flex h-4 w-4 items-center justify-center rounded-full border border-current">
-                  {index + 1}
-                </span>
-                <span>{step.label}</span>
-              </div>
-            );
-          })}
-        </div>
+        <StepProgress steps={STEPS} currentIndex={stepIndex} />
 
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h4 className="text-sm font-medium text-gray-700 mb-4">{currentStep.description}</h4>
