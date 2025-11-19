@@ -10,6 +10,7 @@ export interface StudentReportDetailFormValues {
   teacher_id: number | '';
   course_id: number | '';
   remarks: string;
+  note: number | '';
   status: StudentReportDetailStatus;
 }
 
@@ -32,6 +33,7 @@ const DEFAULT_FORM = (reportId: number): StudentReportDetailFormValues => ({
   teacher_id: '',
   course_id: '',
   remarks: '',
+  note: '',
   status: 2,
 });
 
@@ -59,6 +61,7 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
         teacher_id: initialData.teacher_id ?? '',
         course_id: initialData.course_id ?? '',
         remarks: initialData.remarks ?? '',
+        note: initialData.note ?? '',
         status: normalizedStatus,
       });
     } else {
@@ -71,6 +74,7 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
     const e: Record<string, string> = {};
     if (form.teacher_id === '' || form.teacher_id === null) e.teacher_id = 'Teacher is required';
     if (form.course_id === '' || form.course_id === null) e.course_id = 'Course is required';
+    if (form.note !== '' && Number.isNaN(Number(form.note))) e.note = 'Note must be a number';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -142,6 +146,22 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
             placeholder="Optional remarks"
             rows={8}
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+          <input
+            type="number"
+            value={form.note}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                note: e.target.value === '' ? '' : Number(e.target.value),
+              }))
+            }
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Optional note"
+          />
+          {errors.note && <p className="mt-1 text-xs text-red-600">{errors.note}</p>}
         </div>
 
         {serverError && (

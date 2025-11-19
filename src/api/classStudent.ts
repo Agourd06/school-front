@@ -8,6 +8,7 @@ export interface MinimalStudent {
   last_name?: string;
   email?: string;
   status?: number;
+  picture?: string | null;
 }
 
 export interface MinimalClass {

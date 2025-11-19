@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import type { PlanningStudentEntry } from '../../api/planningStudent';
 import PlanningStatusBadge from '../PlanningStatusBadge';
 
@@ -14,13 +14,6 @@ interface PlanningMonthViewProps {
   onSelectDate: (isoDate: string) => void;
   getPeriodLabel?: (entry: PlanningStudentEntry) => string;
 }
-
-const formatDateLabel = (date: Date) =>
-  date.toLocaleDateString(undefined, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
 
 const formatTime = (time: string) => {
   if (!time) return time;
@@ -40,6 +33,27 @@ const formatSessionType = (entry: PlanningStudentEntry) =>
   entry.planningSessionType?.title || `Type #${entry.planning_session_type_id}`;
 
 const getISODate = (date: Date) => date.toISOString().split('T')[0];
+
+const ENTRY_TONE_STYLES: Record<
+  'today' | 'future' | 'past',
+  { base: string; text: string; muted: string }
+> = {
+  today: {
+    base: 'border-green-200 bg-green-50/70 hover:border-green-300 hover:bg-green-50',
+    text: 'text-green-900',
+    muted: 'text-green-700',
+  },
+  future: {
+    base: 'border-blue-200 bg-blue-50/70 hover:border-blue-300 hover:bg-blue-50',
+    text: 'text-blue-900',
+    muted: 'text-blue-700',
+  },
+  past: {
+    base: 'border-gray-200 bg-gray-50 hover:border-gray-200 hover:bg-gray-50 opacity-80',
+    text: 'text-gray-500',
+    muted: 'text-gray-400',
+  },
+};
 
 const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
   monthStart,
@@ -149,6 +163,20 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
     };
   }, []);
 
+  const getEntryTone = useCallback(
+    (entry: PlanningStudentEntry): 'today' | 'future' | 'past' => {
+      if (!entry.date_day) return 'future';
+      const now = new Date();
+      const start = new Date(`${entry.date_day}T${entry.hour_start || '00:00'}`);
+      const end = new Date(`${entry.date_day}T${entry.hour_end || entry.hour_start || '23:59'}`);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'future';
+      if (now >= start && now <= end) return 'today';
+      if (now < start) return 'future';
+      return 'past';
+    },
+    []
+  );
+
   const handleMouseEnter = (entryId: number) => {
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
@@ -238,7 +266,6 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
             {/* Calendar days */}
             {monthDays.map((day, index) => {
               const isToday = getISODate(new Date()) === day.iso;
-              const periodLabel = day.entries.length > 0 ? getPeriodLabel?.(day.entries[0]) : null;
 
               return (
                 <div
@@ -262,7 +289,8 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
                     )}
                   </div>
                   <div className="space-y-1 max-h-[90px] overflow-y-auto">
-                    {day.entries.slice(0, 3).map((entry) => {
+                  {day.entries.slice(0, 3).map((entry) => {
+                      const tone = ENTRY_TONE_STYLES[getEntryTone(entry)];
                       const isConflict =
                         conflictSlot &&
                         conflictSlot.date_day === entry.date_day &&
@@ -277,15 +305,15 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
                             onClick={() => onSelectEntry(entry)}
                             onMouseEnter={() => handleMouseEnter(entry.id)}
                             onMouseLeave={handleMouseLeave}
-                            className={`w-full text-left border rounded px-1.5 py-1 bg-white shadow-sm hover:shadow-md hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200 text-xs ${
-                              isConflict ? 'border-red-400 ring-1 ring-red-100' : 'border-gray-200'
+                            className={`w-full text-left border rounded px-1.5 py-1 shadow-sm transition-all duration-200 text-xs ${
+                              isConflict ? 'border-red-400 ring-1 ring-red-100' : tone.base
                             }`}
                           >
-                            <div className="font-semibold text-gray-900 truncate">
+                            <div className={`font-semibold truncate ${tone.text}`}>
                               {formatTimeRange(entry.hour_start, entry.hour_end)}
                             </div>
-                            <div className="text-gray-600 truncate">{formatSessionType(entry)}</div>
-                            <div className="text-gray-500 truncate">{formatTeacherName(entry)}</div>
+                            <div className={`truncate ${tone.text}`}>{formatSessionType(entry)}</div>
+                            <div className={`truncate ${tone.muted}`}>{formatTeacherName(entry)}</div>
                           </button>
 
                           {/* Hover Overlay - Same as week view */}

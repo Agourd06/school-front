@@ -23,6 +23,7 @@ export interface StudentReportDetail {
   teacher_id: number;
   course_id: number;
   remarks?: string | null;
+  note?: number | null;
   status: StudentReportDetailStatus;
   created_at?: string;
   updated_at?: string;
@@ -36,6 +37,7 @@ export interface CreateStudentReportDetailPayload {
   teacher_id: number;
   course_id: number;
   remarks?: string | null;
+  note?: number | null;
   status?: StudentReportDetailStatus;
   // Note: This entity doesn't have a direct company_id column
   // Backend filters by course.company_id from the authenticated user's JWT

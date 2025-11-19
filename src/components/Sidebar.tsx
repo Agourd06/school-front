@@ -12,6 +12,8 @@ interface SidebarProps {
     | "planning"
     | "studentReports"
     | "studentPresence"
+    | "studentNotes"
+    | "studentReportDetails"
     | "planningSessionTypes"
     | "levelPricings"
     | "studentPayments"
@@ -40,6 +42,8 @@ interface SidebarProps {
       | "planning"
       | "studentReports"
       | "studentPresence"
+      | "studentNotes"
+      | "studentReportDetails"
       | "planningSessionTypes"
       | "levelPricings"
       | "studentPayments"
@@ -107,7 +111,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
        
         { tab: 'administrators', label: 'Administrators' },
         { tab: 'studentReports', label: 'Student Reports' },
-        { tab: 'studentPresence', label: 'Student Presence' },
         { tab: 'studentLinkTypes', label: 'Student Link Types' },
         { tab: 'studentContacts', label: 'Student Contacts' },
         { tab: 'studentDiplomes', label: 'Student Diplomes' },
@@ -127,6 +130,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       title: 'Scholarity',
       items: [
         { tab: 'planning', label: 'Planning' },
+        { tab: 'studentPresence', label: 'Student Presence' },
+        { tab: 'studentNotes', label: 'Student Notes' },
+        { tab: 'studentReportDetails', label: 'Student Report Details' },
 
       ],
     },

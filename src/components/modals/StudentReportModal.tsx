@@ -6,6 +6,7 @@ import RichTextEditor from '../inputs/RichTextEditor';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 
 export interface StudentReportFormValues {
+  school_year_id: number | '';
   school_year_period_id: number | '';
   student_id: number | '';
   remarks: string;
@@ -23,9 +24,18 @@ interface StudentReportModalProps {
   periodOptions: SearchSelectOption[];
   studentOptions: SearchSelectOption[];
   serverError?: string | null;
+  presetValues?: Partial<StudentReportFormValues>;
+  contextInfo?: {
+    year?: string;
+    period?: string;
+    className?: string;
+  };
+  disableStudentSelect?: boolean;
+  disablePeriodSelect?: boolean;
 }
 
 const DEFAULT_FORM: StudentReportFormValues = {
+  school_year_id: '',
   school_year_period_id: '',
   student_id: '',
   remarks: '',
@@ -45,6 +55,10 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
   periodOptions,
   studentOptions,
   serverError,
+  presetValues,
+  contextInfo,
+  disableStudentSelect = false,
+  disablePeriodSelect = false,
 }) => {
   const [form, setForm] = useState<StudentReportFormValues>(DEFAULT_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,16 +71,20 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
       setForm({
         school_year_period_id: initialData.school_year_period_id ?? '',
         student_id: initialData.student_id ?? '',
+        school_year_id: initialData.school_year_id ?? '',
         remarks: initialData.remarks ?? '',
         mention: initialData.mention ?? '',
         passed: !!initialData.passed,
         status: normalizedStatus,
       });
     } else {
-      setForm(DEFAULT_FORM);
+      setForm({
+        ...DEFAULT_FORM,
+        ...presetValues,
+      });
     }
     setErrors({});
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, presetValues]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -75,6 +93,9 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
     }
     if (form.student_id === '' || form.student_id === null) {
       e.student_id = 'Student is required';
+    }
+    if (form.school_year_id === '' || form.school_year_id === null) {
+      e.school_year_id = 'School year is required';
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -107,6 +128,24 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
       className="sm:max-w-4xl"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {contextInfo && (
+          <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-blue-700 space-x-2 flex flex-wrap gap-2">
+            {contextInfo.year && <span className="font-semibold">Year:</span>}
+            {contextInfo.year && <span>{contextInfo.year}</span>}
+            {contextInfo.period && (
+              <>
+                <span className="font-semibold">Period:</span>
+                <span>{contextInfo.period}</span>
+              </>
+            )}
+            {contextInfo.className && (
+              <>
+                <span className="font-semibold">Class:</span>
+                <span>{contextInfo.className}</span>
+              </>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <SearchSelect
             label="School Year Period"
@@ -115,6 +154,7 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
             options={periodOptions}
             placeholder="Select period"
             error={errors.school_year_period_id}
+            disabled={disablePeriodSelect}
           />
           <SearchSelect
             label="Student"
@@ -123,6 +163,7 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
             options={studentOptions}
             placeholder="Select student"
             error={errors.student_id}
+            disabled={disableStudentSelect}
           />
         </div>
 

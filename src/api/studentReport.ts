@@ -17,8 +17,16 @@ export interface SchoolYearPeriodSummary {
   end_date?: string | null;
 }
 
+export interface SchoolYearSummary {
+  id: number;
+  title?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
 export interface StudentReport {
   id: number;
+  school_year_id: number;
   school_year_period_id: number;
   student_id: number;
   remarks?: string | null;
@@ -29,9 +37,11 @@ export interface StudentReport {
   updated_at?: string;
   student?: StudentSummary | null;
   period?: SchoolYearPeriodSummary | null;
+  year?: SchoolYearSummary | null;
 }
 
 export interface CreateStudentReportPayload {
+  school_year_id: number;
   school_year_period_id: number;
   student_id: number;
   remarks?: string | null;
@@ -48,6 +58,7 @@ export interface GetStudentReportsParams extends PaginationParams {
   status?: StudentReportStatus;
   student_id?: number;
   school_year_period_id?: number;
+  school_year_id?: number;
   passed?: boolean;
 }
 
@@ -93,6 +104,7 @@ const buildQueryString = (params: GetStudentReportsParams = {}): string => {
   if (params.status !== undefined && params.status !== null) qp.append('status', String(params.status));
   if (params.student_id) qp.append('student_id', String(params.student_id));
   if (params.school_year_period_id) qp.append('school_year_period_id', String(params.school_year_period_id));
+  if (params.school_year_id) qp.append('school_year_id', String(params.school_year_id));
   if (params.passed !== undefined && params.passed !== null) qp.append('passed', String(params.passed));
   const qs = qp.toString();
   return qs ? `?${qs}` : '';

@@ -1,35 +1,52 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { StudentPresence } from '../../api/studentPresence';
+import type { ClassStudentAssignment } from '../../api/classStudent';
+import type { StudentPresenceStatus } from '../../api/studentPresence';
 import {
   useStudentPresences,
   useCreateStudentPresence,
   useUpdateStudentPresence,
-  useDeleteStudentPresence,
 } from '../../hooks/useStudentPresence';
-import { useStudents } from '../../hooks/useStudents';
 import { usePlanningStudents } from '../../hooks/usePlanningStudents';
-// import { useCompanies } from '../../hooks/useCompanies'; // Removed - company is auto-set from authenticated user
+import { useClassStudents } from '../../hooks/useClassStudents';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
-import Pagination from '../Pagination';
-import StudentPresenceModal, { type StudentPresenceFormValues } from '../modals/StudentPresenceModal';
-import DeleteModal from '../modals/DeleteModal';
 import BaseModal from '../modals/BaseModal';
-import { EditButton, DeleteButton } from '../ui';
-import type { StudentPresence, StudentPresenceStatus } from '../../api/studentPresence';
-import { STATUS_OPTIONS, STATUS_OPTIONS_FORM, STATUS_VALUE_LABEL } from '../../constants/status';
 
-const EMPTY_META = {
-  page: 1,
-  limit: 10,
-  total: 0,
-  totalPages: 1,
-  hasNext: false,
-  hasPrevious: false,
+const formatStudentName = (
+  presence: StudentPresence | undefined,
+  classStudent?: ClassStudentAssignment
+) => {
+  const student = presence?.student ?? classStudent?.student;
+  const first = student?.first_name ?? '';
+  const last = student?.last_name ?? '';
+  const full = `${first} ${last}`.trim();
+  return full || student?.email || `Student #${student?.id ?? presence?.student_id ?? classStudent?.student_id ?? '—'}`;
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
-  ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
-];
+const formatPlanningDetail = (planning: any | undefined) => {
+  if (!planning) return null;
+  const date =
+    planning.date_day && !Number.isNaN(new Date(planning.date_day).getTime())
+      ? new Date(planning.date_day).toLocaleDateString()
+      : '—';
+  const time =
+    planning.hour_start && planning.hour_end ? `${planning.hour_start} – ${planning.hour_end}` : '—';
+  const teacher = planning.teacher
+    ? `${planning.teacher.first_name ?? ''} ${planning.teacher.last_name ?? ''}`.trim() ||
+      planning.teacher.email ||
+      `Teacher #${planning.teacher.id}`
+    : '—';
+  const classroom = planning.class_room?.title || `Room #${planning.class_room_id ?? '—'}`;
+  const classTitle = planning.class?.title || `Class #${planning.class_id ?? '—'}`;
+  return {
+    date,
+    time,
+    teacher,
+    classroom,
+    classTitle,
+    period: planning.period ?? '—',
+  };
+};
 
 const presenceLabel: Record<string, string> = {
   present: 'Present',
@@ -39,18 +56,10 @@ const presenceLabel: Record<string, string> = {
 };
 
 const presenceStyles: Record<string, string> = {
-  present: 'bg-green-100 text-green-800 border border-green-200',
-  absent: 'bg-red-100 text-red-700 border border-red-200',
-  late: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-  excused: 'bg-purple-100 text-purple-700 border border-purple-200',
-};
-
-const statusStyles: Record<number, string> = {
-  2: 'bg-yellow-100 text-yellow-800',
-  1: 'bg-green-100 text-green-800',
-  0: 'bg-gray-200 text-gray-700',
-  [-1]: 'bg-purple-100 text-purple-700',
-  [-2]: 'bg-red-100 text-red-700',
+  present: 'border-green-200 bg-green-50 text-green-800',
+  absent: 'border-red-200 bg-red-50 text-red-700',
+  late: 'border-yellow-200 bg-yellow-50 text-yellow-800',
+  excused: 'border-purple-200 bg-purple-50 text-purple-800',
 };
 
 const extractErrorMessage = (err: any): string => {
@@ -62,459 +71,710 @@ const extractErrorMessage = (err: any): string => {
   return 'Unexpected error';
 };
 
-const formatStudentName = (presence: StudentPresence) => {
-  const first = presence.student?.first_name ?? '';
-  const last = presence.student?.last_name ?? '';
-  const full = `${first} ${last}`.trim();
-  return full || presence.student?.email || `Student #${presence.student_id}`;
-};
-
-const formatPlanningSummary = (presence: StudentPresence) => {
-  const planning = presence.studentPlanning;
-  if (!planning) return `Planning #${presence.student_planning_id}`;
-
-  const date = planning.date_day ? new Date(planning.date_day).toLocaleDateString() : null;
-  const timeRange =
-    planning.hour_start && planning.hour_end ? `${planning.hour_start} – ${planning.hour_end}` : undefined;
-  const period = planning.period ?? '';
-
-  return [period, date, timeRange].filter(Boolean).join(' • ') || `Planning #${planning.id}`;
-};
-
-const availableStatusValues = new Set(STATUS_OPTIONS.map((opt) => Number(opt.value)));
-
 const StudentPresenceSection: React.FC = () => {
-  const [pagination, setPagination] = useState({ page: 1, limit: 10 });
-  const [filters, setFilters] = useState({
-    status: 'all',
-    student: '',
-    planning: '',
-  });
-  const [presenceModalOpen, setPresenceModalOpen] = useState(false);
-  const [editingPresence, setEditingPresence] = useState<StudentPresence | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<StudentPresence | null>(null);
-  const [remarkModal, setRemarkModal] = useState<{ title: string; content: string } | null>(null);
-  const [alert, setAlert] = useState<{
-    type: 'success' | 'error';
-    message: string;
-    actionLabel?: string;
-    onAction?: () => void;
-  } | null>(null);
-  const [modalError, setModalError] = useState<string | null>(null);
+  const [selectedPlanningId, setSelectedPlanningId] = useState<string>('');
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [planningDate, setPlanningDate] = useState('');
+  const [activeTab, setActiveTab] = useState<'presence' | 'notes'>('presence');
+  const [noteEditor, setNoteEditor] = useState<{
+    presence: StudentPresence | null;
+    note: string;
+    remarks: string;
+  }>({ presence: null, note: '-1', remarks: '' });
 
-  const params = useMemo(
+  const presenceParams = useMemo(
     () => ({
-      page: pagination.page,
-      limit: pagination.limit,
-      status:
-        filters.status === 'all'
-          ? undefined
-          : filters.status !== ''
-          ? (Number(filters.status) as StudentPresenceStatus)
-          : undefined,
-      student_id: filters.student ? Number(filters.student) : undefined,
-      student_planning_id: filters.planning ? Number(filters.planning) : undefined,
+      page: 1,
+      limit: 100,
+      student_planning_id: selectedPlanningId ? Number(selectedPlanningId) : undefined,
     }),
-    [filters, pagination]
+    [selectedPlanningId]
   );
 
   const {
     data: presenceResp,
     isLoading: presenceLoading,
     error: presenceError,
-    refetch: refetchPresence,
-  } = useStudentPresences(params);
+    refetch: refetchPresences,
+  } = useStudentPresences(presenceParams);
 
-  const presences = presenceResp?.data ?? [];
-  const presenceMeta = presenceResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
+  const presences = useMemo(() => presenceResp?.data ?? [], [presenceResp]);
+
+  const { data: planningResp, isLoading: planningLoading } = usePlanningStudents({ page: 1, limit: 100 } as any);
+
+  const filteredPlannings = useMemo(() => {
+    const all = planningResp?.data || [];
+    if (!planningDate) return all;
+    return all.filter((planning) => planning.date_day && planning.date_day.startsWith(planningDate));
+  }, [planningResp, planningDate]);
+
+  const planningOptions = useMemo<SearchSelectOption[]>(() => {
+    return filteredPlannings.map((planning) => {
+      const date = planning.date_day ? new Date(planning.date_day).toLocaleDateString() : '';
+      const timeRange =
+        planning.hour_start && planning.hour_end ? `${planning.hour_start} – ${planning.hour_end}` : '';
+      const classLabel = planning.class?.title || (planning.class_id ? `Class #${planning.class_id}` : null);
+      const labelParts = [classLabel, planning.period, date, timeRange].filter(Boolean);
+      return {
+        value: planning.id,
+        label: labelParts.length ? labelParts.join(' • ') : `Planning #${planning.id}`,
+      };
+    });
+  }, [filteredPlannings]);
+
+  useEffect(() => {
+    if (!selectedPlanningId) return;
+    const exists = filteredPlannings.some((planning) => planning.id === Number(selectedPlanningId));
+    if (!exists) {
+      setSelectedPlanningId('');
+      setAlert(null);
+    }
+  }, [filteredPlannings, selectedPlanningId]);
+
+  const selectedPlanning = useMemo(
+    () =>
+      selectedPlanningId
+        ? (planningResp?.data || []).find((planning) => planning.id === Number(selectedPlanningId))
+        : null,
+    [planningResp, selectedPlanningId]
+  );
+
+  const {
+    data: classStudentsResp,
+    isLoading: classStudentsLoading,
+    error: classStudentsError,
+  } = useClassStudents(
+    selectedPlanning?.class_id ? { class_id: selectedPlanning.class_id, limit: 100 } : {}
+  );
+
+  const classStudents = useMemo(() => classStudentsResp?.data ?? [], [classStudentsResp]);
+
+  const classStudentMap = useMemo(() => {
+    const map = new Map<number, ClassStudentAssignment>();
+    classStudents.forEach((assignment) => {
+      if (assignment.student_id) {
+        map.set(assignment.student_id, assignment);
+      }
+    });
+    return map;
+  }, [classStudents]);
+
+  const planPresences = useMemo(() => {
+    if (!selectedPlanningId) return [];
+    const planningId = Number(selectedPlanningId);
+    const filtered = presences.filter((presence) => presence.student_planning_id === planningId);
+    const map = new Map<number | string, StudentPresence>();
+
+    const getTimestamp = (presence: StudentPresence) => {
+      const dateString = presence.updated_at ?? presence.created_at ?? '';
+      const ts = Date.parse(dateString);
+      return Number.isNaN(ts) ? 0 : ts;
+    };
+
+    filtered.forEach((presence) => {
+      const key = presence.student_id ?? `presence-${presence.id}`;
+      const existing = map.get(key);
+      if (!existing || getTimestamp(presence) >= getTimestamp(existing)) {
+        map.set(key, presence);
+      }
+    });
+
+    return Array.from(map.values());
+  }, [presences, selectedPlanningId]);
+
+  const compareByName = useCallback(
+    (a: StudentPresence, b: StudentPresence) => {
+      const nameA = formatStudentName(a, classStudentMap.get(a.student_id ?? 0)).toLowerCase();
+      const nameB = formatStudentName(b, classStudentMap.get(b.student_id ?? 0)).toLowerCase();
+      return nameA.localeCompare(nameB);
+    },
+    [classStudentMap]
+  );
+
+  const absentPresences = useMemo(() => {
+    return planPresences
+      .filter((presence) => presence.presence !== 'present')
+      .sort(compareByName);
+  }, [planPresences, compareByName]);
+
+  const presentPresences = useMemo(() => {
+    return planPresences
+      .filter((presence) => presence.presence === 'present')
+      .sort(compareByName);
+  }, [planPresences, compareByName]);
+
+  const PAGE_SIZE = 10;
+  const [absentPage, setAbsentPage] = useState(1);
+  const [presentPage, setPresentPage] = useState(1);
+
+  useEffect(() => {
+    setAbsentPage(1);
+    setPresentPage(1);
+  }, [absentPresences.length, presentPresences.length]);
+
+  const paginate = (list: StudentPresence[], page: number) => {
+    const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    const safePage = Math.min(page, totalPages);
+    const start = (safePage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    return {
+      slice: list.slice(start, end),
+      page: safePage,
+      totalPages,
+      startIndex: start + 1,
+      endIndex: Math.min(end, list.length),
+    };
+  };
+
+  const absentPagination = paginate(absentPresences, absentPage);
+  const presentPagination = paginate(presentPresences, presentPage);
 
   const createPresenceMut = useCreateStudentPresence();
   const updatePresenceMut = useUpdateStudentPresence();
-  const deletePresenceMut = useDeleteStudentPresence();
 
-  const { data: studentsResp } = useStudents({ page: 1, limit: 100 } as any);
-  const { data: planningResp } = usePlanningStudents({ page: 1, limit: 100 } as any);
-  // const { data: companiesResp } = useCompanies({ page: 1, limit: 100 } as any); // Removed - company is auto-set from authenticated user
+  const autoCreatedRef = useRef<Set<number>>(new Set());
 
-  const studentOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (studentsResp?.data || []).map((student) => ({
-        value: student.id,
-        label:
-          `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() ||
-          student.email ||
-          `Student #${student.id}`,
-      })),
-    [studentsResp]
-  );
+  useEffect(() => {
+    autoCreatedRef.current.clear();
+  }, [selectedPlanningId]);
 
-  const planningOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (planningResp?.data || []).map((planning) => {
-        const date = planning.date_day ? new Date(planning.date_day).toLocaleDateString() : '';
-        const timeRange =
-          planning.hour_start && planning.hour_end ? `${planning.hour_start} – ${planning.hour_end}` : '';
-        const labelParts = [planning.period, date, timeRange].filter(Boolean);
-        return {
-          value: planning.id,
-          label: labelParts.length > 0 ? labelParts.join(' • ') : `Planning #${planning.id}`,
-        };
-      }),
-    [planningResp]
-  );
-
-  // const companyOptions removed - company is auto-set from authenticated user
-
-  const openCreatePresence = () => {
-    setEditingPresence(null);
-    setModalError(null);
-    setPresenceModalOpen(true);
-  };
-
-  const openEditPresence = (presence: StudentPresence) => {
-    setEditingPresence(presence);
-    setModalError(null);
-    setPresenceModalOpen(true);
-  };
-
-  const closePresenceModal = () => {
-    setPresenceModalOpen(false);
-    setEditingPresence(null);
-    setModalError(null);
-  };
-
-  const handlePresenceSubmit = async (values: StudentPresenceFormValues) => {
-    setModalError(null);
-    setAlert(null);
-
-    if (!availableStatusValues.has(values.status)) {
-      const message = 'Invalid status selected.';
-      setModalError(message);
-      setAlert({ type: 'error', message });
+  useEffect(() => {
+    if (!selectedPlanningId || !selectedPlanning?.class_id || classStudents.length === 0) {
       return;
     }
 
-    const noteValue = values.note.trim() === '' ? -1 : Number(values.note);
+    const planningId = Number(selectedPlanningId);
+    const existingStudentIds = new Set(planPresences.map((presence) => presence.student_id));
+    const missingStudentIds = classStudents
+      .map((assignment) => assignment.student_id)
+      .filter((studentId): studentId is number => Boolean(studentId))
+      .filter((studentId) => !existingStudentIds.has(studentId))
+      .filter((studentId) => !autoCreatedRef.current.has(studentId));
 
-    // company_id is automatically set by the API from authenticated user
-    const payload = {
-      student_planning_id: Number(values.student_planning_id),
-      student_id: Number(values.student_id),
-      presence: values.presence,
-      note: noteValue,
-      remarks: values.remarks || undefined,
-      status: values.status,
-    };
+    if (!missingStudentIds.length) return;
 
-    try {
-      if (editingPresence) {
-        await updatePresenceMut.mutateAsync({ id: editingPresence.id, data: payload });
-        setAlert({ type: 'success', message: 'Student presence updated successfully.' });
-      } else {
-        await createPresenceMut.mutateAsync(payload);
-        setAlert({ type: 'success', message: 'Student presence created successfully.' });
+    let cancelled = false;
+    (async () => {
+      for (const studentId of missingStudentIds) {
+        autoCreatedRef.current.add(studentId);
+        try {
+          await createPresenceMut.mutateAsync({
+            student_planning_id: planningId,
+            student_id: studentId,
+            presence: 'absent',
+            note: -1,
+            remarks: undefined,
+            status: 1 as StudentPresenceStatus,
+          });
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to auto-create presence', err);
+        }
       }
-      closePresenceModal();
-      refetchPresence();
-    } catch (err: any) {
-      const message = extractErrorMessage(err);
-      setModalError(message);
-      setAlert({ type: 'error', message });
-      throw err;
-    }
-  };
+      if (!cancelled) {
+        refetchPresences();
+      }
+    })();
 
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    classStudents,
+    planPresences,
+    selectedPlanningId,
+    selectedPlanning,
+    createPresenceMut,
+    refetchPresences,
+  ]);
+
+  const handlePlanningSelect = (value: number | string | '') => {
+    const strValue = value === '' ? '' : String(value);
+    setSelectedPlanningId(strValue);
     setAlert(null);
+    setNoteEditor({ presence: null, note: '-1', remarks: '' });
+  };
+
+  const handleMarkPresence = async (presence: StudentPresence, nextPresence: StudentPresence['presence']) => {
     try {
-      await deletePresenceMut.mutateAsync(deleteTarget.id);
-      const previousStatus = deleteTarget.status && deleteTarget.status !== -2 ? deleteTarget.status : 2;
-      setAlert({
-        type: 'success',
-        message: 'Student presence deleted successfully.',
-        actionLabel: 'Undo',
-        onAction: () => handleUndoDelete(deleteTarget.id, previousStatus),
+      await updatePresenceMut.mutateAsync({
+        id: presence.id,
+        data: { presence: nextPresence },
       });
-      setDeleteTarget(null);
-      refetchPresence();
+      setAlert({ type: 'success', message: `Marked ${formatStudentName(presence)} as ${presenceLabel[nextPresence]}` });
+      refetchPresences();
     } catch (err: any) {
-      const message = extractErrorMessage(err);
-      setAlert({ type: 'error', message });
+      setAlert({ type: 'error', message: extractErrorMessage(err) });
     }
   };
 
-  const handleUndoDelete = async (id: number, status: StudentPresenceStatus) => {
+  const openNoteEditor = (presence: StudentPresence) => {
+    setNoteEditor({
+      presence,
+      note:
+        presence.note === null || presence.note === undefined ? '-1' : String(presence.note),
+      remarks: presence.remarks ?? '',
+    });
+  };
+
+  const closeNoteEditor = () => setNoteEditor({ presence: null, note: '-1', remarks: '' });
+
+  const handleSaveNote = async () => {
+    if (!noteEditor.presence) return;
     try {
-      await updatePresenceMut.mutateAsync({ id, data: { status } });
-      setAlert({ type: 'success', message: 'Student presence restored successfully.' });
-      refetchPresence();
+      await updatePresenceMut.mutateAsync({
+        id: noteEditor.presence.id,
+        data: {
+          note: Number(noteEditor.note ?? -1),
+          remarks: noteEditor.remarks || undefined,
+        },
+      });
+      setAlert({ type: 'success', message: 'Presence updated successfully.' });
+      closeNoteEditor();
+      refetchPresences();
     } catch (err: any) {
-      const message = extractErrorMessage(err);
-      setAlert({ type: 'error', message });
+      setAlert({ type: 'error', message: extractErrorMessage(err) });
     }
   };
 
-  useEffect(() => {
-    if (!alert || alert.onAction) return;
-    const timeout = window.setTimeout(() => setAlert(null), 5000);
-    return () => window.clearTimeout(timeout);
-  }, [alert]);
+  const planningDetail = formatPlanningDetail(selectedPlanning);
+  const courseCoefficient = useMemo(() => {
+    if (!selectedPlanning?.course) return '—';
+    const course = selectedPlanning.course as { coefficient?: number | string };
+    return course.coefficient ?? '—';
+  }, [selectedPlanning]);
 
-  const handleFilterChange = (field: keyof typeof filters) => (value: number | string | '') => {
-    setFilters((prev) => ({
-      ...prev,
-      [field]: value === undefined || value === null ? '' : String(value),
-    }));
-    setPagination((prev) => ({ ...prev, page: 1 }));
+  const renderPresenceItem = (
+    presence: StudentPresence,
+    side: 'left' | 'right',
+    showEdit = false
+  ) => {
+    const studentInfo = classStudentMap.get(presence.student_id ?? 0);
+    const chipStyle = presenceStyles[presence.presence] ?? 'border-gray-200 bg-gray-50 text-gray-600';
+    const containerStyle =
+      side === 'left'
+        ? 'border-orange-200 bg-orange-50/80'
+        : 'border-green-200 bg-green-50/80';
+    const titleColor = side === 'left' ? 'text-orange-900' : 'text-green-900';
+    const metaColor = side === 'left' ? 'text-orange-600' : 'text-green-600';
+    return (
+      <li
+        key={presence.id}
+        className={`rounded-2xl border p-4 shadow-sm flex items-start justify-between gap-3 ${containerStyle}`}
+      >
+        <div className="space-y-1">
+          <p className={`font-semibold leading-tight ${titleColor}`}>{formatStudentName(presence, studentInfo)}</p>
+          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${chipStyle}`}>
+            {presenceLabel[presence.presence] ?? presence.presence}
+          </span>
+          <div className={`text-xs ${metaColor}`}>
+            Note: {presence.note ?? -1} •{' '}
+            {presence.remarks ? (
+              <button
+                type="button"
+                className="text-inherit underline-offset-2 hover:underline"
+                onClick={() =>
+                  setNoteEditor({
+                    presence,
+                    note:
+                      presence.note === null || presence.note === undefined
+                        ? '-1'
+                        : String(presence.note),
+                    remarks: presence.remarks ?? '',
+                  })
+                }
+              >
+                View remarks
+              </button>
+            ) : (
+              'No remarks'
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {showEdit && (
+            <button
+              type="button"
+              onClick={() => openNoteEditor(presence)}
+              className={`rounded-full border p-2 ${
+                side === 'left'
+                  ? 'border-orange-300 text-orange-600 hover:text-orange-700 hover:border-orange-400'
+                  : 'border-green-300 text-green-600 hover:text-green-700 hover:border-green-400'
+              }`}
+              aria-label="Edit note and remarks"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z" />
+              </svg>
+            </button>
+          )}
+          {side === 'left' ? (
+            <button
+              type="button"
+              onClick={() => handleMarkPresence(presence, 'present')}
+              className="rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white hover:bg-orange-600"
+            >
+              Mark present
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleMarkPresence(presence, 'absent')}
+              className="rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-50"
+            >
+              Mark absent
+            </button>
+          )}
+        </div>
+      </li>
+    );
   };
-
-  const openRemarkModal = (title: string, content: string) => {
-    setRemarkModal({ title, content });
-  };
-  const closeRemarkModal = () => setRemarkModal(null);
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Student Presence</h1>
-            <p className="text-sm text-gray-500">
-              Monitor attendance records, notes, and remarks for student planning sessions.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900">Student Presence</h1>
+          <p className="text-sm text-gray-500">
+            Select a planning session to mark students as present or absent and manage remarks.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 p-1">
+          {(['presence', 'notes'] as const).map((tab) => (
             <button
+              key={tab}
               type="button"
-              onClick={openCreatePresence}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-full transition ${
+                activeTab === tab
+                  ? 'bg-white text-blue-600 shadow'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Presence
+              {tab === 'presence' ? 'Presence' : 'Notes'}
             </button>
-          </div>
+          ))}
         </div>
-        {alert && (
-          <div
-            className={`mt-4 flex flex-wrap items-center gap-3 rounded-md border px-4 py-2 text-sm ${
-              alert.type === 'success'
-                ? 'border-green-200 bg-green-50 text-green-700'
-                : 'border-red-200 bg-red-50 text-red-700'
-            }`}
-          >
-            <span>{alert.message}</span>
-            {alert.actionLabel && alert.onAction && (
-              <button
-                type="button"
-                onClick={async () => {
-                  const action = alert.onAction;
-                  if (action) {
-                    await action();
-                  }
-                }}
-                className="inline-flex items-center rounded-md border border-current px-3 py-1 text-xs font-semibold hover:bg-white/20"
-              >
-                {alert.actionLabel}
-              </button>
-            )}
-          </div>
-        )}
-        {presenceError && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-            {(presenceError as Error).message}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SearchSelect
-            label="Status"
-            value={filters.status}
-            onChange={handleFilterChange('status')}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
-          <SearchSelect
-            label="Student"
-            value={filters.student}
-            onChange={handleFilterChange('student')}
-            options={studentOptions}
-            placeholder="All students"
-            isClearable
-          />
-          <SearchSelect
-            label="Planning"
-            value={filters.planning}
-            onChange={handleFilterChange('planning')}
-            options={planningOptions}
-            placeholder="All plannings"
-            isClearable
-          />
-        </div>
-
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Student</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Planning
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Presence
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Note</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Summary
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {presenceLoading ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading student presence…
-                  </td>
-                </tr>
-              ) : presences.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No presence records found.
-                  </td>
-                </tr>
-              ) : (
-                presences.map((presence) => (
-                  <tr key={presence.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      <div className="font-medium text-gray-900">{formatStudentName(presence)}</div>
-                      <div className="text-xs text-gray-500">#{presence.id}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{formatPlanningSummary(presence)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          presenceStyles[presence.presence] ?? 'bg-gray-100 text-gray-600 border border-gray-200'
-                        }`}
-                      >
-                        {presenceLabel[presence.presence] ?? presence.presence}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {presence.note === null || presence.note === undefined ? (
-                        <span className="text-xs text-gray-400">Not set</span>
-                      ) : (
-                        <span className="font-semibold text-gray-900">{presence.note}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {presence.remarks ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              openRemarkModal(
-                                `Presence Remarks • ${formatStudentName(presence)}`,
-                                presence.remarks || ''
-                              )
-                            }
-                            className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
-                          >
-                            View Remarks
-                          </button>
-                        ) : (
-                          <span className="text-xs text-gray-400">No remarks</span>
-                        )}
-                        {presence.company ? (
-                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
-                            {presence.company.name || `Company #${presence.company_id}`}
-                          </span>
-                        ) : null}
-                        {presence.created_at && (
-                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
-                            Created {new Date(presence.created_at).toLocaleDateString()}
-                          </span>
-                        )}
-                        {presence.updated_at && (
-                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
-                            Updated {new Date(presence.updated_at).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          statusStyles[presence.status] ?? 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        {STATUS_VALUE_LABEL[presence.status] ?? `Status ${presence.status}`}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <EditButton onClick={() => openEditPresence(presence)} />
-                        <DeleteButton onClick={() => setDeleteTarget(presence)} />
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        <Pagination
-          currentPage={presenceMeta.page}
-          totalPages={presenceMeta.totalPages}
-          totalItems={presenceMeta.total}
-          itemsPerPage={presenceMeta.limit}
-          hasNext={presenceMeta.hasNext}
-          hasPrevious={presenceMeta.hasPrevious}
-          onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-          onPageSizeChange={(limit) => setPagination({ page: 1, limit })}
-          isLoading={presenceLoading}
-        />
       </div>
 
-      <StudentPresenceModal
-        isOpen={presenceModalOpen}
-        onClose={closePresenceModal}
-        initialData={editingPresence ?? undefined}
-        onSubmit={handlePresenceSubmit}
-        isSubmitting={createPresenceMut.isPending || updatePresenceMut.isPending}
-        planningOptions={planningOptions}
-        studentOptions={studentOptions}
-        // companyOptions removed - company is auto-set from authenticated user
-        serverError={modalError}
-      />
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Planning date</label>
+          <input
+            type="date"
+            value={planningDate}
+            onChange={(event) => {
+              setPlanningDate(event.target.value);
+              setSelectedPlanningId('');
+              setAlert(null);
+              setNoteEditor({ presence: null, note: '-1', remarks: '' });
+            }}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+        <SearchSelect
+          label="Planning session"
+          value={selectedPlanningId}
+          onChange={handlePlanningSelect}
+          options={planningOptions}
+          placeholder={
+            planningDate
+              ? planningOptions.length
+                ? 'Select planning'
+                : 'No planning on this date'
+              : 'Select a date first'
+          }
+          isLoading={planningLoading}
+          disabled={!planningDate || planningOptions.length === 0}
+        />
 
-      <DeleteModal
-        isOpen={!!deleteTarget}
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={handleConfirmDelete}
-        isLoading={deletePresenceMut.isPending}
-        title="Delete Student Presence"
-        entityName={deleteTarget ? formatStudentName(deleteTarget) : undefined}
-      />
+        {planningDetail && (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900 shadow-inner">
+            <p className="text-xs uppercase tracking-wide text-blue-500 mb-2">Planning details</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div>
+                <p className="text-xs text-blue-500">Class</p>
+                <p className="font-semibold">{planningDetail.classTitle}</p>
+              </div>
+              <div>
+                <p className="text-xs text-blue-500">Period</p>
+                <p className="font-semibold">{planningDetail.period}</p>
+              </div>
+              <div>
+                <p className="text-xs text-blue-500">Date</p>
+                <p className="font-semibold">{planningDetail.date}</p>
+              </div>
+              <div>
+                <p className="text-xs text-blue-500">Time</p>
+                <p className="font-semibold">{planningDetail.time}</p>
+              </div>
+              <div>
+                <p className="text-xs text-blue-500">Teacher</p>
+                <p className="font-semibold">{planningDetail.teacher}</p>
+              </div>
+              <div>
+                <p className="text-xs text-blue-500">Classroom</p>
+                <p className="font-semibold">{planningDetail.classroom}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
-      {remarkModal && (
+      {alert && (
+        <div
+          className={`rounded-md border px-4 py-2 text-sm ${
+            alert.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-700'
+              : 'border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
+          {alert.message}
+        </div>
+      )}
+
+      {presenceError && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          {(presenceError as Error).message}
+        </div>
+      )}
+      {classStudentsError && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          {(classStudentsError as Error).message}
+        </div>
+      )}
+
+      {activeTab === 'presence' ? (
+        !selectedPlanningId ? (
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+            {planningDate
+              ? planningOptions.length
+                ? 'Select a planning session to load class roster and manage student presence.'
+                : 'No planning sessions found for the selected date.'
+              : 'Select a date to view available planning sessions.'}
+          </div>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Class roster · Absent / Not yet marked</p>
+                  <p className="text-xs text-gray-500">
+                    {absentPresences.length} student{absentPresences.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+              </div>
+              {presenceLoading || classStudentsLoading ? (
+                <div className="py-12 text-center text-sm text-gray-500">Loading students…</div>
+              ) : absentPresences.length === 0 ? (
+                <div className="py-12 text-center text-sm text-gray-500">Everyone is marked present.</div>
+              ) : (
+                <>
+                  <ul className="space-y-3">
+                    {absentPagination.slice.map((presence) => renderPresenceItem(presence, 'left', false))}
+                  </ul>
+                  {absentPresences.length > PAGE_SIZE && (
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
+                      <span>
+                        Showing {absentPagination.startIndex}–{absentPagination.endIndex} of {absentPresences.length}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAbsentPage((prev) => Math.max(1, prev - 1))}
+                          disabled={absentPagination.page === 1}
+                          className="rounded-full border px-2 py-1 disabled:opacity-40"
+                        >
+                          Prev
+                        </button>
+                        <span>
+                          {absentPagination.page}/{absentPagination.totalPages}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setAbsentPage((prev) => Math.min(absentPagination.totalPages, prev + 1))}
+                          disabled={absentPagination.page === absentPagination.totalPages}
+                          className="rounded-full border px-2 py-1 disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Present students</p>
+                  <p className="text-xs text-gray-500">
+                    {presentPresences.length} student{presentPresences.length === 1 ? '' : 's'}
+                  </p>
+                </div>
+              </div>
+              {presenceLoading || classStudentsLoading ? (
+                <div className="py-12 text-center text-sm text-gray-500">Loading students…</div>
+              ) : presentPresences.length === 0 ? (
+                <div className="py-12 text-center text-sm text-gray-500">Mark students as present to see them here.</div>
+              ) : (
+                <>
+                  <ul className="space-y-3">
+                    {presentPagination.slice.map((presence) => renderPresenceItem(presence, 'right', false))}
+                  </ul>
+                  {presentPresences.length > PAGE_SIZE && (
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
+                      <span>
+                        Showing {presentPagination.startIndex}–{presentPagination.endIndex} of {presentPresences.length}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPresentPage((prev) => Math.max(1, prev - 1))}
+                          disabled={presentPagination.page === 1}
+                          className="rounded-full border px-2 py-1 disabled:opacity-40"
+                        >
+                          Prev
+                        </button>
+                        <span>
+                          {presentPagination.page}/{presentPagination.totalPages}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setPresentPage((prev) => Math.min(presentPagination.totalPages, prev + 1))}
+                          disabled={presentPagination.page === presentPagination.totalPages}
+                          className="rounded-full border px-2 py-1 disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )
+      ) : !selectedPlanningId ? (
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+          {planningDate
+            ? planningOptions.length
+              ? 'Select a planning session to review and edit notes.'
+              : 'No planning sessions found for the selected date.'
+            : 'Select a date to view available planning sessions.'}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900 shadow-inner">
+            <p className="text-xs uppercase tracking-wide text-sky-500 mb-1">Coefficient</p>
+            <p className="text-2xl font-semibold">
+              {courseCoefficient}
+            </p>
+          </div>
+          <div className="space-y-3 rounded-2xl border border-green-100 bg-white p-4 shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Present students · Notes</p>
+                <p className="text-xs text-gray-500">
+                  {presentPresences.length} student{presentPresences.length === 1 ? '' : 's'}
+                </p>
+              </div>
+            </div>
+            {presenceLoading || classStudentsLoading ? (
+              <div className="py-12 text-center text-sm text-gray-500">Loading students…</div>
+            ) : presentPresences.length === 0 ? (
+              <div className="py-12 text-center text-sm text-gray-500">Mark students as present to manage notes.</div>
+            ) : (
+              <>
+                <ul className="space-y-3">
+                  {presentPagination.slice.map((presence) => renderPresenceItem(presence, 'right', true))}
+                </ul>
+                {presentPresences.length > PAGE_SIZE && (
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
+                    <span>
+                      Showing {presentPagination.startIndex}–{presentPagination.endIndex} of {presentPresences.length}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPresentPage((prev) => Math.max(1, prev - 1))}
+                        disabled={presentPagination.page === 1}
+                        className="rounded-full border px-2 py-1 disabled:opacity-40"
+                      >
+                        Prev
+                      </button>
+                      <span>
+                        {presentPagination.page}/{presentPagination.totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPresentPage((prev) => Math.min(presentPagination.totalPages, prev + 1))}
+                        disabled={presentPagination.page === presentPagination.totalPages}
+                        className="rounded-full border px-2 py-1 disabled:opacity-40"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {noteEditor.presence && (
         <BaseModal
           isOpen
-          onClose={closeRemarkModal}
-          title={remarkModal.title}
-          className="sm:max-w-3xl"
-          contentClassName="space-y-4"
+          onClose={closeNoteEditor}
+          title={`Update note · ${formatStudentName(noteEditor.presence, classStudentMap.get(noteEditor.presence.student_id ?? 0))}`}
+          className="sm:max-w-lg"
         >
-          <div className="rt-content max-h-[60vh] overflow-y-auto">
-            <div dangerouslySetInnerHTML={{ __html: remarkModal.content || '<p>No remarks provided.</p>' }} />
-          </div>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSaveNote();
+            }}
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+              <input
+                type="number"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={noteEditor.note}
+                onChange={(event) => setNoteEditor((prev) => ({ ...prev, note: event.target.value }))}
+                placeholder="-1"
+              />
+              <p className="mt-1 text-xs text-gray-500">Use -1 to indicate no note was provided.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+              <textarea
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                rows={4}
+                value={noteEditor.remarks}
+                onChange={(event) => setNoteEditor((prev) => ({ ...prev, remarks: event.target.value }))}
+                placeholder="Add optional remarks…"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeNoteEditor}
+                className="text-sm font-medium text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Save
+              </button>
+            </div>
+          </form>
         </BaseModal>
       )}
     </div>

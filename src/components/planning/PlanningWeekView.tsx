@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import type { PlanningStudentEntry } from '../../api/planningStudent';
 import PlanningStatusBadge from '../PlanningStatusBadge';
 
@@ -51,6 +51,27 @@ const formatSessionTypeMeta = (entry: PlanningStudentEntry) => {
 
 const getISODate = (date: Date) => date.toISOString().split('T')[0];
 
+const ENTRY_TONE_STYLES: Record<
+  'today' | 'future' | 'past',
+  { base: string; text: string; muted: string }
+> = {
+  today: {
+    base: 'border-green-200 bg-green-50/70 hover:border-green-300 hover:bg-green-50',
+    text: 'text-green-900',
+    muted: 'text-green-700',
+  },
+  future: {
+    base: 'border-blue-200 bg-blue-50/70 hover:border-blue-300 hover:bg-blue-50',
+    text: 'text-blue-900',
+    muted: 'text-blue-700',
+  },
+  past: {
+    base: 'border-gray-200 bg-gray-50 hover:border-gray-200 hover:bg-gray-50 opacity-80',
+    text: 'text-gray-500',
+    muted: 'text-gray-400',
+  },
+};
+
 const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
   weekStart,
   entries,
@@ -66,6 +87,20 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
   const [hoveredEntryId, setHoveredEntryId] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const getEntryTone = useCallback(
+    (entry: PlanningStudentEntry): 'today' | 'future' | 'past' => {
+      if (!entry.date_day) return 'future';
+      const now = new Date();
+      const start = new Date(`${entry.date_day}T${entry.hour_start || '00:00'}`);
+      const end = new Date(`${entry.date_day}T${entry.hour_end || entry.hour_start || '23:59'}`);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'future';
+      if (now >= start && now <= end) return 'today';
+      if (now < start) return 'future';
+      return 'past';
+    },
+    []
+  );
 
   const days = useMemo(() => {
     const start = new Date(Date.UTC(
@@ -204,6 +239,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                   <div className="space-y-2">
                     {day.entries.map((entry) => {
                       const periodLabel = getPeriodLabel?.(entry) ?? entry.period;
+                      const tone = ENTRY_TONE_STYLES[getEntryTone(entry)];
                       const isConflict =
                         conflictSlot &&
                         conflictSlot.date_day === entry.date_day &&
@@ -219,20 +255,20 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                             onClick={() => onSelectEntry(entry)}
                             onMouseEnter={() => handleMouseEnter(entry.id)}
                             onMouseLeave={handleMouseLeave}
-                            className={`w-full text-left border rounded-lg px-2.5 py-2 bg-white shadow-sm hover:shadow-lg hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200 ${
-                              isConflict ? 'border-red-400 ring-2 ring-red-100' : 'border-gray-200'
+                            className={`w-full text-left border rounded-lg px-2.5 py-2 shadow-sm transition-all duration-200 ${
+                              isConflict ? 'border-red-400 ring-2 ring-red-100' : tone.base
                             }`}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-semibold text-gray-900 whitespace-nowrap">
+                              <span className={`text-xs font-semibold whitespace-nowrap ${tone.text}`}>
                                 {formatTimeRange(entry.hour_start, entry.hour_end)}
                               </span>
                             </div>
-                            <p className="text-xs text-gray-700 line-clamp-1 leading-tight mb-0.5">{periodLabel}</p>
-                            <p className="text-xs text-gray-600 line-clamp-1 leading-tight mb-0.5">
+                            <p className={`text-xs line-clamp-1 leading-tight mb-0.5 ${tone.text}`}>{periodLabel}</p>
+                            <p className={`text-xs line-clamp-1 leading-tight mb-0.5 ${tone.muted}`}>
                               {formatSessionType(entry)}
                             </p>
-                            <p className="text-xs text-gray-500 line-clamp-1 leading-tight">
+                            <p className={`text-xs line-clamp-1 leading-tight ${tone.muted}`}>
                               {formatTeacherName(entry)}
                             </p>
                           </button>
