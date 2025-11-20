@@ -2,18 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import DeleteModal from '../modals/DeleteModal';
 import StudentReportModal, { type StudentReportFormValues } from '../modals/StudentReportModal';
-import StudentReportDetailModal, { type StudentReportDetailFormValues } from '../modals/StudentReportDetailModal';
-import type { StudentReport } from '../../api/studentReport';
-import type { ClassStudentAssignment } from '../../api/classStudent';
-import type { StudentReportDetail } from '../../api/studentReportDetail';
-import { useStudentReports, useCreateStudentReport, useUpdateStudentReport, useDeleteStudentReport } from '../../hooks/useStudentReports';
-import { useStudentReportDetails, useCreateStudentReportDetail, useUpdateStudentReportDetail, useDeleteStudentReportDetail } from '../../hooks/useStudentReportDetails';
+import type { StudentReport, StudentReportDashboardStudent } from '../../api/studentReport';
+import { useCreateStudentReport, useUpdateStudentReport, useDeleteStudentReport } from '../../hooks/useStudentReports';
+import { useStudentReportDashboard } from '../../hooks/useStudentReportDashboard';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { useClasses } from '../../hooks/useClasses';
-import { useClassStudents } from '../../hooks/useClassStudents';
-import { useTeachers } from '../../hooks/useTeachers';
-import { useCourses } from '../../hooks/useCourses';
 import { STATUS_VALUE_LABEL } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 
@@ -30,32 +24,98 @@ const passedStyles: Record<'passed' | 'failed', string> = {
   failed: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
 };
 
-const extractErrorMessage = (err: any): string => {
+type ErrorWithMessage = {
+  response?: {
+    data?: {
+      message?: unknown;
+    };
+  };
+  message?: unknown;
+};
+
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
-  if (Array.isArray(dataMessage)) return dataMessage.join(', ');
-  if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  const responseMessage = (err as ErrorWithMessage).response?.data?.message;
+  if (Array.isArray(responseMessage)) return responseMessage.join(', ');
+  if (typeof responseMessage === 'string') return responseMessage;
+  const directMessage = (err as ErrorWithMessage).message;
+  if (typeof directMessage === 'string') return directMessage;
+  if (err instanceof Error && typeof err.message === 'string') return err.message;
   return 'Unexpected error';
 };
 
-const formatAssignmentStudent = (assignment: ClassStudentAssignment) => {
-  const student = assignment.student;
+type StudentLike = {
+  id?: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  picture?: string | null;
+};
+
+type TeacherLike = {
+  id?: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+};
+
+type CourseLike = {
+  id?: number;
+  title?: string | null;
+};
+
+const formatStudentName = (student: StudentLike | null | undefined, fallbackId?: number) => {
   const first = student?.first_name ?? '';
   const last = student?.last_name ?? '';
   const full = `${first} ${last}`.trim();
-  return full || student?.email || `Student #${assignment.student_id}`;
+  if (full) return full;
+  if (student?.email) return student.email;
+  if (fallbackId) return `Student #${fallbackId}`;
+  return 'Student';
 };
 
-const getAvatarForStudent = (assignment: ClassStudentAssignment) => {
-  const picture = assignment.student?.picture;
+const getAvatarForStudent = (student: StudentLike | null | undefined) => {
+  const picture = student?.picture;
   if (picture) {
     return { type: 'image' as const, value: getFileUrl(picture) };
   }
-  const first = assignment.student?.first_name ?? '';
-  const last = assignment.student?.last_name ?? '';
+  const first = student?.first_name ?? '';
+  const last = student?.last_name ?? '';
   const initials = `${first.slice(0, 1)}${last.slice(0, 1)}`.trim().toUpperCase() || '??';
   return { type: 'initials' as const, value: initials };
+};
+
+const formatTeacherName = (teacher: TeacherLike | null | undefined, fallbackId?: number) => {
+  const first = teacher?.first_name ?? '';
+  const last = teacher?.last_name ?? '';
+  const full = `${first} ${last}`.trim();
+  if (full) return full;
+  if (teacher?.email) return teacher.email;
+  if (fallbackId) return `Teacher #${fallbackId}`;
+  return 'Teacher';
+};
+
+const formatCourseTitle = (course: CourseLike | null | undefined, fallbackId?: number) => {
+  if (course?.title) return course.title;
+  if (fallbackId) return `Course #${fallbackId}`;
+  return 'Course';
+};
+
+const capitalize = (value?: string | null) => {
+  if (!value) return '';
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
+
+const formatDisplayDate = (value?: string | null) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+};
+
+const formatTimeValue = (time?: string | null) => {
+  if (!time) return '';
+  return time.length > 5 ? time.slice(0, 5) : time;
 };
 
 const API_LIMIT = 100;
@@ -64,64 +124,53 @@ const StudentReportsSection: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
   const [selectedClass, setSelectedClass] = useState<string>('');
+  const [selectedStudentFilter, setSelectedStudentFilter] = useState<string>('');
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('');
+  const [selectedTeacherFilter, setSelectedTeacherFilter] = useState<string>('');
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [editingReport, setEditingReport] = useState<StudentReport | null>(null);
   const [modalStudentId, setModalStudentId] = useState<number | null>(null);
   const [reportModalError, setReportModalError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentReport | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
-  const [editingDetail, setEditingDetail] = useState<StudentReportDetail | null>(null);
-  const [selectedReportIdForDetail, setSelectedReportIdForDetail] = useState<number | null>(null);
-  const [deleteDetailTarget, setDeleteDetailTarget] = useState<StudentReportDetail | null>(null);
-  const [detailModalError, setDetailModalError] = useState<string | null>(null);
 
-  const { data: yearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 } as any);
+  const { data: yearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
   const { data: periodsResp, isLoading: periodsLoading } = useSchoolYearPeriods({
     page: 1,
     limit: 100,
     schoolYearId: selectedYear ? Number(selectedYear) : undefined,
-  } as any);
+  });
   const { data: classesResp, isLoading: classesLoading } = useClasses({
     page: 1,
     limit: API_LIMIT,
     school_year_id: selectedYear ? Number(selectedYear) : undefined,
     school_year_period_id: selectedPeriod ? Number(selectedPeriod) : undefined,
-  } as any);
-  const {
-    data: classStudentsResp,
-    isLoading: classStudentsLoading,
-    error: classStudentsError,
-  } = useClassStudents(
-    selectedClass ? { class_id: Number(selectedClass), limit: API_LIMIT } : {}
-  );
-
-  const reportParams = useMemo(
-    () => ({
-      page: 1,
-      limit: API_LIMIT,
-      school_year_id: selectedYear ? Number(selectedYear) : undefined,
-      school_year_period_id: selectedPeriod ? Number(selectedPeriod) : undefined,
-    }),
-    [selectedYear, selectedPeriod]
-  );
+  });
+  const dashboardParams = useMemo(() => {
+    if (!selectedYear || !selectedPeriod || !selectedClass) return null;
+    return {
+      class_id: Number(selectedClass),
+      school_year_id: Number(selectedYear),
+      school_year_period_id: Number(selectedPeriod),
+    };
+  }, [selectedClass, selectedPeriod, selectedYear]);
 
   const {
-    data: reportsResp,
-    isLoading: reportsLoading,
-    error: reportsError,
-    refetch: refetchReports,
-  } = useStudentReports(reportParams);
+    data: dashboardData,
+    isLoading: dashboardLoading,
+    error: dashboardError,
+    refetch: refetchDashboard,
+  } = useStudentReportDashboard(dashboardParams, { enabled: Boolean(dashboardParams) });
 
   const createReportMut = useCreateStudentReport();
   const updateReportMut = useUpdateStudentReport();
   const deleteReportMut = useDeleteStudentReport();
-  const createDetailMut = useCreateStudentReportDetail();
-  const updateDetailMut = useUpdateStudentReportDetail();
-  const deleteDetailMut = useDeleteStudentReportDetail();
 
-  const { data: teachersResp } = useTeachers({ page: 1, limit: API_LIMIT } as any);
-  const { data: coursesResp } = useCourses({ page: 1, limit: API_LIMIT } as any);
+  useEffect(() => {
+    setSelectedStudentFilter('');
+    setSelectedCourseFilter('');
+    setSelectedTeacherFilter('');
+  }, [selectedClass, selectedPeriod, selectedYear]);
 
   const yearOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -158,104 +207,161 @@ const StudentReportsSection: React.FC = () => {
     return map;
   }, [classesResp]);
 
-  const classStudents = useMemo(() => {
-    const safeAssignments = (classStudentsResp?.data || [])
-      .filter(
-        (assignment) =>
-          assignment.student_id &&
-          assignment.status !== -2 &&
-          assignment.student?.status !== -2
-      )
-      .map((assignment) => {
-        const student = assignment.student;
-        const hasData =
-          Boolean(student) &&
-          [
-            student?.first_name,
-            student?.last_name,
-            student?.email,
-            student?.picture,
-          ].some((value) => value && String(value).trim().length > 0);
+  const dashboardStudents = useMemo(() => dashboardData?.students || [], [dashboardData]);
 
-        if (hasData) return assignment;
+  const studentLookup = useMemo(() => {
+    const map = new Map<number, StudentReportDashboardStudent>();
+    dashboardStudents.forEach((entry) => {
+      map.set(entry.student_id, entry);
+    });
+    return map;
+  }, [dashboardStudents]);
 
-        return {
-          ...assignment,
-          student: {
-            id: assignment.student_id,
-            first_name: 'Student',
-            last_name: `#${assignment.student_id}`,
-            email: student?.email ?? null,
-            status: student?.status ?? 1,
-            picture: student?.picture ?? null,
-          },
-        };
+  const studentFilterOptions = useMemo<SearchSelectOption[]>(() => {
+    const options = dashboardStudents.map((entry) => ({
+      value: entry.student_id,
+      label: formatStudentName(entry.student, entry.student_id),
+    }));
+    return options.sort((a, b) => a.label.localeCompare(b.label));
+  }, [dashboardStudents]);
+
+  const courseMap = useMemo(() => {
+    const map = new Map<number, CourseLike>();
+    (dashboardData?.sessions || []).forEach((session) => {
+      const courseId = session.course_id ?? session.course?.id;
+      if (!courseId) return;
+      map.set(courseId, {
+        id: courseId,
+        title: session.course?.title ?? map.get(courseId)?.title ?? `Course #${courseId}`,
       });
-
-    return safeAssignments.filter((assignment) => Boolean(assignment.student)) as ClassStudentAssignment[];
-  }, [classStudentsResp]);
-
-  const reportsByStudentId = useMemo(() => {
-    const map = new Map<number, StudentReport>();
-    (reportsResp?.data || []).forEach((report) => {
-      if (report.student_id) {
-        map.set(report.student_id, report);
-      }
+    });
+    (dashboardData?.presences || []).forEach((presence) => {
+      const course = presence.studentPlanning?.course;
+      const courseId = course?.id ?? presence.studentPlanning?.course_id;
+      if (!courseId) return;
+      map.set(courseId, {
+        id: courseId,
+        title: course?.title ?? map.get(courseId)?.title ?? `Course #${courseId}`,
+      });
     });
     return map;
-  }, [reportsResp]);
+  }, [dashboardData]);
 
-  const reportIds = useMemo(() => {
-    return (reportsResp?.data || []).map((r) => r.id).filter((id): id is number => !!id);
-  }, [reportsResp]);
+  const teacherMap = useMemo(() => {
+    const map = new Map<number, TeacherLike>();
+    (dashboardData?.sessions || []).forEach((session) => {
+      const teacherId = session.teacher_id ?? session.teacher?.id;
+      if (!teacherId) return;
+      map.set(teacherId, {
+        id: teacherId,
+        first_name: session.teacher?.first_name ?? map.get(teacherId)?.first_name ?? '',
+        last_name: session.teacher?.last_name ?? map.get(teacherId)?.last_name ?? '',
+        email: session.teacher?.email ?? map.get(teacherId)?.email,
+      });
+    });
+    (dashboardData?.presences || []).forEach((presence) => {
+      const teacher = presence.studentPlanning?.teacher;
+      const teacherId = teacher?.id ?? presence.studentPlanning?.teacher_id;
+      if (!teacherId) return;
+      map.set(teacherId, {
+        id: teacherId,
+        first_name: teacher?.first_name ?? map.get(teacherId)?.first_name ?? '',
+        last_name: teacher?.last_name ?? map.get(teacherId)?.last_name ?? '',
+        email: teacher?.email ?? map.get(teacherId)?.email,
+      });
+    });
+    return map;
+  }, [dashboardData]);
 
-  // Fetch all report details - we'll filter client-side by report IDs
-  const { data: allDetailsResp, refetch: refetchDetails } = useStudentReportDetails(
-    {
-      page: 1,
-      limit: API_LIMIT,
-    },
-    { enabled: reportIds.length > 0 }
-  );
+  const courseFilterOptions = useMemo<SearchSelectOption[]>(() => {
+    return Array.from(courseMap.entries())
+      .map(([id, course]) => ({
+        value: id,
+        label: formatCourseTitle(course, id),
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [courseMap]);
 
-  const detailsByStudentId = useMemo(() => {
-    const map = new Map<number, StudentReportDetail[]>();
-    const allDetails = allDetailsResp?.data || [];
-    const reportIdSet = new Set(reportIds);
+  const teacherFilterOptions = useMemo<SearchSelectOption[]>(() => {
+    return Array.from(teacherMap.entries())
+      .map(([id, teacher]) => ({
+        value: id,
+        label: formatTeacherName(teacher, id),
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [teacherMap]);
 
-    allDetails.forEach((detail) => {
-      if (reportIdSet.has(detail.student_report_id)) {
-        const report = reportsResp?.data?.find((r) => r.id === detail.student_report_id);
-        if (report?.student_id) {
-          const existing = map.get(report.student_id) || [];
-          map.set(report.student_id, [...existing, detail]);
-        }
+  const filteredStudents = useMemo(() => {
+    if (!selectedStudentFilter) return dashboardStudents;
+    const targetId = Number(selectedStudentFilter);
+    return dashboardStudents.filter((entry) => entry.student_id === targetId);
+  }, [dashboardStudents, selectedStudentFilter]);
+
+  // Keep for future use when Sessions column is implemented
+  const filteredSessions = useMemo(() => {
+    let sessions = dashboardData?.sessions || [];
+    if (selectedCourseFilter) {
+      const courseId = Number(selectedCourseFilter);
+      sessions = sessions.filter((session) => (session.course_id ?? session.course?.id) === courseId);
+    }
+    if (selectedTeacherFilter) {
+      const teacherId = Number(selectedTeacherFilter);
+      sessions = sessions.filter((session) => (session.teacher_id ?? session.teacher?.id) === teacherId);
+    }
+    return sessions;
+  }, [dashboardData, selectedCourseFilter, selectedTeacherFilter]);
+
+  const filteredPresences = useMemo(() => {
+    let presences = dashboardData?.presences || [];
+    
+    // Apply filters
+    if (selectedStudentFilter) {
+      const studentId = Number(selectedStudentFilter);
+      presences = presences.filter((presence) => presence.student_id === studentId);
+    }
+    if (selectedCourseFilter) {
+      const courseId = Number(selectedCourseFilter);
+      presences = presences.filter((presence) => {
+        const planningCourseId = presence.studentPlanning?.course_id ?? presence.studentPlanning?.course?.id;
+        return planningCourseId === courseId;
+      });
+    }
+    if (selectedTeacherFilter) {
+      const teacherId = Number(selectedTeacherFilter);
+      presences = presences.filter((presence) => {
+        const planningTeacherId = presence.studentPlanning?.teacher_id ?? presence.studentPlanning?.teacher?.id;
+        return planningTeacherId === teacherId;
+      });
+    }
+    return presences;
+  }, [dashboardData, selectedCourseFilter, selectedStudentFilter, selectedTeacherFilter]);
+
+  // Group presences by student
+  const studentsWithPresences = useMemo(() => {
+    const studentMap = new Map<number, {
+      student_id: number;
+      student: StudentLike | null;
+      presences: typeof filteredPresences;
+    }>();
+
+    filteredPresences.forEach((presence) => {
+      const studentId = presence.student_id;
+      if (!studentMap.has(studentId)) {
+        const studentEntry = studentLookup.get(studentId);
+        const studentInfo = presence.student ?? studentEntry?.student ?? null;
+        studentMap.set(studentId, {
+          student_id: studentId,
+          student: studentInfo,
+          presences: [],
+        });
       }
+      studentMap.get(studentId)!.presences.push(presence);
     });
 
-    return map;
-  }, [allDetailsResp, reportIds, reportsResp]);
+    return Array.from(studentMap.values());
+  }, [filteredPresences, studentLookup]);
 
-  const teacherOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (teachersResp?.data || []).map((teacher: any) => ({
-        value: teacher.id,
-        label:
-          `${teacher.first_name ?? ''} ${teacher.last_name ?? ''}`.trim() ||
-          teacher.email ||
-          `Teacher #${teacher.id}`,
-      })),
-    [teachersResp]
-  );
-
-  const courseOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (coursesResp?.data || []).map((course: any) => ({
-        value: course.id,
-        label: course.title || `Course #${course.id}`,
-      })),
-    [coursesResp]
-  );
+  const totalStudents = dashboardStudents.length;
 
   useEffect(() => {
     if (!alert) return;
@@ -303,8 +409,8 @@ const StudentReportsSection: React.FC = () => {
         setAlert({ type: 'success', message: 'Student report created successfully.' });
       }
       handleReportModalClose();
-      refetchReports();
-    } catch (err: any) {
+      refetchDashboard();
+    } catch (err: unknown) {
       setReportModalError(extractErrorMessage(err));
       throw err;
     }
@@ -316,67 +422,8 @@ const StudentReportsSection: React.FC = () => {
       await deleteReportMut.mutateAsync(deleteTarget.id);
       setAlert({ type: 'success', message: 'Student report deleted successfully.' });
       setDeleteTarget(null);
-      refetchReports();
-    } catch (err: any) {
-      setAlert({ type: 'error', message: extractErrorMessage(err) });
-    }
-  };
-
-  const handleOpenCreateDetail = (reportId: number) => {
-    setEditingDetail(null);
-    setSelectedReportIdForDetail(reportId);
-    setDetailModalError(null);
-    setDetailModalOpen(true);
-  };
-
-  const handleOpenEditDetail = (detail: StudentReportDetail) => {
-    setEditingDetail(detail);
-    setSelectedReportIdForDetail(detail.student_report_id);
-    setDetailModalError(null);
-    setDetailModalOpen(true);
-  };
-
-  const handleDetailModalClose = () => {
-    setDetailModalOpen(false);
-    setEditingDetail(null);
-    setSelectedReportIdForDetail(null);
-    setDetailModalError(null);
-  };
-
-  const handleDetailSubmit = async (values: StudentReportDetailFormValues) => {
-    const payload = {
-      student_report_id: values.student_report_id,
-      teacher_id: Number(values.teacher_id),
-      course_id: Number(values.course_id),
-      remarks: values.remarks || undefined,
-      note: values.note === '' ? null : Number(values.note),
-      status: values.status,
-    };
-    try {
-      if (editingDetail) {
-        await updateDetailMut.mutateAsync({ id: editingDetail.id, data: payload });
-        setAlert({ type: 'success', message: 'Report detail updated successfully.' });
-      } else {
-        await createDetailMut.mutateAsync(payload);
-        setAlert({ type: 'success', message: 'Report detail created successfully.' });
-      }
-      handleDetailModalClose();
-      refetchDetails();
-      refetchReports();
-    } catch (err: any) {
-      setDetailModalError(extractErrorMessage(err));
-      throw err;
-    }
-  };
-
-  const handleDeleteDetail = async () => {
-    if (!deleteDetailTarget) return;
-    try {
-      await deleteDetailMut.mutateAsync(deleteDetailTarget.id);
-      setAlert({ type: 'success', message: 'Report detail deleted successfully.' });
-      setDeleteDetailTarget(null);
-      refetchDetails();
-    } catch (err: any) {
+      refetchDashboard();
+    } catch (err: unknown) {
       setAlert({ type: 'error', message: extractErrorMessage(err) });
     }
   };
@@ -400,14 +447,7 @@ const StudentReportsSection: React.FC = () => {
     [selectedYear, selectedPeriod, modalStudentId]
   );
 
-  const modalStudentOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      classStudents.map((assignment) => ({
-        value: assignment.student_id!,
-        label: formatAssignmentStudent(assignment),
-      })),
-    [classStudents]
-  );
+  const modalStudentOptions = studentFilterOptions;
 
   const modalPeriodOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -419,12 +459,13 @@ const StudentReportsSection: React.FC = () => {
 
   const deleteEntityName = useMemo(() => {
     if (!deleteTarget) return undefined;
-    const assignment = classStudents.find((item) => item.student_id === deleteTarget.student_id);
-    if (assignment) return formatAssignmentStudent(assignment);
+    const entry = studentLookup.get(deleteTarget.student_id);
+    if (entry) return formatStudentName(entry.student, entry.student_id);
     return `Student #${deleteTarget.student_id}`;
-  }, [deleteTarget, classStudents]);
+  }, [deleteTarget, studentLookup]);
 
-  const canShowGrid = selectedYear && selectedPeriod && selectedClass;
+  const canShowGrid = Boolean(selectedYear && selectedPeriod && selectedClass);
+  const isDashboardLoading = canShowGrid && dashboardLoading;
 
   return (
     <div className="space-y-6">
@@ -485,14 +526,9 @@ const StudentReportsSection: React.FC = () => {
         </div>
       )}
 
-      {reportsError && (
+      {dashboardError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-          {(reportsError as Error).message}
-        </div>
-      )}
-      {classStudentsError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-          {(classStudentsError as Error).message}
+          {(dashboardError as Error).message}
         </div>
       )}
 
@@ -500,305 +536,240 @@ const StudentReportsSection: React.FC = () => {
         <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
           Select a school year, period, and class to view student reports.
         </div>
-      ) : classStudentsLoading || reportsLoading ? (
+      ) : isDashboardLoading ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-          Loading class students…
+          Loading dashboard data…
         </div>
-      ) : classStudents.length === 0 ? (
+      ) : totalStudents === 0 ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
           No students are registered in this class.
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-6">
-          {/* First Column: Students List */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Students</h2>
-            <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
-              {classStudents.map((assignment) => {
-                const studentId = assignment.student_id!;
-                const report = reportsByStudentId.get(studentId);
-                return (
-                  <div
-                    key={assignment.id}
-                    className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm flex flex-col gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      {(() => {
-                        const avatar = getAvatarForStudent(assignment);
-                        return avatar.type === 'image' ? (
-                          <img
-                            src={avatar.value}
-                            alt={formatAssignmentStudent(assignment)}
-                            className="h-10 w-10 rounded-full object-cover border border-white shadow"
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-sm">
-                            {avatar.value}
-                          </div>
-                        );
-                      })()}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{formatAssignmentStudent(assignment)}</p>
-                        <p className="text-xs text-gray-500">Student #{studentId}</p>
-                      </div>
-                    </div>
-                    {report && (
-                      <div className="space-y-1 text-xs">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${report.passed ? passedStyles.passed : passedStyles.failed}`}>
-                            {report.passed ? 'Passed' : 'Not Passed'}
-                          </span>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              statusStyles[report.status] ?? 'bg-gray-100 text-gray-700'
-                            }`}
-                          >
-                            {STATUS_VALUE_LABEL[report.status] ?? `Status ${report.status}`}
-                          </span>
-                        </div>
-                        <p className="text-gray-600 truncate">
-                          <span className="font-medium">Mention:</span> {report.mention || '—'}
-                        </p>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-end gap-2">
-                      {report && (
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(report)}
-                          className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => (report ? handleOpenEditReport(report) : handleOpenCreateReport(studentId))}
-                        className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
-                      >
-                        {report ? 'Edit' : 'Create'}
-                      </button>
-                    </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <SearchSelect
+              label="Filter by student"
+              value={selectedStudentFilter}
+              onChange={(value) => setSelectedStudentFilter(value === '' ? '' : String(value))}
+              options={studentFilterOptions}
+              placeholder={studentFilterOptions.length === 0 ? 'No students available' : 'All students'}
+              disabled={studentFilterOptions.length === 0}
+              isClearable
+            />
+            <SearchSelect
+              label="Filter by course"
+              value={selectedCourseFilter}
+              onChange={(value) => setSelectedCourseFilter(value === '' ? '' : String(value))}
+              options={courseFilterOptions}
+              placeholder={courseFilterOptions.length === 0 ? 'No courses available' : 'All courses'}
+              disabled={courseFilterOptions.length === 0}
+              isClearable
+            />
+            <SearchSelect
+              label="Filter by teacher"
+              value={selectedTeacherFilter}
+              onChange={(value) => setSelectedTeacherFilter(value === '' ? '' : String(value))}
+              options={teacherFilterOptions}
+              placeholder={teacherFilterOptions.length === 0 ? 'No teachers available' : 'All teachers'}
+              disabled={teacherFilterOptions.length === 0}
+              isClearable
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">Students</h2>
+              <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                {filteredStudents.length === 0 ? (
+                  <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+                    {selectedStudentFilter
+                      ? 'No student matches the current filter.'
+                      : 'Students will appear here once available.'}
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                ) : (
+                  filteredStudents.map((entry) => {
+                    const studentId = entry.student_id;
+                    const studentInfo = entry.student;
+                    const avatar = getAvatarForStudent(studentInfo);
+                    const displayName = formatStudentName(studentInfo, studentId);
+                    const report = entry.report || null;
 
-          {/* Second Column: Empty for now */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Reserved</h2>
-            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center text-sm text-gray-500">
-              This column is reserved for future use.
-            </div>
-          </div>
-
-          {/* Third Column: Courses and Notes */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Courses & Notes</h2>
-            <div className="space-y-4 max-h-[calc(100vh-300px)] overflow-y-auto">
-              {classStudents
-                .filter((assignment) => {
-                  const studentId = assignment.student_id!;
-                  return reportsByStudentId.has(studentId);
-                })
-                .map((assignment) => {
-                  const studentId = assignment.student_id!;
-                  const report = reportsByStudentId.get(studentId);
-                  const details = detailsByStudentId.get(studentId) || [];
-                  if (!report) return null;
-                  return (
-                    <div key={assignment.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                        {(() => {
-                          const avatar = getAvatarForStudent(assignment);
-                          return avatar.type === 'image' ? (
+                    return (
+                      <div
+                        key={studentId}
+                        className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm flex flex-col gap-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          {avatar.type === 'image' ? (
                             <img
                               src={avatar.value}
-                              alt={formatAssignmentStudent(assignment)}
-                              className="h-8 w-8 rounded-full object-cover border border-white shadow"
+                              alt={displayName}
+                              className="h-10 w-10 rounded-full object-cover border border-white shadow"
                             />
                           ) : (
-                            <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-xs">
+                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-sm">
                               {avatar.value}
                             </div>
-                          );
-                        })()}
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{formatAssignmentStudent(assignment)}</p>
-                          <p className="text-xs text-gray-500">Student #{studentId}</p>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                            <p className="text-xs text-gray-500">Student #{studentId}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs text-gray-500">
-                          {details.length} {details.length === 1 ? 'detail' : 'details'}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenCreateDetail(report.id)}
-                          className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                        >
-                          + Add detail
-                        </button>
-                      </div>
-                      {details.length === 0 ? (
-                        <p className="text-xs text-gray-500 text-center py-2">No course details yet.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {details.map((detail) => (
-                            <div key={detail.id} className="rounded-md border border-gray-100 bg-gray-50 p-2 group">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-gray-900 truncate">
-                                    {detail.course?.title || `Course #${detail.course_id}`}
-                                  </p>
-                                  <p className="text-xs text-gray-600 mt-0.5">
-                                    {detail.teacher
-                                      ? `${detail.teacher.first_name ?? ''} ${detail.teacher.last_name ?? ''}`.trim() ||
-                                        detail.teacher.email ||
-                                        `Teacher #${detail.teacher_id}`
-                                      : `Teacher #${detail.teacher_id}`}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  {detail.note !== null && detail.note !== undefined && (
-                                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700">
-                                      {detail.note}
-                                    </span>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenEditDetail(detail)}
-                                    className="opacity-0 group-hover:opacity-100 text-xs text-blue-600 hover:text-blue-700 px-1"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setDeleteDetailTarget(detail)}
-                                    className="opacity-0 group-hover:opacity-100 text-xs text-red-600 hover:text-red-700 px-1"
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                              {detail.remarks && (
-                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">{detail.remarks}</p>
-                              )}
+                        {report ? (
+                          <div className="space-y-1 text-xs">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${report.passed ? passedStyles.passed : passedStyles.failed}`}>
+                                {report.passed ? 'Passed' : 'Not Passed'}
+                              </span>
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                  statusStyles[report.status] ?? 'bg-gray-100 text-gray-700'
+                                }`}
+                              >
+                                {STATUS_VALUE_LABEL[report.status] ?? `Status ${report.status}`}
+                              </span>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              {classStudents
-                .filter((assignment) => {
-                  const studentId = assignment.student_id!;
-                  return reportsByStudentId.has(studentId);
-                })
-                .map((assignment) => {
-                  const studentId = assignment.student_id!;
-                  const report = reportsByStudentId.get(studentId);
-                  const details = detailsByStudentId.get(studentId) || [];
-                  if (!report) return null;
-                  return (
-                    <div key={assignment.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200">
-                        {(() => {
-                          const avatar = getAvatarForStudent(assignment);
-                          return avatar.type === 'image' ? (
-                            <img
-                              src={avatar.value}
-                              alt={formatAssignmentStudent(assignment)}
-                              className="h-8 w-8 rounded-full object-cover border border-white shadow"
-                            />
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-xs">
-                              {avatar.value}
-                            </div>
-                          );
-                        })()}
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{formatAssignmentStudent(assignment)}</p>
-                          <p className="text-xs text-gray-500">Student #{studentId}</p>
+                            <p className="text-gray-600 truncate">
+                              <span className="font-medium">Mention:</span> {report.mention || '—'}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500">No report yet. Create one to get started.</p>
+                        )}
+                        <div className="flex items-center justify-end gap-2">
+                          {report && (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(report)}
+                              className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => (report ? handleOpenEditReport(report) : handleOpenCreateReport(studentId))}
+                            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                          >
+                            {report ? 'Edit' : 'Create'}
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs text-gray-500">
-                          {details.length} {details.length === 1 ? 'detail' : 'details'}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenCreateDetail(report.id)}
-                          className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                        >
-                          + Add detail
-                        </button>
-                      </div>
-                      {details.length === 0 ? (
-                        <p className="text-xs text-gray-500 text-center py-2">No course details yet.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {details.map((detail) => (
-                            <div key={detail.id} className="rounded-md border border-gray-100 bg-gray-50 p-2 group">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium text-gray-900 truncate">
-                                    {detail.course?.title || `Course #${detail.course_id}`}
-                                  </p>
-                                  <p className="text-xs text-gray-600 mt-0.5">
-                                    {detail.teacher
-                                      ? `${detail.teacher.first_name ?? ''} ${detail.teacher.last_name ?? ''}`.trim() ||
-                                        detail.teacher.email ||
-                                        `Teacher #${detail.teacher_id}`
-                                      : `Teacher #${detail.teacher_id}`}
-                                  </p>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  {detail.note !== null && detail.note !== undefined && (
-                                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-700">
-                                      {detail.note}
-                                    </span>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenEditDetail(detail)}
-                                    className="opacity-0 group-hover:opacity-100 text-xs text-blue-600 hover:text-blue-700 px-1"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setDeleteDetailTarget(detail)}
-                                    className="opacity-0 group-hover:opacity-100 text-xs text-red-600 hover:text-red-700 px-1"
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              </div>
-                              {detail.remarks && (
-                                <p className="text-xs text-gray-600 mt-1 line-clamp-2">{detail.remarks}</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-                .filter(Boolean)}
-              {classStudents.filter((assignment) => {
-                const studentId = assignment.student_id!;
-                return reportsByStudentId.has(studentId);
-              }).length === 0 && (
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">Sessions</h2>
+              <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
                 <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
-                  No students with reports yet. Create reports to see course details here.
+                  Sessions will be displayed here in the future.
                 </div>
-              )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">Courses And Notes</h2>
+              <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                {studentsWithPresences.length === 0 ? (
+                  <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+                    {selectedStudentFilter || selectedCourseFilter || selectedTeacherFilter
+                      ? 'No students match the selected filters.'
+                      : 'No presences or notes recorded yet for this class and period.'}
+                  </div>
+                ) : (
+                  studentsWithPresences.map((studentData) => {
+                    const studentAvatar = getAvatarForStudent(studentData.student);
+                    const studentName = formatStudentName(studentData.student, studentData.student_id);
+
+                    return (
+                      <div key={studentData.student_id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                        <div className="flex items-center gap-3 mb-3">
+                          {studentAvatar.type === 'image' ? (
+                            <img
+                              src={studentAvatar.value}
+                              alt={studentName}
+                              className="h-10 w-10 rounded-full object-cover border border-white shadow"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-sm">
+                              {studentAvatar.value}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{studentName}</p>
+                            <p className="text-xs text-gray-500">Student #{studentData.student_id}</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2 pl-12">
+                          {studentData.presences.map((presence) => {
+                            const courseId = presence.studentPlanning?.course_id ?? presence.studentPlanning?.course?.id;
+                            const courseMeta = courseId ? courseMap.get(courseId) : null;
+                            const courseLabel = formatCourseTitle(
+                              presence.studentPlanning?.course ?? courseMeta ?? null,
+                              courseId
+                            );
+                            const teacherId = presence.studentPlanning?.teacher_id ?? presence.studentPlanning?.teacher?.id;
+                            const teacherMeta = teacherId ? teacherMap.get(teacherId) : null;
+                            const teacherLabel = formatTeacherName(
+                              presence.studentPlanning?.teacher ?? teacherMeta ?? null,
+                              teacherId
+                            );
+                            const dateLabel = formatDisplayDate(presence.studentPlanning?.date_day);
+                            const timeRange = [formatTimeValue(presence.studentPlanning?.hour_start), formatTimeValue(presence.studentPlanning?.hour_end)]
+                              .filter(Boolean)
+                              .join(' - ');
+                            const presenceStatus = capitalize(presence.presence);
+                            const note = typeof presence.note === 'number' && presence.note !== null ? presence.note : null;
+
+                            return (
+                              <div key={presence.id} className="border-t border-gray-100 pt-2 first:border-t-0 first:pt-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-semibold text-gray-900">
+                                      <span className="text-gray-500">Course:</span> {courseLabel}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                      <span className="text-gray-400">Teacher:</span> {teacherLabel}
+                                    </p>
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                      {presenceStatus && (
+                                        <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                                          presenceStatus.toLowerCase() === 'present' 
+                                            ? 'bg-green-100 text-green-700' 
+                                            : 'bg-yellow-100 text-yellow-700'
+                                        }`}>
+                                          {presenceStatus}
+                                        </span>
+                                      )}
+                                      {note !== null && (
+                                        <span className="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                                          Note: {note}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {dateLabel && (
+                                      <p className="text-[10px] text-gray-400 mt-1">
+                                        <span className="text-gray-300">Date:</span> {[dateLabel, timeRange].filter(Boolean).join(' · ') || 'No schedule info'}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       <StudentReportModal
@@ -823,29 +794,6 @@ const StudentReportsSection: React.FC = () => {
         isLoading={deleteReportMut.isPending}
         title="Delete Student Report"
         entityName={deleteEntityName}
-      />
-
-      {selectedReportIdForDetail && (
-        <StudentReportDetailModal
-          isOpen={detailModalOpen}
-          onClose={handleDetailModalClose}
-          initialData={editingDetail ?? undefined}
-          reportId={selectedReportIdForDetail}
-          onSubmit={handleDetailSubmit}
-          isSubmitting={createDetailMut.isPending || updateDetailMut.isPending}
-          teacherOptions={teacherOptions}
-          courseOptions={courseOptions}
-          serverError={detailModalError}
-        />
-      )}
-
-      <DeleteModal
-        isOpen={!!deleteDetailTarget}
-        onCancel={() => setDeleteDetailTarget(null)}
-        onConfirm={handleDeleteDetail}
-        isLoading={deleteDetailMut.isPending}
-        title="Delete Report Detail"
-        entityName={deleteDetailTarget?.course?.title || undefined}
       />
     </div>
   );

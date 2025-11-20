@@ -8,6 +8,7 @@ export interface PlanningTeacher {
   id: number;
   first_name?: string | null;
   last_name?: string | null;
+  email?: string | null;
 }
 
 export interface PlanningClass {
@@ -76,7 +77,7 @@ export interface PlanningStudentPayload {
   status?: PlanningStatus;
 }
 
-export interface UpdatePlanningStudentPayload extends Partial<PlanningStudentPayload> {}
+export type UpdatePlanningStudentPayload = Partial<PlanningStudentPayload>;
 
 export interface GetPlanningStudentParams extends PaginationParams {
   status?: PlanningStatus;
@@ -90,7 +91,12 @@ export interface GetPlanningStudentParams extends PaginationParams {
   // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
-const toPaginated = (raw: any): PaginatedResponse<PlanningStudentEntry> => {
+type RawPlanningResponse = {
+  data?: PlanningStudentEntry[];
+  meta?: Partial<PaginatedResponse<PlanningStudentEntry>['meta']>;
+};
+
+const toPaginated = (raw: unknown): PaginatedResponse<PlanningStudentEntry> => {
   if (Array.isArray(raw)) {
     return {
       data: raw,
@@ -105,8 +111,8 @@ const toPaginated = (raw: any): PaginatedResponse<PlanningStudentEntry> => {
     };
   }
 
-  const meta = raw?.meta || {};
-  const data = raw?.data || [];
+  const meta = (raw as RawPlanningResponse)?.meta || {};
+  const data = (raw as RawPlanningResponse)?.data || [];
   const page = meta.page ?? 1;
   const limit = meta.limit ?? (Array.isArray(data) ? data.length : 10);
   const total = meta.total ?? (Array.isArray(data) ? data.length : 0);

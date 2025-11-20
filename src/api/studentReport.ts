@@ -1,5 +1,7 @@
 import api from './axios';
 import type { PaginatedResponse, PaginationParams } from '../types/api';
+import type { PlanningStudentEntry } from './planningStudent';
+import type { StudentPresence } from './studentPresence';
 
 export type StudentReportStatus = -2 | -1 | 0 | 1 | 2;
 
@@ -8,6 +10,8 @@ export interface StudentSummary {
   first_name?: string | null;
   last_name?: string | null;
   email?: string | null;
+  picture?: string | null;
+  status?: number | null;
 }
 
 export interface SchoolYearPeriodSummary {
@@ -40,6 +44,39 @@ export interface StudentReport {
   year?: SchoolYearSummary | null;
 }
 
+export interface StudentReportDashboardFilters {
+  class_id: number;
+  school_year_id: number;
+  school_year_period_id: number;
+  period_label?: string | null;
+  student_id?: number | null;
+  course_id?: number | null;
+  teacher_id?: number | null;
+}
+
+export interface StudentReportDashboardStudent {
+  student_id: number;
+  student?: StudentSummary | null;
+  report?: StudentReport | null;
+}
+
+export interface StudentReportDashboardResponse {
+  filters: StudentReportDashboardFilters;
+  students: StudentReportDashboardStudent[];
+  sessions: PlanningStudentEntry[];
+  presences: StudentPresence[];
+}
+
+export interface StudentReportDashboardParams {
+  class_id: number;
+  school_year_id: number;
+  school_year_period_id: number;
+  period_label?: string;
+  student_id?: number;
+  course_id?: number;
+  teacher_id?: number;
+}
+
 export interface CreateStudentReportPayload {
   school_year_id: number;
   school_year_period_id: number;
@@ -62,7 +99,12 @@ export interface GetStudentReportsParams extends PaginationParams {
   passed?: boolean;
 }
 
-const toPaginated = (raw: any): PaginatedResponse<StudentReport> => {
+type RawStudentReportResponse = {
+  data?: StudentReport[];
+  meta?: Partial<PaginatedResponse<StudentReport>['meta']>;
+};
+
+const toPaginated = (raw: unknown): PaginatedResponse<StudentReport> => {
   if (Array.isArray(raw)) {
     return {
       data: raw,
@@ -77,8 +119,8 @@ const toPaginated = (raw: any): PaginatedResponse<StudentReport> => {
     };
   }
 
-  const data = raw?.data ?? [];
-  const meta = raw?.meta ?? {};
+  const data = (raw as RawStudentReportResponse)?.data ?? [];
+  const meta = (raw as RawStudentReportResponse)?.meta ?? {};
   const page = meta.page ?? 1;
   const limit = meta.limit ?? (Array.isArray(data) ? data.length : 10);
   const total = meta.total ?? (Array.isArray(data) ? data.length : 0);
@@ -106,6 +148,19 @@ const buildQueryString = (params: GetStudentReportsParams = {}): string => {
   if (params.school_year_period_id) qp.append('school_year_period_id', String(params.school_year_period_id));
   if (params.school_year_id) qp.append('school_year_id', String(params.school_year_id));
   if (params.passed !== undefined && params.passed !== null) qp.append('passed', String(params.passed));
+  const qs = qp.toString();
+  return qs ? `?${qs}` : '';
+};
+
+const buildDashboardQueryString = (params: StudentReportDashboardParams): string => {
+  const qp = new URLSearchParams();
+  qp.append('class_id', String(params.class_id));
+  qp.append('school_year_id', String(params.school_year_id));
+  qp.append('school_year_period_id', String(params.school_year_period_id));
+  if (params.period_label) qp.append('period_label', params.period_label);
+  if (params.student_id) qp.append('student_id', String(params.student_id));
+  if (params.course_id) qp.append('course_id', String(params.course_id));
+  if (params.teacher_id) qp.append('teacher_id', String(params.teacher_id));
   const qs = qp.toString();
   return qs ? `?${qs}` : '';
 };
@@ -140,6 +195,12 @@ export const studentReportApi = {
 
   async delete(id: number): Promise<void> {
     await api.delete(`/student-reports/${id}`);
+  },
+
+  async getDashboard(params: StudentReportDashboardParams): Promise<StudentReportDashboardResponse> {
+    const qs = buildDashboardQueryString(params);
+    const { data } = await api.get(`/student-reports/dashboard${qs}`);
+    return data;
   },
 };
 

@@ -12,6 +12,18 @@ export interface StudentPresenceStudent {
   email?: string | null;
 }
 
+export interface StudentPresenceTeacher {
+  id: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+}
+
+export interface StudentPresenceCourse {
+  id: number;
+  title?: string | null;
+}
+
 export interface StudentPresencePlanning {
   id: number;
   period?: string | null;
@@ -21,6 +33,9 @@ export interface StudentPresencePlanning {
   class_id?: number | null;
   class_room_id?: number | null;
   teacher_id?: number | null;
+  course_id?: number | null;
+  course?: StudentPresenceCourse | null;
+  teacher?: StudentPresenceTeacher | null;
 }
 
 export interface StudentPresenceCompany {
@@ -63,7 +78,12 @@ export interface GetStudentPresenceParams extends PaginationParams {
   // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
-const toPaginated = (raw: any): PaginatedResponse<StudentPresence> => {
+type RawPresenceResponse = {
+  data?: StudentPresence[];
+  meta?: Partial<PaginatedResponse<StudentPresence>['meta']>;
+};
+
+const toPaginated = (raw: unknown): PaginatedResponse<StudentPresence> => {
   if (Array.isArray(raw)) {
     return {
       data: raw,
@@ -78,8 +98,8 @@ const toPaginated = (raw: any): PaginatedResponse<StudentPresence> => {
     };
   }
 
-  const data = raw?.data ?? [];
-  const meta = raw?.meta ?? {};
+  const data = (raw as RawPresenceResponse)?.data ?? [];
+  const meta = (raw as RawPresenceResponse)?.meta ?? {};
   const page = meta.page ?? 1;
   const limit = meta.limit ?? (Array.isArray(data) ? data.length : 10);
   const total = meta.total ?? (Array.isArray(data) ? data.length : 0);

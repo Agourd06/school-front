@@ -3,9 +3,12 @@ import { schoolYearPeriodApi } from '../api';
 import type { CreateSchoolYearPeriodRequest, UpdateSchoolYearPeriodRequest } from '../api/schoolYearPeriod';
 import type { FilterParams } from '../types/api';
 
-export const useSchoolYearPeriods = (params: FilterParams = {}) => {
-  const rawParams = params as any;
-  const hasSchoolYearId = rawParams.schoolYearId !== undefined && rawParams.schoolYearId !== null;
+type SchoolYearPeriodFilterParams = FilterParams & {
+  schoolYearId?: number;
+};
+
+export const useSchoolYearPeriods = (params: SchoolYearPeriodFilterParams = {}) => {
+  const hasSchoolYearId = params.schoolYearId !== undefined && params.schoolYearId !== null;
   
   return useQuery({
     queryKey: ['schoolYearPeriods', params],
