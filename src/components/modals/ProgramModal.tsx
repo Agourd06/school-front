@@ -3,6 +3,7 @@ import BaseModal from './BaseModal';
 import { useCreateProgram, useUpdateProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
+import { Input, Select, Button } from '../ui';
 
 interface ProgramModalProps {
   isOpen: boolean;
@@ -85,30 +86,26 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
     <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Program' : 'Add Program'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {formError && <p className="text-sm text-red-600">{formError}</p>}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.title ? 'border-red-300' : 'border-gray-300'}`}
-          />
-          {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-        </div>
+        <Input
+          label="Title"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          >
-            {STATUS_OPTIONS_FORM.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Status"
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          options={STATUS_OPTIONS_FORM.map(opt => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -121,19 +118,8 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-          >
-            {isEditing ? 'Update' : 'Create'}
-          </button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{isEditing ? 'Update' : 'Create'}</Button>
         </div>
       </form>
     </BaseModal>

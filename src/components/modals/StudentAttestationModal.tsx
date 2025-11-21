@@ -5,6 +5,7 @@ import { useStudents } from '../../hooks/useStudents';
 import { useAttestations } from '../../hooks/useAttestations';
 // import { useCompanies } from '../../hooks/useCompanies'; // Removed - company is auto-set from authenticated user
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
+import { Input, Select, Button } from '../ui';
 // import { useCompanyId } from '../../hooks/useCompanyId'; // Removed - company is auto-set from authenticated user
 import type { StudentAttestation } from '../../api/studentAttestation';
 
@@ -166,84 +167,76 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({ isOpe
       <form onSubmit={handleSubmit} className="space-y-4">
         {formError && <p className="text-sm text-red-600">{formError}</p>}
         
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Student *</label>
-          <select
-            name="Idstudent"
-            value={form.Idstudent}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.Idstudent ? 'border-red-300' : 'border-gray-300'}`}
-          >
-            <option value="">Select a student</option>
-            {students.map((s: any) => (
-              <option key={s.id} value={s.id}>
-                {`${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `Student #${s.id}`}
-              </option>
-            ))}
-          </select>
-          {errors.Idstudent && <p className="mt-1 text-sm text-red-600">{errors.Idstudent}</p>}
-        </div>
+        <Select
+          label="Student *"
+          name="Idstudent"
+          value={form.Idstudent}
+          onChange={handleChange}
+          options={[
+            { value: '', label: 'Select a student' },
+            ...(students.map((s: any) => ({
+              value: s.id,
+              label: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `Student #${s.id}`,
+            })))
+          ]}
+          error={errors.Idstudent}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Attestation *</label>
-          <select
-            name="Idattestation"
-            value={form.Idattestation}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.Idattestation ? 'border-red-300' : 'border-gray-300'}`}
-          >
-            <option value="">Select an attestation</option>
-            {attestations.map((a: any) => (
-              <option key={a.id} value={a.id}>{a.title}</option>
-            ))}
-          </select>
-          {errors.Idattestation && <p className="mt-1 text-sm text-red-600">{errors.Idattestation}</p>}
-        </div>
+        <Select
+          label="Attestation *"
+          name="Idattestation"
+          value={form.Idattestation}
+          onChange={handleChange}
+          options={[
+            { value: '', label: 'Select an attestation' },
+            ...(attestations.map((a: any) => ({
+              value: a.id,
+              label: a.title,
+            })))
+          ]}
+          error={errors.Idattestation}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Date Asked</label>
-            <input
-              type="date"
-              name="dateask"
-              value={form.dateask}
-              onChange={handleChange}
-              max={form.datedelivery || undefined}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.datedelivery ? 'border-red-300' : 'border-gray-300'}`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Date Delivery</label>
-            <input
-              type="date"
-              name="datedelivery"
-              value={form.datedelivery}
-              onChange={handleChange}
-              min={form.dateask || undefined}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.datedelivery ? 'border-red-300' : 'border-gray-300'}`}
-            />
-            {errors.datedelivery && <p className="mt-1 text-sm text-red-600">{errors.datedelivery}</p>}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            name="Status"
-            value={form.Status}
+          <Input
+            label="Date Asked"
+            type="date"
+            name="dateask"
+            value={form.dateask}
             onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          >
-            {STATUS_OPTIONS_FORM.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+            max={form.datedelivery || undefined}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+
+          <Input
+            label="Date Delivery"
+            type="date"
+            name="datedelivery"
+            value={form.datedelivery}
+            onChange={handleChange}
+            min={form.dateask || undefined}
+            error={errors.datedelivery}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
+
+        <Select
+          label="Status"
+          name="Status"
+          value={form.Status}
+          onChange={handleChange}
+          options={STATUS_OPTIONS_FORM.map(opt => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{isEditing ? 'Update' : 'Create'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{isEditing ? 'Update' : 'Create'}</Button>
         </div>
       </form>
     </BaseModal>

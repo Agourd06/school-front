@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import { ProgramModal, DeleteModal, DescriptionModal } from '../modals';
-import { EditButton, DeleteButton } from '../ui';
+import { EditButton, DeleteButton, Button } from '../ui';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
@@ -152,16 +152,17 @@ const ProgramsSection: React.FC = () => {
             <p className="text-sm text-gray-500">Manage academic programs, descriptions, and statuses.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={openCreateModal}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="inline-flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add Program
-            </button>
+            </Button>
           </div>
         </div>
         {alert && (

@@ -7,7 +7,7 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import SchoolYearModal from '../modals/SchoolYearModal';
 import DeleteModal from '../modals/DeleteModal';
-import { EditButton, DeleteButton } from '../ui';
+import { EditButton, DeleteButton, Input, Button } from '../ui';
 import type { SchoolYear } from '../../api/schoolYear';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useSchoolYear } from '../../context/SchoolYearContext';
@@ -188,16 +188,17 @@ const SchoolYearsSection: React.FC = () => {
             <p className="text-sm text-gray-500">Manage school years and their date ranges.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={openCreateModal}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="inline-flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add School Year
-            </button>
+            </Button>
           </div>
         </div>
         {alert && (
@@ -233,13 +234,13 @@ const SchoolYearsSection: React.FC = () => {
             isClearable={false}
           />
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Search</label>
-            <input
+            <Input
+              label="Search"
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
               placeholder="Search by school year title..."
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>

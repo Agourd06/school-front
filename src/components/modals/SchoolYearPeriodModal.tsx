@@ -12,6 +12,7 @@ import {
   validateSelectRequired,
 } from "./validations";
 import { STATUS_OPTIONS_FORM } from "../../constants/status";
+import { Input, Select, Button } from "../ui";
 
 interface SchoolYearPeriodModalProps {
   isOpen: boolean;
@@ -147,127 +148,97 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
               </div>
             </div>
           ) : (
-            <select
-              className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                isSchoolYearLocked ? "bg-gray-100 cursor-not-allowed" : ""
-              }`}
+            <Select
               value={schoolYearId}
               onChange={(e) =>
                 setSchoolYearId(e.target.value ? Number(e.target.value) : "")
               }
               disabled={isSchoolYearLocked}
-              required
-            >
-              <option value="">Select a school year</option>
-              {(yearsData?.data || []).map((y: any) => (
-                <option key={y.id} value={y.id}>
-                  {y.title}
-                </option>
-              ))}
-            </select>
-          )}
-          {errors.schoolYearId && (
-            <p className="mt-1 text-sm text-red-600">{errors.schoolYearId}</p>
+              options={[
+                { value: '', label: 'Select a school year' },
+                ...((yearsData?.data || []).map((y: any) => ({
+                  value: y.id,
+                  label: y.title,
+                })))
+              ]}
+              error={errors.schoolYearId}
+              className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                isSchoolYearLocked ? "bg-gray-100 cursor-not-allowed" : ""
+              }`}
+            />
           )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Title
-          </label>
-          <input
-            type="text"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-          )}
-        </div>
+        <Input
+          label="Title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Start Date
-            </label>
-            <input
-              type="date"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              End Date
-            </label>
-            <input
-              type="date"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              required
-            />
-          </div>
+          <Input
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+            error={errors.start_date}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Input
+            label="End Date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            required
+            error={errors.end_date || errors.date}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Lifecycle Status
-          </label>
-          <select
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            value={lifecycleStatus}
-            onChange={(e) =>
-              setLifecycleStatus(
-                e.target.value as "planned" | "ongoing" | "completed"
-              )
-            }
-          >
-            <option value="planned">Planned</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Status
-          </label>
-          <select
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            value={status}
-            onChange={(e) => setStatus(Number(e.target.value))}
-          >
-            {STATUS_OPTIONS_FORM.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {(errors.start_date || errors.end_date || errors.date) && (
-          <div className="text-sm text-red-600">
-            {errors.start_date || errors.end_date || errors.date}
-          </div>
-        )}
+        <Select
+          label="Lifecycle Status"
+          value={lifecycleStatus}
+          onChange={(e) =>
+            setLifecycleStatus(
+              e.target.value as "planned" | "ongoing" | "completed"
+            )
+          }
+          options={[
+            { value: 'planned', label: 'Planned' },
+            { value: 'ongoing', label: 'Ongoing' },
+            { value: 'completed', label: 'Completed' },
+          ]}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
+        <Select
+          label="Status"
+          value={status}
+          onChange={(e) => setStatus(Number(e.target.value))}
+          options={STATUS_OPTIONS_FORM.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            variant="primary"
           >
             {period ? "Update" : "Create"}
-          </button>
+          </Button>
         </div>
       </form>
     </BaseModal>

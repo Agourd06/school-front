@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
+import { Input, Select, Button } from '../ui';
 import type { PlanningSessionType, PlanningSessionTypeStatus } from '../../api/planningSessionType';
 
 export interface PlanningSessionTypeFormValues {
@@ -121,65 +122,49 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
       className="sm:max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={handleInputChange('title')}
-            maxLength={150}
-            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.title ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="e.g. Laboratory Session"
-          />
-          {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-        </div>
+        <Input
+          label="Title"
+          type="text"
+          value={form.title}
+          onChange={handleInputChange('title')}
+          maxLength={150}
+          placeholder="e.g. Laboratory Session"
+          error={errors.title}
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Type</label>
-          <input
-            type="text"
-            value={form.type}
-            onChange={handleInputChange('type')}
-            maxLength={50}
-            className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              errors.type ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="e.g. LAB"
-          />
-          {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type}</p>}
-        </div>
+        <Input
+          label="Type"
+          type="text"
+          value={form.type}
+          onChange={handleInputChange('type')}
+          maxLength={50}
+          placeholder="e.g. LAB"
+          error={errors.type}
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Coefficient</label>
-            <input
-              type="number"
-              step="0.01"
-              value={form.coefficient ?? ''}
-              onChange={handleInputChange('coefficient')}
-              className={`mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.coefficient ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="Optional"
-            />
-            {errors.coefficient && <p className="mt-1 text-sm text-red-600">{errors.coefficient}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              value={form.status}
-              onChange={(e) => handleChange('status')(e.target.value as PlanningSessionTypeStatus)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Input
+            label="Coefficient"
+            type="number"
+            step="0.01"
+            value={form.coefficient ?? ''}
+            onChange={handleInputChange('coefficient')}
+            placeholder="Optional"
+            error={errors.coefficient}
+            className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <Select
+            label="Status"
+            value={form.status}
+            onChange={(e) => handleChange('status')(e.target.value as PlanningSessionTypeStatus)}
+            options={statusOptions.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+            className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         {serverError && (
@@ -189,21 +174,22 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
         )}
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             disabled={isSubmitting}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
+            isLoading={isSubmitting}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60"
           >
-            {isSubmitting ? 'Saving…' : initialData ? 'Update Type' : 'Create Type'}
-          </button>
+            {initialData ? 'Update Type' : 'Create Type'}
+          </Button>
         </div>
       </form>
     </BaseModal>

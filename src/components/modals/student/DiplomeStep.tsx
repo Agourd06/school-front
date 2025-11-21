@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Input, Select, Button } from '../../ui';
 import { STATUS_OPTIONS_FORM } from '../../../constants/status';
 import { getFileUrl } from '../../../utils/apiConfig';
 import type { DiplomeFormData } from './types';
@@ -75,88 +76,63 @@ const DiplomeStep: React.FC<DiplomeStepProps> = ({
     <form onSubmit={onSubmit} className="space-y-4">
       {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Student</label>
-          <input
-            value={studentName}
-            disabled
-            className="mt-1 block w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            value={form.status}
-            onChange={(e) => onFormChange('status', Number(e.target.value))}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            {STATUS_OPTIONS_FORM.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Input
+          label="Student"
+          value={studentName}
+          disabled
+          className="bg-gray-100 border-gray-200"
+        />
+        <Select
+          label="Status"
+          value={form.status}
+          onChange={(e) => onFormChange('status', Number(e.target.value))}
+          options={STATUS_OPTIONS_FORM.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            value={form.title}
-            onChange={(e) => onFormChange('title', e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-          {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">School</label>
-          <input
-            value={form.school}
-            onChange={(e) => onFormChange('school', e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-          {errors.school && <p className="text-sm text-red-600">{errors.school}</p>}
-        </div>
+        <Input
+          label="Title"
+          value={form.title}
+          onChange={(e) => onFormChange('title', e.target.value)}
+          error={errors.title}
+        />
+        <Input
+          label="School"
+          value={form.school}
+          onChange={(e) => onFormChange('school', e.target.value)}
+          error={errors.school}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Diplome</label>
-          <input
-            value={form.diplome}
-            onChange={(e) => onFormChange('diplome', e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Year (YYYY)</label>
-          <input
-            value={form.annee}
-            onChange={(e) => onFormChange('annee', e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-          {errors.annee && <p className="text-sm text-red-600">{errors.annee}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Country</label>
-          <input
-            value={form.country}
-            onChange={(e) => onFormChange('country', e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
+        <Input
+          label="Diplome"
+          value={form.diplome}
+          onChange={(e) => onFormChange('diplome', e.target.value)}
+        />
+        <Input
+          label="Year (YYYY)"
+          value={form.annee}
+          onChange={(e) => onFormChange('annee', e.target.value)}
+          error={errors.annee}
+        />
+        <Input
+          label="Country"
+          value={form.country}
+          onChange={(e) => onFormChange('country', e.target.value)}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">City</label>
-          <input
-            value={form.city}
-            onChange={(e) => onFormChange('city', e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
+        <Input
+          label="City"
+          value={form.city}
+          onChange={(e) => onFormChange('city', e.target.value)}
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Diplome picture 1</label>
@@ -208,28 +184,29 @@ const DiplomeStep: React.FC<DiplomeStepProps> = ({
       </div>
 
       <div className="flex justify-between space-x-3 pt-4">
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={onBack}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
         >
           Back
-        </button>
+        </Button>
         <div className="flex space-x-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onSkip}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
           >
             Skip
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            variant="primary"
+            isLoading={isSubmitting}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Saving...' : hasDiplome ? 'Update & Continue' : 'Save & Continue'}
-          </button>
+            {hasDiplome ? 'Update & Continue' : 'Save & Continue'}
+          </Button>
         </div>
       </div>
     </form>

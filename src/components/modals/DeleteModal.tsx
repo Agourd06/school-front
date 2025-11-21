@@ -1,5 +1,6 @@
 import React from 'react';
 import BaseModal from './BaseModal';
+import { Button } from '../ui';
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -33,22 +34,23 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
       <div className="space-y-5 text-center">
         <p className="text-sm text-gray-600">{finalMessage}</p>
         <div className="flex justify-center space-x-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             disabled={isLoading}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="danger"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-60"
+            isLoading={isLoading}
             disabled={isLoading}
           >
-            {isLoading ? 'Deleting…' : 'Delete'}
-          </button>
+            Delete
+          </Button>
         </div>
       </div>
     </BaseModal>

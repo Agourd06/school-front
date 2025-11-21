@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateStudentLinkType, useUpdateStudentLinkType } from '../../hooks/useStudentLinkTypes';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
+import { Input, Select, Button } from '../ui';
 
 interface Props {
   isOpen: boolean;
@@ -46,28 +47,27 @@ const StudentLinkTypeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Link Type' : 'Add Link Type'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            placeholder="Parent, Guardian, etc."
-          />
-          {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select value={status} onChange={(e) => setStatus(Number(e.target.value))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-            {STATUS_OPTIONS_FORM.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+        <Input
+          label="Title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Parent, Guardian, etc."
+          error={error}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
+        <Select
+          label="Status"
+          value={status}
+          onChange={(e) => setStatus(Number(e.target.value))}
+          options={STATUS_OPTIONS_FORM.map(opt => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+        />
         <div className="flex justify-end space-x-3 pt-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{isEditing ? 'Update' : 'Create'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{isEditing ? 'Update' : 'Create'}</Button>
         </div>
       </form>
     </BaseModal>

@@ -4,6 +4,7 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import type { StudentReportDetail, StudentReportDetailStatus } from '../../api/studentReportDetail';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
+import { Input, Select, Button } from '../ui';
 
 export interface StudentReportDetailFormValues {
   student_report_id: number;
@@ -120,22 +121,18 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
             placeholder="Select course"
             error={errors.course_id}
           />
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              value={form.status}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, status: Number(e.target.value) as StudentReportDetailStatus }))
-              }
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {statusOptionsSelect.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Status"
+            value={form.status}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, status: Number(e.target.value) as StudentReportDetailStatus }))
+            }
+            options={statusOptionsSelect.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+            className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         <div>
@@ -147,22 +144,20 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
             rows={8}
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
-          <input
-            type="number"
-            value={form.note}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                note: e.target.value === '' ? '' : Number(e.target.value),
-              }))
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Optional note"
-          />
-          {errors.note && <p className="mt-1 text-xs text-red-600">{errors.note}</p>}
-        </div>
+        <Input
+          label="Note"
+          type="number"
+          value={form.note}
+          onChange={(e) =>
+            setForm((prev) => ({
+              ...prev,
+              note: e.target.value === '' ? '' : Number(e.target.value),
+            }))
+          }
+          placeholder="Optional note"
+          error={errors.note}
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
 
         {serverError && (
           <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -171,21 +166,22 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
         )}
 
         <div className="flex justify-end space-x-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
             disabled={isSubmitting}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
+            isLoading={isSubmitting}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60"
           >
-            {isSubmitting ? 'Saving…' : initialData ? 'Update Detail' : 'Create Detail'}
-          </button>
+            {initialData ? 'Update Detail' : 'Create Detail'}
+          </Button>
         </div>
       </form>
     </BaseModal>

@@ -6,6 +6,7 @@ import {
 } from "../../hooks/useClassRooms";
 import { validateRequired, validatePositiveNumber } from "./validations";
 import { STATUS_OPTIONS_FORM } from "../../constants/status";
+import { Input, Select, Button } from "../ui";
 
 interface ClassRoomModalProps {
   isOpen: boolean;
@@ -94,89 +95,52 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({
       title={isEditing ? "Edit Classroom" : "Add Classroom"}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Code
-          </label>
-          <input
-            name="code"
-            value={form.code}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              errors.code ? "border-red-300" : "border-gray-300"
-            }`}
-          />
-          {errors.code && (
-            <p className="mt-1 text-sm text-red-600">{errors.code}</p>
-          )}
-        </div>
+        <Input
+          label="Code"
+          name="code"
+          value={form.code}
+          onChange={handleChange}
+          error={errors.code}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Title
-          </label>
-          <input
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              errors.title ? "border-red-300" : "border-gray-300"
-            }`}
-          />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-          )}
-        </div>
+        <Input
+          label="Title"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Capacity
-          </label>
-          <input
-            type="number"
-            name="capacity"
-            value={form.capacity}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              errors.capacity ? "border-red-300" : "border-gray-300"
-            }`}
-          />
-          {errors.capacity && (
-            <p className="mt-1 text-sm text-red-600">{errors.capacity}</p>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Status
-          </label>
-          <select
-            name="status"
-            value={form.status}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          >
-            {STATUS_OPTIONS_FORM.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Input
+          label="Capacity"
+          type="number"
+          name="capacity"
+          value={form.capacity}
+          onChange={handleChange}
+          error={errors.capacity}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
+        <Select
+          label="Status"
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          options={STATUS_OPTIONS_FORM.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
+          </Button>
+          <Button type="submit" variant="primary">
             {isEditing ? "Update" : "Create"}
-          </button>
+          </Button>
         </div>
       </form>
     </BaseModal>

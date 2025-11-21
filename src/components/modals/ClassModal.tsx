@@ -9,6 +9,7 @@ import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 import DescriptionModal from './DescriptionModal';
+import { Input, Select, Button } from '../ui';
 import type { CreateClassRequest } from '../../api/classes';
 
 interface ClassModalProps {
@@ -178,130 +179,121 @@ const ClassModal: React.FC<ClassModalProps> = ({ isOpen, onClose, classItem, des
 
         {/* Title and Status */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Title *</label>
-            <input
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.title ? 'border-red-300' : 'border-gray-300'}`}
-            />
-            {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              name="status"
-              value={form.status}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-              {STATUS_OPTIONS_FORM.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+          <Input
+            label="Title *"
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            error={errors.title}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Select
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            options={STATUS_OPTIONS_FORM.map(opt => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
 
         {descriptionPosition === 'top' && descriptionEditor}
 
         {/* School Year and Period */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">School Year *</label>
-            <select
-              name="school_year_id"
-              value={form.school_year_id}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.school_year_id ? 'border-red-300' : 'border-gray-300'}`}
-            >
-              <option value="">Select school year</option>
-              {schoolYears.map(year => (
-                <option key={year.id} value={year.id}>{year.title}</option>
-              ))}
-            </select>
-            {errors.school_year_id && <p className="mt-1 text-sm text-red-600">{errors.school_year_id}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">School Year Period</label>
-            <select
-              name="school_year_period_id"
-              value={form.school_year_period_id}
-              onChange={handleChange}
-              disabled={!form.school_year_id}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                errors.school_year_period_id ? 'border-red-300' : 'border-gray-300'
-              } ${!form.school_year_id ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-            >
-              <option value="">Select period (optional)</option>
-              {periods.map(period => (
-                <option key={period.id} value={period.id}>{period.title}</option>
-              ))}
-            </select>
-            {errors.school_year_period_id && <p className="mt-1 text-sm text-red-600">{errors.school_year_period_id}</p>}
-          </div>
+          <Select
+            label="School Year *"
+            name="school_year_id"
+            value={form.school_year_id}
+            onChange={handleChange}
+            options={[
+              { value: '', label: 'Select school year' },
+              ...(schoolYears.map(year => ({
+                value: year.id,
+                label: year.title,
+              })))
+            ]}
+            error={errors.school_year_id}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Select
+            label="School Year Period"
+            name="school_year_period_id"
+            value={form.school_year_period_id}
+            onChange={handleChange}
+            disabled={!form.school_year_id}
+            options={[
+              { value: '', label: 'Select period (optional)' },
+              ...(periods.map(period => ({
+                value: period.id,
+                label: period.title,
+              })))
+            ]}
+            error={errors.school_year_period_id}
+            className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${!form.school_year_id ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+          />
         </div>
 
         {/* Program, Specialization, and Level */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Program *</label>
-            <select
-              name="program_id"
-              value={form.program_id}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.program_id ? 'border-red-300' : 'border-gray-300'}`}
-            >
-              <option value="">Select program</option>
-              {programs.map(program => (
-                <option key={program.id} value={program.id}>{program.title}</option>
-              ))}
-            </select>
-            {errors.program_id && <p className="mt-1 text-sm text-red-600">{errors.program_id}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Specialization *</label>
-            <select
-              name="specialization_id"
-              value={form.specialization_id}
-              onChange={handleChange}
-              disabled={!form.program_id}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                errors.specialization_id ? 'border-red-300' : 'border-gray-300'
-              } ${!form.program_id ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-            >
-              <option value="">Select specialization</option>
-              {specializations.map(spec => (
-                <option key={spec.id} value={spec.id}>{spec.title}</option>
-              ))}
-            </select>
-            {errors.specialization_id && <p className="mt-1 text-sm text-red-600">{errors.specialization_id}</p>}
-          </div>
+          <Select
+            label="Program *"
+            name="program_id"
+            value={form.program_id}
+            onChange={handleChange}
+            options={[
+              { value: '', label: 'Select program' },
+              ...(programs.map(program => ({
+                value: program.id,
+                label: program.title,
+              })))
+            ]}
+            error={errors.program_id}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Select
+            label="Specialization *"
+            name="specialization_id"
+            value={form.specialization_id}
+            onChange={handleChange}
+            disabled={!form.program_id}
+            options={[
+              { value: '', label: 'Select specialization' },
+              ...(specializations.map(spec => ({
+                value: spec.id,
+                label: spec.title,
+              })))
+            ]}
+            error={errors.specialization_id}
+            className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${!form.program_id ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+          />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Level *</label>
-          <select
-            name="level_id"
-            value={form.level_id}
-            onChange={handleChange}
-            disabled={!form.specialization_id}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              errors.level_id ? 'border-red-300' : 'border-gray-300'
-            } ${!form.specialization_id ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-          >
-            <option value="">Select level</option>
-            {levels.map(level => (
-              <option key={level.id} value={level.id}>{level.title}</option>
-            ))}
-          </select>
-          {errors.level_id && <p className="mt-1 text-sm text-red-600">{errors.level_id}</p>}
-        </div>
+        <Select
+          label="Level *"
+          name="level_id"
+          value={form.level_id}
+          onChange={handleChange}
+          disabled={!form.specialization_id}
+          options={[
+            { value: '', label: 'Select level' },
+            ...(levels.map(level => ({
+              value: level.id,
+              label: level.title,
+            })))
+          ]}
+          error={errors.level_id}
+          className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${!form.specialization_id ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+        />
 
         {descriptionPosition === 'bottom' && descriptionEditor}
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{isEditing ? 'Update' : 'Create'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{isEditing ? 'Update' : 'Create'}</Button>
         </div>
       </form>
       {isDescriptionPreviewOpen && (

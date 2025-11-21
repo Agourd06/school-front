@@ -5,6 +5,7 @@ import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations, useSpecialization as useSpecializationById } from '../../hooks/useSpecializations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
+import { Input, Select, Button } from '../ui';
 
 interface LevelModalProps {
   isOpen: boolean;
@@ -205,41 +206,35 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
           {errors.specialization_id && <p className="mt-1 text-sm text-red-600">{errors.specialization_id}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.title ? 'border-red-300' : 'border-gray-300'}`}
-          />
-          {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-        </div>
+        <Input
+          label="Title"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Level number</label>
-            <input
-              name="level"
-              value={form.level}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.level ? 'border-red-300' : 'border-gray-300'}`}
-            />
-            {errors.level && <p className="mt-1 text-sm text-red-600">{errors.level}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              name="status"
-              value={form.status}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            >
-              {STATUS_OPTIONS_FORM.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+          <Input
+            label="Level number"
+            name="level"
+            value={form.level}
+            onChange={handleChange}
+            error={errors.level}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Select
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            options={STATUS_OPTIONS_FORM.map(opt => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
 
         <div>
@@ -255,8 +250,8 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{isEditing ? 'Update' : 'Create'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{isEditing ? 'Update' : 'Create'}</Button>
         </div>
       </form>
     </BaseModal>

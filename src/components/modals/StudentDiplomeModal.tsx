@@ -5,6 +5,7 @@ import SearchSelect from '../inputs/SearchSelect';
 import { useStudents } from '../../hooks/useStudents';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
+import { Input, Select, FileInput, Button } from '../ui';
 
 interface Props {
   isOpen: boolean;
@@ -131,28 +132,36 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
         {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Title</label>
-            <input name="title" value={form.title} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-            {errors.title && <p className="text-sm text-red-600">{errors.title}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">School</label>
-            <input name="school" value={form.school} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-            {errors.school && <p className="text-sm text-red-600">{errors.school}</p>}
-          </div>
+          <Input
+            label="Title"
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            error={errors.title}
+          />
+          <Input
+            label="School"
+            name="school"
+            value={form.school}
+            onChange={handleChange}
+            error={errors.school}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Diplome</label>
-            <input name="diplome" value={form.diplome} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Year (YYYY)</label>
-            <input name="annee" value={form.annee} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-            {errors.annee && <p className="text-sm text-red-600">{errors.annee}</p>}
-          </div>
+          <Input
+            label="Diplome"
+            name="diplome"
+            value={form.diplome}
+            onChange={handleChange}
+          />
+          <Input
+            label="Year (YYYY)"
+            name="annee"
+            value={form.annee}
+            onChange={handleChange}
+            error={errors.annee}
+          />
           <div>
             <SearchSelect
               label="Student"
@@ -170,49 +179,53 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Country</label>
-            <input name="country" value={form.country} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">City</label>
-            <input name="city" value={form.city} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-          </div>
+          <Input
+            label="Country"
+            name="country"
+            value={form.country}
+            onChange={handleChange}
+          />
+          <Input
+            label="City"
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+          />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select name="status" value={form.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-            {STATUS_OPTIONS_FORM.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Status"
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          options={STATUS_OPTIONS_FORM.map(opt => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Diplome picture 1</label>
-            <input type="file" accept="image/*" onChange={handleFile('file1')} className="mt-1 block w-full" />
-            {errors.diplome_picture_1 && <p className="text-sm text-red-600">{errors.diplome_picture_1}</p>}
-            {isEditing && item?.diplome_picture_1 && !file1 && (
-              <img src={getFileUrl(item.diplome_picture_1)} alt="current 1" className="mt-2 h-16 w-16 object-cover border rounded" />
-            )}
-            {file1 && <p className="text-xs text-gray-500 mt-1">{file1.name}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Diplome picture 2</label>
-            <input type="file" accept="image/*" onChange={handleFile('file2')} className="mt-1 block w-full" />
-            {errors.diplome_picture_2 && <p className="text-sm text-red-600">{errors.diplome_picture_2}</p>}
-            {isEditing && item?.diplome_picture_2 && !file2 && (
-              <img src={getFileUrl(item.diplome_picture_2)} alt="current 2" className="mt-2 h-16 w-16 object-cover border rounded" />
-            )}
-            {file2 && <p className="text-xs text-gray-500 mt-1">{file2.name}</p>}
-          </div>
+          <FileInput
+            label="Diplome picture 1"
+            accept="image/*"
+            onChange={(file) => setFile1(file)}
+            currentFileUrl={isEditing && item?.diplome_picture_1 && !file1 ? getFileUrl(item.diplome_picture_1) : null}
+            error={errors.diplome_picture_1}
+            helperText={file1 ? file1.name : undefined}
+          />
+          <FileInput
+            label="Diplome picture 2"
+            accept="image/*"
+            onChange={(file) => setFile2(file)}
+            currentFileUrl={isEditing && item?.diplome_picture_2 && !file2 ? getFileUrl(item.diplome_picture_2) : null}
+            error={errors.diplome_picture_2}
+            helperText={file2 ? file2.name : undefined}
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{isEditing ? 'Update' : 'Create'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{isEditing ? 'Update' : 'Create'}</Button>
         </div>
       </form>
     </BaseModal>

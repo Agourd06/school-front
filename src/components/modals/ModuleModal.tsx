@@ -3,6 +3,7 @@ import { useCreateModule, useUpdateModule } from "../../hooks/useModules";
 import BaseModal from "./BaseModal";
 import RichTextEditor from "../inputs/RichTextEditor";
 import { STATUS_OPTIONS_FORM } from "../../constants/status";
+import { Input, Select, Button } from "../ui";
 
 interface Module {
   id: number;
@@ -154,96 +155,48 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
       title={isEditing ? "Edit Module" : "Add Module"}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Module Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              errors.title ? "border-red-300" : "border-gray-300"
-            }`}
-          />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-          )}
-        </div>
+        <Input
+          label="Module Title"
+          type="text"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
-        <div>
-          <label
-            htmlFor="volume"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Volume (optional)
-          </label>
-          <input
-                    disabled={true}
+        <Input
+          label="Volume (optional)"
+          type="number"
+          name="volume"
+          value={formData.volume}
+          onChange={handleChange}
+          error={errors.volume}
+          disabled
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
-            type="number"
-            id="volume"
-            name="volume"
-            value={formData.volume}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              errors.volume ? "border-red-300" : "border-gray-300"
-            }`}
-          />
-          {errors.volume && (
-            <p className="mt-1 text-sm text-red-600">{errors.volume}</p>
-          )}
-        </div>
+        <Input
+          label="Coefficient (optional)"
+          type="text"
+          name="coefficient"
+          value={formData.coefficient}
+          onChange={handleChange}
+          error={errors.coefficient}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
-        <div>
-          <label
-            htmlFor="coefficient"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Coefficient (optional)
-          </label>
-          <input
-            type="text"
-            step="0.1"
-            id="coefficient"
-            name="coefficient"
-            value={formData.coefficient}
-            onChange={handleChange}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              errors.coefficient ? "border-red-300" : "border-gray-300"
-            }`}
-          />
-          {errors.coefficient && (
-            <p className="mt-1 text-sm text-red-600">{errors.coefficient}</p>
-          )}
-        </div>
-
-        <div>
-          <label
-            htmlFor="status"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Status
-          </label>
-          <select
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          >
-            {STATUS_OPTIONS_FORM.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Status"
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          options={STATUS_OPTIONS_FORM.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div>
           <label
@@ -266,24 +219,21 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
+            isLoading={createModule.isPending || updateModule.isPending}
             disabled={createModule.isPending || updateModule.isPending}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {createModule.isPending || updateModule.isPending
-              ? "Saving..."
-              : isEditing
-              ? "Update"
-              : "Create"}
-          </button>
+            {isEditing ? "Update" : "Create"}
+          </Button>
         </div>
       </form>
     </BaseModal>

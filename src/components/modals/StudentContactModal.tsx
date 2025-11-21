@@ -4,6 +4,7 @@ import { useCreateStudentContact, useUpdateStudentContact } from '../../hooks/us
 import { useStudentLinkTypes } from '../../hooks/useStudentLinkTypes';
 import { useStudents } from '../../hooks/useStudents';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
+import { Input, Select, Button } from '../ui';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 
 interface Props {
@@ -139,72 +140,95 @@ const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">First name</label>
-            <input name="firstname" value={form.firstname} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-            {errors.firstname && <p className="text-sm text-red-600">{errors.firstname}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Last name</label>
-            <input name="lastname" value={form.lastname} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-            {errors.lastname && <p className="text-sm text-red-600">{errors.lastname}</p>}
-          </div>
+          <Input
+            label="First name"
+            name="firstname"
+            value={form.firstname}
+            onChange={handleChange}
+            error={errors.firstname}
+          />
+          <Input
+            label="Last name"
+            name="lastname"
+            value={form.lastname}
+            onChange={handleChange}
+            error={errors.lastname}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Birthday</label>
-            <input type="date" name="birthday" value={form.birthday} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input name="email" value={form.email} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-            {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-          </div>
+          <Input
+            label="Birthday"
+            type="date"
+            name="birthday"
+            value={form.birthday}
+            onChange={handleChange}
+          />
+          <Input
+            label="Email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            error={errors.email}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Phone</label>
-            <input name="phone" value={form.phone} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Link type</label>
-            <select name="studentlinktypeId" value={form.studentlinktypeId} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-              <option value="">None</option>
-              {(((linkTypes as any)?.data) || []).map((lt: any) => (
-                <option key={lt.id} value={lt.id}>{lt.title}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select name="status" value={form.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-              {STATUS_OPTIONS_FORM.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+          <Input
+            label="Phone"
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+          />
+          <Select
+            label="Link type"
+            name="studentlinktypeId"
+            value={form.studentlinktypeId}
+            onChange={handleChange}
+            options={[
+              { value: '', label: 'None' },
+              ...(((linkTypes as any)?.data) || []).map((lt: any) => ({
+                value: lt.id,
+                label: lt.title,
+              }))
+            ]}
+          />
+          <Select
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            options={STATUS_OPTIONS_FORM.map(opt => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Adress</label>
-            <input name="adress" value={form.adress} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">City</label>
-            <input name="city" value={form.city} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Country</label>
-            <input name="country" value={form.country} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-          </div>
+          <Input
+            label="Adress"
+            name="adress"
+            value={form.adress}
+            onChange={handleChange}
+          />
+          <Input
+            label="City"
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+          />
+          <Input
+            label="Country"
+            name="country"
+            value={form.country}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">{isEditing ? 'Update' : 'Create'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{isEditing ? 'Update' : 'Create'}</Button>
         </div>
       </form>
     </BaseModal>

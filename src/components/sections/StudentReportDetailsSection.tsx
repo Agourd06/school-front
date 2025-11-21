@@ -4,7 +4,7 @@ import Pagination from '../Pagination';
 import BaseModal from '../modals/BaseModal';
 import StudentReportDetailModal, { type StudentReportDetailFormValues } from '../modals/StudentReportDetailModal';
 import DeleteModal from '../modals/DeleteModal';
-import { EditButton, DeleteButton } from '../ui';
+import { EditButton, DeleteButton, Button } from '../ui';
 import type { StudentReport, StudentReportStatus } from '../../api/studentReport';
 import type { StudentReportDetail } from '../../api/studentReportDetail';
 import {
@@ -433,24 +433,26 @@ const StudentReportDetailsSection: React.FC = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 onClick={openCreateDetail}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60"
                 disabled={!selectedReportId}
+                className="inline-flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Add detail
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => setSelectedReportId(null)}
-                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+                className="inline-flex items-center gap-2"
               >
                 Close
-              </button>
+              </Button>
             </div>
           </div>
 

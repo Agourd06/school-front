@@ -4,6 +4,7 @@ import { useCreateAdministrator, useUpdateAdministrator } from '../../hooks/useA
 import { useClassRooms } from '../../hooks/useClassRooms';
 import { validateRequired } from './validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
+import { Input, Select, FileInput, Button } from '../ui';
 
 interface AdministratorModalProps {
   isOpen: boolean;
@@ -132,93 +133,137 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({ isOpen, onClose
     <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Administrator' : 'Add Administrator'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Picture</label>
-            <input name="picture" type="file" accept="image/*" onChange={handlePictureChange} className="mt-1 block w-full text-sm" />
-            {errors.picture && <p className="mt-1 text-sm text-red-600">{errors.picture}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input name="email" type="email" value={form.email} onChange={handleChange} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.email ? 'border-red-300' : 'border-gray-300'}`} />
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-          </div>
+          <FileInput
+            label="Picture"
+            name="picture"
+            accept="image/*"
+            onChange={(file) => setPictureFile(file)}
+            error={errors.picture}
+            className="text-sm"
+          />
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            error={errors.email}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">First name</label>
-            <input name="first_name" value={form.first_name} onChange={handleChange} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.first_name ? 'border-red-300' : 'border-gray-300'}`} />
-            {errors.first_name && <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Last name</label>
-            <input name="last_name" value={form.last_name} onChange={handleChange} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${errors.last_name ? 'border-red-300' : 'border-gray-300'}`} />
-            {errors.last_name && <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>}
-          </div>
+          <Input
+            label="First name"
+            name="first_name"
+            value={form.first_name}
+            onChange={handleChange}
+            error={errors.first_name}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Input
+            label="Last name"
+            name="last_name"
+            value={form.last_name}
+            onChange={handleChange}
+            error={errors.last_name}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Gender</label>
-            <select name="gender" value={form.gender} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-              <option value="">Select</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Birthday</label>
-            <input type="date" name="birthday" value={form.birthday} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Phone</label>
-            <input name="phone" value={form.phone} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-          </div>
+          <Select
+            label="Gender"
+            name="gender"
+            value={form.gender}
+            onChange={handleChange}
+            options={[
+              { value: '', label: 'Select' },
+              { value: 'male', label: 'Male' },
+              { value: 'female', label: 'Female' },
+            ]}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Input
+            label="Birthday"
+            type="date"
+            name="birthday"
+            value={form.birthday}
+            onChange={handleChange}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Input
+            label="Phone"
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Address</label>
-          <input name="address" value={form.address} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-        </div>
+        <Input
+          label="Address"
+          name="address"
+          value={form.address}
+          onChange={handleChange}
+          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">City</label>
-            <input name="city" value={form.city} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Country</label>
-            <input name="country" value={form.country} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Nationality</label>
-            <input name="nationality" value={form.nationality} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-          </div>
+          <Input
+            label="City"
+            name="city"
+            value={form.city}
+            onChange={handleChange}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Input
+            label="Country"
+            name="country"
+            value={form.country}
+            onChange={handleChange}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Input
+            label="Nationality"
+            name="nationality"
+            value={form.nationality}
+            onChange={handleChange}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select name="status" value={form.status} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-              {STATUS_OPTIONS_FORM.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Class Room</label>
-            <select name="class_room_id" value={form.class_room_id} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-              <option value="">No class room</option>
-              {(classRooms?.data || []).map((cr: any) => (
-                <option key={cr.id} value={cr.id}>{cr.code} — {cr.title}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            options={STATUS_OPTIONS_FORM.map(opt => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
+          <Select
+            label="Class Room"
+            name="class_room_id"
+            value={form.class_room_id}
+            onChange={handleChange}
+            options={[
+              { value: '', label: 'No class room' },
+              ...((classRooms?.data || []).map((cr: any) => ({
+                value: cr.id,
+                label: `${cr.code} — ${cr.title}`,
+              })))
+            ]}
+            className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">{isEditing ? 'Update' : 'Create'}</button>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{isEditing ? 'Update' : 'Create'}</Button>
         </div>
       </form>
     </BaseModal>
