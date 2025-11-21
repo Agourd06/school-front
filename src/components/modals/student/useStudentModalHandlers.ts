@@ -1,48 +1,22 @@
-import { useUpdateStudent } from '../../../hooks/useStudents';
+import { useUpdateStudent, useCreateStudent } from '../../../hooks/useStudents';
 import { useCreateStudentDiplome, useUpdateStudentDiplome } from '../../../hooks/useStudentDiplomes';
 import { useCreateStudentContact, useUpdateStudentContact } from '../../../hooks/useStudentContacts';
 import { useCreateStudentLinkType, useUpdateStudentLinkType } from '../../../hooks/useStudentLinkTypes';
 import { validateRequired } from '../validations';
-import type { StudentFormData, DiplomeFormData, ContactFormData } from './types';
+import { useStudentModalContext } from './StudentModalContext';
+import type { StudentFormData } from './types';
 
 interface UseStudentModalHandlersProps {
-  studentId: number;
-  studentForm: StudentFormData;
-  setStudentForm: (form: StudentFormData) => void;
-  studentErrors: Record<string, string>;
-  setStudentErrors: (errors: Record<string, string>) => void;
-  pictureFile: File | null;
-  setPictureFile: (file: File | null) => void;
-  diplomeForm: DiplomeFormData;
-  setDiplomeForm: (form: DiplomeFormData) => void;
-  diplomeErrors: Record<string, string>;
-  setDiplomeErrors: (errors: Record<string, string>) => void;
-  diplomeFile1: File | null;
-  diplomeFile2: File | null;
-  currentDiplome: any | null;
-  setCurrentDiplome: (diplome: any | null) => void;
-  contactForm: ContactFormData;
-  setContactForm: (form: ContactFormData) => void;
-  contactErrors: Record<string, string>;
-  setContactErrors: (errors: Record<string, string>) => void;
-  currentContact: any | null;
-  setCurrentContact: (contact: any | null) => void;
-  linkTypeTitle: string;
-  setLinkTypeTitle: (title: string) => void;
-  linkTypeStatus: number;
-  setLinkTypeStatus: (status: number) => void;
-  linkTypeError: string;
-  setLinkTypeError: (error: string) => void;
-  currentLinkType: any | null;
-  setCurrentLinkType: (linkType: any | null) => void;
-  refetchStudentDetails: () => Promise<any>;
   onStepComplete: (nextStep: number) => void;
   onFinish: () => void;
 }
 
 export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => {
+  const { onStepComplete, onFinish } = props;
+  
   const {
     studentId,
+    setStudentId,
     studentForm,
     setStudentForm,
     studentErrors,
@@ -72,10 +46,9 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     currentLinkType,
     setCurrentLinkType,
     refetchStudentDetails,
-    onStepComplete,
-    onFinish,
-  } = props;
+  } = useStudentModalContext();
 
+  const createStudentMut = useCreateStudent();
   const updateStudentMut = useUpdateStudent();
   const createDiplomeMut = useCreateStudentDiplome();
   const updateDiplomeMut = useUpdateStudentDiplome();
@@ -150,7 +123,18 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     if (pictureFile) formData.append('picture', pictureFile, pictureFile.name);
 
     try {
-      await updateStudentMut.mutateAsync({ id: studentId, data: formData });
+      let result;
+      if (studentId) {
+        // Update existing student
+        result = await updateStudentMut.mutateAsync({ id: studentId, data: formData });
+      } else {
+        // Create new student
+        result = await createStudentMut.mutateAsync(formData as any);
+        // Set the student ID in context for subsequent steps
+        if (result?.id) {
+          setStudentId(result.id);
+        }
+      }
       await refetchStudentDetails();
       onStepComplete(1);
     } catch (err: any) {
@@ -173,6 +157,11 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     event.preventDefault();
     if (!validateDiplome()) return;
 
+    if (!studentId) {
+      setDiplomeErrors({ ...diplomeErrors, form: 'Student ID is required. Please save the student first.' });
+      return;
+    }
+
     const payload: any = {
       ...diplomeForm,
       annee: diplomeForm.annee ? String(diplomeForm.annee) : undefined,
@@ -182,21 +171,21 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     if (diplomeFile1) payload.diplome_picture_1 = diplomeFile1;
     if (diplomeFile2) payload.diplome_picture_2 = diplomeFile2;
 
-      try {
-        let result;
-        if (currentDiplome) {
-          result = await updateDiplomeMut.mutateAsync({ id: currentDiplome.id, data: payload });
-          setCurrentDiplome(result);
-        } else {
-          result = await createDiplomeMut.mutateAsync(payload);
-          setCurrentDiplome(result);
-        }
-        await refetchStudentDetails();
-        onStepComplete(2);
-      } catch (err: any) {
-        const message = err?.response?.data?.message || 'Failed to save diplome';
-        setDiplomeErrors({ ...diplomeErrors, form: message });
+    try {
+      let result;
+      if (currentDiplome) {
+        result = await updateDiplomeMut.mutateAsync({ id: currentDiplome.id, data: payload });
+        setCurrentDiplome(result);
+      } else {
+        result = await createDiplomeMut.mutateAsync(payload);
+        setCurrentDiplome(result);
       }
+      await refetchStudentDetails();
+      onStepComplete(2);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || 'Failed to save diplome';
+      setDiplomeErrors({ ...diplomeErrors, form: message });
+    }
   };
 
   // Contact handlers
@@ -212,6 +201,11 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
   const handleContactSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validateContact()) return;
+
+    if (!studentId) {
+      setContactErrors({ ...contactErrors, form: 'Student ID is required. Please save the student first.' });
+      return;
+    }
 
     const studentIdNumber = Number(studentId);
     if (isNaN(studentIdNumber) || studentIdNumber < 1 || !Number.isInteger(studentIdNumber)) {
@@ -263,6 +257,11 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     setLinkTypeError('');
     if (!linkTypeTitle.trim()) {
       setLinkTypeError('Title is required');
+      return;
+    }
+
+    if (!studentId) {
+      setLinkTypeError('Student ID is required. Please save the student first.');
       return;
     }
 
@@ -326,6 +325,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     handleStudentChange,
     handleStudentPicture,
     handleStudentSubmit,
+    createStudentMut,
     updateStudentMut,
 
     // Diplome

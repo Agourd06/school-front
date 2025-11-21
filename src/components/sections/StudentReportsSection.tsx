@@ -1,28 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Eye } from 'lucide-react';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import DeleteModal from '../modals/DeleteModal';
 import StudentReportModal, { type StudentReportFormValues } from '../modals/StudentReportModal';
+import BaseModal from '../modals/BaseModal';
 import type { StudentReport, StudentReportDashboardStudent } from '../../api/studentReport';
+import type { Student as ApiStudent } from '../../api/students';
+import { studentsApi } from '../../api/students';
 import { useCreateStudentReport, useUpdateStudentReport, useDeleteStudentReport } from '../../hooks/useStudentReports';
 import { useStudentReportDashboard } from '../../hooks/useStudentReportDashboard';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { useClasses } from '../../hooks/useClasses';
-import { STATUS_VALUE_LABEL } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
-
-const statusStyles: Record<number, string> = {
-  2: 'bg-yellow-100 text-yellow-800',
-  1: 'bg-green-100 text-green-800',
-  0: 'bg-gray-100 text-gray-700',
-  [-1]: 'bg-purple-100 text-purple-700',
-  [-2]: 'bg-red-100 text-red-700',
-};
-
-const passedStyles: Record<'passed' | 'failed', string> = {
-  passed: 'bg-blue-100 text-blue-700 border border-blue-200',
-  failed: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-};
 
 type ErrorWithMessage = {
   response?: {
@@ -64,6 +55,8 @@ type CourseLike = {
   title?: string | null;
 };
 
+type SortKey = 'student' | 'teacher' | 'course' | 'note' | 'coefficient';
+
 const formatStudentName = (student: StudentLike | null | undefined, fallbackId?: number) => {
   const first = student?.first_name ?? '';
   const last = student?.last_name ?? '';
@@ -85,6 +78,262 @@ const getAvatarForStudent = (student: StudentLike | null | undefined) => {
   return { type: 'initials' as const, value: initials };
 };
 
+const StudentDetailsButton: React.FC<{ studentId?: number }> = ({ studentId }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [preview, setPreview] = useState<{ src: string; label: string } | null>(null);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['studentDetails', studentId],
+    queryFn: () => studentsApi.getDetails(Number(studentId)),
+    enabled: Boolean(isOpen && studentId),
+    staleTime: 60_000,
+  });
+
+  const student = data?.student as ApiStudent | undefined;
+  const diploma = data?.diploma;
+  const contact = data?.contact;
+  const linkType = data?.linkType ?? contact?.studentLinkType;
+
+  const handleOpen = () => {
+    if (!studentId) return;
+    setIsOpen(true);
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={handleOpen}
+        disabled={!studentId}
+        className="p-2 rounded-full text-gray-500 transition-colors hover:text-gray-900 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="View student details"
+      >
+        <Eye className="h-4 w-4" />
+      </button>
+
+      <BaseModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title={
+          student
+            ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() ||
+              student.email ||
+              'Student details'
+            : 'Student details'
+        }
+      >
+        {isLoading ? (
+          <div className="py-8 text-center text-sm text-gray-500">Loading student details…</div>
+        ) : error ? (
+          <div className="py-2 text-sm text-red-600">Failed to load student details. Please try again.</div>
+        ) : (
+          <div className="space-y-5">
+            {student && (
+              <section className="space-y-2">
+                <div className="flex items-center gap-3">
+                  {student.picture && (
+                    <img
+                      src={getFileUrl(student.picture)}
+                      alt={student.first_name ?? student.email ?? 'student'}
+                      className="h-14 w-14 rounded-full object-cover border"
+                    />
+                  )}
+                  <div>
+                    <p className="text-base font-semibold text-gray-900">
+                      {`${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() ||
+                        student.email ||
+                        `#${student.id}`}
+                    </p>
+                    <p className="text-sm text-gray-500">{student.email}</p>
+                    {student.phone && <p className="text-sm text-gray-500">{student.phone}</p>}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-gray-500 uppercase text-xs">Nationality</p>
+                    <p className="text-gray-900">{student.nationality || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 uppercase text-xs">Birthday</p>
+                    <p className="text-gray-900">{student.birthday || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 uppercase text-xs">City</p>
+                    <p className="text-gray-900">{student.city || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 uppercase text-xs">Country</p>
+                    <p className="text-gray-900">{student.country || '—'}</p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {diploma && (
+              <section className="rounded-2xl border border-gray-200 p-4 space-y-4 bg-gradient-to-br from-white to-blue-50/40">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-blue-500">Academic Record</p>
+                    <h4 className="text-lg font-semibold text-gray-900 mt-1">{diploma.title || 'Diploma'}</h4>
+                  </div>
+                  <span className="text-xs rounded-full bg-blue-100 px-3 py-0.5 text-blue-700 font-semibold">
+                    {diploma.status === 1 ? 'Active' : diploma.status === -1 ? 'Archived' : 'Draft'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-800">
+                    <p>
+                      <span className="text-gray-500">Diploma:</span> {diploma.diplome || '—'}
+                    </p>
+                    <p>
+                      <span className="text-gray-500">School:</span> {diploma.school || '—'}
+                    </p>
+                    <p>
+                      <span className="text-gray-500">Year:</span> {diploma.annee || '—'}
+                    </p>
+                    <p>
+                      <span className="text-gray-500">Status:</span> {diploma.status ?? '—'}
+                    </p>
+                    <p className="sm:col-span-2">
+                      <span className="text-gray-500">Location:</span>{' '}
+                      {[diploma.city, diploma.country].filter(Boolean).join(', ') || '—'}
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    {diploma.diplome_picture_1 || diploma.diplome_picture_2 ? (
+                      <>
+                        {diploma.diplome_picture_1 && (
+                          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPreview({
+                                  src: getFileUrl(diploma.diplome_picture_1!),
+                                  label: `${diploma.title || 'Diploma'} – picture 1`,
+                                })
+                              }
+                              className="w-full"
+                            >
+                              <img
+                                className="h-40 w-full object-contain transition-transform duration-300 hover:scale-105"
+                                src={getFileUrl(diploma.diplome_picture_1)}
+                                alt="Diploma picture 1"
+                              />
+                            </button>
+                          </div>
+                        )}
+                        {diploma.diplome_picture_2 && (
+                          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPreview({
+                                  src: getFileUrl(diploma.diplome_picture_2!),
+                                  label: `${diploma.title || 'Diploma'} – picture 2`,
+                                })
+                              }
+                              className="w-full"
+                            >
+                              <img
+                                className="h-40 w-full object-contain transition-transform duration-300 hover:scale-105"
+                                src={getFileUrl(diploma.diplome_picture_2)}
+                                alt="Diploma picture 2"
+                              />
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed border-gray-300 text-xs text-gray-500">
+                        No diploma images uploaded.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {contact && (
+              <section className="rounded-lg border border-gray-200 p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-gray-900">Contact</h4>
+                  <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                    {contact.status === 1 ? 'Active' : contact.status === -1 ? 'Archived' : 'Draft'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
+                  <p>
+                    <span className="text-gray-500">Name:</span>{' '}
+                    {`${contact.firstname ?? ''} ${contact.lastname ?? ''}`.trim() || '—'}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Birthday:</span> {contact.birthday || '—'}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Email:</span> {contact.email || '—'}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Phone:</span> {contact.phone || '—'}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Address:</span> {contact.adress || '—'}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">City:</span> {contact.city || '—'}
+                  </p>
+                  <p>
+                    <span className="text-gray-500">Country:</span> {contact.country || '—'}
+                  </p>
+                </div>
+              </section>
+            )}
+
+            {linkType && (
+              <section className="rounded-lg border border-gray-200 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-gray-900">Link Type</h4>
+                  <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                    {linkType.status === 1 ? 'Active' : linkType.status === 0 ? 'Disabled' : 'Draft'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700">
+                  <span className="text-gray-500">Title:</span> {linkType.title || '—'}
+                </p>
+                {linkType.student_id && (
+                  <p className="text-xs text-gray-500">Linked student ID: {linkType.student_id}</p>
+                )}
+              </section>
+            )}
+
+            {!student && !diploma && !contact && (
+              <p className="text-sm text-gray-500">No details available for this student.</p>
+            )}
+          </div>
+        )}
+      </BaseModal>
+
+      <BaseModal isOpen={!!preview} onClose={() => setPreview(null)} title={preview?.label || 'Diploma preview'}>
+        {preview && (
+          <div className="flex flex-col items-center gap-4">
+            <img
+              src={preview.src}
+              alt={preview.label}
+              className="max-h-[70vh] w-full object-contain rounded-2xl border bg-white"
+            />
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+            >
+              Close Preview
+            </button>
+          </div>
+        )}
+      </BaseModal>
+    </>
+  );
+};
+
 const formatTeacherName = (teacher: TeacherLike | null | undefined, fallbackId?: number) => {
   const first = teacher?.first_name ?? '';
   const last = teacher?.last_name ?? '';
@@ -99,23 +348,6 @@ const formatCourseTitle = (course: CourseLike | null | undefined, fallbackId?: n
   if (course?.title) return course.title;
   if (fallbackId) return `Course #${fallbackId}`;
   return 'Course';
-};
-
-const capitalize = (value?: string | null) => {
-  if (!value) return '';
-  return value.charAt(0).toUpperCase() + value.slice(1);
-};
-
-const formatDisplayDate = (value?: string | null) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
-};
-
-const formatTimeValue = (time?: string | null) => {
-  if (!time) return '';
-  return time.length > 5 ? time.slice(0, 5) : time;
 };
 
 const API_LIMIT = 100;
@@ -133,6 +365,10 @@ const StudentReportsSection: React.FC = () => {
   const [reportModalError, setReportModalError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentReport | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>({
+    key: 'student',
+    direction: 'asc',
+  });
 
   const { data: yearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
   const { data: periodsResp, isLoading: periodsLoading } = useSchoolYearPeriods({
@@ -297,20 +533,6 @@ const StudentReportsSection: React.FC = () => {
     return dashboardStudents.filter((entry) => entry.student_id === targetId);
   }, [dashboardStudents, selectedStudentFilter]);
 
-  // Keep for future use when Sessions column is implemented
-  const filteredSessions = useMemo(() => {
-    let sessions = dashboardData?.sessions || [];
-    if (selectedCourseFilter) {
-      const courseId = Number(selectedCourseFilter);
-      sessions = sessions.filter((session) => (session.course_id ?? session.course?.id) === courseId);
-    }
-    if (selectedTeacherFilter) {
-      const teacherId = Number(selectedTeacherFilter);
-      sessions = sessions.filter((session) => (session.teacher_id ?? session.teacher?.id) === teacherId);
-    }
-    return sessions;
-  }, [dashboardData, selectedCourseFilter, selectedTeacherFilter]);
-
   const filteredPresences = useMemo(() => {
     let presences = dashboardData?.presences || [];
     
@@ -336,30 +558,108 @@ const StudentReportsSection: React.FC = () => {
     return presences;
   }, [dashboardData, selectedCourseFilter, selectedStudentFilter, selectedTeacherFilter]);
 
-  // Group presences by student
-  const studentsWithPresences = useMemo(() => {
-    const studentMap = new Map<number, {
-      student_id: number;
-      student: StudentLike | null;
-      presences: typeof filteredPresences;
-    }>();
+  const presenceCards = useMemo(() => {
+    return filteredPresences.map((presence) => {
+      const studentEntry = studentLookup.get(presence.student_id);
+      const studentInfo = presence.student ?? studentEntry?.student ?? null;
+      const studentName = formatStudentName(studentInfo, presence.student_id);
+      const studentAvatar = getAvatarForStudent(studentInfo);
 
-    filteredPresences.forEach((presence) => {
-      const studentId = presence.student_id;
-      if (!studentMap.has(studentId)) {
-        const studentEntry = studentLookup.get(studentId);
-        const studentInfo = presence.student ?? studentEntry?.student ?? null;
-        studentMap.set(studentId, {
-          student_id: studentId,
-          student: studentInfo,
-          presences: [],
-        });
+      const courseId = presence.studentPlanning?.course_id ?? presence.studentPlanning?.course?.id;
+      const courseMeta = courseId ? courseMap.get(courseId) : null;
+      const courseName = formatCourseTitle(presence.studentPlanning?.course ?? courseMeta ?? null, courseId);
+      const courseCoefficient = (presence.studentPlanning?.course as { coefficient?: number | null } | undefined)?.coefficient ?? null;
+
+      const teacherId = presence.studentPlanning?.teacher_id ?? presence.studentPlanning?.teacher?.id;
+      const teacherMeta = teacherId ? teacherMap.get(teacherId) : null;
+      const teacherName = formatTeacherName(presence.studentPlanning?.teacher ?? teacherMeta ?? null, teacherId);
+
+      const noteRaw = presence.note as string | number | null | undefined;
+      let noteValue = '';
+      let noteNumeric: number | null = null;
+      if (typeof noteRaw === 'number') {
+        noteValue = noteRaw.toString();
+        noteNumeric = noteRaw;
+      } else if (typeof noteRaw === 'string') {
+        noteValue = noteRaw.trim();
+        const parsed = Number(noteValue);
+        noteNumeric = Number.isFinite(parsed) ? parsed : null;
       }
-      studentMap.get(studentId)!.presences.push(presence);
-    });
 
-    return Array.from(studentMap.values());
-  }, [filteredPresences, studentLookup]);
+      const validateReport = Boolean((presence as { validate_report?: boolean | null }).validate_report);
+
+      return {
+        id: presence.id,
+        studentId: presence.student_id,
+        studentName,
+        teacherName,
+        courseName,
+        courseCoefficient,
+        avatar: studentAvatar,
+        note: noteValue || '—',
+        noteNumeric,
+        validateReport,
+      };
+    });
+  }, [filteredPresences, studentLookup, courseMap, teacherMap]);
+
+  const sortedPresenceCards = useMemo(() => {
+    const cards = [...presenceCards];
+    cards.sort((a, b) => {
+      const { key } = sortConfig;
+      let comparison = 0;
+      if (key === 'student') {
+        comparison = (a.studentName || '').localeCompare(b.studentName || '');
+      } else if (key === 'teacher') {
+        comparison = (a.teacherName || '').localeCompare(b.teacherName || '');
+      } else if (key === 'course') {
+        comparison = (a.courseName || '').localeCompare(b.courseName || '');
+      } else if (key === 'coefficient') {
+        const coeffA = a.courseCoefficient ?? 0;
+        const coeffB = b.courseCoefficient ?? 0;
+        comparison = coeffA - coeffB;
+      } else {
+        if (a.noteNumeric !== null && b.noteNumeric !== null) {
+          comparison = a.noteNumeric - b.noteNumeric;
+        } else if (a.noteNumeric !== null) {
+          comparison = -1;
+        } else if (b.noteNumeric !== null) {
+          comparison = 1;
+        } else {
+          comparison = (a.note || '').localeCompare(b.note || '');
+        }
+      }
+      return sortConfig.direction === 'asc' ? comparison : -comparison;
+    });
+    return cards;
+  }, [presenceCards, sortConfig]);
+
+  const handleSort = (key: SortKey) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      const defaultDirection = key === 'note' ? 'desc' : 'asc';
+      return { key, direction: defaultDirection };
+    });
+  };
+
+  const renderSortIndicator = (key: SortKey) => {
+    if (sortConfig.key !== key) return (
+      <svg className="h-3 w-3 text-gray-300" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M10 5l4 4H6l4-4zm0 10l-4-4h8l-4 4z" />
+      </svg>
+    );
+    return sortConfig.direction === 'asc' ? (
+      <svg className="h-3 w-3 text-blue-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M10 5l4 4H6l4-4z" />
+      </svg>
+    ) : (
+      <svg className="h-3 w-3 text-blue-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M10 15l-4-4h8l-4 4z" />
+      </svg>
+    );
+  };
 
   const totalStudents = dashboardStudents.length;
 
@@ -368,20 +668,6 @@ const StudentReportsSection: React.FC = () => {
     const timeout = window.setTimeout(() => setAlert(null), 4000);
     return () => window.clearTimeout(timeout);
   }, [alert]);
-
-  const handleOpenCreateReport = (studentId: number) => {
-    setEditingReport(null);
-    setModalStudentId(studentId);
-    setReportModalError(null);
-    setReportModalOpen(true);
-  };
-
-  const handleOpenEditReport = (report: StudentReport) => {
-    setEditingReport(report);
-    setModalStudentId(report.student_id);
-    setReportModalError(null);
-    setReportModalOpen(true);
-  };
 
   const handleReportModalClose = () => {
     setReportModalOpen(false);
@@ -576,7 +862,7 @@ const StudentReportsSection: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_0.7fr_1.4fr] gap-6">
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-900">Students</h2>
               <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
@@ -592,14 +878,13 @@ const StudentReportsSection: React.FC = () => {
                     const studentInfo = entry.student;
                     const avatar = getAvatarForStudent(studentInfo);
                     const displayName = formatStudentName(studentInfo, studentId);
-                    const report = entry.report || null;
 
                     return (
                       <div
                         key={studentId}
-                        className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm flex flex-col gap-3"
+                        className="rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm flex items-center justify-between gap-3"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
                           {avatar.type === 'image' ? (
                             <img
                               src={avatar.value}
@@ -611,50 +896,9 @@ const StudentReportsSection: React.FC = () => {
                               {avatar.value}
                             </div>
                           )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
-                            <p className="text-xs text-gray-500">Student #{studentId}</p>
-                          </div>
+                          <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
                         </div>
-                        {report ? (
-                          <div className="space-y-1 text-xs">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${report.passed ? passedStyles.passed : passedStyles.failed}`}>
-                                {report.passed ? 'Passed' : 'Not Passed'}
-                              </span>
-                              <span
-                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                                  statusStyles[report.status] ?? 'bg-gray-100 text-gray-700'
-                                }`}
-                              >
-                                {STATUS_VALUE_LABEL[report.status] ?? `Status ${report.status}`}
-                              </span>
-                            </div>
-                            <p className="text-gray-600 truncate">
-                              <span className="font-medium">Mention:</span> {report.mention || '—'}
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-500">No report yet. Create one to get started.</p>
-                        )}
-                        <div className="flex items-center justify-end gap-2">
-                          {report && (
-                            <button
-                              type="button"
-                              onClick={() => setDeleteTarget(report)}
-                              className="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => (report ? handleOpenEditReport(report) : handleOpenCreateReport(studentId))}
-                            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
-                          >
-                            {report ? 'Edit' : 'Create'}
-                          </button>
-                        </div>
+                        <StudentDetailsButton studentId={studentId} />
                       </div>
                     );
                   })
@@ -673,98 +917,121 @@ const StudentReportsSection: React.FC = () => {
 
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-900">Courses And Notes</h2>
-              <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
-                {studentsWithPresences.length === 0 ? (
-                  <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+              <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
+                {presenceCards.length === 0 ? (
+                  <div className="p-6 text-center text-sm text-gray-500">
                     {selectedStudentFilter || selectedCourseFilter || selectedTeacherFilter
-                      ? 'No students match the selected filters.'
+                      ? 'No records match the selected filters.'
                       : 'No presences or notes recorded yet for this class and period.'}
                   </div>
                 ) : (
-                  studentsWithPresences.map((studentData) => {
-                    const studentAvatar = getAvatarForStudent(studentData.student);
-                    const studentName = formatStudentName(studentData.student, studentData.student_id);
-
-                    return (
-                      <div key={studentData.student_id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                        <div className="flex items-center gap-3 mb-3">
-                          {studentAvatar.type === 'image' ? (
-                            <img
-                              src={studentAvatar.value}
-                              alt={studentName}
-                              className="h-10 w-10 rounded-full object-cover border border-white shadow"
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-semibold text-sm">
-                              {studentAvatar.value}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{studentName}</p>
-                            <p className="text-xs text-gray-500">Student #{studentData.student_id}</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2 pl-12">
-                          {studentData.presences.map((presence) => {
-                            const courseId = presence.studentPlanning?.course_id ?? presence.studentPlanning?.course?.id;
-                            const courseMeta = courseId ? courseMap.get(courseId) : null;
-                            const courseLabel = formatCourseTitle(
-                              presence.studentPlanning?.course ?? courseMeta ?? null,
-                              courseId
-                            );
-                            const teacherId = presence.studentPlanning?.teacher_id ?? presence.studentPlanning?.teacher?.id;
-                            const teacherMeta = teacherId ? teacherMap.get(teacherId) : null;
-                            const teacherLabel = formatTeacherName(
-                              presence.studentPlanning?.teacher ?? teacherMeta ?? null,
-                              teacherId
-                            );
-                            const dateLabel = formatDisplayDate(presence.studentPlanning?.date_day);
-                            const timeRange = [formatTimeValue(presence.studentPlanning?.hour_start), formatTimeValue(presence.studentPlanning?.hour_end)]
-                              .filter(Boolean)
-                              .join(' - ');
-                            const presenceStatus = capitalize(presence.presence);
-                            const note = typeof presence.note === 'number' && presence.note !== null ? presence.note : null;
-
-                            return (
-                              <div key={presence.id} className="border-t border-gray-100 pt-2 first:border-t-0 first:pt-0">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-semibold text-gray-900">
-                                      <span className="text-gray-500">Course:</span> {courseLabel}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-0.5">
-                                      <span className="text-gray-400">Teacher:</span> {teacherLabel}
-                                    </p>
-                                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                                      {presenceStatus && (
-                                        <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                                          presenceStatus.toLowerCase() === 'present' 
-                                            ? 'bg-green-100 text-green-700' 
-                                            : 'bg-yellow-100 text-yellow-700'
-                                        }`}>
-                                          {presenceStatus}
-                                        </span>
-                                      )}
-                                      {note !== null && (
-                                        <span className="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
-                                          Note: {note}
-                                        </span>
-                                      )}
-                                    </div>
-                                    {dateLabel && (
-                                      <p className="text-[10px] text-gray-400 mt-1">
-                                        <span className="text-gray-300">Date:</span> {[dateLabel, timeRange].filter(Boolean).join(' · ') || 'No schedule info'}
-                                      </p>
-                                    )}
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 text-[11px]">
+                      <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
+                        <tr>
+                          <th scope="col" className="px-4 py-2 text-left font-semibold">
+                            <button
+                              type="button"
+                              onClick={() => handleSort('student')}
+                              className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
+                            >
+                              Student
+                              {renderSortIndicator('student')}
+                            </button>
+                          </th>
+                          <th scope="col" className="px-4 py-2 text-left font-semibold">
+                            <button
+                              type="button"
+                              onClick={() => handleSort('teacher')}
+                              className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
+                            >
+                              Teacher
+                              {renderSortIndicator('teacher')}
+                            </button>
+                          </th>
+                          <th scope="col" className="px-4 py-2 text-left font-semibold">
+                            <button
+                              type="button"
+                              onClick={() => handleSort('course')}
+                              className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
+                            >
+                              Course
+                              {renderSortIndicator('course')}
+                            </button>
+                          </th>
+                          <th scope="col" className="px-4 py-2 text-left font-semibold">
+                            <button
+                              type="button"
+                              onClick={() => handleSort('coefficient')}
+                              className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
+                            >
+                              Coefficient
+                              {renderSortIndicator('coefficient')}
+                            </button>
+                          </th>
+                          <th scope="col" className="px-4 py-2 text-left font-semibold">
+                            <button
+                              type="button"
+                              onClick={() => handleSort('note')}
+                              className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
+                            >
+                              Note
+                              {renderSortIndicator('note')}
+                            </button>
+                          </th>
+                          <th scope="col" className="px-4 py-2 text-left font-semibold">
+                            Validation
+                          </th>
+                          <th scope="col" className="px-4 py-2 text-center font-semibold">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {sortedPresenceCards.map((entry) => (
+                          <tr
+                            key={entry.id}
+                            className={`text-gray-800 ${entry.validateReport ? 'bg-green-50' : 'bg-gray-50'}`}
+                          >
+                            <td className="px-4 py-2">
+                              <div className="flex items-center gap-2">
+                                {entry.avatar.type === 'image' ? (
+                                  <img
+                                    src={entry.avatar.value}
+                                    alt={entry.studentName}
+                                    className="h-7 w-7 rounded-full object-cover border border-white shadow"
+                                  />
+                                ) : (
+                                  <div className="h-7 w-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-semibold">
+                                    {entry.avatar.value}
                                   </div>
-                                </div>
+                                )}
+                                <span className="font-medium truncate max-w-[140px]">{entry.studentName}</span>
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })
+                            </td>
+                            <td className="px-4 py-2 text-gray-600 truncate max-w-[130px]">{entry.teacherName}</td>
+                            <td className="px-4 py-2 text-gray-600 truncate max-w-[180px]">{entry.courseName}</td>
+                            <td className="px-4 py-2 text-gray-600 truncate max-w-[100px]">
+                              {entry.courseCoefficient !== null ? entry.courseCoefficient : '—'}
+                            </td>
+                            <td className="px-4 py-2 text-gray-600 truncate max-w-[120px]">{entry.note}</td>
+                            <td className="px-4 py-2">
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                  entry.validateReport ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                                }`}
+                              >
+                                {entry.validateReport ? 'Validated' : 'Pending'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              <StudentDetailsButton studentId={entry.studentId} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>

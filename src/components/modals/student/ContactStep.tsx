@@ -5,6 +5,7 @@ interface ContactStepProps {
   form: ContactFormData;
   errors: Record<string, string>;
   linkTypesData: any;
+  studentName: string;
   onFormChange: (field: keyof ContactFormData, value: any) => void;
   onSubmit: (e: React.FormEvent) => void;
   onBack: () => void;
@@ -17,6 +18,7 @@ const ContactStep: React.FC<ContactStepProps> = ({
   form,
   errors,
   linkTypesData,
+  studentName,
   onFormChange,
   onSubmit,
   onBack,
@@ -27,6 +29,16 @@ const ContactStep: React.FC<ContactStepProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Student</label>
+          <input
+            value={studentName}
+            disabled
+            className="mt-1 block w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100"
+          />
+        </div>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">First name</label>

@@ -22,6 +22,7 @@ export interface StudentPresenceTeacher {
 export interface StudentPresenceCourse {
   id: number;
   title?: string | null;
+  coefficient?: number | null;
 }
 
 export interface StudentPresencePlanning {
@@ -50,6 +51,7 @@ export interface StudentPresence {
   presence: PresenceValue;
   note: number;
   remarks?: string | null;
+  validate_report?: boolean | null;
   company_id?: number | null;
   status: StudentPresenceStatus;
   created_at?: string;
@@ -80,7 +82,9 @@ export interface GetStudentPresenceParams extends PaginationParams {
 
 type RawPresenceResponse = {
   data?: StudentPresence[];
-  meta?: Partial<PaginatedResponse<StudentPresence>['meta']>;
+  meta?: Partial<PaginatedResponse<StudentPresence>['meta']> & {
+    lastPage?: number;
+  };
 };
 
 const toPaginated = (raw: unknown): PaginatedResponse<StudentPresence> => {

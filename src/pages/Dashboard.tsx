@@ -96,6 +96,7 @@ const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC
 
 const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab || 'users');
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const { setNavigateToPeriods } = useSchoolYear();
   const { setNavigateToSpecializations, setNavigateBackToPrograms } = useProgram();
   const { setNavigateToLevels, setNavigateBackToSpecializations } = useSpecialization();
@@ -120,12 +121,36 @@ const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab 
     });
   }, [setNavigateToPeriods, setNavigateToSpecializations, setNavigateToLevels, setNavigateBackToSpecializations, setNavigateBackToPrograms]);
 
+  const toggleSidebarVisibility = () => setIsSidebarVisible((prev) => !prev);
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onToggleCollapse={toggleSidebarVisibility}
+        isCollapsed={!isSidebarVisible}
+      />
 
-      <div className="flex-1 ml-64">
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      {!isSidebarVisible && (
+        <button
+          type="button"
+          onClick={toggleSidebarVisibility}
+          className="hidden sm:flex fixed top-24 left-4 z-30 h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          aria-label="Show sidebar"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
+
+      <div
+        className={`flex-1 transition-all duration-300 ${
+          isSidebarVisible ? 'ml-64' : 'ml-0'
+        }`}
+      >
+        <div className="max-w-[86rem] mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <Suspense fallback={<div className="rounded-md border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500">Loading section…</div>}>
               <SectionComponent />

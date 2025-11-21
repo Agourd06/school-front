@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
-import { useStudentModalData } from './student/useStudentModalData';
+import { StudentModalProvider, useStudentModalContext } from './student/StudentModalContext';
 import { useStudentModalHandlers } from './student/useStudentModalHandlers';
 import StudentStep from './student/StudentStep';
 import DiplomeStep from './student/DiplomeStep';
@@ -16,103 +16,46 @@ interface StudentModalProps {
   student?: Student | null;
 }
 
-const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student }) => {
-  // This modal is only for editing - requires a student ID
-  if (!student?.id) {
-    console.warn('StudentModal requires a student with an ID for editing');
-    return null;
-  }
-
-  const studentId = student.id;
+const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [stepIndex, setStepIndex] = useState(0);
-
-  // Get all form data and state from custom hook
   const {
     studentForm,
-    setStudentForm,
     studentErrors,
-    setStudentErrors,
     pictureFile,
-    setPictureFile,
     diplomeForm,
-    setDiplomeForm,
     diplomeErrors,
-    setDiplomeErrors,
     diplomeFile1,
-    setDiplomeFile1,
     diplomeFile2,
-    setDiplomeFile2,
     currentDiplome,
     contactForm,
-    setContactForm,
     contactErrors,
-    setContactErrors,
     currentContact,
     linkTypeTitle,
-    setLinkTypeTitle,
     linkTypeStatus,
-    setLinkTypeStatus,
     linkTypeError,
-    setLinkTypeError,
     currentLinkType,
     classRooms,
     studentDetailsData,
-    refetchStudentDetails,
     linkTypesData,
-    setCurrentDiplomeFn,
-    setCurrentContactFn,
-    setCurrentLinkTypeFn,
-  } = useStudentModalData(studentId);
+    studentName,
+    setDiplomeForm,
+    setContactForm,
+    setLinkTypeTitle,
+    setLinkTypeStatus,
+    setDiplomeFile1,
+    setDiplomeFile2,
+  } = useStudentModalContext();
 
   // Get all handlers from custom hook
   const handlers = useStudentModalHandlers({
-    studentId,
-    studentForm,
-    setStudentForm,
-    studentErrors,
-    setStudentErrors,
-    pictureFile,
-    setPictureFile,
-    diplomeForm,
-    setDiplomeForm,
-    diplomeErrors,
-    setDiplomeErrors,
-    diplomeFile1,
-    diplomeFile2,
-    currentDiplome,
-    setCurrentDiplome: setCurrentDiplomeFn,
-    contactForm,
-    setContactForm,
-    contactErrors,
-    setContactErrors,
-    currentContact,
-    setCurrentContact: setCurrentContactFn,
-    linkTypeTitle,
-    setLinkTypeTitle,
-    linkTypeStatus,
-    setLinkTypeStatus,
-    linkTypeError,
-    setLinkTypeError,
-    currentLinkType,
-    setCurrentLinkType: setCurrentLinkTypeFn,
-    refetchStudentDetails,
     onStepComplete: (nextStep: number) => setStepIndex(nextStep),
     onFinish: onClose,
   });
 
   // Reset form when modal closes
   useEffect(() => {
-    if (!isOpen) {
-      setStepIndex(0);
-      setStudentErrors({});
-      setDiplomeErrors({});
-      setContactErrors({});
-      setLinkTypeError('');
-      setPictureFile(null);
-      setDiplomeFile1(null);
-      setDiplomeFile2(null);
-    }
-  }, [isOpen, setStudentErrors, setDiplomeErrors, setContactErrors, setLinkTypeError, setPictureFile, setDiplomeFile1, setDiplomeFile2]);
+    setStepIndex(0);
+  }, []);
 
   const currentStep = STEPS[stepIndex];
 
@@ -134,7 +77,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
             onPictureChange={handleStudentPicture}
             onSubmit={handlers.handleStudentSubmit}
             onCancel={onClose}
-            isSubmitting={handlers.updateStudentMut.isPending}
+            isSubmitting={handlers.createStudentMut.isPending || handlers.updateStudentMut.isPending}
           />
         );
 
@@ -147,11 +90,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
             diplomeFile2={diplomeFile2}
             currentDiplomePicture1={studentDetailsData?.diploma?.diplome_picture_1}
             currentDiplomePicture2={studentDetailsData?.diploma?.diplome_picture_2}
-            studentName={
-              `${studentDetailsData?.student?.first_name ?? ''} ${studentDetailsData?.student?.last_name ?? ''}`.trim() ||
-              studentDetailsData?.student?.email ||
-              '—'
-            }
+            studentName={studentName}
             onFormChange={(field, value) => setDiplomeForm((prev) => ({ ...prev, [field]: value }))}
             onFile1Change={setDiplomeFile1}
             onFile2Change={setDiplomeFile2}
@@ -169,6 +108,7 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
             form={contactForm}
             errors={contactErrors}
             linkTypesData={linkTypesData}
+            studentName={studentName}
             onFormChange={(field, value) => setContactForm((prev) => ({ ...prev, [field]: value }))}
             onSubmit={handlers.handleContactSubmit}
             onBack={() => setStepIndex(1)}
@@ -199,15 +139,29 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Edit Student">
-      <div className="space-y-6">
-        <StepProgress steps={STEPS} currentIndex={stepIndex} />
+    <div className="space-y-6">
+      <StepProgress steps={STEPS} currentIndex={stepIndex} />
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h4 className="text-sm font-medium text-gray-700 mb-4">{currentStep.description}</h4>
-          {renderStepContent()}
-        </div>
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <h4 className="text-sm font-medium text-gray-700 mb-4">{currentStep.description}</h4>
+        {renderStepContent()}
       </div>
+    </div>
+  );
+};
+
+const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student }) => {
+  // This modal is only for editing - requires a student ID
+  if (!student?.id) {
+    console.warn('StudentModal requires a student with an ID for editing');
+    return null;
+  }
+
+  return (
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Edit Student">
+      <StudentModalProvider initialStudentId={student.id}>
+        <StudentModalContent onClose={onClose} />
+      </StudentModalProvider>
     </BaseModal>
   );
 };

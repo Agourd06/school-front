@@ -61,9 +61,16 @@ interface SidebarProps {
       | "attestations"
       | "studentAttestations"
   ) => void;
+  onToggleCollapse?: () => void;
+  isCollapsed?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  onTabChange,
+  onToggleCollapse,
+  isCollapsed,
+}) => {
   const [isParametersOpen, setIsParametersOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -145,10 +152,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
 
       ],
     },
-    {
-      title: 'Finance',
-      items: [],
-    },
+    // {
+    //   title: 'Finance',
+    //   items: [],
+    // },
     {
       title: 'Direction',
       items: [],
@@ -198,35 +205,59 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         onClick={closeMobile}
       />
       <div
-        className={`w-64 bg-white shadow-lg fixed left-0 top-16 z-40 transform transition-transform sm:translate-x-0 ${
-          isMobileOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"
-        }`}
+        className={`w-64 bg-white shadow-lg fixed left-0 top-16 z-40 transform transition-transform ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${isCollapsed ? 'sm:-translate-x-full' : 'sm:translate-x-0'}`}
         style={{ height: 'calc(100vh - 4rem)' }}
       >
         <div className="p-6 h-full flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-bold text-gray-900">Edusol</h2>
-            {/* Close button on mobile */}
-            <button
-              type="button"
-              aria-label="Close sidebar"
-              className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-gray-100"
-              onClick={closeMobile}
-            >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div className="flex items-center gap-2">
+              {onToggleCollapse && (
+                <button
+                  type="button"
+                  aria-label={isCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+                  className="hidden sm:inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition"
+                  onClick={onToggleCollapse}
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d={isCollapsed ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7'}
+                    />
+                  </svg>
+                </button>
+              )}
+              {/* Close button on mobile */}
+              <button
+                type="button"
+                aria-label="Close sidebar"
+                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-gray-100"
+                onClick={closeMobile}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Users Section */}
