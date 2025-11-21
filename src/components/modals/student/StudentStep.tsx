@@ -7,7 +7,7 @@ interface StudentStepProps {
   errors: Record<string, string>;
   pictureFile: File | null;
   currentPictureUrl?: string | null;
-  classRooms: any;
+  classRooms: PaginatedResponse<ClassRoom> | null | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onPictureChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (e: React.FormEvent) => void;

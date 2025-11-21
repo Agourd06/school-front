@@ -1,7 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   classStudentApi,
-  type ClassStudentAssignment,
   type CreateClassStudentRequest,
   type UpdateClassStudentRequest,
   type GetClassStudentParams,
@@ -41,7 +40,7 @@ export const useUpdateClassStudent = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateClassStudentRequest }) => classStudentApi.update(id, data),
-    onSuccess: (_res: ClassStudentAssignment) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['classStudents'] });
       qc.invalidateQueries({ queryKey: ['classes'] });
       qc.invalidateQueries({ queryKey: ['students'] });

@@ -13,6 +13,7 @@ interface ProgramContextType {
 
 const ProgramContext = createContext<ProgramContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useProgram = () => {
   const context = useContext(ProgramContext);
   if (context === undefined) {

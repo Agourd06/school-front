@@ -3,13 +3,15 @@ import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Input, Select, FileInput, Button } from '../ui';
 import type { StudentFormData } from '../modals/student/types';
+import type { ClassRoom } from '../../api/classRoom';
+import type { PaginatedResponse } from '../../types/api';
 
 interface StudentStepFormProps {
   form: StudentFormData;
   errors: Record<string, string>;
   pictureFile: File | null;
   currentPictureUrl?: string | null;
-  classRooms: any;
+  classRooms: PaginatedResponse<ClassRoom> | null | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onPictureChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -193,7 +195,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           onChange={onChange}
           options={[
             { value: '', label: 'No class room' },
-            ...((classRooms?.data || []).map((cr: any) => ({
+            ...((classRooms?.data || []).map((cr: ClassRoom) => ({
               value: cr.id,
               label: `${cr.code} — ${cr.title}`,
             })))

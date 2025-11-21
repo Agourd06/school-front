@@ -17,7 +17,7 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({
 }) => {
   const createMutation = useCreateAdministrator();
   const updateMutation = useUpdateAdministrator();
-  const { data: classRooms } = useClassRooms({ limit: 100, page: 1 } as any);
+  const { data: classRooms } = useClassRooms({ limit: 100, page: 1 });
 
   const isEditing = !!administrator;
 
@@ -58,7 +58,7 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({
     if (isEditing && administrator?.id) {
       await updateMutation.mutateAsync({ id: administrator.id, data: formDataObj });
     } else {
-      await createMutation.mutateAsync(formDataObj as any);
+      await createMutation.mutateAsync(formDataObj);
     }
     onClose();
   };

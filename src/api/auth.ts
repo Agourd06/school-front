@@ -1,4 +1,5 @@
 import api from './axios';
+import type { User } from './users';
 
 export interface LoginRequest {
   email: string;
@@ -82,7 +83,7 @@ export const authApi = {
     return response.data;
   },
 
-  getProfile: async (): Promise<{ message: string; user: any }> => {
+  getProfile: async (): Promise<{ message: string; user: User }> => {
     const response = await api.get('/profile');
     return response.data;
   },

@@ -77,9 +77,10 @@ export const moduleCourseApi = {
     try {
       const response = await api.post('/module-course', data);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If relationship already exists (409), try to restore it if it's soft-deleted
-      if (error?.response?.status === 409) {
+      const axiosError = error as { response?: { status?: number } };
+      if (axiosError?.response?.status === 409) {
         try {
           // Try to restore by updating status to 1 (active)
           // This will work if the relationship exists and is soft-deleted (status = -2)
@@ -89,19 +90,20 @@ export const moduleCourseApi = {
             coefficient: data.coefficient ?? null,
           });
           return restored;
-        } catch (updateError: any) {
+        } catch {
           // If update fails, the relationship might already be active
           // Try to get the existing relationship
           try {
             const existing = await moduleCourseApi.getById(data.module_id, data.course_id);
             // Return the existing relationship - it's already active
             return existing;
-          } catch (getError: any) {
+          } catch (getError: unknown) {
             // If getById also fails (404), the backend might filter out soft-deleted items
             // In this case, the relationship exists but is soft-deleted and filtered out
             // Try updating anyway - the backend should allow updating soft-deleted items
             // If this also fails, we'll throw the original error
-            if (getError?.response?.status === 404) {
+            const axiosError = getError as { response?: { status?: number } };
+            if (axiosError?.response?.status === 404) {
               // Relationship exists but is filtered out (soft-deleted)
               // Try update again - backend should restore it
               try {
@@ -111,7 +113,7 @@ export const moduleCourseApi = {
                   coefficient: data.coefficient ?? null,
                 });
                 return restored;
-              } catch (finalError: any) {
+              } catch {
                 // If everything fails, throw original error
                 throw error;
               }

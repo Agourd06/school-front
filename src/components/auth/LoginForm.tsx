@@ -22,8 +22,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
       onSuccess?.();
     } catch (err) {
       // Prefer backend error message when available (axios error shape)
-      const anyErr = err as any;
-      const serverMsg = anyErr?.response?.data?.message || anyErr?.message;
+      const axiosError = err as { response?: { data?: { message?: string } }; message?: string };
+      const serverMsg = axiosError?.response?.data?.message || axiosError?.message;
       console.error('Login error', anyErr);
       setError(serverMsg || 'Invalid email or password');
     }

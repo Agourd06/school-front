@@ -5,7 +5,7 @@ import type { Props as SelectProps } from 'react-select';
 interface SearchSelectOption {
   value: number | string;
   label: string;
-  data?: any;
+  data?: unknown;
 }
 
 interface SearchSelectProps {
@@ -72,7 +72,7 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
           }}
           placeholder={placeholder}
           value={selectedOption ? { value: selectedOption.value, label: selectedOption.label } : null}
-          onChange={(opt: any) => {
+          onChange={(opt: SearchSelectOption | null) => {
             if (!opt) {
               onChange('');
             } else {

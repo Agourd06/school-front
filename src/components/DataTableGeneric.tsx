@@ -15,7 +15,7 @@ type ListState<T> = {
     hasNext: boolean;
     hasPrevious: boolean;
   };
-  filters: Record<string, any> & { search?: string; status?: number | null | undefined };
+  filters: Record<string, unknown> & { search?: string; status?: number | null | undefined };
 };
 
 interface StatusOption {
@@ -85,7 +85,7 @@ function DataTableGeneric<T extends { id: number }>({
             <div className="w-full sm:w-48">
               <FilterDropdown
                 options={statusFilterOptions}
-                value={(filters as any).status ?? null}
+                value={(filters as { status?: number | null }).status ?? null}
                 onChange={(val) => onFilterChange?.(val === null ? null : Number(val))}
                 placeholder="Filter by status"
                 isLoading={loading}
@@ -116,8 +116,8 @@ function DataTableGeneric<T extends { id: number }>({
             ) : (
               <li className="px-4 py-8 sm:px-6">
                 <div className="text-center text-gray-500">
-                  {(filters as any).search ? (
-                    <>No {title.toLowerCase()} found matching "{(filters as any).search}"</>
+                  {(filters as { search?: string }).search ? (
+                    <>No {title.toLowerCase()} found matching "{(filters as { search?: string }).search}"</>
                   ) : (
                     `No ${title.toLowerCase()} found`
                   )}

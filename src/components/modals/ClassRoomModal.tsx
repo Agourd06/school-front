@@ -23,7 +23,7 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({
   const isEditing = !!classRoom;
 
   const handleSubmit = async (formData: { code: string; title: string; capacity: string; status: number }) => {
-    const payload: any = {
+      const payload: CreateClassRoomRequest = {
       code: formData.code,
       title: formData.title,
       capacity: Number(formData.capacity || 0),

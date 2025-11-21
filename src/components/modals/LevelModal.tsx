@@ -22,8 +22,8 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
   const createMutation = useCreateLevel();
   const updateMutation = useUpdateLevel();
 
-  const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
-  const programs = useMemo(() => ((programsResp as any)?.data || []) as any[], [programsResp]);
+  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
+  const programs = useMemo(() => (programsResp?.data || []) as Program[], [programsResp]);
 
   const specializationIdForFetch = level
     ? level.specialization_id || level.specialization?.id || 0
@@ -39,7 +39,7 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
     if (programFromLevel) return programFromLevel;
     if (programFromSpecialization) return programFromSpecialization;
     if (programIdForLookup) {
-      return programs.find((p: any) => p.id === programIdForLookup);
+      return programs.find((p: Program) => p.id === programIdForLookup);
     }
     return null;
   }, [programFromLevel, programFromSpecialization, programIdForLookup, programs]);
@@ -52,8 +52,8 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
       : selectedSpecialization?.program_id
       ? selectedSpecialization.program_id
       : undefined,
-  } as any);
-  const specializations = useMemo(() => ((specializationsResp as any)?.data || []) as any[], [specializationsResp]);
+  });
+  const specializations = useMemo(() => (specializationsResp?.data || []) as Specialization[], [specializationsResp]);
 
   const isProgramLocked = !!level || !!initialSpecializationId;
   const isSpecializationLocked = !!level || !!initialSpecializationId;
@@ -88,7 +88,7 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
         await createMutation.mutateAsync(payload);
       }
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setFormError(err?.response?.data?.message || 'Failed to save level');
     }
   };

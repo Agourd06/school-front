@@ -3,11 +3,12 @@ import { useCoursesForModule } from './useModuleCourse';
 import { courseApi } from '../api/course';
 import { moduleApi } from '../api/module';
 import type { Course } from '../api/course';
+import type { ModuleCourse } from '../api/moduleCourse';
 
 // Transform ModuleCourse to the expected format
 // Note: volume and coefficient come from the module-course relationship table (module-specific values)
 // These are NOT the original course's volume/coefficient, but values specific to this module-course assignment
-const transformModuleCourseToCourse = (mc: any): Course & { tri?: number; assignment_created_at?: string; assignment_volume?: number | null; assignment_coefficient?: number | null } => ({
+const transformModuleCourseToCourse = (mc: ModuleCourse): Course & { tri?: number; assignment_created_at?: string; assignment_volume?: number | null; assignment_coefficient?: number | null } => ({
   id: mc.course.id,
   title: mc.course.title,
   tri: mc.tri,

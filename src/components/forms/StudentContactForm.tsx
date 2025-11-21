@@ -147,8 +147,9 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
     }
     try {
       await onSubmit(form);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Failed to save';
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const msg = axiosError?.response?.data?.message || 'Failed to save';
       setErrors((prev) => ({ ...prev, form: msg }));
     }
   };

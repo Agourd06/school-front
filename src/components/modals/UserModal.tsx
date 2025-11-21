@@ -2,6 +2,7 @@ import React from 'react';
 import { useCreateUser, useUpdateUser } from '../../hooks/useUsers';
 import BaseModal from './BaseModal';
 import { UserForm, type User } from '../forms';
+import type { UpdateUserRequest } from '../../api/user';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
 
   const handleSubmit = async (formData: { username: string; email: string; password: string; role: 'user' | 'admin' }) => {
     if (isEditing && user) {
-      const updateData: any = {
+      const updateData: UpdateUserRequest = {
         username: formData.username,
         email: formData.email,
         role: formData.role,

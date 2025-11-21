@@ -13,6 +13,7 @@ interface SpecializationContextType {
 
 const SpecializationContext = createContext<SpecializationContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSpecialization = () => {
   const context = useContext(SpecializationContext);
   if (context === undefined) {

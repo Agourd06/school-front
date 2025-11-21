@@ -7,7 +7,7 @@ export type PlanningSessionTypeStatus = 'active' | 'inactive';
 export interface PlanningSessionTypeCompany {
   id: number;
   name: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PlanningSessionType {
@@ -36,10 +36,10 @@ export interface GetPlanningSessionTypeParams extends PaginationParams {
   status?: PlanningSessionTypeStatus;
 }
 
-const toPaginated = (raw: any): PaginatedResponse<PlanningSessionType> => {
+const toPaginated = (raw: unknown): PaginatedResponse<PlanningSessionType> => {
   if (Array.isArray(raw)) {
     return {
-      data: raw,
+      data: raw as PlanningSessionType[],
       meta: {
         page: 1,
         limit: raw.length,
@@ -51,8 +51,9 @@ const toPaginated = (raw: any): PaginatedResponse<PlanningSessionType> => {
     };
   }
 
-  const meta = raw?.meta || {};
-  const data = raw?.data || [];
+  const rawObj = raw as { meta?: { page?: number; limit?: number; total?: number; totalPages?: number; lastPage?: number; hasNext?: boolean; hasPrevious?: boolean }; data?: PlanningSessionType[] };
+  const meta = rawObj?.meta || {};
+  const data = rawObj?.data || [];
   const page = meta.page ?? 1;
   const limit = meta.limit ?? (Array.isArray(data) ? data.length : 10);
   const total = meta.total ?? (Array.isArray(data) ? data.length : 0);

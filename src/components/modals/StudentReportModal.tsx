@@ -1,6 +1,5 @@
 import React from 'react';
 import BaseModal from './BaseModal';
-import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import type { StudentReport, StudentReportStatus } from '../../api/studentReport';
 import { StudentReportForm, type StudentReportFormData } from '../forms';
 

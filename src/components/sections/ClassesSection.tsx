@@ -14,25 +14,27 @@ import SearchSelect from '../inputs/SearchSelect';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import DescriptionModal from '../modals/DescriptionModal';
+import type { ClassEntity } from '../../api/classes';
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
 const ClassesSection: React.FC = () => {
-  const [state, setState] = React.useState<ListState<any>>({
+  const [state, setState] = React.useState<ListState<ClassEntity>>({
     data: [],
     loading: false,
     error: null,
     pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrevious: false },
     filters: { search: '', status: undefined },
   });
-  const [modal, setModal] = React.useState<{ type: 'class' | null; data?: any }>({ type: null });
+  const [modal, setModal] = React.useState<{ type: 'class' | null; data?: ClassEntity }>({ type: null });
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
   const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -54,7 +56,7 @@ const ClassesSection: React.FC = () => {
     page: state.pagination.page,
     limit: state.pagination.limit,
     search: state.filters.search || undefined,
-    status: (state.filters as any).status,
+    status: (state.filters as { status?: number | null }).status,
     program_id: programFilter ? Number(programFilter) : undefined,
     specialization_id: specializationFilter ? Number(specializationFilter) : undefined,
     level_id: levelFilter ? Number(levelFilter) : undefined,
@@ -63,7 +65,7 @@ const ClassesSection: React.FC = () => {
     student_id: undefined, // Removed student_id from params
   };
 
-  const { data: response, isLoading, error, refetch: refetchClasses } = useClasses(params as any);
+  const { data: response, isLoading, error, refetch: refetchClasses } = useClasses(params);
 
   React.useEffect(() => {
     if (response) {
@@ -71,37 +73,37 @@ const ClassesSection: React.FC = () => {
         ...prev,
         data: response.data,
         loading: isLoading,
-        error: (error as any)?.message || null,
+        error: (error as { message?: string })?.message || null,
         pagination: response.meta,
       }));
     }
   }, [response, isLoading, error]);
 
-  const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
-  const programs = useMemo(() => ((programsResp as any)?.data || []) as any[], [programsResp]);
+  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
+  const programs = useMemo(() => (programsResp?.data || []) as Program[], [programsResp]);
   const programOptions: SearchSelectOption[] = useMemo(
-    () => programs.map((program: any) => ({ value: program.id, label: program.title })),
+    () => programs.map((program: Program) => ({ value: program.id, label: program.title })),
     [programs]
   );
 
-  const { data: specializationsResp } = useSpecializations({ page: 1, limit: 100, program_id: programFilter ? Number(programFilter) : undefined } as any);
-  const specializations = useMemo(() => ((specializationsResp as any)?.data || []) as any[], [specializationsResp]);
+  const { data: specializationsResp } = useSpecializations({ page: 1, limit: 100, program_id: programFilter ? Number(programFilter) : undefined });
+  const specializations = useMemo(() => (specializationsResp?.data || []) as Specialization[], [specializationsResp]);
   const specializationOptions: SearchSelectOption[] = useMemo(
-    () => specializations.map((spec: any) => ({ value: spec.id, label: spec.title })),
+    () => specializations.map((spec: Specialization) => ({ value: spec.id, label: spec.title })),
     [specializations]
   );
 
-  const { data: levelsResp } = useLevels({ page: 1, limit: 100, specialization_id: specializationFilter ? Number(specializationFilter) : undefined } as any);
-  const levels = useMemo(() => ((levelsResp as any)?.data || []) as any[], [levelsResp]);
+  const { data: levelsResp } = useLevels({ page: 1, limit: 100, specialization_id: specializationFilter ? Number(specializationFilter) : undefined });
+  const levels = useMemo(() => (levelsResp?.data || []) as Level[], [levelsResp]);
   const levelOptions: SearchSelectOption[] = useMemo(
-    () => levels.map((lvl: any) => ({ value: lvl.id, label: lvl.title })),
+    () => levels.map((lvl: Level) => ({ value: lvl.id, label: lvl.title })),
     [levels]
   );
 
-  const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 } as any);
-  const schoolYears = useMemo(() => ((schoolYearsResp as any)?.data || []) as any[], [schoolYearsResp]);
+  const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 });
+  const schoolYears = useMemo(() => (schoolYearsResp?.data || []) as SchoolYear[], [schoolYearsResp]);
   const schoolYearOptions: SearchSelectOption[] = useMemo(
-    () => schoolYears.map((year: any) => ({ value: year.id, label: year.title })),
+    () => schoolYears.map((year: SchoolYear) => ({ value: year.id, label: year.title })),
     [schoolYears]
   );
 
@@ -109,17 +111,17 @@ const ClassesSection: React.FC = () => {
     page: 1,
     limit: 100,
     school_year_id: schoolYearFilter ? Number(schoolYearFilter) : undefined,
-  } as any);
-  const periods = useMemo(() => ((periodsResp as any)?.data || []) as any[], [periodsResp]);
+  });
+  const periods = useMemo(() => (periodsResp?.data || []) as SchoolYearPeriod[], [periodsResp]);
   const periodOptions: SearchSelectOption[] = useMemo(
-    () => periods.map((period: any) => ({ value: period.id, label: period.title })),
+    () => periods.map((period: SchoolYearPeriod) => ({ value: period.id, label: period.title })),
     [periods]
   );
 
   const deleteClassMut = useDeleteClass();
 
   const requestDelete = (id: number) => {
-    const classItem = state.data.find((item: any) => item.id === id);
+    const classItem = state.data.find((item: ClassEntity) => item.id === id);
     if (!classItem) return;
     setDeleteTarget({ id, name: classItem.title });
     setAlert(null);
@@ -133,18 +135,18 @@ const ClassesSection: React.FC = () => {
       setDeleteTarget(null);
       setAlert({ type: 'success', message: 'Class deleted successfully.' });
       refetchClasses();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }
   };
 
-  const openModal = (data?: any) => setModal({ type: 'class', data });
+  const openModal = (data?: ClassEntity) => setModal({ type: 'class', data });
   const closeModal = () => setModal({ type: null });
 
   const handleSearch = useCallback((q: string) => {
     setState(prev => {
-      const prevSearch = (prev.filters as any).search ?? '';
+      const prevSearch = (prev.filters as { search?: string }).search ?? '';
       if (prevSearch === (q ?? '')) return prev;
       return {
         ...prev,
@@ -154,7 +156,7 @@ const ClassesSection: React.FC = () => {
     });
   }, []);
 
-  const openDetailsModal = (cls: any) => {
+  const openDetailsModal = (cls: ClassEntity) => {
     setDescriptionModal({
       title: cls.title || `Class #${cls.id}`,
       description: cls.description || '<p class="text-gray-500 italic">No description available</p>',
@@ -268,7 +270,7 @@ const ClassesSection: React.FC = () => {
         addButtonText="Add Class"
         searchPlaceholder="Search by class title..."
         filterOptions={STATUS_OPTIONS}
-        renderRow={(cls: any, onEdit, onDelete, index) => {
+        renderRow={(cls: ClassEntity, onEdit, onDelete, index) => {
           const programTitle = cls.program?.title || programs.find(p => p.id === cls.program_id)?.title || '—';
           const specializationTitle =
             cls.specialization?.title || specializations.find(s => s.id === cls.specialization_id)?.title || '—';

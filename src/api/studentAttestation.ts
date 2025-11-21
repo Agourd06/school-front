@@ -40,10 +40,10 @@ export interface CreateStudentAttestationRequest {
 
 export type UpdateStudentAttestationRequest = Partial<CreateStudentAttestationRequest>;
 
-const toPaginated = (raw: any): PaginatedResponse<StudentAttestation> => {
+const toPaginated = (raw: unknown): PaginatedResponse<StudentAttestation> => {
   if (Array.isArray(raw)) {
     return {
-      data: raw,
+      data: raw as StudentAttestation[],
       meta: {
         page: 1,
         limit: raw.length,
@@ -54,16 +54,18 @@ const toPaginated = (raw: any): PaginatedResponse<StudentAttestation> => {
       },
     };
   }
-  const meta = raw?.meta || {};
+  const rawObj = raw as { meta?: { totalPages?: number; lastPage?: number; page?: number; limit?: number; total?: number; hasNext?: boolean; hasPrevious?: boolean }; data?: StudentAttestation[] };
+  const meta = rawObj?.meta || {};
+  const rawData = rawObj?.data || [];
   const totalPages = meta.totalPages ?? meta.lastPage ?? 1;
   const page = meta.page ?? 1;
-  const limit = meta.limit ?? (Array.isArray(raw?.data) ? raw.data.length : 10);
+  const limit = meta.limit ?? (Array.isArray(rawData) ? rawData.length : 10);
   return {
-    data: raw?.data || [],
+    data: Array.isArray(rawData) ? rawData : [],
     meta: {
       page,
       limit,
-      total: meta.total ?? (Array.isArray(raw?.data) ? raw.data.length : 0),
+      total: meta.total ?? (Array.isArray(rawData) ? rawData.length : 0),
       totalPages,
       hasNext: meta.hasNext ?? page < totalPages,
       hasPrevious: meta.hasPrevious ?? page > 1,
@@ -123,7 +125,8 @@ export const studentAttestationApi = {
     const body = {
       ...payload,
     };
-    if (!('companyid' in body)) (body as any).companyid = companyId;
+    const bodyWithCompanyId = body as UpdateStudentAttestationRequest & { companyid?: number };
+    if (!('companyid' in bodyWithCompanyId)) bodyWithCompanyId.companyid = companyId;
     const { data } = await api.patch(`/studentattestation/${id}`, body);
     return data;
   },

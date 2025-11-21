@@ -1,13 +1,15 @@
 import React from 'react';
 import { Input, Select, Button } from '../ui';
 import type { ContactFormData } from '../modals/student/types';
+import type { StudentLinkType } from '../../api/studentLinkType';
+import type { PaginatedResponse } from '../../types/api';
 
 interface StudentContactStepFormProps {
   form: ContactFormData;
   errors: Record<string, string>;
-  linkTypesData: any;
+  linkTypesData: PaginatedResponse<StudentLinkType> | null | undefined;
   studentName: string;
-  onFormChange: (field: keyof ContactFormData, value: any) => void;
+  onFormChange: (field: keyof ContactFormData, value: string | number | '') => void;
   onSubmit: (e: React.FormEvent) => void;
   onBack: () => void;
   onSkip: () => void;
@@ -81,7 +83,7 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
           onChange={(e) => onFormChange('studentlinktypeId', e.target.value ? Number(e.target.value) : '')}
           options={[
             { value: '', label: 'Select link type' },
-            ...((linkTypesData?.data || []).map((lt: any) => ({
+            ...((linkTypesData?.data || []).map((lt: StudentLinkType) => ({
               value: lt.id,
               label: lt.title,
             })))

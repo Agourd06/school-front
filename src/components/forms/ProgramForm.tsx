@@ -71,8 +71,9 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
     if (!validate()) return;
     try {
       await onSubmit(form);
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message || 'Failed to save program');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      setFormError(axiosError?.response?.data?.message || 'Failed to save program');
     }
   };
 

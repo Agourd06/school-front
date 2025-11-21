@@ -3,6 +3,7 @@ import type { PlanningStudentEntry, GetPlanningStudentParams } from '../../api/p
 import type { ClassEntity } from '../../api/classes';
 import type { Course } from '../../api/course';
 import type { GetClassStudentParams } from '../../api/classStudent';
+import type { Teacher } from '../../api/teachers';
 import {
   usePlanningStudents,
   useCreatePlanningStudent,
@@ -69,7 +70,7 @@ const PlanningSection: React.FC = () => {
         p.status = filters.status;
       } else if (filters.status !== 'all' && filters.status !== '') {
         const statusNum = Number(filters.status);
-        if (!Number.isNaN(statusNum)) p.status = statusNum as any;
+        if (!Number.isNaN(statusNum)) p.status = statusNum;
       }
     }
     if (filters.class_id) p.class_id = +filters.class_id;
@@ -106,17 +107,17 @@ const PlanningSection: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeydown);
   }, []);
 
-  const { data: classes, isLoading: classesLoading } = useClasses({ page: 1, limit: 100 } as any);
-  const { data: teachers, isLoading: teachersLoading } = useTeachers({ page: 1, limit: 100 } as any);
-  const { data: rooms, isLoading: roomsLoading } = useClassRooms({ page: 1, limit: 100 } as any);
-  const { data: specs, isLoading: specsLoading } = useSpecializations({ page: 1, limit: 100 } as any);
-  const { data: schoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 } as any);
-  const { data: coursesResp, isLoading: coursesLoading } = useCourses({ page: 1, limit: 100 } as any);
+  const { data: classes, isLoading: classesLoading } = useClasses({ page: 1, limit: 100 });
+  const { data: teachers, isLoading: teachersLoading } = useTeachers({ page: 1, limit: 100 });
+  const { data: rooms, isLoading: roomsLoading } = useClassRooms({ page: 1, limit: 100 });
+  const { data: specs, isLoading: specsLoading } = useSpecializations({ page: 1, limit: 100 });
+  const { data: schoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
+  const { data: coursesResp, isLoading: coursesLoading } = useCourses({ page: 1, limit: 100 });
   const { data: periods, isLoading: periodsLoading } = useSchoolYearPeriods({
     page: 1,
     limit: 100,
     schoolYearId: form.school_year_id === '' ? undefined : Number(form.school_year_id),
-  } as any);
+  });
   const {
     data: sessionTypesResp,
     isLoading: sessionTypesLoading,
@@ -131,10 +132,13 @@ const PlanningSection: React.FC = () => {
     error: classStudentsError,
   } = useClassStudents(classStudentsParams);
 
-  const mapOptions = (data: any[], labelKey: string): SearchSelectOption[] =>
+  const mapOptions = <T extends { id: number; status?: number; [key: string]: unknown }>(
+    data: T[],
+    labelKey: string
+  ): SearchSelectOption[] =>
     (data || [])
       .filter((item) => item?.status !== -2)
-      .map((item) => ({ value: item.id, label: item[labelKey] || `#${item.id}` }));
+      .map((item) => ({ value: item.id, label: (item[labelKey] as string) || `#${item.id}` }));
 
   const classesMap = useMemo(() => {
     const map = new Map<number, ClassEntity>();
@@ -161,8 +165,8 @@ const PlanningSection: React.FC = () => {
   const teacherOptions = useMemo(
     () =>
       (teachers?.data || [])
-        .filter((teacher: any) => teacher?.status !== -2)
-        .map((teacher: any) => ({
+        .filter((teacher: Teacher) => teacher?.status !== -2)
+        .map((teacher: Teacher) => ({
           value: teacher.id,
           label: `${teacher.first_name ?? ''} ${teacher.last_name ?? ''}`.trim() || teacher.email || `Teacher #${teacher.id}`,
         })),
@@ -183,7 +187,7 @@ const PlanningSection: React.FC = () => {
   const courseOptions = useMemo(
     () =>
       (coursesResp?.data || [])
-        .filter((course: any) => course?.status !== -2)
+        .filter((course: Course) => course?.status !== -2)
         .map((course: Course) => ({
           value: course.id,
           label: course.title || `Course #${course.id}`,
@@ -435,11 +439,11 @@ const PlanningSection: React.FC = () => {
       await planningQuery.refetch();
       setConflictSlot(null);
       if (!selectedEntry) setForm(INITIAL_FORM(currentWeekStart));
-    } catch (err: any) {
-      const responseMessage = err?.response?.data?.message;
+    } catch (err: unknown) {
+      const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       const msg = Array.isArray(responseMessage)
         ? responseMessage.join(', ')
-        : responseMessage || err.message || 'Failed to save planning';
+        : responseMessage || (err as Error).message || 'Failed to save planning';
       setFormAlert({ type: 'error', message: msg });
       if (msg.toLowerCase().includes('overlap')) {
         setConflictSlot({ date_day: form.date_day, hour_start: form.hour_start, hour_end: form.hour_end });
@@ -454,8 +458,9 @@ const PlanningSection: React.FC = () => {
       setFormAlert({ type: 'success', message: 'Deleted successfully.' });
       await planningQuery.refetch();
       resetForm();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err.message || 'Failed to delete planning';
+    } catch (err: unknown) {
+      const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+      const msg = responseMessage || (err as Error).message || 'Failed to delete planning';
       setFormAlert({ type: 'error', message: Array.isArray(msg) ? msg.join(', ') : msg });
     }
   };

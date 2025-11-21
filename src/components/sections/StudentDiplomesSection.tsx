@@ -11,6 +11,7 @@ import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
 import { EditButton, DeleteButton, Input, Button } from '../ui';
 import type { StudentDiplome } from '../../api/studentDiplome';
+import type { Student } from '../../api/students';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 
@@ -28,12 +29,13 @@ const statusFilterOptions: SearchSelectOption[] = [
   ...STATUS_OPTIONS.filter((opt) => opt.value !== -2).map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -80,11 +82,11 @@ const StudentDiplomesSection: React.FC = () => {
 
   const deleteDiplomeMut = useDeleteStudentDiplome();
 
-  const { data: studentsResp } = useStudents({ page: 1, limit: 100 } as any);
+  const { data: studentsResp } = useStudents({ page: 1, limit: 100 });
 
   const studentOptions = useMemo<SearchSelectOption[]>(
     () =>
-      (studentsResp?.data || []).map((student: any) => ({
+      (studentsResp?.data || []).map((student: Student) => ({
         value: student.id,
         label:
           `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() ||
@@ -151,7 +153,7 @@ const StudentDiplomesSection: React.FC = () => {
       setDeleteTarget(null);
       setAlert({ type: 'success', message: 'Diplome deleted successfully.' });
       refetchDiplomes();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }

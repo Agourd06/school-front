@@ -1,7 +1,7 @@
 import React from 'react';
 import BaseModal from './BaseModal';
-import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
-import type { StudentReportDetail, StudentReportDetailStatus } from '../../api/studentReportDetail';
+import type { SearchSelectOption } from '../inputs/SearchSelect';
+import type { StudentReportDetail as StudentReportDetailFromAPI, StudentReportDetailStatus } from '../../api/studentReportDetail';
 import { StudentReportDetailForm, type StudentReportDetailFormData } from '../forms';
 
 export interface StudentReportDetailFormValues {
@@ -16,7 +16,7 @@ export interface StudentReportDetailFormValues {
 interface StudentReportDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialData?: StudentReportDetail | null;
+  initialData?: StudentReportDetailFromAPI | null;
   reportId: number;
   onSubmit: (values: StudentReportDetailFormValues) => Promise<void>;
   isSubmitting?: boolean;

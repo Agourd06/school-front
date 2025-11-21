@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { programApi, type Program, type CreateProgramRequest, type UpdateProgramRequest } from '../api/program';
+import { programApi, type CreateProgramRequest, type UpdateProgramRequest } from '../api/program';
 import type { FilterParams } from '../types/api';
 
 export const usePrograms = (params: FilterParams = {}) =>
@@ -24,7 +24,7 @@ export const useUpdateProgram = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateProgramRequest }) => programApi.update(id, data),
-    onSuccess: (_result: Program) => qc.invalidateQueries({ queryKey: ['programs'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['programs'] }),
   });
 };
 

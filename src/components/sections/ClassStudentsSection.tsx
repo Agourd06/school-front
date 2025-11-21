@@ -10,6 +10,9 @@ import { classStudentApi } from '../../api/classStudent';
 import type { MinimalStudent, GetClassStudentParams } from '../../api/classStudent';
 import type { Student as ApiStudent } from '../../api/students';
 import type { DropResult } from '@hello-pangea/dnd';
+import type { PaginatedResponse } from '../../types/api';
+import type { SchoolYear } from '../../api/schoolYear';
+import type { ClassEntity } from '../../api/classes';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { studentsApi } from '../../api/students';
 import BaseModal from '../modals/BaseModal';
@@ -291,11 +294,11 @@ const ClassStudentsSection: React.FC = () => {
   const createMut = useCreateClassStudent();
   const deleteMut = useDeleteClassStudent();
 
-  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: MAX_FETCH_LIMIT } as any);
+  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: MAX_FETCH_LIMIT });
   
   const studentsMap = useMemo(() => {
     const map = new Map<number, StudentLite>();
-    (((studentsResp as any)?.data) || []).forEach((stu: ApiStudent) => {
+    ((studentsResp as PaginatedResponse<ApiStudent>)?.data || []).forEach((stu) => {
       map.set(stu.id, makeStudentLite(stu.id, stu));
     });
     return map;
@@ -354,10 +357,10 @@ const ClassStudentsSection: React.FC = () => {
       }
     });
 
-    const students = (((studentsResp as any)?.data) || [])
-      .filter((stu: ApiStudent) => stu?.status !== -2)
-      .filter((stu: ApiStudent) => !assignedIds.has(stu.id))
-      .map((stu: ApiStudent) => makeStudentLite(stu.id, stu))
+    const students = ((studentsResp as PaginatedResponse<ApiStudent>)?.data || [])
+      .filter((stu) => stu?.status !== -2)
+      .filter((stu) => !assignedIds.has(stu.id))
+      .map((stu) => makeStudentLite(stu.id, stu))
       .sort(sortStudentsByLabel);
 
     setUnassignedStudents(students);
@@ -405,10 +408,10 @@ const ClassStudentsSection: React.FC = () => {
   const isUnassignedLoading = studentsLoading || allAssignmentsQuery.isLoading;
 
   // Fetch school years
-  const { data: schoolYearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 } as any);
+  const { data: schoolYearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
   const yearOptions: SearchSelectOption[] = useMemo(
-    () => (((schoolYearsResp as any)?.data) || [])
-      .map((year: any) => ({ value: year.id, label: year.title || `Year #${year.id}` })),
+    () => ((schoolYearsResp as PaginatedResponse<SchoolYear>)?.data || [])
+      .map((year) => ({ value: year.id, label: year.title || `Year #${year.id}` })),
     [schoolYearsResp]
   );
 
@@ -422,9 +425,9 @@ const ClassStudentsSection: React.FC = () => {
   const { data: classesResp, isLoading: classesLoading } = useClasses(classesParams);
   
   const classOptions: SearchSelectOption[] = useMemo(
-    () => (((classesResp as any)?.data) || [])
-      .filter((cls: any) => cls?.status !== -2)
-      .map((cls: any) => ({ value: cls.id, label: cls.title || `Class #${cls.id}` })),
+    () => ((classesResp as PaginatedResponse<ClassEntity>)?.data || [])
+      .filter((cls) => cls?.status !== -2)
+      .map((cls) => ({ value: cls.id, label: cls.title || `Class #${cls.id}` })),
     [classesResp]
   );
 
@@ -459,8 +462,8 @@ const ClassStudentsSection: React.FC = () => {
       setAssignedFilter('');
       setAssignedSearch('');
       setFeedback(null);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || 'Failed to assign student';
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || 'Failed to assign student';
       setFeedback(message);
     }
   };
@@ -482,8 +485,8 @@ const ClassStudentsSection: React.FC = () => {
       setUnassignedFilter('');
       setUnassignedSearch('');
       setFeedback(null);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || 'Failed to unassign student';
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || 'Failed to unassign student';
       setFeedback(message);
     }
   };

@@ -54,10 +54,10 @@ export interface GetStudentReportDetailsParams extends PaginationParams {
   // company_id is automatically filtered by backend from JWT (via course.company_id), no need to send it
 }
 
-const toPaginated = (raw: any): PaginatedResponse<StudentReportDetail> => {
+const toPaginated = (raw: unknown): PaginatedResponse<StudentReportDetail> => {
   if (Array.isArray(raw)) {
     return {
-      data: raw,
+      data: raw as StudentReportDetail[],
       meta: {
         page: 1,
         limit: raw.length,
@@ -69,15 +69,16 @@ const toPaginated = (raw: any): PaginatedResponse<StudentReportDetail> => {
     };
   }
 
-  const data = raw?.data ?? [];
-  const meta = raw?.meta ?? {};
+  const rawObj = raw as { meta?: { page?: number; limit?: number; total?: number; totalPages?: number; lastPage?: number; hasNext?: boolean; hasPrevious?: boolean }; data?: StudentReportDetail[] };
+  const data = rawObj?.data ?? [];
+  const meta = rawObj?.meta ?? {};
   const page = meta.page ?? 1;
   const limit = meta.limit ?? (Array.isArray(data) ? data.length : 10);
   const total = meta.total ?? (Array.isArray(data) ? data.length : 0);
   const totalPages = meta.totalPages ?? meta.lastPage ?? (limit > 0 ? Math.max(1, Math.ceil(total / limit)) : 1);
 
   return {
-    data,
+    data: Array.isArray(data) ? data : [],
     meta: {
       page,
       limit,

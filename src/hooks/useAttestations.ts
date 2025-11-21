@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { attestationApi, type CreateAttestationRequest, type UpdateAttestationRequest, type Attestation, type GetAttestationsParams } from '../api/attestation';
+import { attestationApi, type CreateAttestationRequest, type UpdateAttestationRequest, type GetAttestationsParams } from '../api/attestation';
 
 export const useAttestations = (params: GetAttestationsParams = {}) =>
   useQuery({
@@ -23,7 +23,7 @@ export const useUpdateAttestation = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateAttestationRequest }) => attestationApi.update(id, data),
-    onSuccess: (_result: Attestation) => qc.invalidateQueries({ queryKey: ['attestations'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['attestations'] }),
   });
 };
 

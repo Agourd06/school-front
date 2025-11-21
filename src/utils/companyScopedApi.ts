@@ -14,7 +14,7 @@ import { getCompanyId } from './companyId';
  * @param payload - The payload object (can be FormData or regular object)
  * @returns The payload with company_id set (mutates FormData, returns new object for regular objects)
  */
-export const ensureCompanyId = <T extends Record<string, any> | FormData>(payload: T): T => {
+export const ensureCompanyId = <T extends Record<string, unknown> | FormData>(payload: T): T => {
   const companyId = getCompanyId();
   
   if (payload instanceof FormData) {
@@ -39,7 +39,8 @@ export const ensureCompanyId = <T extends Record<string, any> | FormData>(payloa
  * @param params - Query parameters object
  * @returns New params object without company_id
  */
-export const removeCompanyIdFromParams = <T extends Record<string, any>>(params: T): Omit<T, 'company_id'> => {
+export const removeCompanyIdFromParams = <T extends Record<string, unknown>>(params: T): Omit<T, 'company_id'> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { company_id, ...rest } = params;
   return rest;
 };

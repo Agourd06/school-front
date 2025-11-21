@@ -46,7 +46,7 @@ export interface GetClassesParams extends FilterParams {
   student_id?: number;
 }
 
-const toPaginated = (raw: any): PaginatedResponse<ClassEntity> => {
+const toPaginated = (raw: unknown): PaginatedResponse<ClassEntity> => {
   if (Array.isArray(raw)) {
     return {
       data: raw,
@@ -108,7 +108,10 @@ export const classesApi = {
       status: 1,
       ...payload,
     });
-    if (body.status === undefined || body.status === null) (body as any).status = 1;
+    const bodyWithDefaults = body as CreateClassRequest & { status?: number };
+    if (bodyWithDefaults.status === undefined || bodyWithDefaults.status === null) {
+      bodyWithDefaults.status = 1;
+    }
     const { data } = await api.post('/classes', body);
     return data;
   },

@@ -14,13 +14,16 @@ export interface StudentReportDetailFormData {
   status: StudentReportDetailStatus;
 }
 
+// Re-export the API type for compatibility
+export type { StudentReportDetail as StudentReportDetailFromAPI } from '../../api/studentReportDetail';
+
 export interface StudentReportDetail {
   id: number;
   student_report_id: number;
   teacher_id?: number;
   course_id?: number;
-  remarks?: string;
-  note?: number | string;
+  remarks?: string | null;
+  note?: number | string | null;
   status: StudentReportDetailStatus;
 }
 

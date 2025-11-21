@@ -6,6 +6,11 @@ import { useSpecializations } from '../../hooks/useSpecializations';
 import { useLevels } from '../../hooks/useLevels';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
+import type { Program } from '../../api/program';
+import type { Specialization } from '../../api/specialization';
+import type { Level } from '../../api/level';
+import type { SchoolYear } from '../../api/schoolYear';
+import type { SchoolYearPeriod } from '../../api/schoolYearPeriod';
 import DescriptionModal from './DescriptionModal';
 import { ClassForm, type Class } from '../forms';
 import type { CreateClassRequest } from '../../api/classes';
@@ -34,32 +39,32 @@ const ClassModal: React.FC<ClassModalProps> = ({
   const createMutation = useCreateClass();
   const updateMutation = useUpdateClass();
 
-  const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
-  const programs = useMemo(() => ((programsResp as any)?.data || []) as any[], [programsResp]);
+  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
+  const programs = useMemo(() => (programsResp?.data || []) as Program[], [programsResp]);
 
   const { data: specializationsResp } = useSpecializations({
     page: 1,
     limit: 100,
     program_id: formState.program_id ? Number(formState.program_id) : undefined,
-  } as any);
-  const specializations = useMemo(() => ((specializationsResp as any)?.data || []) as any[], [specializationsResp]);
+  });
+  const specializations = useMemo(() => (specializationsResp?.data || []) as Specialization[], [specializationsResp]);
 
   const { data: levelsResp } = useLevels({
     page: 1,
     limit: 100,
     specialization_id: formState.specialization_id ? Number(formState.specialization_id) : undefined,
-  } as any);
-  const levels = useMemo(() => ((levelsResp as any)?.data || []) as any[], [levelsResp]);
+  });
+  const levels = useMemo(() => (levelsResp?.data || []) as Level[], [levelsResp]);
 
-  const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 } as any);
-  const schoolYears = useMemo(() => ((schoolYearsResp as any)?.data || []) as any[], [schoolYearsResp]);
+  const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 });
+  const schoolYears = useMemo(() => (schoolYearsResp?.data || []) as SchoolYear[], [schoolYearsResp]);
 
   const { data: periodsResp } = useSchoolYearPeriods({
     page: 1,
     limit: 100,
     schoolYearId: formState.school_year_id ? Number(formState.school_year_id) : undefined,
-  } as any);
-  const periods = useMemo(() => ((periodsResp as any)?.data || []) as any[], [periodsResp]);
+  });
+  const periods = useMemo(() => (periodsResp?.data || []) as SchoolYearPeriod[], [periodsResp]);
 
   useEffect(() => {
     if (classItem) {
@@ -77,17 +82,6 @@ const ClassModal: React.FC<ClassModalProps> = ({
     }
   }, [classItem, isOpen]);
 
-  const handleFormChange = (formData: {
-    program_id: number | string | '';
-    specialization_id: number | string | '';
-    school_year_id: number | string | '';
-  }) => {
-    setFormState({
-      program_id: formData.program_id,
-      specialization_id: formData.specialization_id,
-      school_year_id: formData.school_year_id,
-    });
-  };
 
   const handleSubmit = async (formData: {
     title: string;
@@ -118,8 +112,9 @@ const ClassModal: React.FC<ClassModalProps> = ({
         await createMutation.mutateAsync(payload);
       }
       onClose();
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message || 'Failed to save class');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      setFormError(axiosError?.response?.data?.message || 'Failed to save class');
     }
   };
 

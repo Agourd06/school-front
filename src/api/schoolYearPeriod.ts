@@ -12,7 +12,7 @@ export interface SchoolYearPeriod {
   lifecycle_status?: 'planned' | 'ongoing' | 'completed';
   created_at?: string;
   updated_at?: string;
-  schoolYear?: any;
+  schoolYear?: { id: number; title: string; [key: string]: unknown } | null;
 }
 
 export interface CreateSchoolYearPeriodRequest {
@@ -58,7 +58,7 @@ export const schoolYearPeriodApi = {
 
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
-    const rawParams: any = params as any;
+    const rawParams = params as FilterParams & { title?: string; lifecycle_status?: string; schoolYearId?: number };
     const searchVal = (rawParams.title ?? rawParams.search) as string | undefined;
     if (searchVal && searchVal.trim()) {
       const s = searchVal.trim();
@@ -75,7 +75,7 @@ export const schoolYearPeriodApi = {
     console.log('SchoolYearPeriods API request URL:', url);
     console.log('SchoolYearPeriods API response:', response.data);
 
-    const applyClientFilterAndPaginate = (items: any[]) => {
+    const applyClientFilterAndPaginate = (items: SchoolYearPeriod[]) => {
       const page = params.page ?? 1;
       const limit = params.limit ?? 10;
       const s = params.search?.toLowerCase().trim();
@@ -136,7 +136,7 @@ export const schoolYearPeriodApi = {
       if (rawParams.schoolYearId !== undefined && rawParams.schoolYearId !== null || 
           rawParams.lifecycle_status || 
           params.search) {
-        return applyClientFilterAndPaginate(response.data.data as any[]);
+        return applyClientFilterAndPaginate(response.data.data as SchoolYearPeriod[]);
       }
       return response.data;
     }
@@ -158,7 +158,7 @@ export const schoolYearPeriodApi = {
     return response.data;
   },
 
-  delete: async (id: number): Promise<any> => {
+  delete: async (id: number): Promise<void> => {
     const response = await api.delete(`/school-year-periods/${id}`);
     return response.data;
   },

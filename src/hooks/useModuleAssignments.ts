@@ -2,11 +2,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useModulesForCourse } from './useModuleCourse';
 import { moduleApi } from '../api/module';
 import type { Module } from '../api/module';
+import type { ModuleCourse } from '../api/moduleCourse';
 
 // Transform ModuleCourse to the expected format
 // Note: volume and coefficient come from the module-course relationship table (course-specific values)
 // These are NOT the original module's volume/coefficient, but values specific to this course-module assignment
-const transformModuleCourseToModule = (mc: any): Module & { tri?: number; assignment_created_at?: string; assignment_volume?: number | null; assignment_coefficient?: number | null } => ({
+const transformModuleCourseToModule = (mc: ModuleCourse): Module & { tri?: number; assignment_created_at?: string; assignment_volume?: number | null; assignment_coefficient?: number | null } => ({
   id: mc.module.id,
   title: mc.module.title,
   tri: mc.tri,

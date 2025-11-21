@@ -47,7 +47,7 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
     }
     try {
       await onSubmit({ title, status });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err?.response?.data?.message || 'Failed to save');
     }
   };

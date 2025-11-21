@@ -6,23 +6,24 @@ import { UserModal, DeleteModal } from '../../components/modals';
 import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
 import { EditButton, DeleteButton } from '../ui';
+import type { User } from '../../api/users';
 
 const UsersSection: React.FC = () => {
-  const [state, setState] = React.useState<ListState<any>>({
+  const [state, setState] = React.useState<ListState<User>>({
     data: [],
     loading: false,
     error: null,
     pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrevious: false },
     filters: { search: '', status: undefined },
   });
-  const [modal, setModal] = React.useState<{ type: 'user' | null; data?: any }>({ type: null });
+  const [modal, setModal] = React.useState<{ type: 'user' | null; data?: User | null }>({ type: null });
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: FilterParams = {
     page: state.pagination.page,
     limit: state.pagination.limit,
     search: state.filters.search || undefined,
-    status: (state.filters as any).status,
+    status: state.filters.status,
   };
   const { data: response, isLoading, error } = useUsers(params);
 
@@ -32,7 +33,7 @@ const UsersSection: React.FC = () => {
         ...prev,
         data: response.data,
         loading: isLoading,
-        error: (error as any)?.message || null,
+        error: (error as { message?: string })?.message || null,
         pagination: response.meta,
       }));
     }
@@ -44,7 +45,7 @@ const UsersSection: React.FC = () => {
   };
 
   const requestDelete = (id: number) => {
-    const user = state.data.find((item: any) => item.id === id);
+    const user = state.data.find((item) => item.id === id);
     if (!user) return;
     setDeleteTarget({ id, name: user.username || user.email || undefined });
   };
@@ -59,12 +60,12 @@ const UsersSection: React.FC = () => {
     }
   };
 
-  const openModal = (data?: any) => setModal({ type: 'user', data });
+  const openModal = (data?: User | null) => setModal({ type: 'user', data: data ?? null });
   const closeModal = () => setModal({ type: null });
 
   const handleSearch = useCallback((q: string) => {
     setState(prev => {
-      const prevSearch = (prev.filters as any).search ?? '';
+      const prevSearch = prev.filters.search ?? '';
       if (prevSearch === (q ?? '')) return prev;
       return {
         ...prev,
@@ -93,7 +94,7 @@ const UsersSection: React.FC = () => {
         addButtonText="Add User"
         searchPlaceholder="Search by name or email..."
         filterOptions={STATUS_OPTIONS}
-        renderRow={(user: any, onEdit, onDelete, index) => (
+        renderRow={(user: User, onEdit, onDelete, index) => (
           <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>

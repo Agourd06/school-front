@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { Input, Select, Button } from '../ui';
@@ -93,8 +93,9 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
     if (!validate()) return;
     try {
       await onSubmit(form);
-    } catch (err: any) {
-      setFormError(err?.response?.data?.message || 'Failed to save specialization');
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      setFormError(axiosError?.response?.data?.message || 'Failed to save specialization');
     }
   };
 

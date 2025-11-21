@@ -48,7 +48,7 @@ export interface GetLevelPricingParams extends PaginationParams {
   search?: string;
 }
 
-const toPaginated = (raw: any): PaginatedResponse<LevelPricing> => {
+const toPaginated = (raw: unknown): PaginatedResponse<LevelPricing> => {
   if (Array.isArray(raw)) {
     return {
       data: raw,
@@ -63,8 +63,9 @@ const toPaginated = (raw: any): PaginatedResponse<LevelPricing> => {
     };
   }
 
-  const data = raw?.data ?? [];
-  const meta = raw?.meta ?? {};
+  const rawObj = raw as { meta?: { page?: number; limit?: number; total?: number; totalPages?: number; lastPage?: number; hasNext?: boolean; hasPrevious?: boolean }; data?: LevelPricing[] };
+  const data = rawObj?.data ?? [];
+  const meta = rawObj?.meta ?? {};
   const page = meta.page ?? 1;
   const limit = meta.limit ?? (Array.isArray(data) ? data.length : 10);
   const total = meta.total ?? (Array.isArray(data) ? data.length : 0);

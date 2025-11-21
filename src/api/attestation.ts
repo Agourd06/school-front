@@ -25,7 +25,7 @@ export interface CreateAttestationRequest {
 
 export type UpdateAttestationRequest = Partial<CreateAttestationRequest>;
 
-const toPaginated = (raw: any): PaginatedResponse<Attestation> => {
+const toPaginated = (raw: unknown): PaginatedResponse<Attestation> => {
   if (Array.isArray(raw)) {
     return {
       data: raw,
@@ -39,16 +39,18 @@ const toPaginated = (raw: any): PaginatedResponse<Attestation> => {
       },
     };
   }
-  const meta = raw?.meta || {};
+  const rawObj = raw as { meta?: { totalPages?: number; lastPage?: number; page?: number; limit?: number; total?: number; hasNext?: boolean; hasPrevious?: boolean }; data?: Attestation[] };
+  const meta = rawObj?.meta || {};
+  const rawData = rawObj?.data || [];
   const totalPages = meta.totalPages ?? meta.lastPage ?? 1;
   const page = meta.page ?? 1;
-  const limit = meta.limit ?? (Array.isArray(raw?.data) ? raw.data.length : 10);
+  const limit = meta.limit ?? (Array.isArray(rawData) ? rawData.length : 10);
   return {
-    data: raw?.data || [],
+    data: Array.isArray(rawData) ? rawData : [],
     meta: {
       page,
       limit,
-      total: meta.total ?? (Array.isArray(raw?.data) ? raw.data.length : 0),
+      total: meta.total ?? (Array.isArray(rawData) ? rawData.length : 0),
       totalPages,
       hasNext: meta.hasNext ?? page < totalPages,
       hasPrevious: meta.hasPrevious ?? page > 1,
@@ -56,9 +58,7 @@ const toPaginated = (raw: any): PaginatedResponse<Attestation> => {
   };
 };
 
-export interface GetAttestationsParams extends FilterParams {
-  // companyid is automatically filtered by backend from JWT, no need to send it
-}
+export type GetAttestationsParams = FilterParams;
 
 export const attestationApi = {
   async getAll(params: GetAttestationsParams = {}): Promise<PaginatedResponse<Attestation>> {
@@ -99,7 +99,9 @@ export const attestationApi = {
     const body = {
       ...payload,
     };
-    if (!('companyid' in body)) (body as any).companyid = companyId;
+    if (!('companyid' in body)) {
+      (body as UpdateAttestationRequest & { companyid?: number }).companyid = companyId;
+    }
     const { data } = await api.patch(`/attestation/${id}`, body);
     return data;
   },

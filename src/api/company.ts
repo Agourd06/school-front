@@ -71,10 +71,10 @@ export interface GetCompaniesParams extends FilterParams {
   company_id?: number;
 }
 
-const toPaginated = (raw: any): PaginatedResponse<Company> => {
+const toPaginated = (raw: unknown): PaginatedResponse<Company> => {
   if (Array.isArray(raw)) {
     return {
-      data: raw,
+      data: raw as Company[],
       meta: {
         page: 1,
         limit: raw.length,
@@ -86,17 +86,19 @@ const toPaginated = (raw: any): PaginatedResponse<Company> => {
     };
   }
 
-  const meta = raw?.meta || {};
+  const rawObj = raw as { meta?: { totalPages?: number; lastPage?: number; page?: number; limit?: number; total?: number; hasNext?: boolean; hasPrevious?: boolean }; data?: Company[] };
+  const meta = rawObj?.meta || {};
+  const rawData = rawObj?.data || [];
   const totalPages = meta.totalPages ?? meta.lastPage ?? 1;
   const page = meta.page ?? 1;
-  const limit = meta.limit ?? (Array.isArray(raw?.data) ? raw.data.length : 10);
+  const limit = meta.limit ?? (Array.isArray(rawData) ? rawData.length : 10);
 
   return {
-    data: raw?.data || [],
+    data: Array.isArray(rawData) ? rawData : [],
     meta: {
       page,
       limit,
-      total: meta.total ?? (Array.isArray(raw?.data) ? raw.data.length : 0),
+      total: meta.total ?? (Array.isArray(rawData) ? rawData.length : 0),
       totalPages,
       hasNext: meta.hasNext ?? page < totalPages,
       hasPrevious: meta.hasPrevious ?? page > 1,
@@ -131,8 +133,9 @@ export const companyApi = {
       company_id: companyId,
       ...data,
     };
-    if (payload.status === undefined || payload.status === null) (payload as any).status = 1;
-    if (!payload.company_id) (payload as any).company_id = companyId;
+    const payloadWithDefaults = payload as CreateCompanyRequest & { status?: number; company_id?: number };
+    if (payloadWithDefaults.status === undefined || payloadWithDefaults.status === null) payloadWithDefaults.status = 1;
+    if (!payloadWithDefaults.company_id) payloadWithDefaults.company_id = companyId;
     const response = await api.post('/company', payload);
     return response.data;
   },
@@ -142,7 +145,8 @@ export const companyApi = {
     const payload = {
       ...data,
     };
-    if (!('company_id' in payload)) (payload as any).company_id = companyId;
+    const payloadWithCompanyId = payload as UpdateCompanyRequest & { company_id?: number };
+    if (!('company_id' in payloadWithCompanyId)) payloadWithCompanyId.company_id = companyId;
     const response = await api.patch(`/company/${id}`, payload);
     return response.data;
   },

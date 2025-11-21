@@ -18,11 +18,11 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
 }) => {
   const createMutation = useCreateStudentAttestation();
   const updateMutation = useUpdateStudentAttestation();
-  const { data: studentsResp } = useStudents({ page: 1, limit: 100 } as any);
-  const { data: attestationsResp } = useAttestations({ page: 1, limit: 100 } as any);
+  const { data: studentsResp } = useStudents({ page: 1, limit: 100 });
+  const { data: attestationsResp } = useAttestations({ page: 1, limit: 100 });
 
-  const students = useMemo(() => ((studentsResp as any)?.data || []), [studentsResp]);
-  const attestations = useMemo(() => ((attestationsResp as any)?.data || []), [attestationsResp]);
+  const students = useMemo(() => (studentsResp?.data || []) as Student[], [studentsResp]);
+  const attestations = useMemo(() => (attestationsResp?.data || []) as Attestation[], [attestationsResp]);
 
   const handleSubmit = async (formData: {
     Idstudent: number | string | '';
@@ -45,7 +45,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
         await createMutation.mutateAsync(payload);
       }
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage = err?.response?.data?.message;
       if (Array.isArray(errorMessage)) {
         throw new Error(errorMessage.join(', '));

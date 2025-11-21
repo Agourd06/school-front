@@ -13,7 +13,7 @@ interface TeacherModalProps {
 const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher }) => {
   const createMutation = useCreateTeacher();
   const updateMutation = useUpdateTeacher();
-  const { data: classRooms } = useClassRooms({ limit: 100, page: 1 } as any);
+  const { data: classRooms } = useClassRooms({ limit: 100, page: 1 });
 
   const isEditing = !!teacher;
 
@@ -53,7 +53,7 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
     if (isEditing && teacher?.id) {
       await updateMutation.mutateAsync({ id: teacher.id, data: formDataObj });
     } else {
-      await createMutation.mutateAsync(formDataObj as any);
+      await createMutation.mutateAsync(formDataObj);
     }
     onClose();
   };

@@ -44,7 +44,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
       setSuccess(true);
       setPassword('');
       setConfirmPassword('');
-    } catch (err) {
+    } catch {
       setError('Failed to reset password. Please try again or request a new reset link.');
     } finally {
       setIsSubmitting(false);

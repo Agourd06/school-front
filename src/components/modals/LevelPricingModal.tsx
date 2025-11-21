@@ -1,6 +1,5 @@
 import React from 'react';
 import BaseModal from './BaseModal';
-import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { LevelPricingForm } from '../forms';
 import type { LevelPricing, LevelPricingStatus } from '../../api/levelPricing';
 

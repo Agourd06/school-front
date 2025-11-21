@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   useModules,
-  useCreateModule,
-  useUpdateModule,
   useDeleteModule,
 } from '../../hooks/useModules';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
@@ -42,18 +40,13 @@ const stripHtml = (input?: string | null): string => {
   return input.replace(/<[^>]+>/g, '');
 };
 
-const getDescriptionPreview = (input?: string | null): string => {
-  const text = stripHtml(input);
-  if (!text) return '';
-  return text.length > 120 ? `${text.slice(0, 120)}…` : text;
-};
-
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -168,7 +161,7 @@ const ModulesSection: React.FC = () => {
       setDeleteTarget(null);
       setAlert({ type: 'success', message: 'Module deleted successfully.' });
       refetchModules();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }

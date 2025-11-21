@@ -3,6 +3,8 @@ import BaseModal from './BaseModal';
 import { useCreateSpecialization, useUpdateSpecialization } from '../../hooks/useSpecializations';
 import { usePrograms, useProgram as useProgramById } from '../../hooks/usePrograms';
 import { SpecializationForm, type Specialization } from '../forms';
+import type { PaginatedResponse } from '../../types/api';
+import type { Program } from '../../api/program';
 
 interface SpecializationModalProps {
   isOpen: boolean;
@@ -19,14 +21,14 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({
 }) => {
   const createMutation = useCreateSpecialization();
   const updateMutation = useUpdateSpecialization();
-  const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
+  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
 
   const programIdForFetch = specialization
     ? specialization.program_id || specialization.program?.id || 0
     : initialProgramId || 0;
   const { data: selectedProgram } = useProgramById(programIdForFetch);
 
-  const programs = useMemo(() => ((programsResp as any)?.data || []), [programsResp]);
+  const programs = useMemo(() => ((programsResp as PaginatedResponse<Program>)?.data || []), [programsResp]);
 
   const isEditing = !!specialization;
   const isProgramLocked = !!specialization || !!initialProgramId;

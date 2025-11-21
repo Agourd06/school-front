@@ -24,7 +24,6 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     pictureFile,
     setPictureFile,
     diplomeForm,
-    setDiplomeForm,
     diplomeErrors,
     setDiplomeErrors,
     diplomeFile1,
@@ -32,16 +31,12 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     currentDiplome,
     setCurrentDiplome,
     contactForm,
-    setContactForm,
     contactErrors,
     setContactErrors,
     currentContact,
     setCurrentContact,
     linkTypeTitle,
-    setLinkTypeTitle,
     linkTypeStatus,
-    setLinkTypeStatus,
-    linkTypeError,
     setLinkTypeError,
     currentLinkType,
     setCurrentLinkType,
@@ -129,7 +124,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
         result = await updateStudentMut.mutateAsync({ id: studentId, data: formData });
       } else {
         // Create new student
-        result = await createStudentMut.mutateAsync(formData as any);
+        result = await createStudentMut.mutateAsync(formData);
         // Set the student ID in context for subsequent steps
         if (result?.id) {
           setStudentId(result.id);
@@ -137,8 +132,9 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       }
       await refetchStudentDetails();
       onStepComplete(1);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'Failed to save student';
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const message = axiosError?.response?.data?.message || 'Failed to save student';
       setStudentErrors({ ...studentErrors, form: message });
     }
   };
@@ -162,7 +158,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       return;
     }
 
-    const payload: any = {
+    const payload: { title: string; school: string; diplome?: string; annee?: string; country?: string; city?: string; student_id: string; status?: string; diplome_picture_1?: File; diplome_picture_2?: File } = {
       ...diplomeForm,
       annee: diplomeForm.annee ? String(diplomeForm.annee) : undefined,
       student_id: String(studentId),
@@ -182,8 +178,9 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       }
       await refetchStudentDetails();
       onStepComplete(2);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'Failed to save diplome';
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const message = axiosError?.response?.data?.message || 'Failed to save diplome';
       setDiplomeErrors({ ...diplomeErrors, form: message });
     }
   };
@@ -214,7 +211,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     }
 
     try {
-      const payload: any = {
+      const payload: { firstname: string; lastname: string; student_id: number; birthday?: string; email?: string; phone?: string; adress?: string; city?: string; country?: string; status?: number; studentlinktypeId?: number } = {
         firstname: contactForm.firstname,
         lastname: contactForm.lastname,
         student_id: studentIdNumber,
@@ -245,8 +242,9 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       }
       await refetchStudentDetails();
       onStepComplete(3);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'Failed to save contact';
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const message = axiosError?.response?.data?.message || 'Failed to save contact';
       setContactErrors({ ...contactErrors, form: message });
     }
   };
@@ -270,7 +268,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       if (currentLinkType) {
         const updated = await updateLinkTypeMut.mutateAsync({
           id: currentLinkType.id,
-          data: { title: linkTypeTitle, status: linkTypeStatus } as any,
+          data: { title: linkTypeTitle, status: linkTypeStatus },
         });
         setCurrentLinkType(updated);
         linkTypeId = updated.id;
@@ -279,7 +277,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
           title: linkTypeTitle,
           status: linkTypeStatus,
           student_id: studentId,
-        } as any);
+        });
         setCurrentLinkType(created);
         linkTypeId = created.id;
       }
@@ -314,8 +312,9 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
 
       await refetchStudentDetails();
       onFinish();
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'Failed to save link type';
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      const message = axiosError?.response?.data?.message || 'Failed to save link type';
       setLinkTypeError(message);
     }
   };

@@ -14,12 +14,12 @@ api.interceptors.request.use(
     // If sending FormData, let the browser set the correct multipart boundary
     if (config.data instanceof FormData) {
       if (config.headers) {
-        delete (config.headers as any)['Content-Type'];
+        delete config.headers['Content-Type'];
       }
     } else {
       // Default JSON for non-FormData bodies
-      if (config.headers && !(config.headers as any)['Content-Type']) {
-        (config.headers as any)['Content-Type'] = 'application/json';
+      if (config.headers && !config.headers['Content-Type']) {
+        config.headers['Content-Type'] = 'application/json';
       }
     }
     const token = localStorage.getItem('token');

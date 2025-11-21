@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { specializationApi, type CreateSpecializationRequest, type UpdateSpecializationRequest, type Specialization, type GetSpecializationsParams } from '../api/specialization';
+import { specializationApi, type CreateSpecializationRequest, type UpdateSpecializationRequest, type GetSpecializationsParams } from '../api/specialization';
 
 export const useSpecializations = (params: GetSpecializationsParams = {}) =>
   useQuery({
@@ -23,7 +23,7 @@ export const useUpdateSpecialization = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateSpecializationRequest }) => specializationApi.update(id, data),
-    onSuccess: (_result: Specialization) => qc.invalidateQueries({ queryKey: ['specializations'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['specializations'] }),
   });
 };
 

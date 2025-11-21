@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   useStudentAttestations,
-  useCreateStudentAttestation,
-  useUpdateStudentAttestation,
   useDeleteStudentAttestation,
 } from '../../hooks/useStudentAttestations';
 import { useStudents } from '../../hooks/useStudents';
@@ -13,6 +11,7 @@ import StudentAttestationModal from '../modals/StudentAttestationModal';
 import DeleteModal from '../modals/DeleteModal';
 import { EditButton, DeleteButton, Button } from '../ui';
 import type { StudentAttestation } from '../../api/studentAttestation';
+import type { Attestation } from '../../api/attestation';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
 const EMPTY_META = {
@@ -37,12 +36,13 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-red-100 text-red-700',
 };
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -58,7 +58,6 @@ const StudentAttestationsSection: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStudentAttestation, setEditingStudentAttestation] = useState<StudentAttestation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentAttestation | null>(null);
-  const [modalError, setModalError] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const params = useMemo(
@@ -88,16 +87,14 @@ const StudentAttestationsSection: React.FC = () => {
   const studentAttestations = studentAttestationsResp?.data ?? [];
   const meta = studentAttestationsResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
-  const createStudentAttestationMut = useCreateStudentAttestation();
-  const updateStudentAttestationMut = useUpdateStudentAttestation();
   const deleteStudentAttestationMut = useDeleteStudentAttestation();
 
-  const { data: studentsResp } = useStudents({ page: 1, limit: 100 } as any);
-  const { data: attestationsResp } = useAttestations({ page: 1, limit: 100 } as any);
+  const { data: studentsResp } = useStudents({ page: 1, limit: 100 });
+  const { data: attestationsResp } = useAttestations({ page: 1, limit: 100 });
 
   const studentOptions = useMemo<SearchSelectOption[]>(
     () =>
-      (studentsResp?.data || []).map((student: any) => ({
+      (studentsResp?.data || []).map((student: Student) => ({
         value: student.id,
         label:
           `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() ||
@@ -109,7 +106,7 @@ const StudentAttestationsSection: React.FC = () => {
 
   const attestationOptions = useMemo<SearchSelectOption[]>(
     () =>
-      (attestationsResp?.data || []).map((attestation: any) => ({
+      (attestationsResp?.data || []).map((attestation: Attestation) => ({
         value: attestation.id,
         label: attestation.title || `Attestation #${attestation.id}`,
       })),
@@ -118,20 +115,17 @@ const StudentAttestationsSection: React.FC = () => {
 
   const openCreateModal = () => {
     setEditingStudentAttestation(null);
-    setModalError(null);
     setModalOpen(true);
   };
 
   const openEditModal = (studentAttestation: StudentAttestation) => {
     setEditingStudentAttestation(studentAttestation);
-    setModalError(null);
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setModalOpen(false);
     setEditingStudentAttestation(null);
-    setModalError(null);
   };
 
   const handleFilterChange = (field: keyof typeof filters) => (value: number | string | '') => {
@@ -166,7 +160,7 @@ const StudentAttestationsSection: React.FC = () => {
       setDeleteTarget(null);
       setAlert({ type: 'success', message: 'Student attestation deleted successfully.' });
       refetchStudentAttestations();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }

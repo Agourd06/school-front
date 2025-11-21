@@ -44,12 +44,13 @@ const stripHtml = (input?: string | null): string => {
 
 
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -98,16 +99,16 @@ const LevelsSection: React.FC = () => {
 
   const deleteLevelMut = useDeleteLevel();
 
-  const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
+  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
   const { data: specializationsResp } = useSpecializations({
     page: 1,
     limit: 100,
     program_id: filters.program ? Number(filters.program) : undefined,
-  } as any);
+  });
 
   const programOptions = useMemo<SearchSelectOption[]>(
     () =>
-      (programsResp?.data || []).map((program: any) => ({
+      (programsResp?.data || []).map((program: Program) => ({
         value: program.id,
         label: program.title || `Program #${program.id}`,
       })),
@@ -116,7 +117,7 @@ const LevelsSection: React.FC = () => {
 
   const specializationOptions = useMemo<SearchSelectOption[]>(
     () =>
-      (specializationsResp?.data || []).map((spec: any) => ({
+      (specializationsResp?.data || []).map((spec: Specialization) => ({
         value: spec.id,
         label: spec.title || `Specialization #${spec.id}`,
       })),
@@ -131,7 +132,7 @@ const LevelsSection: React.FC = () => {
       // If context is cleared, clear the filter too
       setFilters((prev) => ({ ...prev, specialization: '' }));
     }
-  }, [selectedSpecializationId]);
+  }, [selectedSpecializationId, filters.specialization]);
 
   const openCreateModal = () => {
     setEditingLevel(null);
@@ -197,7 +198,7 @@ const LevelsSection: React.FC = () => {
       setDeleteTarget(null);
       setAlert({ type: 'success', message: 'Level deleted successfully.' });
       refetchLevels();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }

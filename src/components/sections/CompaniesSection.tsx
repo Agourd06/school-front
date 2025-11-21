@@ -6,23 +6,24 @@ import { CompanyModal, DeleteModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { EditButton, DeleteButton } from '../ui';
+import type { Company } from '../../api/company';
 
 const CompaniesSection: React.FC = () => {
-  const [state, setState] = React.useState<ListState<any>>({
+  const [state, setState] = React.useState<ListState<Company>>({
     data: [],
     loading: false,
     error: null,
     pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrevious: false },
     filters: { search: '', status: undefined },
   });
-  const [modal, setModal] = React.useState<{ type: 'company' | null; data?: any }>({ type: null });
+  const [modal, setModal] = React.useState<{ type: 'company' | null; data?: Company | null }>({ type: null });
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
 
   const params: FilterParams = {
     page: state.pagination.page,
     limit: state.pagination.limit,
     search: state.filters.search || undefined,
-    status: (state.filters as any).status,
+    status: state.filters.status,
   };
 
   const { data: response, isLoading, error } = useCompanies(params);
@@ -33,7 +34,7 @@ const CompaniesSection: React.FC = () => {
         ...prev,
         data: response.data,
         loading: isLoading,
-        error: (error as any)?.message || null,
+        error: (error as { message?: string })?.message || null,
         pagination: response.meta,
       }));
     }
@@ -45,7 +46,7 @@ const CompaniesSection: React.FC = () => {
   };
 
   const requestDelete = (id: number) => {
-    const company = state.data.find((item: any) => item.id === id);
+    const company = state.data.find((item) => item.id === id);
     if (!company) return;
     setDeleteTarget({ id, name: company.name });
   };
@@ -60,12 +61,12 @@ const CompaniesSection: React.FC = () => {
     }
   };
 
-  const open = (data?: any) => setModal({ type: 'company', data });
+  const open = (data?: Company | null) => setModal({ type: 'company', data: data ?? null });
   const close = () => setModal({ type: null });
 
   const handleSearch = useCallback((q: string) => {
     setState(prev => {
-      const prevSearch = (prev.filters as any).search ?? '';
+      const prevSearch = prev.filters.search ?? '';
       if (prevSearch === (q ?? '')) return prev;
       return {
         ...prev,
@@ -90,7 +91,7 @@ const CompaniesSection: React.FC = () => {
         addButtonText="Add Company"
         searchPlaceholder="Search by company name..."
         filterOptions={STATUS_OPTIONS}
-        renderRow={(company: any, onEdit, onDelete, index) => (
+        renderRow={(company: Company, onEdit, onDelete, index) => (
           <li key={company?.id ?? `company-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>

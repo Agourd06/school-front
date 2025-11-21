@@ -85,8 +85,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   useEffect(() => {
     const handler = () => setIsMobileOpen((prev) => !prev);
-    window.addEventListener("toggle-sidebar", handler as any);
-    return () => window.removeEventListener("toggle-sidebar", handler as any);
+    window.addEventListener("toggle-sidebar", handler as EventListener);
+    return () => window.removeEventListener("toggle-sidebar", handler as EventListener);
   }, []);
 
   const closeMobile = () => setIsMobileOpen(false);

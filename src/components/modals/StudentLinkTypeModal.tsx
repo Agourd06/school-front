@@ -16,7 +16,7 @@ const StudentLinkTypeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
   const isEditing = !!item;
 
   const handleSubmit = async (formData: { title: string; status: number }) => {
-    const base = { title: formData.title, status: formData.status } as any;
+    const base = { title: formData.title, status: formData.status };
     if (isEditing && item) {
       await updateMut.mutateAsync({ id: item.id, data: base });
     } else {

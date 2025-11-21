@@ -104,7 +104,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((prev) => {
-      let nextValue: any = value;
+      let nextValue: string | number | '' = value;
       if (name === 'status') nextValue = Number(value);
       if (['program_id', 'specialization_id', 'level_id', 'school_year_id', 'school_year_period_id'].includes(name)) {
         nextValue = value ? Number(value) : '';
@@ -148,7 +148,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
     if (!validate()) return;
     try {
       await onSubmit(form);
-    } catch (err: any) {
+    } catch {
       // Error handling is done in the modal
     }
   };

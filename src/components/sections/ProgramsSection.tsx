@@ -6,6 +6,7 @@ import { EditButton, DeleteButton, Button } from '../ui';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
+import type { Program } from '../../api/program';
 
 const EMPTY_META = {
   page: 1,
@@ -34,20 +35,14 @@ const stripHtml = (input?: string) => {
   return input.replace(/<[^>]+>/g, '');
 };
 
-const getDescriptionPreview = (input?: string) => {
-  const text = stripHtml(input);
-  if (!text) return '';
-  return text.length > 120 ? `${text.slice(0, 120)}…` : text;
-};
-
 const ProgramsSection: React.FC = () => {
   const { setSelectedProgramId, navigateToSpecializations } = useProgram();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({ status: 'all', search: '' });
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [programModalOpen, setProgramModalOpen] = useState(false);
-  const [editingProgram, setEditingProgram] = useState<any | null>(null);
-  const [descriptionModal, setDescriptionModal] = useState<any | null>(null);
+  const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+  const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name?: string } | null>(null);
 
   const params = useMemo(
@@ -91,7 +86,7 @@ const ProgramsSection: React.FC = () => {
     setProgramModalOpen(true);
   };
 
-  const openEditModal = (program: any) => {
+  const openEditModal = (program: Program) => {
     setEditingProgram(program);
     setProgramModalOpen(true);
   };
@@ -101,10 +96,10 @@ const ProgramsSection: React.FC = () => {
     setEditingProgram(null);
   };
 
-  const openDescriptionModal = (program: any) => setDescriptionModal(program);
+  const openDescriptionModal = (program: Program) => setDescriptionModal({ title: program.title, description: program.description || '' });
   const closeDescriptionModal = () => setDescriptionModal(null);
 
-  const requestDelete = (program: any) => {
+  const requestDelete = (program: Program) => {
     setDeleteTarget({ id: program.id, name: program.title });
     setAlert(null);
   };
@@ -117,12 +112,13 @@ const ProgramsSection: React.FC = () => {
       setAlert({ type: 'success', message: 'Program deleted successfully.' });
       setDeleteTarget(null);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string | string[] } }; message?: string };
       const message =
-        err?.response?.data?.message ||
-        (Array.isArray(err?.response?.data) ? err.response.data.join(', ') : err?.message) ||
+        error?.response?.data?.message ||
+        (Array.isArray(error?.response?.data) ? error.response.data.join(', ') : error?.message) ||
         'Failed to delete program.';
-      setAlert({ type: 'error', message });
+      setAlert({ type: 'error', message: Array.isArray(message) ? message.join(', ') : message });
     }
   };
 
@@ -132,7 +128,7 @@ const ProgramsSection: React.FC = () => {
     return () => window.clearTimeout(timeout);
   }, [alert]);
 
-  const handleRowClick = (program: any, e: React.MouseEvent) => {
+  const handleRowClick = (program: Program, e: React.MouseEvent) => {
     // Don't navigate if clicking on action buttons
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('td:last-child')) {

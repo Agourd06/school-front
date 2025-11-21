@@ -57,7 +57,7 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
     if (period?.id) {
       await updateMutation.mutateAsync({ id: period.id, ...payload });
     } else {
-      await createMutation.mutateAsync(payload as any);
+      await createMutation.mutateAsync(payload);
     }
     onClose();
   };

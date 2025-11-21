@@ -40,12 +40,13 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-red-100 text-red-700',
 };
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -127,10 +128,10 @@ const StudentPaymentsSection: React.FC = () => {
   const updatePaymentMut = useUpdateStudentPayment();
   const deletePaymentMut = useDeleteStudentPayment();
 
-  const { data: studentsResp } = useStudents({ page: 1, limit: 100 } as any);
-  const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 } as any);
-  const { data: levelsResp } = useLevels({ page: 1, limit: 100 } as any);
-  const { data: levelPricingResp } = useLevelPricings({ page: 1, limit: 100 } as any);
+  const { data: studentsResp } = useStudents({ page: 1, limit: 100 });
+  const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 });
+  const { data: levelsResp } = useLevels({ page: 1, limit: 100 });
+  const { data: levelPricingResp } = useLevelPricings({ page: 1, limit: 100 });
 
   const studentOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -177,7 +178,8 @@ const StudentPaymentsSection: React.FC = () => {
   const filteredLevelPricingFilterOptions = useMemo(() => {
     if (!filters.level) return levelPricingOptions;
     return levelPricingOptions.filter((option) => {
-      const levelId = option.data?.level_id ?? option.data?.levelId;
+      const data = option.data as { level_id?: number; levelId?: number } | undefined;
+      const levelId = data?.level_id ?? data?.levelId;
       if (levelId === undefined || levelId === null) return true;
       return Number(levelId) === Number(filters.level);
     });
@@ -247,7 +249,7 @@ const StudentPaymentsSection: React.FC = () => {
       }
       closeModal();
       refetchPayments();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setModalError(message);
       setAlert({ type: 'error', message });
@@ -263,7 +265,7 @@ const StudentPaymentsSection: React.FC = () => {
       setDeleteTarget(null);
       setAlert({ type: 'success', message: 'Student payment deleted successfully.' });
       refetchPayments();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }

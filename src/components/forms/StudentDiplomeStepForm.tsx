@@ -12,7 +12,7 @@ interface StudentDiplomeStepFormProps {
   currentDiplomePicture1?: string | null;
   currentDiplomePicture2?: string | null;
   studentName: string;
-  onFormChange: (field: keyof DiplomeFormData, value: any) => void;
+  onFormChange: (field: keyof DiplomeFormData, value: string | number | '') => void;
   onFile1Change: (file: File | null) => void;
   onFile2Change: (file: File | null) => void;
   onSubmit: (e: React.FormEvent) => void;

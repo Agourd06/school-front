@@ -14,20 +14,20 @@ export const useStudentModalData = (studentId: number) => {
   const [diplomeErrors, setDiplomeErrors] = useState<Record<string, string>>({});
   const [diplomeFile1, setDiplomeFile1] = useState<File | null>(null);
   const [diplomeFile2, setDiplomeFile2] = useState<File | null>(null);
-  const [currentDiplome, setCurrentDiplome] = useState<any | null>(null);
+  const [currentDiplome, setCurrentDiplome] = useState<StudentDiplome | null>(null);
 
   const [contactForm, setContactForm] = useState<ContactFormData>(initialContactForm);
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
-  const [currentContact, setCurrentContact] = useState<any | null>(null);
+  const [currentContact, setCurrentContact] = useState<StudentContact | null>(null);
 
   const [linkTypeTitle, setLinkTypeTitle] = useState('');
   const [linkTypeStatus, setLinkTypeStatus] = useState<number>(1);
   const [linkTypeError, setLinkTypeError] = useState('');
-  const [currentLinkType, setCurrentLinkType] = useState<any | null>(null);
+  const [currentLinkType, setCurrentLinkType] = useState<StudentLinkType | null>(null);
 
-  const { data: classRooms } = useClassRooms({ page: 1, limit: 100 } as any);
+  const { data: classRooms } = useClassRooms({ page: 1, limit: 100 });
   const { data: studentDetailsData, refetch: refetchStudentDetails } = useStudentDetails(studentId || 0);
-  const { data: linkTypesData } = useStudentLinkTypes({ page: 1, limit: 100 } as any);
+  const { data: linkTypesData } = useStudentLinkTypes({ page: 1, limit: 100 });
 
   // Log which student ID we're fetching
   useEffect(() => {

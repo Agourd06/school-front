@@ -37,10 +37,10 @@ export interface GetLevelsParams extends FilterParams {
   specialization_id?: number;
 }
 
-const toPaginated = (raw: any): PaginatedResponse<Level> => {
+const toPaginated = (raw: unknown): PaginatedResponse<Level> => {
   if (Array.isArray(raw)) {
     return {
-      data: raw,
+      data: raw as Level[],
       meta: {
         page: 1,
         limit: raw.length,
@@ -51,16 +51,18 @@ const toPaginated = (raw: any): PaginatedResponse<Level> => {
       },
     };
   }
-  const meta = raw?.meta || {};
+  const rawObj = raw as { meta?: { totalPages?: number; lastPage?: number; page?: number; limit?: number; total?: number; hasNext?: boolean; hasPrevious?: boolean }; data?: Level[] };
+  const meta = rawObj?.meta || {};
+  const rawData = rawObj?.data || [];
   const totalPages = meta.totalPages ?? meta.lastPage ?? 1;
   const page = meta.page ?? 1;
-  const limit = meta.limit ?? (Array.isArray(raw?.data) ? raw.data.length : 10);
+  const limit = meta.limit ?? (Array.isArray(rawData) ? rawData.length : 10);
   return {
-    data: raw?.data || [],
+    data: Array.isArray(rawData) ? rawData : [],
     meta: {
       page,
       limit,
-      total: meta.total ?? (Array.isArray(raw?.data) ? raw.data.length : 0),
+      total: meta.total ?? (Array.isArray(rawData) ? rawData.length : 0),
       totalPages,
       hasNext: meta.hasNext ?? page < totalPages,
       hasPrevious: meta.hasPrevious ?? page > 1,
@@ -93,7 +95,10 @@ export const levelApi = {
       status: 1,
       ...payload,
     });
-    if (body.status === undefined || body.status === null) (body as any).status = 1;
+    const bodyWithDefaults = body as CreateLevelRequest & { status?: number };
+    if (bodyWithDefaults.status === undefined || bodyWithDefaults.status === null) {
+      bodyWithDefaults.status = 1;
+    }
     const { data } = await api.post('/levels', body);
     return data;
   },

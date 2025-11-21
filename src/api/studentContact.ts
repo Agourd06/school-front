@@ -45,7 +45,7 @@ export interface GetAllStudentContactParams {
 }
 
 export const studentContactApi = {
-  async getAll(params: GetAllStudentContactParams = {}): Promise<{ data: StudentContact[]; meta: any }> {
+  async getAll(params: GetAllStudentContactParams = {}): Promise<{ data: StudentContact[]; meta: { page?: number; limit?: number; total?: number; totalPages?: number; hasNext?: boolean; hasPrevious?: boolean } }> {
     const { data } = await api.get('/student-contact', { params });
     return data;
   },

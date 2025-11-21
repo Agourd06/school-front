@@ -54,10 +54,10 @@ export interface GetClassStudentParams extends FilterParams {
   // company_id is automatically filtered by backend from JWT, no need to send it
 }
 
-const toPaginated = (raw: any): PaginatedResponse<ClassStudentAssignment> => {
+const toPaginated = (raw: unknown): PaginatedResponse<ClassStudentAssignment> => {
   if (Array.isArray(raw)) {
     return {
-      data: raw,
+      data: raw as ClassStudentAssignment[],
       meta: {
         page: 1,
         limit: raw.length,
@@ -69,15 +69,16 @@ const toPaginated = (raw: any): PaginatedResponse<ClassStudentAssignment> => {
     };
   }
 
-  const meta = raw?.meta || {};
-  const data = raw?.data || [];
+  const rawObj = raw as { meta?: { page?: number; limit?: number; total?: number; totalPages?: number; lastPage?: number; hasNext?: boolean; hasPrevious?: boolean }; data?: ClassStudentAssignment[] };
+  const meta = rawObj?.meta || {};
+  const data = rawObj?.data || [];
   const page = meta.page ?? 1;
   const limit = meta.limit ?? (Array.isArray(data) ? data.length : 10);
   const total = meta.total ?? (Array.isArray(data) ? data.length : 0);
   const totalPages = meta.totalPages ?? meta.lastPage ?? (limit > 0 ? Math.max(1, Math.ceil(total / limit)) : 1);
 
   return {
-    data,
+    data: Array.isArray(data) ? data : [],
     meta: {
       page,
       limit,
@@ -122,9 +123,10 @@ export const classStudentApi = {
       ...payload,
     });
 
-    if (body.tri === undefined || body.tri === null) (body as any).tri = 1;
-    if ((body as any).tri < 1) (body as any).tri = 1;
-    if (body.status === undefined || body.status === null) (body as any).status = 1;
+    const bodyWithDefaults = body as CreateClassStudentRequest & { tri?: number; status?: number };
+    if (bodyWithDefaults.tri === undefined || bodyWithDefaults.tri === null) bodyWithDefaults.tri = 1;
+    if (bodyWithDefaults.tri < 1) bodyWithDefaults.tri = 1;
+    if (bodyWithDefaults.status === undefined || bodyWithDefaults.status === null) bodyWithDefaults.status = 1;
 
     const { data } = await api.post('/class-student', body);
     return data;

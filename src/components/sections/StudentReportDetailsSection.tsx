@@ -5,7 +5,7 @@ import BaseModal from '../modals/BaseModal';
 import StudentReportDetailModal, { type StudentReportDetailFormValues } from '../modals/StudentReportDetailModal';
 import DeleteModal from '../modals/DeleteModal';
 import { EditButton, DeleteButton, Button } from '../ui';
-import type { StudentReport, StudentReportStatus } from '../../api/studentReport';
+import type { StudentReport } from '../../api/studentReport';
 import type { StudentReportDetail } from '../../api/studentReportDetail';
 import {
   useStudentReports,
@@ -41,12 +41,13 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-red-100 text-red-700',
 };
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -73,15 +74,15 @@ const StudentReportDetailsSection: React.FC = () => {
   const [detailModalError, setDetailModalError] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const { data: yearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 } as any);
+  const { data: yearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
   const { data: periodsResp, isLoading: periodsLoading } = useSchoolYearPeriods({
     page: 1,
     limit: 100,
     schoolYearId: filters.year ? Number(filters.year) : undefined,
-  } as any);
-  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: 200 } as any);
-  const { data: teachersResp } = useTeachers({ page: 1, limit: 200 } as any);
-  const { data: coursesResp } = useCourses({ page: 1, limit: 200 } as any);
+  });
+  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: 200 });
+  const { data: teachersResp } = useTeachers({ page: 1, limit: 200 });
+  const { data: coursesResp } = useCourses({ page: 1, limit: 200 });
 
   const reportParams = useMemo(
     () => ({
@@ -98,10 +99,9 @@ const StudentReportDetailsSection: React.FC = () => {
     data: reportsResp,
     isLoading: reportsLoading,
     error: reportsError,
-    refetch: refetchReports,
   } = useStudentReports(reportParams);
 
-  const reports = reportsResp?.data ?? [];
+  const reports = useMemo(() => reportsResp?.data ?? [], [reportsResp?.data]);
   const reportMeta =
     reportsResp?.meta ?? { ...EMPTY_META, page: reportPagination.page, limit: reportPagination.limit };
 
@@ -164,7 +164,7 @@ const StudentReportDetailsSection: React.FC = () => {
 
   const teacherOptions = useMemo<SearchSelectOption[]>(
     () =>
-      (teachersResp?.data || []).map((teacher: any) => ({
+      (teachersResp?.data || []).map((teacher: Teacher) => ({
         value: teacher.id,
         label:
           `${teacher.first_name ?? ''} ${teacher.last_name ?? ''}`.trim() ||
@@ -176,7 +176,7 @@ const StudentReportDetailsSection: React.FC = () => {
 
   const courseOptions = useMemo<SearchSelectOption[]>(
     () =>
-      (coursesResp?.data || []).map((course: any) => ({
+      (coursesResp?.data || []).map((course: Course) => ({
         value: course.id,
         label: course.title || `Course #${course.id}`,
       })),
@@ -248,7 +248,7 @@ const StudentReportDetailsSection: React.FC = () => {
       }
       handleDetailModalClose();
       refetchDetails();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setDetailModalError(extractErrorMessage(err));
       throw err;
     }
@@ -261,7 +261,7 @@ const StudentReportDetailsSection: React.FC = () => {
       setAlert({ type: 'success', message: 'Report detail deleted successfully.' });
       setDeleteDetailTarget(null);
       refetchDetails();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setAlert({ type: 'error', message: extractErrorMessage(err) });
     }
   };

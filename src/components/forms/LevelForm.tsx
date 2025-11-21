@@ -130,7 +130,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
     if (!validate()) return;
     try {
       await onSubmit(form);
-    } catch (err: any) {
+    } catch {
       // Error handling is done in the modal
     }
   };

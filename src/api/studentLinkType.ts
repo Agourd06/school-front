@@ -26,7 +26,7 @@ export interface GetAllStudentLinkTypeParams {
 }
 
 export const studentLinkTypeApi = {
-  async getAll(params: GetAllStudentLinkTypeParams = {}): Promise<{ data: StudentLinkType[]; meta: any }> {
+  async getAll(params: GetAllStudentLinkTypeParams = {}): Promise<{ data: StudentLinkType[]; meta: { page?: number; limit?: number; total?: number; totalPages?: number; hasNext?: boolean; hasPrevious?: boolean } }> {
     const { data } = await api.get('/studentlinktype', { params });
     return data;
   },

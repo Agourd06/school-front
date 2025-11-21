@@ -91,19 +91,15 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validate()) return;
-    try {
-      await onSubmit({
-        ...form,
-        title: form.title.trim(),
-        type: form.type.trim(),
-        coefficient:
-          form.coefficient === null || form.coefficient === undefined || Number.isNaN(Number(form.coefficient))
-            ? null
-            : Number(form.coefficient),
-      });
-    } catch (err) {
-      // Allow parent to display error feedback; keep modal open.
-    }
+    await onSubmit({
+      ...form,
+      title: form.title.trim(),
+      type: form.type.trim(),
+      coefficient:
+        form.coefficient === null || form.coefficient === undefined || Number.isNaN(Number(form.coefficient))
+          ? null
+          : Number(form.coefficient),
+    });
   };
 
   return (

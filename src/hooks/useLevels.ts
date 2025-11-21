@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { levelApi, type CreateLevelRequest, type UpdateLevelRequest, type Level, type GetLevelsParams } from '../api/level';
+import { levelApi, type CreateLevelRequest, type UpdateLevelRequest, type GetLevelsParams } from '../api/level';
 
 export const useLevels = (params: GetLevelsParams = {}) =>
   useQuery({
@@ -23,7 +23,7 @@ export const useUpdateLevel = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateLevelRequest }) => levelApi.update(id, data),
-    onSuccess: (_res: Level) => qc.invalidateQueries({ queryKey: ['levels'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['levels'] }),
   });
 };
 

@@ -57,7 +57,7 @@ const buildFormData = (payload: Partial<CreateStudentDiplomeRequest>) => {
 };
 
 export const studentDiplomeApi = {
-  async getAll(params: GetAllStudentDiplomeParams = {}): Promise<{ data: StudentDiplome[]; meta: any }> {
+  async getAll(params: GetAllStudentDiplomeParams = {}): Promise<{ data: StudentDiplome[]; meta: { page?: number; limit?: number; total?: number; totalPages?: number; hasNext?: boolean; hasPrevious?: boolean } }> {
     const { data } = await api.get('/student-diplome', { params });
     return data;
   },

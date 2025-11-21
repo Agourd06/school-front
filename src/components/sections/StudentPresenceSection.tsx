@@ -23,7 +23,7 @@ const formatStudentName = (
   return full || student?.email || `Student #${student?.id ?? presence?.student_id ?? classStudent?.student_id ?? '—'}`;
 };
 
-const formatPlanningDetail = (planning: any | undefined) => {
+const formatPlanningDetail = (planning: PlanningStudentEntry | undefined) => {
   if (!planning) return null;
   const date =
     planning.date_day && !Number.isNaN(new Date(planning.date_day).getTime())
@@ -62,12 +62,13 @@ const presenceStyles: Record<string, string> = {
   excused: 'border-purple-200 bg-purple-50 text-purple-800',
 };
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -100,7 +101,7 @@ const StudentPresenceSection: React.FC = () => {
 
   const presences = useMemo(() => presenceResp?.data ?? [], [presenceResp]);
 
-  const { data: planningResp, isLoading: planningLoading } = usePlanningStudents({ page: 1, limit: 100 } as any);
+  const { data: planningResp, isLoading: planningLoading } = usePlanningStudents({ page: 1, limit: 100 });
 
   const filteredPlannings = useMemo(() => {
     const all = planningResp?.data || [];
@@ -267,7 +268,6 @@ const StudentPresenceSection: React.FC = () => {
             status: 1 as StudentPresenceStatus,
           });
         } catch (err) {
-          // eslint-disable-next-line no-console
           console.error('Failed to auto-create presence', err);
         }
       }
@@ -303,7 +303,7 @@ const StudentPresenceSection: React.FC = () => {
       });
       setAlert({ type: 'success', message: `Marked ${formatStudentName(presence)} as ${presenceLabel[nextPresence]}` });
       refetchPresences();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setAlert({ type: 'error', message: extractErrorMessage(err) });
     }
   };
@@ -332,7 +332,7 @@ const StudentPresenceSection: React.FC = () => {
       setAlert({ type: 'success', message: 'Presence updated successfully.' });
       closeNoteEditor();
       refetchPresences();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setAlert({ type: 'error', message: extractErrorMessage(err) });
     }
   };

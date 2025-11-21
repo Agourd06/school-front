@@ -103,21 +103,6 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
     }
   }, [moduleAssignments]);
 
-  const formatTimestamp = (value?: string) => {
-    if (!value) return "—";
-    try {
-      return new Intl.DateTimeFormat(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(value));
-    } catch (e) {
-      return value;
-    }
-  };
-
   const updateAssignedState = (
     updater: (current: AssignmentModule[]) => AssignmentModule[]
   ) => {
@@ -178,7 +163,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
         // Wait a bit for cache invalidation to propagate, then refetch
         await new Promise((resolve) => setTimeout(resolve, 100));
         await refetchAssignments();
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Check if the error is because the module is already assigned (409)
         // The API layer should handle restoration of soft-deleted relationships
         // If we still get a 409 error here, it means the relationship exists and is active
@@ -250,7 +235,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
       await refetchAssignments();
       setDeleteModalOpen(false);
       setModuleToDelete(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Rollback on error
       updateAssignedState((prev) => [...prev, moduleToDelete]);
       console.error("Failed to remove module from course:", error);
@@ -373,7 +358,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
       handleCloseEditModule();
       // Refetch to ensure we have the latest data from the server
       await refetchAssignments();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update module assignment:", error);
       // Rollback on error - refetch to get the correct state
       await refetchAssignments();

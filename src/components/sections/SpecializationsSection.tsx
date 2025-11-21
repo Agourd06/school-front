@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   useSpecializations,
-  useCreateSpecialization,
-  useUpdateSpecialization,
   useDeleteSpecialization,
 } from '../../hooks/useSpecializations';
 import { usePrograms } from '../../hooks/usePrograms';
@@ -13,6 +11,7 @@ import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import { EditButton, DeleteButton, Button, Input } from '../ui';
 import type { Specialization } from '../../api/specialization';
+import type { Program } from '../../api/program';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
 import { useSpecialization as useSpecializationContext } from '../../context/SpecializationContext';
@@ -44,12 +43,13 @@ const stripHtml = (input?: string | null): string => {
   return input.replace(/<[^>]+>/g, '');
 };
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -67,7 +67,6 @@ const SpecializationsSection: React.FC = () => {
   const [editingSpecialization, setEditingSpecialization] = useState<Specialization | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Specialization | null>(null);
   const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
-  const [modalError, setModalError] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const params = useMemo(
@@ -97,15 +96,13 @@ const SpecializationsSection: React.FC = () => {
   const specializations = specializationsResp?.data ?? [];
   const meta = specializationsResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
-  const createSpecializationMut = useCreateSpecialization();
-  const updateSpecializationMut = useUpdateSpecialization();
   const deleteSpecializationMut = useDeleteSpecialization();
 
-  const { data: programsResp } = usePrograms({ page: 1, limit: 100 } as any);
+  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
 
   const programOptions = useMemo<SearchSelectOption[]>(
     () =>
-      (programsResp?.data || []).map((program: any) => ({
+      (programsResp?.data || []).map((program: Program) => ({
         value: program.id,
         label: program.title || `Program #${program.id}`,
       })),
@@ -120,24 +117,21 @@ const SpecializationsSection: React.FC = () => {
       // If context is cleared, clear the filter too
       setFilters((prev) => ({ ...prev, program: '' }));
     }
-  }, [selectedProgramId]);
+  }, [selectedProgramId, filters.program]);
 
   const openCreateModal = () => {
     setEditingSpecialization(null);
-    setModalError(null);
     setModalOpen(true);
   };
 
   const openEditModal = (specialization: Specialization) => {
     setEditingSpecialization(specialization);
-    setModalError(null);
     setModalOpen(true);
   };
 
   const closeModal = () => {
     setModalOpen(false);
     setEditingSpecialization(null);
-    setModalError(null);
   };
 
   const openDescriptionModal = (specialization: Specialization) => {
@@ -183,7 +177,7 @@ const SpecializationsSection: React.FC = () => {
       setDeleteTarget(null);
       setAlert({ type: 'success', message: 'Specialization deleted successfully.' });
       refetchSpecializations();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }

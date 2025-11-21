@@ -155,8 +155,9 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
     }
     try {
       await onSubmit(form, file1, file2);
-    } catch (err: any) {
-      setErrors((prev) => ({ ...prev, form: err?.response?.data?.message || 'Failed to save' }));
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      setErrors((prev) => ({ ...prev, form: axiosError?.response?.data?.message || 'Failed to save' }));
     }
   };
 

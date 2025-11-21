@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { studentLinkTypeApi, type CreateStudentLinkTypeRequest, type StudentLinkType, type UpdateStudentLinkTypeRequest, type GetAllStudentLinkTypeParams } from '../api/studentLinkType';
+import { studentLinkTypeApi, type CreateStudentLinkTypeRequest, type UpdateStudentLinkTypeRequest, type GetAllStudentLinkTypeParams } from '../api/studentLinkType';
 
 export const useStudentLinkTypes = (params: GetAllStudentLinkTypeParams = {}) =>
   useQuery({ queryKey: ['studentlinktypes', params], queryFn: () => studentLinkTypeApi.getAll(params) });
@@ -19,7 +19,7 @@ export const useUpdateStudentLinkType = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateStudentLinkTypeRequest }) => studentLinkTypeApi.update(id, data),
-    onSuccess: (_data: StudentLinkType) => qc.invalidateQueries({ queryKey: ['studentlinktypes'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['studentlinktypes'] }),
   });
 };
 

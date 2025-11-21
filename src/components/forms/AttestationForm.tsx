@@ -73,8 +73,9 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
     if (!validate()) return;
     try {
       await onSubmit(form);
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message;
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+      const errorMessage = axiosError?.response?.data?.message;
       if (Array.isArray(errorMessage)) {
         setFormError(errorMessage.join(', '));
       } else if (typeof errorMessage === 'string') {

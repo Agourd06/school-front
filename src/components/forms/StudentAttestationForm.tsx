@@ -138,12 +138,7 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    try {
-      await onSubmit(form);
-    } catch (err: any) {
-      // Error handling is done in the modal
-      throw err;
-    }
+    await onSubmit(form);
   };
 
   return (

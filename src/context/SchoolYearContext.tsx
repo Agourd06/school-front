@@ -11,6 +11,7 @@ interface SchoolYearContextType {
 
 const SchoolYearContext = createContext<SchoolYearContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSchoolYear = () => {
   const context = useContext(SchoolYearContext);
   if (context === undefined) {

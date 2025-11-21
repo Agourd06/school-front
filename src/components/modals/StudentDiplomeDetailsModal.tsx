@@ -1,11 +1,12 @@
 import React from 'react';
 import BaseModal from './BaseModal';
 import { getFileUrl } from '../../utils/apiConfig';
+import type { StudentDiplome } from '../../api/studentDiplome';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  item: any;
+  item: StudentDiplome;
 }
 
 const DetailRow: React.FC<{ label: string; value?: React.ReactNode }> = ({ label, value }) => (

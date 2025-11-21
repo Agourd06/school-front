@@ -1,4 +1,4 @@
-import { DEFAULT_PLANNING_STATUS, type PlanningStatus } from '../../constants/planning';
+import { DEFAULT_PLANNING_STATUS } from '../../constants/planning';
 import type { FormState, PlanningPagination } from './types';
 
 export const INITIAL_PAGINATION: PlanningPagination = {
@@ -50,12 +50,13 @@ export const INITIAL_FORM = (weekStart: Date): FormState => ({
   status: DEFAULT_PLANNING_STATUS,
 });
 
-export const extractErrorMessage = (err: any): string => {
+export const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 

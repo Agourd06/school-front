@@ -16,6 +16,8 @@ import {
 } from '../../api/classStudent';
 import type { Student } from '../../api/students';
 import type { DropResult } from '@hello-pangea/dnd';
+import type { PaginatedResponse } from '../../types/api';
+import type { ClassEntity } from '../../api/classes';
 
 interface Props {
   isOpen: boolean;
@@ -70,14 +72,14 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, class
   const createMut = useCreateClassStudent();
   const deleteMut = useDeleteClassStudent();
 
-  const { data: classesResp, isLoading: classesLoading } = useClasses({ page: 1, limit: MAX_FETCH_LIMIT } as any);
-  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: MAX_FETCH_LIMIT } as any);
+  const { data: classesResp, isLoading: classesLoading } = useClasses({ page: 1, limit: MAX_FETCH_LIMIT });
+  const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: MAX_FETCH_LIMIT });
 
   const classOptions: SearchSelectOption[] = useMemo(
     () =>
-      (((classesResp as any)?.data) || [])
-        .filter((cls: any) => cls?.status !== -2)
-        .map((cls: any) => ({
+      ((classesResp as PaginatedResponse<ClassEntity>)?.data || [])
+        .filter((cls) => cls?.status !== -2)
+        .map((cls) => ({
           value: cls.id,
           label: cls.title || `Class #${cls.id}`,
         })),
@@ -96,7 +98,7 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, class
 
   const studentsMap = useMemo(() => {
     const map = new Map<number, StudentLite>();
-    (((studentsResp as any)?.data) || []).forEach((stu: Student) => {
+    ((studentsResp as PaginatedResponse<Student>)?.data || []).forEach((stu) => {
       map.set(stu.id, makeStudentLite(stu.id, stu));
     });
     return map;
@@ -166,10 +168,10 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, class
       }
     });
 
-    const students = (((studentsResp as any)?.data) || [])
-      .filter((stu: Student) => stu?.status !== -2)
-      .filter((stu: Student) => !assignedIds.has(stu.id))
-      .map((stu: Student) => makeStudentLite(stu.id, stu))
+    const students = ((studentsResp as PaginatedResponse<Student>)?.data || [])
+      .filter((stu) => stu?.status !== -2)
+      .filter((stu) => !assignedIds.has(stu.id))
+      .map((stu) => makeStudentLite(stu.id, stu))
       .sort(sortStudentsByLabel);
 
     setUnassignedStudents(students);
@@ -247,8 +249,8 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, class
       setAssignedFilter('');
       setAssignedSearch('');
       setFeedback(null);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || 'Failed to assign student';
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || 'Failed to assign student';
       setFeedback(message);
     }
   };
@@ -270,8 +272,8 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, class
       setUnassignedFilter('');
       setUnassignedSearch('');
       setFeedback(null);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || 'Failed to unassign student';
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || 'Failed to unassign student';
       setFeedback(message);
     }
   };

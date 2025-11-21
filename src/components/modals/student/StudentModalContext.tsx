@@ -5,6 +5,12 @@ import { useClassRooms } from '../../../hooks/useClassRooms';
 import { useStudentLinkTypes } from '../../../hooks/useStudentLinkTypes';
 import { initialStudentForm, initialDiplomeForm, initialContactForm } from './constants';
 import type { StudentFormData, DiplomeFormData, ContactFormData } from './types';
+import type { StudentDiplome } from '../../../api/studentDiplome';
+import type { StudentContact } from '../../../api/studentContact';
+import type { StudentLinkType } from '../../../api/studentLinkType';
+import type { ClassRoom } from '../../../api/classRoom';
+import type { Student } from '../../../api/students';
+import type { PaginatedResponse } from '../../../types/api';
 
 interface StudentModalContextValue {
   // Student ID - the core value that flows through all steps
@@ -28,16 +34,16 @@ interface StudentModalContextValue {
   setDiplomeFile1: (file: File | null) => void;
   diplomeFile2: File | null;
   setDiplomeFile2: (file: File | null) => void;
-  currentDiplome: any | null;
-  setCurrentDiplome: (diplome: any | null) => void;
+  currentDiplome: StudentDiplome | null;
+  setCurrentDiplome: (diplome: StudentDiplome | null) => void;
 
   // Contact form data
   contactForm: ContactFormData;
   setContactForm: (form: ContactFormData) => void;
   contactErrors: Record<string, string>;
   setContactErrors: (errors: Record<string, string>) => void;
-  currentContact: any | null;
-  setCurrentContact: (contact: any | null) => void;
+  currentContact: StudentContact | null;
+  setCurrentContact: (contact: StudentContact | null) => void;
 
   // Link type form data
   linkTypeTitle: string;
@@ -46,14 +52,19 @@ interface StudentModalContextValue {
   setLinkTypeStatus: (status: number) => void;
   linkTypeError: string;
   setLinkTypeError: (error: string) => void;
-  currentLinkType: any | null;
-  setCurrentLinkType: (linkType: any | null) => void;
+  currentLinkType: StudentLinkType | null;
+  setCurrentLinkType: (linkType: StudentLinkType | null) => void;
 
   // External data
-  classRooms: any;
-  studentDetailsData: any;
-  refetchStudentDetails: () => Promise<any>;
-  linkTypesData: any;
+  classRooms: PaginatedResponse<ClassRoom> | null | undefined;
+  studentDetailsData: {
+    student: Student;
+    diploma: StudentDiplome | null;
+    contact: StudentContact | null;
+    linkType: StudentLinkType | null;
+  } | null | undefined;
+  refetchStudentDetails: () => void;
+  linkTypesData: { data: StudentLinkType[]; meta: { page?: number; limit?: number; total?: number; totalPages?: number; hasNext?: boolean; hasPrevious?: boolean } } | null | undefined;
 
   // Computed values
   studentName: string;
@@ -80,27 +91,31 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
   const [diplomeErrors, setDiplomeErrors] = useState<Record<string, string>>({});
   const [diplomeFile1, setDiplomeFile1] = useState<File | null>(null);
   const [diplomeFile2, setDiplomeFile2] = useState<File | null>(null);
-  const [currentDiplome, setCurrentDiplome] = useState<any | null>(null);
+  const [currentDiplome, setCurrentDiplome] = useState<StudentDiplome | null>(null);
 
   const [contactForm, setContactForm] = useState<ContactFormData>(initialContactForm);
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
-  const [currentContact, setCurrentContact] = useState<any | null>(null);
+  const [currentContact, setCurrentContact] = useState<StudentContact | null>(null);
 
   const [linkTypeTitle, setLinkTypeTitle] = useState('');
   const [linkTypeStatus, setLinkTypeStatus] = useState<number>(1);
   const [linkTypeError, setLinkTypeError] = useState('');
-  const [currentLinkType, setCurrentLinkType] = useState<any | null>(null);
+  const [currentLinkType, setCurrentLinkType] = useState<StudentLinkType | null>(null);
 
-  const { data: classRooms } = useClassRooms({ page: 1, limit: 100 } as any);
-  const { data: studentDetailsData, refetch: refetchStudentDetails } = useStudentDetails(studentId || 0);
-  const { data: linkTypesData } = useStudentLinkTypes({ page: 1, limit: 100 } as any);
+  const { data: classRooms } = useClassRooms({ page: 1, limit: 100 });
+  const { data: studentDetailsData, refetch: refetchStudentDetailsRaw } = useStudentDetails(studentId || 0);
+  const { data: linkTypesData } = useStudentLinkTypes({ page: 1, limit: 100 });
+
+  const refetchStudentDetails = () => {
+    void refetchStudentDetailsRaw();
+  };
 
   // Update studentId when initialStudentId changes
   useEffect(() => {
     if (initialStudentId !== null && initialStudentId !== studentId) {
       setStudentId(initialStudentId);
     }
-  }, [initialStudentId]);
+  }, [initialStudentId, studentId]);
 
   // Load existing data when editing (studentId exists and data is available)
   useEffect(() => {
@@ -233,6 +248,7 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
   return <StudentModalContext.Provider value={value}>{children}</StudentModalContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useStudentModalContext = () => {
   const context = useContext(StudentModalContext);
   if (!context) {

@@ -37,12 +37,13 @@ const statusStyles: Record<PlanningSessionTypeStatus, string> = {
   inactive: 'bg-gray-100 text-gray-700 border border-gray-200',
 };
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -109,7 +110,7 @@ const PlanningSessionTypesSection: React.FC = () => {
         setAlert({ type: 'success', message: 'Planning session type created successfully.' });
       }
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setModalError(message);
       setAlert({ type: 'error', message });
@@ -125,7 +126,7 @@ const PlanningSessionTypesSection: React.FC = () => {
       setAlert({ type: 'success', message: 'Planning session type deleted successfully.' });
       setDeleteTarget(null);
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }

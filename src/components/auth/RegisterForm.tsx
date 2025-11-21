@@ -34,7 +34,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
       setPassword('');
       setConfirmPassword('');
       onSuccess?.();
-    } catch (err) {
+    } catch {
       setError('Registration failed. Please try again.');
     }
   };

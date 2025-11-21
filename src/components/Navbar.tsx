@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
 
-  const rawUser = user as any;
+  const rawUser = user as { username?: string; email?: string } | null;
   const displayName = rawUser?.username || rawUser?.email || 'User';
   const initials = displayName
     .split(/\s+/)

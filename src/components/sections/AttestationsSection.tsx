@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   useAttestations,
-  useCreateAttestation,
-  useUpdateAttestation,
   useDeleteAttestation,
 } from '../../hooks/useAttestations';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
@@ -36,12 +34,13 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-red-100 text-red-700',
 };
 
-const extractErrorMessage = (err: any): string => {
+const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
-  const dataMessage = err?.response?.data?.message;
+  const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+  const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
-  if (typeof err.message === 'string') return err.message;
+  if (typeof axiosError.message === 'string') return axiosError.message;
   return 'Unexpected error';
 };
 
@@ -83,8 +82,6 @@ const AttestationsSection: React.FC = () => {
   const attestations = attestationsResp?.data ?? [];
   const meta = attestationsResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
-  const createAttestationMut = useCreateAttestation();
-  const updateAttestationMut = useUpdateAttestation();
   const deleteAttestationMut = useDeleteAttestation();
 
   const openCreateModal = () => {
@@ -142,7 +139,7 @@ const AttestationsSection: React.FC = () => {
       setDeleteTarget(null);
       setAlert({ type: 'success', message: 'Attestation deleted successfully.' });
       refetchAttestations();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message = extractErrorMessage(err);
       setAlert({ type: 'error', message });
     }

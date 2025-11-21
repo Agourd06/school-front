@@ -1,6 +1,5 @@
 import React from 'react';
 import BaseModal from './BaseModal';
-import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import type { PresenceValue, StudentPresence, StudentPresenceStatus } from '../../api/studentPresence';
 import { StudentPresenceForm, type StudentPresenceFormData } from '../forms';
 
