@@ -360,6 +360,23 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                 </div>
 
                                 <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex-shrink-0">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M4 11h16M5 11v9a2 2 0 002 2h10a2 2 0 002-2v-9" />
+                                    </svg>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Course</p>
+                                    <p className="text-base text-gray-900 font-semibold">
+                                      {entry.course?.title || `Course #${entry.course_id}`}
+                                    </p>
+                                    {entry.course?.volume && (
+                                      <p className="text-xs text-gray-500 mt-0.5">Volume: {entry.course.volume}</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

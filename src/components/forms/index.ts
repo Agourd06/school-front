@@ -64,6 +64,9 @@ export type { StudentPresenceFormData, StudentPresence } from './StudentPresence
 export { default as StudentPaymentForm } from './StudentPaymentForm';
 export type { StudentPaymentFormData, StudentPayment } from './StudentPaymentForm';
 
+export { default as ClassCourseForm } from './ClassCourseForm';
+export type { ClassCourseFormData } from './ClassCourseForm';
+
 export { default as StudentAttestationForm } from './StudentAttestationForm';
 export type { StudentAttestationFormData, StudentAttestation } from './StudentAttestationForm';
 

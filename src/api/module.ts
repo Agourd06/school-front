@@ -37,6 +37,16 @@ export interface Module {
   assignment_created_at?: string;
 }
 
+export interface ModuleCourseListItem {
+  id: number;
+  title: string;
+  description?: string | null;
+  volume?: number | null;
+  coefficient?: number | null;
+  status?: number;
+  tri?: number | null;
+}
+
 export interface CreateModuleRequest {
   title: string;
   description?: string;
@@ -131,6 +141,11 @@ export const moduleApi = {
   getCourseAssignments: async (moduleId: number): Promise<{ assigned: Course[]; unassigned: Course[] }> => {
     const response = await api.get(`/module/${moduleId}/courses`);
     return response.data;
+  },
+
+  getLinkedCourses: async (moduleId: number): Promise<ModuleCourseListItem[]> => {
+    const { data } = await api.get(`/modules/${moduleId}/courses`);
+    return data;
   },
 
   updateCourseAssignments: async (moduleId: number, data: { add: number[]; remove: number[] }): Promise<{ message: string }> => {

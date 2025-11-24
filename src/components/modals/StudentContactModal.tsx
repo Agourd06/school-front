@@ -9,7 +9,7 @@ import { StudentContactForm, type StudentContact } from '../forms';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  item?: StudentContact | null;
+  item?: StudentContact | null  | undefined;
 }
 
 const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {

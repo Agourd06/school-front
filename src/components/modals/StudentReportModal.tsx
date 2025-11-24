@@ -2,6 +2,7 @@ import React from 'react';
 import BaseModal from './BaseModal';
 import type { StudentReport, StudentReportStatus } from '../../api/studentReport';
 import { StudentReportForm, type StudentReportFormData } from '../forms';
+import type { SearchSelectOption } from '../inputs/SearchSelect';
 
 export interface StudentReportFormValues {
   school_year_id: number | '';
@@ -30,6 +31,7 @@ interface StudentReportModalProps {
   };
   disableStudentSelect?: boolean;
   disablePeriodSelect?: boolean;
+  onViewReportDetails?: (studentId: number) => void;
 }
 
 const StudentReportModal: React.FC<StudentReportModalProps> = ({
@@ -45,6 +47,7 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
   contextInfo,
   disableStudentSelect = false,
   disablePeriodSelect = false,
+  onViewReportDetails,
 }) => {
   const handleSubmit = async (formData: StudentReportFormData) => {
     await onSubmit(formData as StudentReportFormValues);
@@ -69,6 +72,7 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
         contextInfo={contextInfo}
         disableStudentSelect={disableStudentSelect}
         disablePeriodSelect={disablePeriodSelect}
+        onViewReportDetails={onViewReportDetails}
       />
     </BaseModal>
   );

@@ -42,6 +42,7 @@ export const INITIAL_FORM = (weekStart: Date): FormState => ({
   hour_start: '06:00',
   hour_end: '07:00',
   class_id: '',
+  class_course_id: '',
   specialization_id: '',
   teacher_id: '',
   class_room_id: '',

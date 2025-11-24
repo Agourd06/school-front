@@ -144,15 +144,6 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
-        <RichTextEditor
-          value={form.remarks}
-          onChange={(content) => setForm((prev) => ({ ...prev, remarks: content }))}
-          placeholder="Optional remarks"
-          rows={8}
-        />
-      </div>
       <Input
         label="Note"
         type="number"
@@ -167,6 +158,15 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
         error={errors.note}
         className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+        <RichTextEditor
+          value={form.remarks}
+          onChange={(content) => setForm((prev) => ({ ...prev, remarks: content }))}
+          placeholder="Optional remarks"
+          rows={8}
+        />
+      </div>
 
       {serverError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

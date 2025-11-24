@@ -41,6 +41,7 @@ export interface FormState {
   hour_start: string;
   hour_end: string;
   class_id: number | '';
+  class_course_id: number | '';
   specialization_id: number | '';
   teacher_id: number | '';
   class_room_id: number | '';
@@ -82,6 +83,8 @@ export interface PlanningFormProps {
   yearsLoading: boolean;
   sessionTypesLoading: boolean;
   coursesLoading: boolean;
+  classCourseOptions: SearchSelectOption[];
+  classCourseLoading: boolean;
   onOpenSessionTypeModal?: () => void;
   isCreatingSessionType?: boolean;
   classDetails: ClassEntity | null;

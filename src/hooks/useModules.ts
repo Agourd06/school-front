@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { moduleApi } from '../api/module';
-import type { UpdateModuleRequest } from '../api/module';
+import type { UpdateModuleRequest, ModuleCourseListItem } from '../api/module';
 import type { FilterParams } from '../types/api';
 
 export const useModules = (params: FilterParams = {}) => {
@@ -75,3 +75,10 @@ export const useRemoveCourseFromModule = () => {
     },
   });
 };
+
+export const useModuleCourses = (moduleId?: number) =>
+  useQuery<ModuleCourseListItem[]>({
+    queryKey: ['moduleCourses', moduleId],
+    queryFn: () => moduleApi.getLinkedCourses(moduleId as number),
+    enabled: !!moduleId,
+  });

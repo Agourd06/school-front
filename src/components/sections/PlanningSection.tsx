@@ -19,6 +19,7 @@ import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useCourses } from '../../hooks/useCourses';
 import { usePlanningSessionTypes } from '../../hooks/usePlanningSessionTypes';
+import { useClassCourses } from '../../hooks/useClassCourses';
 import PlanningWeekView from '../planning/PlanningWeekView';
 import PlanningMonthView from '../planning/PlanningMonthView';
 import PlanningHeader from '../planning/components/PlanningHeader';
@@ -202,6 +203,26 @@ const PlanningSection: React.FC = () => {
     return map;
   }, [coursesResp]);
 
+  const classCourseParams = useMemo(() => {
+    if (!form.class_id) return null;
+    return { class_id: Number(form.class_id), status: 1, limit: 100 };
+  }, [form.class_id]);
+
+  const {
+    data: classCourseResp,
+    isLoading: classCourseLoading,
+  } = useClassCourses(classCourseParams ?? {}, { enabled: Boolean(classCourseParams) });
+
+  const classCourseOptions = useMemo(
+    () =>
+      (classCourseResp?.data || []).map((item) => ({
+        value: item.id,
+        label: item.title || `Class course #${item.id}`,
+        data: item,
+      })),
+    [classCourseResp]
+  );
+
   const selectedClassDetails = useMemo<ClassEntity | null>(() => {
     if (!form.class_id) return null;
     return classesMap.get(Number(form.class_id)) ?? null;
@@ -334,6 +355,7 @@ const PlanningSection: React.FC = () => {
       hour_start: normalizeTimeFormat(entry.hour_start),
       hour_end: normalizeTimeFormat(entry.hour_end),
       class_id: entry.class_id ?? '',
+      class_course_id: '',
       specialization_id: entry.specialization_id ?? '',
       teacher_id: entry.teacher_id ?? '',
       class_room_id: entry.class_room_id ?? '',
@@ -396,6 +418,7 @@ const PlanningSection: React.FC = () => {
     if (!form.hour_end) errors.hour_end = 'End time is required';
     if (form.hour_start && form.hour_end && form.hour_start >= form.hour_end) errors.hour_end = 'End must be after start';
     if (form.class_id === '') errors.class_id = 'Class is required';
+    if (form.class_course_id === '') errors.class_course_id = 'Class course is required';
     if (form.specialization_id === '') errors.specialization_id = 'Specialization is required';
     if (form.teacher_id === '') errors.teacher_id = 'Teacher is required';
     if (form.class_room_id === '') errors.class_room_id = 'Classroom is required';
@@ -476,22 +499,33 @@ const PlanningSection: React.FC = () => {
           [name]: value === '' ? '' : Number(value),
         };
 
-        if (name === 'class_id' && value !== '') {
-          const selectedClass = classesMap.get(Number(value));
-          if (selectedClass?.specialization_id) {
-            updated.specialization_id = selectedClass.specialization_id;
+        if (name === 'class_id') {
+          if (value !== '') {
+            const selectedClass = classesMap.get(Number(value));
+            if (selectedClass?.specialization_id) {
+              updated.specialization_id = selectedClass.specialization_id;
+            }
           }
+          updated.class_course_id = '';
+          updated.course_id = '';
+          updated.teacher_id = '';
         }
 
         if (name === 'school_year_id') {
           updated.period = '';
           updated.class_id = '';
           updated.specialization_id = '';
+          updated.class_course_id = '';
+          updated.course_id = '';
+          updated.teacher_id = '';
         }
 
         if (name === 'period') {
           updated.class_id = '';
           updated.specialization_id = '';
+          updated.class_course_id = '';
+          updated.course_id = '';
+          updated.teacher_id = '';
         }
 
         return updated;
@@ -551,6 +585,8 @@ const PlanningSection: React.FC = () => {
             yearsLoading={yearsLoading}
             sessionTypesLoading={sessionTypesLoading}
             coursesLoading={coursesLoading}
+              classCourseOptions={classCourseOptions}
+              classCourseLoading={classCourseLoading}
             onOpenSessionTypeModal={undefined}
             isCreatingSessionType={false}
             classDetails={selectedClassDetails}

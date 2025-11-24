@@ -40,6 +40,8 @@ const PlanningForm: React.FC<PlanningFormProps> = ({
   classStudents,
   classStudentsLoading,
   classStudentsError,
+  classCourseOptions,
+  classCourseLoading,
 }) => {
   const statusOptions = PLANNING_STATUS_OPTIONS_FORM;
   const timeSelectOptions = useMemo(() => TIME_OPTIONS.map((time) => ({ value: time, label: time })), []);
@@ -50,6 +52,25 @@ const PlanningForm: React.FC<PlanningFormProps> = ({
   const [isClassStudentsModalOpen, setIsClassStudentsModalOpen] = useState(false);
   const [showCourseDetails, setShowCourseDetails] = useState(false);
   const canSelectClass = Boolean(form.school_year_id && form.period);
+  const handleClassCourseChange = (value: number | '' | string) => {
+    setForm((prev) => {
+      if (value === '' || value === null) {
+        return { ...prev, class_course_id: '', course_id: '', teacher_id: '' };
+      }
+      const numericValue = Number(value);
+      const matched = classCourseOptions.find((option) => Number(option.value) === numericValue);
+      const data = matched?.data as { course_id?: number; teacher_id?: number } | undefined;
+      return {
+        ...prev,
+        class_course_id: numericValue,
+        course_id: data?.course_id ?? prev.course_id,
+        teacher_id: data?.teacher_id ?? prev.teacher_id,
+      };
+    });
+    if (formErrors.class_course_id) setFormErrors((prev) => ({ ...prev, class_course_id: '' }));
+    if (formErrors.course_id) setFormErrors((prev) => ({ ...prev, course_id: '' }));
+    if (formErrors.teacher_id) setFormErrors((prev) => ({ ...prev, teacher_id: '' }));
+  };
 
   useEffect(() => {
     if (!form.class_id) {
@@ -186,7 +207,7 @@ const PlanningForm: React.FC<PlanningFormProps> = ({
         {/* Class & Resources Section */}
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Class & Resources</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">Class *</label>
@@ -213,61 +234,23 @@ const PlanningForm: React.FC<PlanningFormProps> = ({
                 disabled={!canSelectClass}
               />
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700">Specialization</p>
-                <span className="text-xs text-gray-400">Auto-selected</span>
-              </div>
-              <div
-                className={`rounded-lg border px-3 py-2 text-sm  ${
-                  specializationDisplay ? 'bg-white text-gray-900 border-gray-200' : 'bg-gray-100 text-gray-400 border-gray-200'
-                }`}
-              >
-                {specializationDisplay || 'Select a class to view specialization'}
-              </div>
-              {formErrors.specialization_id && <p className="text-xs text-red-600">{formErrors.specialization_id}</p>}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <SearchSelect
-              label="Teacher *"
-              value={form.teacher_id}
-              onChange={handleSelectChange('teacher_id')}
-              options={teacherOptions}
-              placeholder="Select teacher"
-              isLoading={teachersLoading}
-              error={formErrors.teacher_id}
-            />
-            <SearchSelect
-              label="Classroom *"
-              value={form.class_room_id}
-              onChange={handleSelectChange('class_room_id')}
-              options={roomOptions}
-              placeholder="Select classroom"
-              isLoading={roomsLoading}
-              error={formErrors.class_room_id}
-            />
-          </div>
-        </div>
-
-        {/* Session Type & Status Section */}
-        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Session Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-gray-700">Session Type *</label>
-              
-              </div>
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Class Course</label>
               <SearchSelect
-                value={form.planning_session_type_id}
-                onChange={handleSelectChange('planning_session_type_id')}
-                options={sessionTypeOptions}
-                placeholder="Select session type"
-                isLoading={sessionTypesLoading}
-                error={formErrors.planning_session_type_id}
+                value={form.class_course_id}
+                onChange={handleClassCourseChange}
+                options={classCourseOptions}
+                placeholder={form.class_id ? 'Select class course' : 'Select a class first'}
+                isLoading={classCourseLoading}
+                disabled={!form.class_id}
+                error={formErrors.class_course_id}
               />
+              <p className="text-xs text-gray-500">
+                Selecting a class course locks the linked course and teacher for this session.
+              </p>
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-gray-700">Course *</label>
@@ -299,25 +282,83 @@ const PlanningForm: React.FC<PlanningFormProps> = ({
                 value={form.course_id}
                 onChange={handleSelectChange('course_id')}
                 options={courseOptions}
-                placeholder="Select course"
+                placeholder="Select a class course first"
                 isLoading={coursesLoading}
                 error={formErrors.course_id}
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1">Auto-filled from the selected class course.</p>
+            </div>
+            <div>
+              <SearchSelect
+                label="Teacher *"
+                value={form.teacher_id}
+                onChange={handleSelectChange('teacher_id')}
+                options={teacherOptions}
+                placeholder="Select a class course first"
+                isLoading={teachersLoading}
+                error={formErrors.teacher_id}
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1">Auto-filled from the selected class course.</p>
+            </div>
+            <SearchSelect
+              label="Classroom *"
+              value={form.class_room_id}
+              onChange={handleSelectChange('class_room_id')}
+              options={roomOptions}
+              placeholder="Select classroom"
+              isLoading={roomsLoading}
+              error={formErrors.class_room_id}
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-700">Specialization</p>
+              <span className="text-xs text-gray-400">Auto-selected</span>
+            </div>
+            <div
+              className={`rounded-lg border px-3 py-2 text-sm  ${
+                specializationDisplay ? 'bg-white text-gray-900 border-gray-200' : 'bg-gray-100 text-gray-400 border-gray-200'
+              }`}
+            >
+              {specializationDisplay || 'Select a class to view specialization'}
+            </div>
+            {formErrors.specialization_id && <p className="text-xs text-red-600">{formErrors.specialization_id}</p>}
+          </div>
+        </div>
+
+        {/* Session Type & Status Section */}
+        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Session Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">Session Type *</label>
+              </div>
+              <SearchSelect
+                value={form.planning_session_type_id}
+                onChange={handleSelectChange('planning_session_type_id')}
+                options={sessionTypeOptions}
+                placeholder="Select session type"
+                isLoading={sessionTypesLoading}
+                error={formErrors.planning_session_type_id}
               />
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
-              className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
-              value={form.status}
-              onChange={(e) => setForm((prev) => ({ ...prev, status: Number(e.target.value) as typeof form.status }))}
-            >
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                value={form.status}
+                onChange={(e) => setForm((prev) => ({ ...prev, status: Number(e.target.value) as typeof form.status }))}
+              >
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

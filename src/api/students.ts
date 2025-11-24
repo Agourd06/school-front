@@ -53,6 +53,12 @@ export type GetAllStudentsParams = {
   status?: number;
 };
 
+export type GetStudentsWithoutReportParams = {
+  school_year_id?: number;
+  school_year_period_id?: number;
+  class_id?: number;
+};
+
 export type CreateStudentRequest = Omit<Student, 'id' | 'created_at' | 'updated_at'>;
 export type UpdateStudentRequest = Partial<CreateStudentRequest>;
 
@@ -94,6 +100,23 @@ export const studentsApi = {
 
   async delete(id: number): Promise<void> {
     await api.delete(`/students/${id}`);
+  },
+
+  /**
+   * Get all students without active reports
+   * Returns a plain array (not paginated) of students that don't have any active student report
+   * Automatically filtered by company_id from JWT token
+   * Can be filtered by school_year_id, school_year_period_id, and/or class_id
+   */
+  async getWithoutReport(params?: GetStudentsWithoutReportParams): Promise<Student[]> {
+    const qp = new URLSearchParams();
+    if (params?.school_year_id) qp.append('school_year_id', String(params.school_year_id));
+    if (params?.school_year_period_id) qp.append('school_year_period_id', String(params.school_year_period_id));
+    if (params?.class_id) qp.append('class_id', String(params.class_id));
+    const qs = qp.toString();
+    const url = qs ? `/students/without-report?${qs}` : '/students/without-report';
+    const response = await api.get(url);
+    return response.data;
   },
 
   /**

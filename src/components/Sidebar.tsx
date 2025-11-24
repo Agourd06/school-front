@@ -29,7 +29,8 @@ interface SidebarProps {
     | "studentContacts"
     | "studentDiplomes"
     | "attestations"
-    | "studentAttestations";
+    | "studentAttestations"
+    | "classCourses";
   onTabChange: (
     tab:
       | "users"
@@ -60,6 +61,7 @@ interface SidebarProps {
       | "studentDiplomes"
       | "attestations"
       | "studentAttestations"
+      | "classCourses"
   ) => void;
   onToggleCollapse?: () => void;
   isCollapsed?: boolean;
@@ -140,6 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         { tab: 'studentPresence', label: 'Student Presence' },
         { tab: 'studentNotes', label: 'Student Notes' },
         { tab: 'studentReportDetails', label: 'Student Report Details' },
+        { tab: 'classCourses', label: 'Class Courses' },
 
       ],
     },

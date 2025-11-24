@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { studentsApi } from '../api/students';
-import type { CreateStudentRequest, UpdateStudentRequest, GetAllStudentsParams } from '../api/students';
+import type { CreateStudentRequest, UpdateStudentRequest, GetAllStudentsParams, GetStudentsWithoutReportParams } from '../api/students';
 
 export const useStudents = (params: GetAllStudentsParams = {}) => {
   return useQuery({
@@ -51,6 +51,19 @@ export const useStudentDetails = (id: number) => {
     queryKey: ['students', id, 'details'],
     queryFn: () => studentsApi.getDetails(id),
     enabled: !!id,
+  });
+};
+
+/**
+ * Get all students without active reports
+ * Returns a plain array (not paginated) of students that don't have any active student report
+ * Automatically filtered by company_id from JWT token
+ * Can be filtered by school_year_id, school_year_period_id, and/or class_id
+ */
+export const useStudentsWithoutReport = (params?: GetStudentsWithoutReportParams) => {
+  return useQuery({
+    queryKey: ['students', 'without-report', params],
+    queryFn: () => studentsApi.getWithoutReport(params),
   });
 };
 

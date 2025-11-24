@@ -31,6 +31,10 @@ export const useCreateStudentReport = () => {
     onSuccess: (result: StudentReport) => {
       qc.invalidateQueries({ queryKey: [QUERY_KEY] });
       qc.setQueryData([QUERY_KEY, result.id], result);
+      // Invalidate students without reports to update the dropdown instantly
+      qc.invalidateQueries({ queryKey: ['students', 'without-report'] });
+      // Invalidate dashboard to update the students list instantly
+      qc.invalidateQueries({ queryKey: ['studentReportDashboard'] });
     },
   });
 };
@@ -42,6 +46,10 @@ export const useUpdateStudentReport = () => {
     onSuccess: (result: StudentReport) => {
       qc.invalidateQueries({ queryKey: [QUERY_KEY] });
       qc.setQueryData([QUERY_KEY, result.id], result);
+      // Invalidate students without reports to ensure dropdown is up to date
+      qc.invalidateQueries({ queryKey: ['students', 'without-report'] });
+      // Invalidate dashboard to update the students list instantly
+      qc.invalidateQueries({ queryKey: ['studentReportDashboard'] });
     },
   });
 };
@@ -52,6 +60,10 @@ export const useDeleteStudentReport = () => {
     mutationFn: (id: number) => studentReportApi.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [QUERY_KEY] });
+      // Invalidate students without reports so deleted student appears in dropdown again
+      qc.invalidateQueries({ queryKey: ['students', 'without-report'] });
+      // Invalidate dashboard to update the students list instantly
+      qc.invalidateQueries({ queryKey: ['studentReportDashboard'] });
     },
   });
 };
