@@ -36,6 +36,9 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
   courseOptions,
   serverError,
 }) => {
+  const disableTeacherSelect = Boolean(initialData?.teacher_id);
+  const disableCourseSelect = Boolean(initialData?.course_id);
+
   const handleSubmit = async (formData: StudentReportDetailFormData) => {
     await onSubmit(formData as StudentReportDetailFormValues);
   };
@@ -56,6 +59,8 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
         serverError={serverError}
         teacherOptions={teacherOptions}
         courseOptions={courseOptions}
+        disableTeacherSelect={disableTeacherSelect}
+        disableCourseSelect={disableCourseSelect}
       />
     </BaseModal>
   );

@@ -3,19 +3,14 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import DeleteModal from '../modals/DeleteModal';
 import StudentReportModal, { type StudentReportFormValues } from '../modals/StudentReportModal';
 import StudentReportDetailModal, { type StudentReportDetailFormValues } from '../modals/StudentReportDetailModal';
-import ReportDetailsViewerModal from '../reportSection/ReportDetailsViewerModal';
 import type { StudentReport, StudentReportDashboardStudent } from '../../api/studentReport';
-import type { StudentReportDetail } from '../../api/studentReportDetail';
+import type { StudentReportDetail, StudentReportDetailStatus } from '../../api/studentReportDetail';
 import {
   useCreateStudentReport,
   useUpdateStudentReport,
   useDeleteStudentReport,
 } from '../../hooks/useStudentReports';
-import {
-  useCreateStudentReportDetail,
-  useUpdateStudentReportDetail,
-  useStudentReportDetails,
-} from '../../hooks/useStudentReportDetails';
+import { useCreateStudentReportDetail, useUpdateStudentReportDetail } from '../../hooks/useStudentReportDetails';
 import { useStudentReportDashboard } from '../../hooks/useStudentReportDashboard';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
@@ -29,6 +24,8 @@ import Report, {
 import type { SortKey } from '../reportSection/types';
 import { getFileUrl } from '../../utils/apiConfig';
 import { studentReportDetailApi } from '../../api/studentReportDetail';
+import CoursesNotesModal from '../reportSection/CoursesNotesModal';
+import { exportStudentReportPdf } from '../../utils/exportStudentReportPdf.tsx';
 
 type ErrorWithMessage = {
   response?: {
@@ -140,11 +137,6 @@ const StudentReportsSection: React.FC = () => {
     studentId: number;
     detail?: StudentReportDetail;
   } | null>(null);
-  const [detailViewerState, setDetailViewerState] = useState<{
-    reportId: number;
-    studentId: number;
-    studentName: string;
-  } | null>(null);
   const [detailModalError, setDetailModalError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentReport | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -153,6 +145,12 @@ const StudentReportsSection: React.FC = () => {
     direction: 'asc',
   });
   const [reportDetailsMap, setReportDetailsMap] = useState<Record<number, StudentReportDetail[]>>({});
+  const [bulkReportCreating, setBulkReportCreating] = useState(false);
+  const [autoDetailCreatingId, setAutoDetailCreatingId] = useState<number | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+  const [courseViewerState, setCourseViewerState] = useState<
+    { mode: 'all' } | { mode: 'student'; studentId: number; studentName: string } | null
+  >(null);
 
   const { data: yearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
   const { data: periodsResp, isLoading: periodsLoading } = useSchoolYearPeriods({
@@ -187,22 +185,11 @@ const StudentReportsSection: React.FC = () => {
   const deleteReportMut = useDeleteStudentReport();
   const createReportDetailMut = useCreateStudentReportDetail();
   const updateReportDetailMut = useUpdateStudentReportDetail();
-  const {
-    data: reportDetailsData,
-    isLoading: reportDetailsLoading,
-    refetch: refetchReportDetails,
-  } = useStudentReportDetails(
-    detailViewerState?.reportId
-      ? { student_report_id: detailViewerState.reportId, limit: 100 }
-      : { limit: 0 },
-    { enabled: !!detailViewerState?.reportId }
-  );
-  const reportDetailEntries = useMemo(() => reportDetailsData?.data ?? [], [reportDetailsData?.data]);
-
   useEffect(() => {
     setSelectedStudentFilter('');
     setSelectedCourseFilter('');
     setSelectedTeacherFilter('');
+    setSelectedStudentId(null); // Clear student selection when filters change
   }, [selectedClass, selectedPeriod, selectedYear]);
 
   const yearOptions = useMemo<SearchSelectOption[]>(
@@ -249,6 +236,12 @@ const StudentReportsSection: React.FC = () => {
     });
     return map;
   }, [dashboardStudents]);
+
+  const selectedStudentName = useMemo(() => {
+    if (!selectedStudentId) return null;
+    const entry = studentLookup.get(selectedStudentId);
+    return entry ? formatStudentName(entry.student, entry.student_id) : null;
+  }, [selectedStudentId, studentLookup]);
 
   const studentFilterOptions = useMemo<SearchSelectOption[]>(() => {
     const options = dashboardStudents.map((entry) => ({
@@ -324,43 +317,22 @@ const StudentReportsSection: React.FC = () => {
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [teacherMap]);
 
-  const courseRows = useMemo<CoursePresenceRow[]>(() => {
-    let presences = dashboardData?.presences || [];
-
-    if (selectedStudentFilter) {
-      const studentId = Number(selectedStudentFilter);
-      presences = presences.filter((presence) => presence.student_id === studentId);
-    }
-    if (selectedCourseFilter) {
-      const courseId = Number(selectedCourseFilter);
-      presences = presences.filter((presence) => {
-        const planningCourseId = presence.studentPlanning?.course_id ?? presence.studentPlanning?.course?.id;
-        return planningCourseId === courseId;
-      });
-    }
-    if (selectedTeacherFilter) {
-      const teacherId = Number(selectedTeacherFilter);
-      presences = presences.filter((presence) => {
-        const planningTeacherId = presence.studentPlanning?.teacher_id ?? presence.studentPlanning?.teacher?.id;
-        return planningTeacherId === teacherId;
-      });
-    }
-
-    return presences.map((presence) => {
+  const allCourseRows = useMemo<CoursePresenceRow[]>(() => {
+    return (dashboardData?.presences || []).map((presence) => {
       const studentEntry = studentLookup.get(presence.student_id);
       const studentInfo = presence.student ?? studentEntry?.student ?? null;
       const studentName = formatStudentName(studentInfo, presence.student_id);
       const studentAvatar = getAvatarForStudent(studentInfo);
 
-      const courseId = presence.studentPlanning?.course_id ?? presence.studentPlanning?.course?.id;
+      const courseId = presence.studentPlanning?.course_id ?? presence.studentPlanning?.course?.id ?? null;
       const courseMeta = courseId ? courseMap.get(courseId) : null;
-      const courseName = formatCourseTitle(presence.studentPlanning?.course ?? courseMeta ?? null, courseId);
+      const courseName = formatCourseTitle(presence.studentPlanning?.course ?? courseMeta ?? null, courseId ?? undefined);
       const courseCoefficient =
         (presence.studentPlanning?.course as { coefficient?: number | null } | undefined)?.coefficient ?? null;
 
-      const teacherId = presence.studentPlanning?.teacher_id ?? presence.studentPlanning?.teacher?.id;
+      const teacherId = presence.studentPlanning?.teacher_id ?? presence.studentPlanning?.teacher?.id ?? null;
       const teacherMeta = teacherId ? teacherMap.get(teacherId) : null;
-      const teacherName = formatTeacherName(presence.studentPlanning?.teacher ?? teacherMeta ?? null, teacherId);
+      const teacherName = formatTeacherName(presence.studentPlanning?.teacher ?? teacherMeta ?? null, teacherId ?? undefined);
 
       const noteRaw = presence.note as string | number | null | undefined;
       let noteValue = '';
@@ -380,24 +352,27 @@ const StudentReportsSection: React.FC = () => {
         id: presence.id,
         studentId: presence.student_id,
         studentName,
-        teacherName,
-        courseName,
-        courseCoefficient,
         avatar: studentAvatar,
+        teacherName,
+        teacherId,
+        courseName,
+        courseId,
+        courseCoefficient,
         note: noteValue || '—',
         noteNumeric,
         validateReport,
       };
     });
-  }, [
-    dashboardData?.presences,
-    selectedStudentFilter,
-    selectedCourseFilter,
-    selectedTeacherFilter,
-    studentLookup,
-    courseMap,
-    teacherMap,
-  ]);
+  }, [dashboardData?.presences, studentLookup, courseMap, teacherMap]);
+
+  const courseRows = useMemo<CoursePresenceRow[]>(() => {
+    return allCourseRows.filter((row) => {
+      if (selectedStudentFilter && row.studentId !== Number(selectedStudentFilter)) return false;
+      if (selectedCourseFilter && row.courseId !== Number(selectedCourseFilter)) return false;
+      if (selectedTeacherFilter && row.teacherId !== Number(selectedTeacherFilter)) return false;
+      return true;
+    });
+  }, [allCourseRows, selectedStudentFilter, selectedCourseFilter, selectedTeacherFilter]);
 
   const filteredStudents = useMemo(() => {
     if (!selectedStudentFilter) return dashboardStudents;
@@ -420,6 +395,11 @@ const StudentReportsSection: React.FC = () => {
     const rows: ReportDetailItem[] = [];
 
     filteredStudents.forEach((entry) => {
+      // Filter by selected student if one is selected
+      if (selectedStudentId !== null && entry.student_id !== selectedStudentId) {
+        return;
+      }
+
       const studentName = formatStudentName(entry.student, entry.student_id);
       const reportId = entry.report?.id;
       const reportDetails =
@@ -448,8 +428,8 @@ const StudentReportsSection: React.FC = () => {
           studentName,
           mention: entry.report?.mention ?? null,
           reportId,
-          courseName: formatCourseTitle(detail.course ?? null, detail.course_id),
-          teacherName: formatTeacherName(detail.teacher ?? null, detail.teacher_id),
+          courseName: formatCourseTitle(detail.course ?? null, detail.course_id ?? detail.course?.id),
+          teacherName: formatTeacherName(detail.teacher ?? null, detail.teacher_id ?? detail.teacher?.id),
           note: detail.note ?? null,
           hasDetails: true,
         });
@@ -457,9 +437,42 @@ const StudentReportsSection: React.FC = () => {
     });
 
     return rows;
-  }, [filteredStudents, reportDetailsMap]);
+  }, [filteredStudents, reportDetailsMap, selectedStudentId]);
 
   useEffect(() => {
+    // If a student is selected, fetch details for that student using student_id filter
+    if (selectedStudentId !== null) {
+      const studentEntry = filteredStudents.find((entry) => entry.student_id === selectedStudentId);
+      if (!studentEntry?.report?.id) return;
+
+      const reportId = studentEntry.report.id;
+      // Only fetch if we don't have details for this report
+      if (reportDetailsMap[reportId]) return;
+
+      let cancelled = false;
+      const fetchDetails = async () => {
+        try {
+          const response = await studentReportDetailApi.getAll({
+            student_id: selectedStudentId,
+            limit: 100,
+          });
+          if (cancelled) return;
+          setReportDetailsMap((prev) => ({
+            ...prev,
+            [reportId]: response.data,
+          }));
+        } catch (error) {
+          console.error('Failed to fetch report details for student', selectedStudentId, error);
+        }
+      };
+
+      fetchDetails();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    // Otherwise, fetch for all missing reports (original behavior)
     const missingReportIds = filteredStudents
       .map((entry) => entry.report?.id)
       .filter((id): id is number => id !== undefined && id !== null && !(id in reportDetailsMap));
@@ -492,15 +505,7 @@ const StudentReportsSection: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [filteredStudents, reportDetailsMap]);
-
-  useEffect(() => {
-    if (!detailViewerState?.reportId || reportDetailsLoading) return;
-    setReportDetailsMap((prev) => ({
-      ...prev,
-      [detailViewerState.reportId!]: reportDetailEntries,
-    }));
-  }, [detailViewerState, reportDetailEntries, reportDetailsLoading]);
+  }, [filteredStudents, reportDetailsMap, selectedStudentId]);
 
   const studentReportMap = useMemo(() => {
     const map = new Map<number, StudentReport | null>();
@@ -509,6 +514,11 @@ const StudentReportsSection: React.FC = () => {
     });
     return map;
   }, [filteredStudents]);
+
+  const studentsMissingReports = useMemo(
+    () => dashboardStudents.filter((entry) => !entry.report),
+    [dashboardStudents]
+  );
 
   const handleOpenReportForStudent = (studentId: number) => {
     const report = studentReportMap.get(studentId) ?? null;
@@ -523,30 +533,52 @@ const StudentReportsSection: React.FC = () => {
     setDetailModalError(null);
   };
 
-  const handleViewReportDetails = (studentId: number, reportId: number | undefined, studentName: string) => {
+  const openDetailModal = (studentId: number, reportId: number, detail?: StudentReportDetail) => {
+    setDetailModalState({ studentId, reportId, detail });
+    setDetailModalError(null);
+  };
+
+  const handleViewReportDetails = async (
+    studentId: number,
+    reportId: number | undefined,
+    detailId?: number
+  ) => {
     if (!reportId) return;
-    setDetailViewerState({ studentId, reportId, studentName });
-  };
 
-  const handleDetailViewerClose = () => {
-    setDetailViewerState(null);
-  };
+    const ensureDetailsInCache = async (): Promise<StudentReportDetail[]> => {
+      if (reportDetailsMap[reportId]) return reportDetailsMap[reportId]!;
+      try {
+        const response = await studentReportDetailApi.getAll({ student_report_id: reportId, limit: 100 });
+        setReportDetailsMap((prev) => ({
+          ...prev,
+          [reportId]: response.data,
+        }));
+        return response.data;
+      } catch (error) {
+        console.error('Failed to preload report details', error);
+        return [];
+      }
+    };
 
-  const handleDetailModalFromViewer = () => {
-    if (!detailViewerState) return;
-    setDetailModalState({ studentId: detailViewerState.studentId, reportId: detailViewerState.reportId });
-    setDetailModalError(null);
-    setDetailViewerState(null);
-  };
+    const cachedDetails = await ensureDetailsInCache();
+    let targetDetail: StudentReportDetail | undefined =
+      detailId !== undefined ? cachedDetails.find((detail) => detail.id === detailId) : cachedDetails[0];
 
-  const handleDetailEditFromViewer = (detail: StudentReportDetail) => {
-    setDetailModalState((prev) => ({
-      studentId: detailViewerState?.studentId ?? prev?.studentId ?? detail.student_report_id,
-      reportId: detail.student_report_id,
-      detail,
-    }));
-    setDetailModalError(null);
-    setDetailViewerState(null);
+    if (!targetDetail && detailId) {
+      try {
+        targetDetail = await studentReportDetailApi.getById(detailId);
+        setReportDetailsMap((prev) => ({
+          ...prev,
+          [reportId]: [...(prev[reportId] ?? []), targetDetail!].filter(
+            (detail, index, self) => self.findIndex((d) => d.id === detail.id) === index
+          ),
+        }));
+      } catch (error) {
+        console.error('Failed to fetch report detail', error);
+      }
+    }
+
+    openDetailModal(studentId, reportId, targetDetail);
   };
 
   const sortedCourseRows = useMemo(() => {
@@ -580,6 +612,34 @@ const StudentReportsSection: React.FC = () => {
     return rows;
   }, [courseRows, sortConfig]);
 
+  const coursesByStudent = useMemo(() => {
+    const map = new Map<number, CoursePresenceRow[]>();
+    allCourseRows.forEach((row) => {
+      if (!map.has(row.studentId)) {
+        map.set(row.studentId, []);
+      }
+      map.get(row.studentId)!.push(row);
+    });
+    return map;
+  }, [allCourseRows]);
+
+  const selectedStudentCourses = useMemo(() => {
+    if (!selectedStudentId) return [];
+    return coursesByStudent.get(selectedStudentId) ?? [];
+  }, [coursesByStudent, selectedStudentId]);
+
+  const courseViewerRows = useMemo(() => {
+    if (!courseViewerState) return [];
+    if (courseViewerState.mode === 'all') return sortedCourseRows;
+    return coursesByStudent.get(courseViewerState.studentId) ?? [];
+  }, [courseViewerState, sortedCourseRows, coursesByStudent]);
+
+  const courseViewerTitle = useMemo(() => {
+    if (!courseViewerState) return 'Courses & notes';
+    if (courseViewerState.mode === 'all') return 'Courses & notes';
+    return `Courses & notes • ${courseViewerState.studentName}`;
+  }, [courseViewerState]);
+
   const handleSort = (key: SortKey) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
@@ -589,6 +649,22 @@ const StudentReportsSection: React.FC = () => {
       return { key, direction: defaultDirection };
     });
   };
+
+  const handleShowAllCourses = () => {
+    if (sortedCourseRows.length === 0) return;
+    setCourseViewerState({ mode: 'all' });
+  };
+
+  const handleShowSelectedStudentCourses = () => {
+    if (!selectedStudentId || !selectedStudentName) return;
+    setCourseViewerState({
+      mode: 'student',
+      studentId: selectedStudentId,
+      studentName: selectedStudentName,
+    });
+  };
+
+  const handleCloseCourseViewer = () => setCourseViewerState(null);
 
   const totalStudents = dashboardStudents.length;
 
@@ -620,8 +696,44 @@ const StudentReportsSection: React.FC = () => {
         await updateReportMut.mutateAsync({ id: editingReport.id, data: payload });
         setAlert({ type: 'success', message: 'Student report updated successfully.' });
       } else {
-        await createReportMut.mutateAsync(payload);
-        setAlert({ type: 'success', message: 'Student report created successfully.' });
+        const newReport = await createReportMut.mutateAsync(payload);
+        
+        // Auto-create report details from course/teacher data
+        const studentId = Number(values.student_id);
+        const studentCourseRows = allCourseRows.filter((row) => row.studentId === studentId);
+        
+        // Group by unique course_id + teacher_id combinations
+        const uniqueCombinations = new Map<string, CoursePresenceRow>();
+        studentCourseRows.forEach((row) => {
+          if (row.courseId && row.teacherId) {
+            const key = `${row.courseId}-${row.teacherId}`;
+            // Keep the first occurrence of each unique combination
+            if (!uniqueCombinations.has(key)) {
+              uniqueCombinations.set(key, row);
+            }
+          }
+        });
+
+        // Create report details for each unique combination
+        const detailPromises = Array.from(uniqueCombinations.values()).map((row) => {
+          const detailPayload = {
+            student_report_id: newReport.id,
+            course_id: row.courseId ?? undefined,
+            teacher_id: row.teacherId ?? undefined,
+            status: 2 as StudentReportDetailStatus,
+          };
+          return createReportDetailMut.mutateAsync(detailPayload);
+        });
+
+        if (detailPromises.length > 0) {
+          await Promise.all(detailPromises);
+          setAlert({
+            type: 'success',
+            message: `Student report created successfully with ${detailPromises.length} report detail${detailPromises.length > 1 ? 's' : ''}.`,
+          });
+        } else {
+          setAlert({ type: 'success', message: 'Student report created successfully.' });
+        }
       }
       handleReportModalClose();
       refetchDashboard();
@@ -655,17 +767,7 @@ const StudentReportsSection: React.FC = () => {
         });
         setAlert({ type: 'success', message: 'Report detail updated successfully.' });
       } else {
-        if (Number.isNaN(teacherId) || Number.isNaN(courseId)) {
-          throw new Error('Teacher and course are required');
-        }
-        result = await createReportDetailMut.mutateAsync({
-          student_report_id: detailModalState.reportId,
-          teacher_id: teacherId,
-          course_id: courseId,
-          remarks: payload.remarks,
-          note: payload.note,
-          status: payload.status,
-        });
+        result = await createReportDetailMut.mutateAsync(payload);
         setAlert({ type: 'success', message: 'Report detail added successfully.' });
       }
 
@@ -687,9 +789,6 @@ const StudentReportsSection: React.FC = () => {
 
       handleDetailModalClose();
       refetchDashboard();
-      if (detailViewerState) {
-        refetchReportDetails();
-      }
     } catch (err: unknown) {
       setDetailModalError(extractErrorMessage(err));
       throw err;
@@ -782,15 +881,225 @@ const StudentReportsSection: React.FC = () => {
     return `Student #${deleteTarget.student_id}`;
   }, [deleteTarget, studentLookup]);
 
+  const handleExportStudentReport = async (studentId: number) => {
+    const report = studentReportMap.get(studentId);
+    if (!report?.id) {
+      setAlert({ type: 'error', message: 'Student must have a report before exporting.' });
+      return;
+    }
+
+    const studentEntry = studentLookup.get(studentId);
+    const studentName = formatStudentName(studentEntry?.student, studentId);
+
+    const ensureDetailsForReport = async (): Promise<StudentReportDetail[]> => {
+      if (reportDetailsMap[report.id]) return reportDetailsMap[report.id]!;
+      const response = await studentReportDetailApi.getAll({ student_report_id: report.id, limit: 100 });
+      setReportDetailsMap((prev) => ({
+        ...prev,
+        [report.id]: response.data,
+      }));
+      return response.data;
+    };
+
+    try {
+      const details = await ensureDetailsForReport();
+
+      const studentCourseRows = coursesByStudent.get(studentId) ?? [];
+
+      const subjects =
+        details.length > 0
+          ? details.map((detail) => {
+              const courseId = detail.course_id ?? detail.course?.id ?? null;
+              const matchingCourse = courseId
+                ? studentCourseRows.find((row) => row.courseId === courseId)
+                : undefined;
+              const noteFromCourse = matchingCourse?.note?.trim();
+              const noteFallback =
+                detail.note === null || detail.note === undefined ? null : String(detail.note);
+              return {
+                name: formatCourseTitle(detail.course ?? null, courseId ?? undefined) || 'Course',
+                studentNote: noteFromCourse || noteFallback || '—',
+                classNote:
+                  matchingCourse?.courseCoefficient !== null && matchingCourse?.courseCoefficient !== undefined
+                    ? `Coeff. ${matchingCourse.courseCoefficient}`
+                    : '—',
+                appreciation: detail.remarks || '—',
+              };
+            })
+          : [];
+
+      const numericNotes = subjects
+        .map((subject) => {
+          const parsed = Number(subject.studentNote);
+          return Number.isFinite(parsed) ? parsed : null;
+        })
+        .filter((value): value is number => value !== null);
+      const overallAverage =
+        numericNotes.length > 0
+          ? (numericNotes.reduce((sum, value) => sum + value, 0) / numericNotes.length).toFixed(2)
+          : null;
+
+      await exportStudentReportPdf({
+        studentName,
+        studentId: studentEntry?.student?.id ? String(studentEntry.student.id) : String(report.student_id ?? '—'),
+        classLabel,
+        schoolYearLabel: yearLabel ?? selectedYear ?? undefined,
+        periodLabel,
+        birthDate: (studentEntry?.student as { birth_date?: string } | undefined)?.birth_date,
+        subjects,
+        counselorNote: report.remarks ?? undefined,
+        principalNote: report.mention ?? undefined,
+        overallAverage,
+        classAverage: null,
+        rank: null,
+        absences: undefined,
+        tardies: undefined,
+      });
+      setAlert({ type: 'success', message: `Report exported for ${studentName}.` });
+    } catch (error: unknown) {
+      console.error('Failed to export student report', error);
+      setAlert({ type: 'error', message: extractErrorMessage(error) });
+    }
+  };
+
   const canShowGrid = Boolean(selectedYear && selectedPeriod && selectedClass);
   const isDashboardLoading = canShowGrid && dashboardLoading;
 
-  const handleCreateReportFromHeader = () => {
-    if (!canShowGrid || dashboardStudents.length === 0) return;
-    setEditingReport(null);
-    setModalStudentId(null);
-    setReportModalError(null);
-    setReportModalOpen(true);
+  const handleCreateReportsForClass = async () => {
+    if (!canShowGrid || !selectedYear || !selectedPeriod || dashboardStudents.length === 0) return;
+    if (studentsMissingReports.length === 0) {
+      setAlert({ type: 'success', message: 'Every student in this class already has a report.' });
+      return;
+    }
+    if (bulkReportCreating) return;
+
+    setBulkReportCreating(true);
+    try {
+      const payloadBase = {
+        school_year_id: Number(selectedYear),
+        school_year_period_id: Number(selectedPeriod),
+        passed: false,
+        status: 2 as StudentReport['status'],
+        remarks: undefined,
+        mention: undefined,
+      };
+
+      let totalDetailsCreated = 0;
+      for (const entry of studentsMissingReports) {
+        const newReport = await createReportMut.mutateAsync({
+          ...payloadBase,
+          student_id: entry.student_id,
+        });
+
+        // Auto-create report details from course/teacher data
+        const studentCourseRows = allCourseRows.filter((row) => row.studentId === entry.student_id);
+        
+        // Group by unique course_id + teacher_id combinations
+        const uniqueCombinations = new Map<string, CoursePresenceRow>();
+        studentCourseRows.forEach((row) => {
+          if (row.courseId && row.teacherId) {
+            const key = `${row.courseId}-${row.teacherId}`;
+            // Keep the first occurrence of each unique combination
+            if (!uniqueCombinations.has(key)) {
+              uniqueCombinations.set(key, row);
+            }
+          }
+        });
+
+        // Create report details for each unique combination
+        const detailPromises = Array.from(uniqueCombinations.values()).map((row) => {
+          const detailPayload = {
+            student_report_id: newReport.id,
+            course_id: row.courseId ?? undefined,
+            teacher_id: row.teacherId ?? undefined,
+            status: 2 as StudentReportDetailStatus,
+          };
+          return createReportDetailMut.mutateAsync(detailPayload);
+        });
+
+        if (detailPromises.length > 0) {
+          await Promise.all(detailPromises);
+          totalDetailsCreated += detailPromises.length;
+        }
+      }
+
+      const reportMessage = `Created ${studentsMissingReports.length} student report${
+        studentsMissingReports.length > 1 ? 's' : ''
+      }`;
+      const detailsMessage =
+        totalDetailsCreated > 0
+          ? ` with ${totalDetailsCreated} report detail${totalDetailsCreated > 1 ? 's' : ''}`
+          : '';
+      setAlert({
+        type: 'success',
+        message: `${reportMessage}${detailsMessage}.`,
+      });
+      await refetchDashboard();
+    } catch (err: unknown) {
+      setAlert({ type: 'error', message: extractErrorMessage(err) });
+    } finally {
+      setBulkReportCreating(false);
+    }
+  };
+
+  const handleCreateDetailFromStudentCard = async (studentId: number) => {
+    const report = studentReportMap.get(studentId);
+    if (!report?.id) return;
+
+    // Toggle selection: if clicking the same student, deselect; otherwise select
+    if (selectedStudentId === studentId) {
+      setSelectedStudentId(null);
+      return;
+    }
+
+    // Set selected student to filter report details
+    setSelectedStudentId(studentId);
+
+    const reportId = report.id;
+    const studentEntry = studentLookup.get(studentId);
+    const studentName = formatStudentName(studentEntry?.student, studentId);
+    const cachedDetails = reportDetailsMap[reportId] ?? getReportDetailsFromReport(studentEntry?.report ?? report);
+
+    // If student already has details, just set selection and return (don't create)
+    if (cachedDetails.length > 0) {
+      return;
+    }
+
+    if (autoDetailCreatingId !== null) return;
+
+    // Ensure modal is closed before creating
+    setDetailModalState(null);
+    setDetailModalError(null);
+    setAutoDetailCreatingId(studentId);
+
+    try {
+      const payload = {
+        student_report_id: reportId,
+        status: 2 as StudentReportDetailStatus,
+      };
+
+      const newDetail = await createReportDetailMut.mutateAsync(payload);
+
+      setReportDetailsMap((prev) => {
+        const existing = prev[reportId] ?? [];
+        return {
+          ...prev,
+          [reportId]: [...existing, newDetail],
+        };
+      });
+      // Ensure modal is closed
+      setDetailModalState(null);
+      setDetailModalError(null);
+      setAlert({
+        type: 'success',
+        message: `Created an empty report detail for ${studentName}. Use the table action to update it.`,
+      });
+      await refetchDashboard();
+    } catch (err: unknown) {
+      setAlert({ type: 'error', message: extractErrorMessage(err) });
+    } finally {
+      setAutoDetailCreatingId(null);
+    }
   };
 
   return (
@@ -903,12 +1212,20 @@ const StudentReportsSection: React.FC = () => {
           <Report
             students={studentCardItems}
             reportDetails={reportDetailsItems}
-            courses={sortedCourseRows}
-            sortConfig={sortConfig}
-            onSort={handleSort}
             onAddReport={handleOpenReportForStudent}
-            onCreateReport={handleCreateReportFromHeader}
+            onCreateReport={handleCreateReportsForClass}
             onViewDetails={handleViewReportDetails}
+            onCreateDetailFromStudent={handleCreateDetailFromStudentCard}
+            onExportStudentReport={handleExportStudentReport}
+            onShowAllCourses={handleShowAllCourses}
+            hasCourseData={sortedCourseRows.length > 0}
+            isCreateReportLoading={bulkReportCreating}
+            disableCreateReport={!canShowGrid || dashboardStudents.length === 0}
+            creatingDetailStudentId={autoDetailCreatingId}
+            selectedStudentId={selectedStudentId}
+            selectedStudentName={selectedStudentName}
+            selectedStudentHasCourses={selectedStudentCourses.length > 0}
+            onShowSelectedStudentCourses={handleShowSelectedStudentCourses}
           />
         </>
       )}
@@ -928,9 +1245,8 @@ const StudentReportsSection: React.FC = () => {
         disablePeriodSelect
         onViewReportDetails={(studentId) => {
           const report = studentReportMap.get(studentId);
-          const studentEntry = studentLookup.get(studentId);
           if (report?.id) {
-            handleViewReportDetails(studentId, report.id, formatStudentName(studentEntry?.student, studentId));
+            handleViewReportDetails(studentId, report.id);
           }
         }}
       />
@@ -947,14 +1263,13 @@ const StudentReportsSection: React.FC = () => {
         serverError={detailModalError}
       />
 
-      <ReportDetailsViewerModal
-        isOpen={!!detailViewerState}
-        onClose={handleDetailViewerClose}
-        studentName={detailViewerState?.studentName ?? ''}
-        details={reportDetailEntries}
-        isLoading={reportDetailsLoading}
-        onAddDetail={handleDetailModalFromViewer}
-        onEditDetail={handleDetailEditFromViewer}
+      <CoursesNotesModal
+        isOpen={!!courseViewerState}
+        onClose={handleCloseCourseViewer}
+        title={courseViewerTitle}
+        rows={courseViewerRows}
+        sortConfig={sortConfig}
+        onSort={handleSort}
       />
 
       <DeleteModal

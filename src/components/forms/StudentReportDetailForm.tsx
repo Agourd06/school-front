@@ -38,6 +38,8 @@ interface StudentReportDetailFormProps {
   serverError?: string | null;
   teacherOptions: SearchSelectOption[];
   courseOptions: SearchSelectOption[];
+  disableTeacherSelect?: boolean;
+  disableCourseSelect?: boolean;
 }
 
 const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
@@ -49,6 +51,8 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
   serverError,
   teacherOptions,
   courseOptions,
+  disableTeacherSelect = false,
+  disableCourseSelect = false,
 }) => {
   const [form, setForm] = useState<StudentReportDetailFormData>({
     student_report_id: reportId,
@@ -88,8 +92,6 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (form.teacher_id === '' || form.teacher_id === null) e.teacher_id = 'Teacher is required';
-    if (form.course_id === '' || form.course_id === null) e.course_id = 'Course is required';
     if (form.note !== '' && Number.isNaN(Number(form.note))) e.note = 'Note must be a number';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -120,7 +122,7 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
           onChange={handleSelectChange('teacher_id')}
           options={teacherOptions}
           placeholder="Select teacher"
-          error={errors.teacher_id}
+          disabled={disableTeacherSelect}
         />
         <SearchSelect
           label="Course"
@@ -128,7 +130,7 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
           onChange={handleSelectChange('course_id')}
           options={courseOptions}
           placeholder="Select course"
-          error={errors.course_id}
+          disabled={disableCourseSelect}
         />
         <Select
           label="Status"

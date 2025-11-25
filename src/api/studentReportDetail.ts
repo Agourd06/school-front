@@ -20,8 +20,8 @@ export interface CourseSummary {
 export interface StudentReportDetail {
   id: number;
   student_report_id: number;
-  teacher_id: number;
-  course_id: number;
+  teacher_id?: number | null;
+  course_id?: number | null;
   remarks?: string | null;
   note?: number | null;
   status: StudentReportDetailStatus;
@@ -34,8 +34,8 @@ export interface StudentReportDetail {
 
 export interface CreateStudentReportDetailPayload {
   student_report_id: number;
-  teacher_id: number;
-  course_id: number;
+  teacher_id?: number;
+  course_id?: number;
   remarks?: string | null;
   note?: number | null;
   status?: StudentReportDetailStatus;
@@ -47,6 +47,7 @@ export interface CreateStudentReportDetailPayload {
 export type UpdateStudentReportDetailPayload = Partial<CreateStudentReportDetailPayload>;
 
 export interface GetStudentReportDetailsParams extends PaginationParams {
+  student_id?: number;
   student_report_id?: number;
   teacher_id?: number;
   course_id?: number;
@@ -94,6 +95,7 @@ const buildQueryString = (params: GetStudentReportDetailsParams = {}): string =>
   const qp = new URLSearchParams();
   if (params.page) qp.append('page', String(params.page));
   if (params.limit) qp.append('limit', String(params.limit));
+  if (params.student_id) qp.append('student_id', String(params.student_id));
   if (params.student_report_id) qp.append('student_report_id', String(params.student_report_id));
   if (params.teacher_id) qp.append('teacher_id', String(params.teacher_id));
   if (params.course_id) qp.append('course_id', String(params.course_id));
@@ -116,16 +118,27 @@ export const studentReportDetailApi = {
 
   async create(payload: CreateStudentReportDetailPayload): Promise<StudentReportDetail> {
     const status = payload.status ?? 2;
-    const body = {
+    const body: Record<string, unknown> = {
       ...payload,
       status,
     };
+    Object.keys(body).forEach((key) => {
+      if (body[key] === undefined) {
+        delete body[key];
+      }
+    });
     const { data } = await api.post('/student-report-details', body);
     return data;
   },
 
   async update(id: number, payload: UpdateStudentReportDetailPayload): Promise<StudentReportDetail> {
-    const { data } = await api.patch(`/student-report-details/${id}`, payload);
+    const body: Record<string, unknown> = { ...payload };
+    Object.keys(body).forEach((key) => {
+      if (body[key] === undefined) {
+        delete body[key];
+      }
+    });
+    const { data } = await api.patch(`/student-report-details/${id}`, body);
     return data;
   },
 

@@ -1,8 +1,6 @@
 import React from 'react';
 import StudentsColumn from './columns/StudentsColumn';
 import ReportDetailsColumn from './columns/ReportDetailsColumn';
-import CoursesColumn from './columns/CoursesColumn';
-import type { SortKey } from './types';
 
 export interface AvatarInfo {
   type: 'image' | 'initials';
@@ -38,7 +36,9 @@ export interface CoursePresenceRow {
   studentName: string;
   avatar: AvatarInfo;
   teacherName: string;
+  teacherId?: number | null;
   courseName: string;
+  courseId?: number | null;
   courseCoefficient: number | null;
   note: string;
   noteNumeric: number | null;
@@ -48,28 +48,61 @@ export interface CoursePresenceRow {
 interface ReportProps {
   students: StudentCardItem[];
   reportDetails: ReportDetailItem[];
-  courses: CoursePresenceRow[];
-  sortConfig: { key: SortKey; direction: 'asc' | 'desc' };
-  onSort: (key: SortKey) => void;
   onAddReport: (studentId: number) => void;
   onCreateReport: () => void;
-  onViewDetails: (studentId: number, reportId: number | undefined, studentName: string) => void;
+  onViewDetails: (studentId: number, reportId: number | undefined, detailId?: number) => void;
+  onCreateDetailFromStudent: (studentId: number) => void;
+  onExportStudentReport: (studentId: number) => void;
+  onShowAllCourses: () => void;
+  hasCourseData: boolean;
+  isCreateReportLoading?: boolean;
+  disableCreateReport?: boolean;
+  creatingDetailStudentId?: number | null;
+  selectedStudentId?: number | null;
+  selectedStudentName?: string | null;
+  selectedStudentHasCourses?: boolean;
+  onShowSelectedStudentCourses?: () => void;
 }
 
 const Report: React.FC<ReportProps> = ({
   students,
   reportDetails,
-  courses,
-  sortConfig,
-  onSort,
   onAddReport,
   onCreateReport,
   onViewDetails,
+  onCreateDetailFromStudent,
+  onExportStudentReport,
+  onShowAllCourses,
+  hasCourseData,
+  isCreateReportLoading = false,
+  disableCreateReport = false,
+  creatingDetailStudentId = null,
+  selectedStudentId = null,
+  selectedStudentName = null,
+  selectedStudentHasCourses = false,
+  onShowSelectedStudentCourses,
 }) => (
-  <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_1fr_0.75fr] gap-6">
-    <StudentsColumn students={students} onAddReport={onAddReport} onCreateReport={onCreateReport} />
-    <ReportDetailsColumn items={reportDetails} onViewDetails={onViewDetails} />
-    <CoursesColumn rows={courses} sortConfig={sortConfig} onSort={onSort} />
+  <div className="grid grid-cols-1 xl:grid-cols-[1fr_1.4fr] gap-6">
+    <StudentsColumn
+      students={students}
+      onAddReport={onAddReport}
+      onCreateReport={onCreateReport}
+      onCreateDetail={onCreateDetailFromStudent}
+      onExportReport={onExportStudentReport}
+      isCreateReportLoading={isCreateReportLoading}
+      disableCreateReport={disableCreateReport}
+      creatingDetailStudentId={creatingDetailStudentId}
+      selectedStudentId={selectedStudentId}
+    />
+    <ReportDetailsColumn
+      items={reportDetails}
+      onViewDetails={onViewDetails}
+      onShowAllCourses={onShowAllCourses}
+      hasCourseData={hasCourseData}
+      selectedStudentName={selectedStudentName}
+      selectedStudentHasCourses={selectedStudentHasCourses}
+      onShowSelectedStudentCourses={onShowSelectedStudentCourses}
+    />
   </div>
 );
 
