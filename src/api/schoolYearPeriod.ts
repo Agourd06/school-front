@@ -58,7 +58,13 @@ export const schoolYearPeriodApi = {
 
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
-    const rawParams = params as FilterParams & { title?: string; lifecycle_status?: string; schoolYearId?: number };
+    const rawParams = params as FilterParams & {
+      title?: string;
+      lifecycle_status?: string;
+      schoolYearId?: number;
+      school_year_id?: number;
+      school_year_period_id?: number;
+    };
     const searchVal = (rawParams.title ?? rawParams.search) as string | undefined;
     if (searchVal && searchVal.trim()) {
       const s = searchVal.trim();
@@ -66,20 +72,24 @@ export const schoolYearPeriodApi = {
     }
     if (params.status !== undefined && params.status !== null) queryParams.append('status', params.status.toString());
     if (rawParams.lifecycle_status) queryParams.append('lifecycle_status', rawParams.lifecycle_status);
+    const schoolYearId = rawParams.schoolYearId ?? rawParams.school_year_id;
+    if (schoolYearId !== undefined && schoolYearId !== null) {
+      queryParams.append('school_year_id', String(schoolYearId));
+    }
+    if (rawParams.school_year_period_id !== undefined && rawParams.school_year_period_id !== null) {
+      queryParams.append('school_year_period_id', String(rawParams.school_year_period_id));
+    }
 
     const queryString = queryParams.toString();
     const url = queryString ? `/school-year-periods?${queryString}` : '/school-year-periods';
 
     const response = await api.get(url);
-    console.log('SchoolYearPeriods API request params:', params);
-    console.log('SchoolYearPeriods API request URL:', url);
-    console.log('SchoolYearPeriods API response:', response.data);
 
     const applyClientFilterAndPaginate = (items: SchoolYearPeriod[]) => {
       const page = params.page ?? 1;
       const limit = params.limit ?? 10;
       const s = params.search?.toLowerCase().trim();
-      const schoolYearIdFilter = rawParams.schoolYearId;
+      const schoolYearIdFilter = schoolYearId;
       const lifecycleStatusFilter = rawParams.lifecycle_status;
 
       let filtered = items;

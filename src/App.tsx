@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import RegistrationPage from './pages/RegistrationPage';
 
 const App: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -20,12 +21,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="pt-16">
-        <Routes>
+      <Routes>
+        {/* Public routes without Navbar */}
         <Route 
           path="/auth" 
-          element={user ? <Navigate to="/dashboard" /> : <AuthPage />} 
+          element={user ? <Navigate to="/dashboard" /> : <><Navbar /><div className="pt-16"><AuthPage /></div></>} 
         />
         <Route 
           path="/login" 
@@ -33,7 +33,11 @@ const App: React.FC = () => {
         />
         <Route 
           path="/register" 
-          element={<Navigate to="/auth?mode=register" />} 
+          element={user ? <Navigate to="/dashboard" /> : <RegistrationPage />} 
+        />
+        <Route 
+          path="/signup" 
+          element={<Navigate to="/register" />} 
         />
         <Route 
           path="/forgot-password" 
@@ -41,11 +45,12 @@ const App: React.FC = () => {
         />
         <Route 
           path="/reset-password" 
-          element={user ? <Navigate to="/dashboard" /> : <ResetPasswordPage />} 
+          element={user ? <Navigate to="/dashboard" /> : <><Navbar /><div className="pt-16"><ResetPasswordPage /></div></>} 
         />
+        {/* Protected routes with Navbar */}
         <Route 
           path="/dashboard" 
-          element={user ? <Dashboard /> : <Navigate to="/auth" />} 
+          element={user ? <><Navbar /><div className="pt-16"><Dashboard /></div></> : <Navigate to="/auth" />} 
         />
         <Route 
           path="/" 
@@ -56,8 +61,7 @@ const App: React.FC = () => {
           path="*" 
           element={<Navigate to={user ? "/dashboard" : "/auth"} />} 
         />
-        </Routes>
-      </div>
+      </Routes>
       
       
     </div>

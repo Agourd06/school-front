@@ -37,9 +37,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Don't redirect on 401 if we're on a public registration page
+      const isPublicRoute = window.location.pathname === '/register' || window.location.pathname === '/signup';
+      
+      if (!isPublicRoute) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

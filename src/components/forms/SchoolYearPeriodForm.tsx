@@ -91,6 +91,15 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
     setErrors({});
   }, [initialData, initialSchoolYearId]);
 
+  const resolveActiveSchoolYear = () => {
+    if (isSchoolYearLocked) {
+      return selectedSchoolYear || initialData?.schoolYear || null;
+    }
+    const id = typeof schoolYearId === 'number' ? schoolYearId : Number(schoolYearId);
+    if (!id) return null;
+    return schoolYears.find((year) => year.id === id) ?? null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
@@ -107,6 +116,21 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
     if (!newErrors.start_date && !newErrors.end_date && dateOrder) newErrors.date = dateOrder;
     const yearReq = validateSelectRequired(schoolYearId, 'School year');
     if (yearReq) newErrors.schoolYearId = yearReq;
+
+    const activeYear = resolveActiveSchoolYear();
+    if (activeYear?.start_date && activeYear?.end_date) {
+      const yearStart = new Date(activeYear.start_date);
+      const yearEnd = new Date(activeYear.end_date);
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      if (!newErrors.start_date && (start < yearStart || start > yearEnd)) {
+        newErrors.start_date = `Start date must be within the school year (${formatDateWithMonthDay(activeYear.start_date)} - ${formatDateWithMonthDay(activeYear.end_date)}).`;
+      }
+      if (!newErrors.end_date && (end < yearStart || end > yearEnd)) {
+        newErrors.end_date = `End date must be within the school year (${formatDateWithMonthDay(activeYear.start_date)} - ${formatDateWithMonthDay(activeYear.end_date)}).`;
+      }
+    }
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;

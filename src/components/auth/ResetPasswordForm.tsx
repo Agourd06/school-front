@@ -13,7 +13,6 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

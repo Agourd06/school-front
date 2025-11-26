@@ -28,11 +28,11 @@ const ClassModal: React.FC<ClassModalProps> = ({
   classItem,
   descriptionPosition = 'top',
 }) => {
-  const [formState, setFormState] = useState({
-    program_id: '' as number | string | '',
-    specialization_id: '' as number | string | '',
-    school_year_id: '' as number | string | '',
-  });
+  const [formState, setFormState] = useState(() => ({
+    program_id: (classItem?.program_id ?? classItem?.program?.id ?? '') as number | string | '',
+    specialization_id: (classItem?.specialization_id ?? classItem?.specialization?.id ?? '') as number | string | '',
+    school_year_id: (classItem?.school_year_id ?? classItem?.schoolYear?.id ?? '') as number | string | '',
+  }));
   const [formError, setFormError] = useState('');
   const [isDescriptionPreviewOpen, setIsDescriptionPreviewOpen] = useState(false);
 
@@ -53,6 +53,7 @@ const ClassModal: React.FC<ClassModalProps> = ({
     page: 1,
     limit: 100,
     specialization_id: formState.specialization_id ? Number(formState.specialization_id) : undefined,
+    program_id: formState.program_id ? Number(formState.program_id) : undefined,
   });
   const levels = useMemo(() => (levelsResp?.data || []) as Level[], [levelsResp]);
 
@@ -81,6 +82,10 @@ const ClassModal: React.FC<ClassModalProps> = ({
       });
     }
   }, [classItem, isOpen]);
+
+  const handleFormChange = (newState: { program_id: number | string | ''; specialization_id: number | string | ''; school_year_id: number | string | '' }) => {
+    setFormState(newState);
+  };
 
 
   const handleSubmit = async (formData: {
@@ -133,6 +138,7 @@ const ClassModal: React.FC<ClassModalProps> = ({
         periods={periods}
         descriptionPosition={descriptionPosition}
         onDescriptionPreview={() => setIsDescriptionPreviewOpen(true)}
+        onFormChange={handleFormChange}
       />
       {isDescriptionPreviewOpen && (
         <DescriptionModal

@@ -1,6 +1,5 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
-import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface Level {
   id: number;
@@ -35,6 +34,7 @@ export type UpdateLevelRequest = Partial<CreateLevelRequest>;
 
 export interface GetLevelsParams extends FilterParams {
   specialization_id?: number;
+  program_id?: number; // NEW - Filter by program
 }
 
 const toPaginated = (raw: unknown): PaginatedResponse<Level> => {
@@ -78,6 +78,7 @@ export const levelApi = {
     if (params.search && params.search.trim()) qp.append('search', params.search.trim());
     if (params.status !== undefined && params.status !== null) qp.append('status', String(params.status));
     if (params.specialization_id) qp.append('specialization_id', String(params.specialization_id));
+    if (params.program_id) qp.append('program_id', String(params.program_id));
     const qs = qp.toString();
     const url = qs ? `/levels?${qs}` : '/levels';
     const response = await api.get(url);
@@ -90,23 +91,23 @@ export const levelApi = {
   },
 
   async create(payload: CreateLevelRequest): Promise<Level> {
-    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
-    const body = ensureCompanyId({
+    // company_id is automatically set by backend from authenticated user - DO NOT send it
+    const { company_id: _ignored, ...rest } = payload;
+    const body: CreateLevelRequest = {
       status: 1,
-      ...payload,
-    });
-    const bodyWithDefaults = body as CreateLevelRequest & { status?: number };
-    if (bodyWithDefaults.status === undefined || bodyWithDefaults.status === null) {
-      bodyWithDefaults.status = 1;
+      ...rest,
+    };
+    if (body.status === undefined || body.status === null) {
+      body.status = 1;
     }
     const { data } = await api.post('/levels', body);
     return data;
   },
 
   async update(id: number, payload: UpdateLevelRequest): Promise<Level> {
-    // Ensure company_id is set from authenticated user (backend will verify it matches)
-    const body = ensureCompanyId(payload);
-    const { data } = await api.patch(`/levels/${id}`, body);
+    // company_id is automatically set by backend from authenticated user - DO NOT send it
+    const { company_id: _ignored, ...rest } = payload;
+    const { data } = await api.patch(`/levels/${id}`, rest);
     return data;
   },
 

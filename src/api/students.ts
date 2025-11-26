@@ -1,5 +1,4 @@
 import api from './axios';
-import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export type Student = {
   id: number;
@@ -83,17 +82,31 @@ export const studentsApi = {
   },
 
   async create(data: CreateStudentRequest | FormData): Promise<Student> {
-    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+    // company_id is automatically set by backend from authenticated user - DO NOT send it
     // Backend will verify class room belongs to the same company (if provided)
-    const payload = ensureCompanyId(data);
+    let payload: CreateStudentRequest | FormData;
+    if (data instanceof FormData) {
+      data.delete('company_id');
+      payload = data;
+    } else {
+      const { company_id: _ignored, ...rest } = data;
+      payload = rest as CreateStudentRequest;
+    }
     const response = await api.post('/students', payload);
     return response.data;
   },
 
   async update(id: number, data: UpdateStudentRequest | FormData): Promise<Student> {
-    // Ensure company_id is set from authenticated user (backend will verify it matches)
+    // company_id is automatically set by backend from authenticated user - DO NOT send it
     // If updating class_room_id, backend will verify the class room belongs to the same company
-    const payload = ensureCompanyId(data);
+    let payload: UpdateStudentRequest | FormData;
+    if (data instanceof FormData) {
+      data.delete('company_id');
+      payload = data;
+    } else {
+      const { company_id: _ignored, ...rest } = data;
+      payload = rest as UpdateStudentRequest;
+    }
     const response = await api.patch(`/students/${id}`, payload);
     return response.data;
   },

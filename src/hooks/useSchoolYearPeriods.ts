@@ -5,15 +5,20 @@ import type { FilterParams } from '../types/api';
 
 type SchoolYearPeriodFilterParams = FilterParams & {
   schoolYearId?: number;
+  school_year_id?: number;
+  school_year_period_id?: number;
 };
 
 export const useSchoolYearPeriods = (params: SchoolYearPeriodFilterParams = {}) => {
-  const hasSchoolYearId = params.schoolYearId !== undefined && params.schoolYearId !== null;
+  const hasSchoolYearId =
+    params.schoolYearId !== undefined && params.schoolYearId !== null
+      ? true
+      : params.school_year_id !== undefined && params.school_year_id !== null;
   
   return useQuery({
     queryKey: ['schoolYearPeriods', params],
     queryFn: () => schoolYearPeriodApi.getAll(params),
-    enabled: hasSchoolYearId, // Only fetch when schoolYearId is provided
+    enabled: hasSchoolYearId,
   });
 };
 

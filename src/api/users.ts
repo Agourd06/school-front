@@ -22,10 +22,10 @@ export interface User {
 
 export interface CreateUserRequest {
   username: string;
-  password: string;
+  password?: string; // Optional - backend will auto-generate if not provided
   email: string;
   role?: 'user' | 'admin';
-  company_id?: number;
+  company_id: number; // Required for public registration
 }
 
 export interface UpdateUserRequest {
@@ -80,7 +80,16 @@ export const usersApi = {
 
   create: async (data: CreateUserRequest): Promise<User> => {
     const response = await api.post('/users', data);
-    return response.data;
+    
+    // Backend returns: { user: {...}, generatedPassword?: "..." }
+    // We only return the user - password is sent via email only (security best practice)
+    const responseData = response.data as { 
+      user: User; 
+      generatedPassword?: string; // Present in response but not used in frontend
+    };
+    
+    // Return only the user object - password is sent via email
+    return responseData.user;
   },
 
   update: async (id: number, data: UpdateUserRequest): Promise<User> => {

@@ -129,19 +129,19 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
       />
 
       <Input
-        label="Volume (optional)"
+        label="Volume"
         type="number"
         name="volume"
         value={formData.volume}
         onChange={handleChange}
         error={errors.volume}
-        disabled
+        
         className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
 
       <Input
-        label="Coefficient (optional)"
-        type="text"
+        label="Coefficient "
+        type="number"
         name="coefficient"
         value={formData.coefficient}
         onChange={handleChange}

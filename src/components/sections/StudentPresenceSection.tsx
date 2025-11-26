@@ -11,6 +11,7 @@ import { usePlanningStudents } from '../../hooks/usePlanningStudents';
 import { useClassStudents } from '../../hooks/useClassStudents';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import BaseModal from '../modals/BaseModal';
+import type { PlanningStudentEntry } from '../../api/planningStudent';
 
 const formatStudentName = (
   presence: StudentPresence | undefined,
@@ -36,7 +37,7 @@ const formatPlanningDetail = (planning: PlanningStudentEntry | undefined) => {
       planning.teacher.email ||
       `Teacher #${planning.teacher.id}`
     : '—';
-  const classroom = planning.class_room?.title || `Room #${planning.class_room_id ?? '—'}`;
+  const classroom = planning.classRoom?.title || `Room #${planning.class_room_id ?? '—'}`;
   const classTitle = planning.class?.title || `Class #${planning.class_id ?? '—'}`;
   return {
     date,
@@ -233,10 +234,12 @@ const StudentPresenceSection: React.FC = () => {
   const createPresenceMut = useCreateStudentPresence();
   const updatePresenceMut = useUpdateStudentPresence();
 
-  const autoCreatedRef = useRef<Set<number>>(new Set());
+  const autoCreatedRef = useRef<Set<string>>(new Set());
+  const isCreatingRef = useRef(false);
 
   useEffect(() => {
     autoCreatedRef.current.clear();
+    isCreatingRef.current = false;
   }, [selectedPlanningId]);
 
   useEffect(() => {
@@ -244,40 +247,83 @@ const StudentPresenceSection: React.FC = () => {
       return;
     }
 
+    // Prevent concurrent auto-creation runs
+    if (isCreatingRef.current) {
+      return;
+    }
+
     const planningId = Number(selectedPlanningId);
-    const existingStudentIds = new Set(planPresences.map((presence) => presence.student_id));
+    
+    // Create a unique key for each student-planning combination
+    const createKey = (studentId: number) => `${planningId}-${studentId}`;
+    
+    // Check existing presences - use both student_id and student_planning_id to avoid duplicates
+    const existingKeys = new Set<string>();
+    planPresences.forEach((presence) => {
+      if (presence.student_id && presence.student_planning_id) {
+        existingKeys.add(`${presence.student_planning_id}-${presence.student_id}`);
+      }
+    });
+
     const missingStudentIds = classStudents
       .map((assignment) => assignment.student_id)
       .filter((studentId): studentId is number => Boolean(studentId))
-      .filter((studentId) => !existingStudentIds.has(studentId))
-      .filter((studentId) => !autoCreatedRef.current.has(studentId));
+      .filter((studentId) => {
+        const key = createKey(studentId);
+        // Only create if not already in database AND not already being created
+        return !existingKeys.has(key) && !autoCreatedRef.current.has(key);
+      });
 
     if (!missingStudentIds.length) return;
 
+    // Mark as creating to prevent concurrent runs
+    isCreatingRef.current = true;
+
     let cancelled = false;
     (async () => {
-      for (const studentId of missingStudentIds) {
-        autoCreatedRef.current.add(studentId);
-        try {
-          await createPresenceMut.mutateAsync({
-            student_planning_id: planningId,
-            student_id: studentId,
-            presence: 'absent',
-            note: -1,
-            remarks: undefined,
-            status: 1 as StudentPresenceStatus,
-          });
-        } catch (err) {
-          console.error('Failed to auto-create presence', err);
+      try {
+        for (const studentId of missingStudentIds) {
+          if (cancelled) break;
+          
+          const key = createKey(studentId);
+          // Double-check before creating (in case another run already created it)
+          if (autoCreatedRef.current.has(key)) continue;
+          
+          autoCreatedRef.current.add(key);
+          
+          try {
+            await createPresenceMut.mutateAsync({
+              student_planning_id: planningId,
+              student_id: studentId,
+              presence: 'absent',
+              note: -1,
+              remarks: undefined,
+              status: 1 as StudentPresenceStatus,
+            });
+          } catch (err: unknown) {
+            // If it's a duplicate error, that's okay - remove from tracking
+            const error = err as { response?: { data?: { message?: string } } };
+            const message = error?.response?.data?.message || '';
+            if (message.toLowerCase().includes('duplicate') || message.toLowerCase().includes('already exists')) {
+              console.warn(`Presence already exists for student ${studentId} and planning ${planningId}`);
+            } else {
+              console.error('Failed to auto-create presence', err);
+              // Remove from tracking on error so it can be retried
+              autoCreatedRef.current.delete(key);
+            }
+          }
         }
-      }
-      if (!cancelled) {
-        refetchPresences();
+      } finally {
+        if (!cancelled) {
+          isCreatingRef.current = false;
+          refetchPresences();
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      isCreatingRef.current = false;
     };
   }, [
     classStudents,
@@ -297,6 +343,7 @@ const StudentPresenceSection: React.FC = () => {
 
   const handleMarkPresence = async (presence: StudentPresence, nextPresence: StudentPresence['presence']) => {
     try {
+      // Always update existing presence record
       await updatePresenceMut.mutateAsync({
         id: presence.id,
         data: { presence: nextPresence },
@@ -307,6 +354,7 @@ const StudentPresenceSection: React.FC = () => {
       setAlert({ type: 'error', message: extractErrorMessage(err) });
     }
   };
+
 
   const openNoteEditor = (presence: StudentPresence) => {
     setNoteEditor({
@@ -337,7 +385,7 @@ const StudentPresenceSection: React.FC = () => {
     }
   };
 
-  const planningDetail = formatPlanningDetail(selectedPlanning);
+  const planningDetail = formatPlanningDetail(selectedPlanning ?? undefined);
   const courseCoefficient = useMemo(() => {
     if (!selectedPlanning?.course) return '—';
     const course = selectedPlanning.course as { coefficient?: number | string };

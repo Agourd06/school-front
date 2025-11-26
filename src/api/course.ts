@@ -1,6 +1,5 @@
 import api from './axios';
 import type { PaginatedResponse, FilterParams } from '../types/api';
-import { ensureCompanyId } from '../utils/companyScopedApi';
 
 interface Company {
   id: number;
@@ -130,16 +129,16 @@ export const courseApi = {
   },
 
   create: async (data: CreateCourseRequest): Promise<Course> => {
-    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
-    const body = ensureCompanyId(data);
-    const response = await api.post('/course', body);
+    // company_id is automatically set by backend from authenticated user - DO NOT send it
+    const { company_id: _ignored, ...rest } = data;
+    const response = await api.post('/course', rest);
     return response.data;
   },
 
   update: async (id: number, data: UpdateCourseRequest): Promise<Course> => {
-    // Ensure company_id is set from authenticated user (backend will verify it matches)
-    const body = ensureCompanyId(data);
-    const response = await api.patch(`/course/${id}`, body);
+    // company_id is automatically set by backend from authenticated user - DO NOT send it
+    const { company_id: _ignored, ...rest } = data;
+    const response = await api.patch(`/course/${id}`, rest);
     return response.data;
   },
 

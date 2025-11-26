@@ -1,6 +1,5 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
-import { ensureCompanyId } from '../utils/companyScopedApi';
 
 export interface ClassEntity {
   id: number;
@@ -103,23 +102,23 @@ export const classesApi = {
   },
 
   async create(payload: CreateClassRequest): Promise<ClassEntity> {
-    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
-    const body = ensureCompanyId({
+    // company_id is automatically set by backend from authenticated user - DO NOT send it
+    const { company_id: _ignored, ...rest } = payload;
+    const body: CreateClassRequest = {
       status: 1,
-      ...payload,
-    });
-    const bodyWithDefaults = body as CreateClassRequest & { status?: number };
-    if (bodyWithDefaults.status === undefined || bodyWithDefaults.status === null) {
-      bodyWithDefaults.status = 1;
+      ...rest,
+    };
+    if (body.status === undefined || body.status === null) {
+      body.status = 1;
     }
     const { data } = await api.post('/classes', body);
     return data;
   },
 
   async update(id: number, payload: UpdateClassRequest): Promise<ClassEntity> {
-    // Ensure company_id is set from authenticated user (backend will verify it matches)
-    const body = ensureCompanyId(payload);
-    const { data } = await api.patch(`/classes/${id}`, body);
+    // company_id is automatically set by backend from authenticated user - DO NOT send it
+    const { company_id: _ignored, ...rest } = payload;
+    const { data } = await api.patch(`/classes/${id}`, rest);
     return data;
   },
 
