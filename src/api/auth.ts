@@ -10,6 +10,8 @@ export interface Company {
   id: number;
   name: string;
   email?: string | null;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
 }
 
 export interface LoginResponse {

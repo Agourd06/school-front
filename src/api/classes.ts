@@ -103,7 +103,8 @@ export const classesApi = {
 
   async create(payload: CreateClassRequest): Promise<ClassEntity> {
     // company_id is automatically set by backend from authenticated user - DO NOT send it
-    const { company_id: _ignored, ...rest } = payload;
+    const { company_id: _companyId, ...rest } = payload;
+    void _companyId;
     const body: CreateClassRequest = {
       status: 1,
       ...rest,
@@ -117,7 +118,8 @@ export const classesApi = {
 
   async update(id: number, payload: UpdateClassRequest): Promise<ClassEntity> {
     // company_id is automatically set by backend from authenticated user - DO NOT send it
-    const { company_id: _ignored, ...rest } = payload;
+    const { company_id: _companyId, ...rest } = payload;
+    void _companyId;
     const { data } = await api.patch(`/classes/${id}`, rest);
     return data;
   },

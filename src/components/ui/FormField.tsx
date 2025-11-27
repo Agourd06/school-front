@@ -20,14 +20,14 @@ const FormField: React.FC<FormFieldProps> = ({
   return (
     <div className={className}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-heading">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="ml-1 text-danger">*</span>}
         </label>
       )}
       <div className={label ? 'mt-1' : ''}>{children}</div>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-      {helperText && !error && <p className="mt-1 text-xs text-gray-500">{helperText}</p>}
+      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
+      {helperText && !error && <p className="mt-1 text-xs text-muted">{helperText}</p>}
     </div>
   );
 };

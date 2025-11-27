@@ -2,9 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === Global Theme Tokens ===================================== */
+:root,
+:root[data-theme='default'] {
+  --color-primary: #2563eb;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #0ea5e9;
+  --color-secondary-foreground: #ffffff;
+
+  --color-surface: #f8fafc;
+  --color-surface-foreground: #0f172a;
+
+  --color-muted: #64748b;
+  --color-muted-foreground: #e2e8f0;
+
+  --color-accent: #9333ea;
+  --color-accent-foreground: #ffffff;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --color-border: #e2e8f0;
+  --color-card: #ffffff;
+  --color-heading: #0f172a;
+  --color-body: #1f2937;
+}
+
+/* Hook for runtime theme overrides (e.g., per company) */
+[data-theme][data-theme]:root {
+  color: var(--color-body);
+  background-color: var(--color-surface);
+}
+
 /* SunEditor custom styles for better text handling */
 .se-container {
-  border: 1px solid #d1d5db !important;
+  border: 1px solid var(--color-border, #d1d5db) !important;
   border-radius: 0.5rem !important;
 }
 
@@ -36,8 +70,8 @@
 
 .rt-content-card {
   border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  border: 1px solid var(--color-border, #e5e7eb);
+  background-color: var(--color-surface, #f9fafb);
   padding: 0.75rem;
 }
 
@@ -46,19 +80,19 @@
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--color-muted, #6b7280);
   margin-bottom: 0.35rem;
 }
 
 .rt-content-value {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-heading, #111827);
 }
 
 /* Rich text editor content styling for DescriptionModal */
 .rt-content {
-  color: #1f2937;
+  color: var(--color-body, #1f2937);
   font-size: 0.95rem;
   line-height: 1.6;
 }
@@ -128,24 +162,24 @@
 }
 
 .rt-content a {
-  color: #2563eb;
+  color: var(--color-primary, #2563eb);
   text-decoration: underline;
 }
 
 .rt-content a:hover {
-  color: #1d4ed8;
+  color: var(--color-primary-hover, #1d4ed8);
 }
 
 .rt-content blockquote {
-  border-left: 4px solid #e5e7eb;
+  border-left: 4px solid var(--color-border, #e5e7eb);
   padding-left: 1rem;
   margin: 1rem 0;
-  color: #6b7280;
+  color: var(--color-muted, #6b7280);
   font-style: italic;
 }
 
 .rt-content code {
-  background-color: #f3f4f6;
+  background-color: var(--color-muted-foreground, #f3f4f6);
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-family: 'Courier New', monospace;
@@ -153,7 +187,7 @@
 }
 
 .rt-content pre {
-  background-color: #f3f4f6;
+  background-color: var(--color-muted-foreground, #f3f4f6);
   padding: 1rem;
   border-radius: 0.5rem;
   overflow-x: auto;

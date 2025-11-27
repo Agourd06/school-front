@@ -127,7 +127,7 @@ const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab 
   const toggleSidebarVisibility = () => setIsSidebarVisible((prev) => !prev);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-surface flex">
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -139,7 +139,7 @@ const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab 
         <button
           type="button"
           onClick={toggleSidebarVisibility}
-          className="hidden sm:flex fixed top-24 left-4 z-30 h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          className="hidden sm:flex fixed top-24 left-4 z-30 h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-heading shadow-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
           aria-label="Show sidebar"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +155,7 @@ const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab 
       >
         <div className="max-w-[86rem] mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
-            <Suspense fallback={<div className="rounded-md border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500">Loading section…</div>}>
+            <Suspense fallback={<div className="rounded-md border border-dashed border-border bg-surface p-6 text-sm text-muted">Loading section…</div>}>
               <SectionComponent />
             </Suspense>
           </div>

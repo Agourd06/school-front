@@ -28,18 +28,16 @@ const Select: React.FC<SelectProps> = ({
   return (
     <div>
       {label && (
-        <label htmlFor={selectId} className="block text-sm font-medium text-gray-700">
+        <label htmlFor={selectId} className="block text-sm font-medium text-heading">
           {label}
         </label>
       )}
       <select
         id={selectId}
         disabled={disabled}
-        className={`mt-1 block w-full px-3 py-2 border rounded-md ${
-          error
-            ? 'border-red-300'
-            : 'border-gray-300'
-        } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${className}`}
+        className={`mt-1 block w-full rounded-md border bg-card px-3 py-2 text-sm text-body shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary ${
+          error ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border'
+        } ${disabled ? 'cursor-not-allowed bg-muted-foreground text-muted' : ''} ${className}`}
         {...props}
       >
         {placeholder && (
@@ -53,8 +51,8 @@ const Select: React.FC<SelectProps> = ({
           </option>
         ))}
       </select>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {helperText && !error && <p className="mt-1 text-xs text-gray-500">{helperText}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {helperText && !error && <p className="mt-1 text-xs text-muted">{helperText}</p>}
     </div>
   );
 };

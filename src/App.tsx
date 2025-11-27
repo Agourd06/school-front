@@ -13,14 +13,14 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-xl font-bold text-blue-600">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="text-xl font-bold text-primary">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface">
       <Routes>
         {/* Public routes without Navbar */}
         <Route 

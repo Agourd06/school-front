@@ -197,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface">
       {/* Overlay for mobile */}
       <div
         className={`fixed left-0 right-0 top-16 bottom-0 bg-black/30 z-30 sm:hidden transition-opacity ${
@@ -215,13 +215,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         <div className="p-6 h-full flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-gray-900">Edusol</h2>
+            <h2 className="text-xl font-bold text-heading">Edusol</h2>
             <div className="flex items-center gap-2">
               {onToggleCollapse && (
                 <button
                   type="button"
                   aria-label={isCollapsed ? 'Show sidebar' : 'Hide sidebar'}
-                  className="hidden sm:inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition"
+                  className="hidden sm:inline-flex items-center justify-center rounded-full border border-border p-2 text-muted hover:bg-muted hover:text-heading transition"
                   onClick={onToggleCollapse}
                 >
                   <svg
@@ -243,7 +243,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 type="button"
                 aria-label="Close sidebar"
-                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-gray-100"
+                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-muted"
                 onClick={closeMobile}
               >
                 <svg
@@ -269,8 +269,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => onTabChange("users")}
               className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
                 activeTab === "users"
-                  ? "bg-blue-100 text-blue-700 border-l-4 border-blue-500"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? "bg-primary/10 text-primary border-l-4 border-primary"
+                  : "text-heading hover:bg-muted hover:text-heading"
               }`}
             >
               <div className="flex items-center">
@@ -296,7 +296,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="mb-6 flex-1 overflow-y-auto pr-2">
             <button
               onClick={toggleParameters}
-              className="w-full text-left px-4 py-3 rounded-lg font-medium transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              className="w-full text-left px-4 py-3 rounded-lg font-medium transition-colors text-heading hover:bg-muted hover:text-heading"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -348,7 +348,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <div key={group.title} className="space-y-1">
                       <button
                         onClick={() => toggleGroup(group.title)}
-                        className="flex w-full items-center justify-between rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                        className="flex w-full items-center justify-between rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted hover:bg-muted hover:text-heading"
                       >
                         <span>{group.title}</span>
                         <svg
@@ -361,7 +361,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         </svg>
                       </button>
                       {isGroupOpen && (
-                        <div className="ml-4 space-y-1 border-l border-gray-200 pl-4">
+                        <div className="ml-4 space-y-1 border-l border-border pl-4">
                           {group.items.map((item) => {
                             const isActive = activeTab === item.tab;
                             return (
@@ -370,8 +370,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 onClick={() => onTabChange(item.tab)}
                                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                                   isActive
-                                    ? 'bg-blue-50 text-blue-700 font-medium'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                                    ? 'bg-primary/10 text-primary font-medium'
+                                    : 'text-muted hover:bg-muted hover:text-heading'
                                 }`}
                               >
                                 {item.label}

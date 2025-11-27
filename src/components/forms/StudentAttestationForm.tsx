@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
+import RichTextEditor from '../inputs/RichTextEditor';
+import SearchSelect from '../inputs/SearchSelect';
+import BaseModal from '../modals/BaseModal';
+import { Eye } from 'lucide-react';
 
 export interface StudentAttestationFormData {
   Idstudent: number | string | '';
   Idattestation: number | string | '';
   dateask: string;
-  datedelivery: string;
+  datedelivery?: string;
+  description?: string;
   Status: number;
 }
 
@@ -17,7 +22,8 @@ export interface StudentAttestation {
   Idattestation?: number;
   attestation?: { id: number };
   dateask?: string;
-  datedelivery?: string;
+  datedelivery?: string | null;
+  description?: string | null;
   Status: number;
 }
 
@@ -28,7 +34,7 @@ interface StudentAttestationFormProps {
   isSubmitting?: boolean;
   serverError?: string | null;
   students: Array<{ id: number; first_name?: string; last_name?: string; email?: string }>;
-  attestations: Array<{ id: number; title: string }>;
+  attestations: Array<{ id: number; title: string; description?: string | null }>;
 }
 
 const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
@@ -45,9 +51,11 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
     Idattestation: '',
     dateask: '',
     datedelivery: '',
+    description: '',
     Status: 1,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [attestationDetailsOpen, setAttestationDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -56,6 +64,7 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
         Idattestation: initialData.Idattestation ?? initialData.attestation?.id ?? '',
         dateask: initialData.dateask || '',
         datedelivery: initialData.datedelivery || '',
+        description: initialData.description || '',
         Status: typeof initialData.Status === 'number' ? initialData.Status : 1,
       });
     } else {
@@ -64,49 +73,32 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
         Idattestation: '',
         dateask: '',
         datedelivery: '',
+        description: '',
         Status: 1,
       });
     }
     setErrors({});
   }, [initialData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const selectedAttestation = useMemo(
+    () => (form.Idattestation ? attestations.find((a) => a.id === Number(form.Idattestation)) : undefined),
+    [attestations, form.Idattestation]
+  );
 
-    const newValue = name === 'Status' || name === 'Idstudent' || name === 'Idattestation'
-      ? (value ? Number(value) : '')
-      : value;
+  const updateField = (name: string, value: string | number | '') => {
+    const newValue =
+      name === 'Status' || name === 'Idstudent' || name === 'Idattestation'
+        ? value !== '' && value !== null
+          ? Number(value)
+          : ''
+        : value;
 
     setForm((prev) => {
       const updatedForm = { ...prev, [name]: newValue };
 
-      if (name === 'dateask' || name === 'datedelivery') {
-        const dateask = name === 'dateask' ? value : updatedForm.dateask;
-        const datedelivery = name === 'datedelivery' ? value : updatedForm.datedelivery;
-
-        if (dateask && datedelivery) {
-          const askDate = new Date(dateask);
-          const deliveryDate = new Date(datedelivery);
-
-          if (askDate >= deliveryDate) {
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              datedelivery: 'Date Delivery must be after Date Asked',
-            }));
-          } else {
-            setErrors((prevErrors) => {
-              const next = { ...prevErrors };
-              delete next.datedelivery;
-              return next;
-            });
-          }
-        } else {
-          setErrors((prevErrors) => {
-            const next = { ...prevErrors };
-            delete next.datedelivery;
-            return next;
-          });
-        }
+      if (name === 'Idattestation') {
+        const selected = attestations.find((a) => a.id === Number(value));
+        updatedForm.description = selected?.description ?? '';
       }
 
       return updatedForm;
@@ -115,6 +107,15 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
     if (errors[name] && name !== 'datedelivery') {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    updateField(name, value);
+  };
+
+  const handleSearchSelectChange = (name: 'Idstudent' | 'Idattestation', value: number | string | '') => {
+    updateField(name, value);
   };
 
   const validate = () => {
@@ -149,61 +150,84 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
         </div>
       )}
 
-      <Select
-        label="Student *"
-        name="Idstudent"
-        value={form.Idstudent}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-heading">Student *</label>
+          <SearchSelect
+            value={form.Idstudent}
+            onChange={(value) => handleSearchSelectChange('Idstudent', value)}
+            options={[
+              { value: '', label: 'Select a student' },
+              ...students.map((s) => ({
+                value: s.id,
+                label: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `Student #${s.id}`,
+              })),
+            ]}
+            error={errors.Idstudent}
+            placeholder="Search student..."
+          />
+        </div>
+        <div>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-heading">Attestation *</label>
+            {form.Idattestation && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                onClick={() => setAttestationDetailsOpen(true)}
+              >
+                <Eye className="h-4 w-4" />
+                View details
+              </button>
+            )}
+          </div>
+          <SearchSelect
+            value={form.Idattestation}
+            onChange={(value) => handleSearchSelectChange('Idattestation', value)}
+            options={[
+              { value: '', label: 'Select an attestation' },
+              ...attestations.map((a) => ({
+                value: a.id,
+                label: a.title,
+              })),
+            ]}
+            error={errors.Idattestation}
+            placeholder="Search attestation..."
+          />
+        </div>
+      </div>
+
+      <Input
+        label="Date Asked"
+        type="date"
+        name="dateask"
+        value={form.dateask}
         onChange={handleChange}
-        options={[
-          { value: '', label: 'Select a student' },
-          ...students.map((s) => ({
-            value: s.id,
-            label: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `Student #${s.id}`,
-          })),
-        ]}
-        error={errors.Idstudent}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
 
-      <Select
-        label="Attestation *"
-        name="Idattestation"
-        value={form.Idattestation}
-        onChange={handleChange}
-        options={[
-          { value: '', label: 'Select an attestation' },
-          ...attestations.map((a) => ({
-            value: a.id,
-            label: a.title,
-          })),
-        ]}
-        error={errors.Idattestation}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {Boolean(initialData) && (
         <Input
-          label="Date Asked"
-          type="date"
-          name="dateask"
-          value={form.dateask}
-          onChange={handleChange}
-          max={form.datedelivery || undefined}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-        />
-
-        <Input
-          label="Date Delivery"
+          label="Date Delivery (optional)"
           type="date"
           name="datedelivery"
-          value={form.datedelivery}
+          value={form.datedelivery ?? ''}
           onChange={handleChange}
           min={form.dateask || undefined}
           error={errors.datedelivery}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
         />
-      </div>
+      )}
 
+      <div>
+        <label className="block text-sm font-medium text-heading mb-1">Description</label>
+        <div className="pointer-events-none opacity-80">
+          <RichTextEditor
+            value={form.description ?? ''}
+            onChange={() => {}}
+            placeholder="Description will be filled automatically from the attestation."
+          />
+        </div>
+        <p className="mt-1 text-xs text-muted">This description mirrors the selected attestation template.</p>
+      </div>
       <Select
         label="Status"
         name="Status"
@@ -213,7 +237,6 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
           value: opt.value,
           label: opt.label,
         }))}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
 
       <div className="flex justify-end space-x-3 pt-4">
@@ -224,6 +247,24 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
           {initialData ? 'Update' : 'Create'}
         </Button>
       </div>
+      <BaseModal
+        isOpen={attestationDetailsOpen}
+        onClose={() => setAttestationDetailsOpen(false)}
+        title="Attestation details"
+      >
+        <div className="space-y-3 text-sm text-body">
+          <p className="font-semibold">{selectedAttestation?.title ?? 'No attestation selected'}</p>
+          <div
+            className="rounded-lg border border-border bg-surface p-3"
+            dangerouslySetInnerHTML={{
+              __html:
+                selectedAttestation?.description && selectedAttestation.description.trim().length > 0
+                  ? selectedAttestation.description
+                  : '<p class="text-muted italic">No description available.</p>',
+            }}
+          />
+        </div>
+      </BaseModal>
     </form>
   );
 };

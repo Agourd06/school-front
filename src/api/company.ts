@@ -38,6 +38,8 @@ export interface Company {
   website?: string;
   status?: number;
   company_id?: number;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
   created_at?: string;
   updated_at?: string;
   users?: User[];
@@ -53,6 +55,8 @@ export interface CreateCompanyRequest {
   website?: string;
   status?: number;
   company_id?: number;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 export interface UpdateCompanyRequest {
@@ -63,16 +67,24 @@ export interface UpdateCompanyRequest {
   website?: string;
   status?: number;
   company_id?: number;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 export interface GetCompaniesParams extends FilterParams {
   company_id?: number;
 }
 
+const normalizeCompany = (company: Company & { primary_color?: string | null; secondary_color?: string | null }): Company => ({
+  ...company,
+  primaryColor: company.primaryColor ?? company.primary_color ?? null,
+  secondaryColor: company.secondaryColor ?? company.secondary_color ?? null,
+});
+
 const toPaginated = (raw: unknown): PaginatedResponse<Company> => {
   if (Array.isArray(raw)) {
     return {
-      data: raw as Company[],
+      data: (raw as Company[]).map((company) => normalizeCompany(company)),
       meta: {
         page: 1,
         limit: raw.length,
@@ -92,7 +104,7 @@ const toPaginated = (raw: unknown): PaginatedResponse<Company> => {
   const limit = meta.limit ?? (Array.isArray(rawData) ? rawData.length : 10);
 
   return {
-    data: Array.isArray(rawData) ? rawData : [],
+    data: Array.isArray(rawData) ? rawData.map((company) => normalizeCompany(company as Company)) : [],
     meta: {
       page,
       limit,
@@ -121,26 +133,28 @@ export const companyApi = {
 
   getById: async (id: number): Promise<Company> => {
     const response = await api.get(`/company/${id}`);
-    return response.data;
+    return normalizeCompany(response.data);
   },
 
   create: async (data: CreateCompanyRequest): Promise<Company> => {
-    const { company_id: _ignored, status: incomingStatus, ...rest } = data;
+    const { company_id: _companyId, status: incomingStatus, ...rest } = data;
+    void _companyId;
     const payload: CreateCompanyRequest = {
       ...rest,
       status: incomingStatus ?? 1,
     };
     const response = await api.post('/company', payload);
-    return response.data;
+    return normalizeCompany(response.data);
   },
 
   update: async (id: number, data: UpdateCompanyRequest): Promise<Company> => {
-    const { company_id: _ignored, ...rest } = data;
+    const { company_id: _companyId, ...rest } = data;
+    void _companyId;
     const payload: UpdateCompanyRequest = {
       ...rest,
     };
     const response = await api.patch(`/company/${id}`, payload);
-    return response.data;
+    return normalizeCompany(response.data);
   },
 
   delete: async (id: number): Promise<{ message: string }> => {

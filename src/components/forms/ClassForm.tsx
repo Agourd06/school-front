@@ -191,7 +191,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
           value={form.title}
           onChange={handleChange}
           error={errors.title}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
           label="Status"
@@ -202,7 +202,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             value: opt.value,
             label: opt.label,
           }))}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
 
@@ -222,7 +222,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             })),
           ]}
           error={errors.school_year_id}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
           label="School Year Period"
@@ -258,7 +258,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             })),
           ]}
           error={errors.program_id}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
           label="Specialization *"

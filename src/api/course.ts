@@ -130,14 +130,16 @@ export const courseApi = {
 
   create: async (data: CreateCourseRequest): Promise<Course> => {
     // company_id is automatically set by backend from authenticated user - DO NOT send it
-    const { company_id: _ignored, ...rest } = data;
+    const { company_id: _companyId, ...rest } = data;
+    void _companyId;
     const response = await api.post('/course', rest);
     return response.data;
   },
 
   update: async (id: number, data: UpdateCourseRequest): Promise<Course> => {
     // company_id is automatically set by backend from authenticated user - DO NOT send it
-    const { company_id: _ignored, ...rest } = data;
+    const { company_id: _companyId, ...rest } = data;
+    void _companyId;
     const response = await api.patch(`/course/${id}`, rest);
     return response.data;
   },

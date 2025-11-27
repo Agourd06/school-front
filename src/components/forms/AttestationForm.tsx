@@ -18,6 +18,36 @@ interface AttestationFormProps {
   serverError?: string | null;
 }
 
+// Default template with required titles
+const DEFAULT_DESCRIPTION_TEMPLATE = `<p><strong>e-comercial Name♯</strong></p>
+<p><strong>e-comercial Date♯</strong></p>
+<p><strong>e-comercial Class♯</strong></p>`;
+
+// Ensure the three required titles are always present in the description
+const ensureRequiredTitles = (description: string): string => {
+  if (!description || description.trim() === '') {
+    return DEFAULT_DESCRIPTION_TEMPLATE;
+  }
+
+  // Check if all three titles are present
+  const hasName = description.includes('e-comercial Name♯') || description.includes('e-comercial Name');
+  const hasDate = description.includes('e-comercial Date♯') || description.includes('e-comercial Date');
+  const hasClass = description.includes('e-comercial Class♯') || description.includes('e-comercial Class');
+
+  // If all are present, return as is
+  if (hasName && hasDate && hasClass) {
+    return description;
+  }
+
+  // Otherwise, prepend the missing titles
+  const missingTitles: string[] = [];
+  if (!hasName) missingTitles.push('<p><strong>e-comercial Name♯</strong></p>');
+  if (!hasDate) missingTitles.push('<p><strong>e-comercial Date♯</strong></p>');
+  if (!hasClass) missingTitles.push('<p><strong>e-comercial Class♯</strong></p>');
+
+  return missingTitles.join('\n') + '\n' + description;
+};
+
 const AttestationForm: React.FC<AttestationFormProps> = ({
   initialData,
   onSubmit,
@@ -35,13 +65,20 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
 
   useEffect(() => {
     if (initialData) {
+      // Ensure required titles are present when editing
+      const description = ensureRequiredTitles(initialData.description || '');
       setForm({
         title: initialData.title || '',
-        description: initialData.description || '',
+        description,
         statut: typeof initialData.statut === 'number' ? initialData.statut : 1,
       });
     } else {
-      setForm({ title: '', description: '', statut: 1 });
+      // Use default template for new attestations
+      setForm({ 
+        title: '', 
+        description: DEFAULT_DESCRIPTION_TEMPLATE, 
+        statut: 1 
+      });
     }
     setErrors({});
     setFormError('');
@@ -57,7 +94,9 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
   };
 
   const handleDescriptionChange = (html: string) => {
-    setForm((prev) => ({ ...prev, description: html }));
+    // Ensure required titles are always present when user edits
+    const descriptionWithTitles = ensureRequiredTitles(html);
+    setForm((prev) => ({ ...prev, description: descriptionWithTitles }));
     if (errors.description) setErrors((prev) => ({ ...prev, description: '' }));
   };
 
@@ -74,14 +113,16 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
     try {
       await onSubmit(form);
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+      const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
       const errorMessage = axiosError?.response?.data?.message;
       if (Array.isArray(errorMessage)) {
         setFormError(errorMessage.join(', '));
       } else if (typeof errorMessage === 'string') {
         setFormError(errorMessage);
+      } else if (axiosError?.message) {
+        setFormError(axiosError.message);
       } else {
-        setFormError(err?.message || 'Failed to save attestation');
+        setFormError('Failed to save attestation');
       }
     }
   };
@@ -100,7 +141,7 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
         value={form.title}
         onChange={handleChange}
         error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select
@@ -112,11 +153,11 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
           value: opt.value,
           label: opt.label,
         }))}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Description</label>
+        <label className="block text-sm font-medium text-heading">Description</label>
         <div className="mt-1">
           <RichTextEditor
             value={form.description}

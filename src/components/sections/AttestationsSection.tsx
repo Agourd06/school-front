@@ -190,7 +190,7 @@ const AttestationsSection: React.FC = () => {
         )}
       
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-body">
           <SearchSelect
             label="Status"
             value={filters.status}
@@ -199,13 +199,13 @@ const AttestationsSection: React.FC = () => {
             isClearable={false}
           />
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Search</label>
+            <label className="block text-sm font-medium text-heading">Search</label>
             <input
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
               placeholder="Search by attestation title or description..."
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary bg-card"
             />
           </div>
         </div>
@@ -220,9 +220,6 @@ const AttestationsSection: React.FC = () => {
                   Title
                 </th>
                 
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Company
-                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
                 </th>
@@ -247,12 +244,9 @@ const AttestationsSection: React.FC = () => {
               ) : (
                 attestations.map((att) => {
                   const statusValue = typeof att.statut === 'number' ? att.statut : 0;
-                  const companyName = att.company?.name || `Company #${att.companyid}`;
                   return (
                     <tr key={att.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{att.title}</td>
-                      
-                      <td className="px-4 py-3 text-sm text-gray-700">{companyName}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -264,15 +258,13 @@ const AttestationsSection: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
-                          {att.description && (
-                            <button
-                              type="button"
-                              onClick={() => openDetailsModal(att)}
-                              className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
-                            >
-                              Details
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => openDetailsModal(att)}
+                            className="inline-flex items-center rounded-md border border-primary/30 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                          >
+                            Remarks
+                          </button>
                           <EditButton onClick={() => openEditModal(att)} />
                           <DeleteButton onClick={() => requestDelete(att)} />
                         </div>

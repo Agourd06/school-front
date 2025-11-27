@@ -109,14 +109,16 @@ export const moduleApi = {
 
   create: async (data: CreateModuleRequest): Promise<Module> => {
     // company_id is automatically set by backend from authenticated user - DO NOT send it
-    const { company_id: _ignored, ...rest } = data;
+    const { company_id: _companyId, ...rest } = data;
+    void _companyId;
     const response = await api.post('/module', rest);
     return response.data;
   },
 
   update: async (id: number, data: UpdateModuleRequest): Promise<Module> => {
     // company_id is automatically set by backend from authenticated user - DO NOT send it
-    const { company_id: _ignored, ...rest } = data;
+    const { company_id: _companyId, ...rest } = data;
+    void _companyId;
     const response = await api.patch(`/module/${id}`, rest);
     return response.data;
   },

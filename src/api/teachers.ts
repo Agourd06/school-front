@@ -82,7 +82,8 @@ export const teachersApi = {
       data.delete('company_id');
       payload = data;
     } else {
-      const { company_id: _ignored, ...rest } = data;
+      const { company_id: _companyId, ...rest } = data;
+      void _companyId;
       payload = rest as CreateTeacherRequest;
     }
     const response = await api.post('/teachers', payload);
@@ -97,7 +98,8 @@ export const teachersApi = {
       data.delete('company_id');
       payload = data;
     } else {
-      const { company_id: _ignored, ...rest } = data;
+      const { company_id: _companyId, ...rest } = data;
+      void _companyId;
       payload = rest as UpdateTeacherRequest;
     }
     const response = await api.patch(`/teachers/${id}`, payload);

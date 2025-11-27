@@ -89,7 +89,8 @@ export const studentsApi = {
       data.delete('company_id');
       payload = data;
     } else {
-      const { company_id: _ignored, ...rest } = data;
+      const { company_id: _companyId, ...rest } = data;
+      void _companyId;
       payload = rest as CreateStudentRequest;
     }
     const response = await api.post('/students', payload);
@@ -104,7 +105,8 @@ export const studentsApi = {
       data.delete('company_id');
       payload = data;
     } else {
-      const { company_id: _ignored, ...rest } = data;
+      const { company_id: _companyId, ...rest } = data;
+      void _companyId;
       payload = rest as UpdateStudentRequest;
     }
     const response = await api.patch(`/students/${id}`, payload);

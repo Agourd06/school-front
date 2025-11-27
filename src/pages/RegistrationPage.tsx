@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { companyApi } from '../api/company';
 import { usersApi } from '../api/users';
@@ -13,6 +13,7 @@ import {
   type CompanyFormData,
   type UserFormData,
 } from '../components/registration';
+import { applyThemeToDocument, mergeTheme, defaultTheme } from '../theme/colors';
 
 type Step = 'company' | 'user' | 'success';
 
@@ -26,6 +27,8 @@ const RegistrationPage: React.FC = () => {
     email: '',
     phone: '',
     website: '',
+    primaryColor: defaultTheme.primary,
+    secondaryColor: defaultTheme.secondary,
   });
   const [userData, setUserData] = useState<UserFormData>({
     username: '',
@@ -33,6 +36,16 @@ const RegistrationPage: React.FC = () => {
     role: 'user',
   });
   const [createdCompanyId, setCreatedCompanyId] = useState<number | null>(null);
+
+  useEffect(() => {
+    applyThemeToDocument(
+      mergeTheme({
+        primary: companyData.primaryColor,
+        secondary: companyData.secondaryColor,
+        accent: companyData.secondaryColor,
+      })
+    );
+  }, [companyData.primaryColor, companyData.secondaryColor]);
 
   const handleCompanySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,9 +58,20 @@ const RegistrationPage: React.FC = () => {
         email: companyData.email.trim(),
         phone: companyData.phone.trim() || undefined,
         website: companyData.website.trim() || undefined,
+        primaryColor: companyData.primaryColor,
+        secondaryColor: companyData.secondaryColor,
       };
 
       const company = await companyApi.create(payload);
+      if (company.primaryColor || company.secondaryColor) {
+        applyThemeToDocument(
+          mergeTheme({
+            primary: company.primaryColor ?? companyData.primaryColor,
+            secondary: company.secondaryColor ?? companyData.secondaryColor,
+            accent: company.secondaryColor ?? companyData.secondaryColor,
+          })
+        );
+      }
       setCreatedCompanyId(company.id);
       setStep('user');
     } catch (err: unknown) {
@@ -144,7 +168,13 @@ const RegistrationPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-surface text-body transition-colors"
+      style={{
+        backgroundImage:
+          'linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 18%, transparent) 0%, var(--color-surface) 55%, color-mix(in srgb, var(--color-secondary) 15%, transparent) 100%)',
+      }}
+    >
       <div className="max-w-2xl w-full">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
@@ -189,12 +219,12 @@ const RegistrationPage: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-muted">
           <p>
             Already have an account?{' '}
             <button
               onClick={handleGoToLogin}
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-primary hover:text-primary/80"
             >
               Sign in
             </button>

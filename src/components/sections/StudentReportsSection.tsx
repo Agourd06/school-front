@@ -1243,12 +1243,6 @@ const StudentReportsSection: React.FC = () => {
         contextInfo={{ year: yearLabel, period: periodLabel, className: classLabel }}
         disableStudentSelect={modalStudentId !== null}
         disablePeriodSelect
-        onViewReportDetails={(studentId) => {
-          const report = studentReportMap.get(studentId);
-          if (report?.id) {
-            handleViewReportDetails(studentId, report.id);
-          }
-        }}
       />
 
       <StudentReportDetailModal

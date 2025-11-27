@@ -59,7 +59,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
         </p>
         <Link
           to="/auth?mode=forgot-password"
-          className="inline-block px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          className="inline-block px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
         >
           Go to Forgot Password
         </Link>
@@ -86,7 +86,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
             name="password"
             type="password"
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="mt-1 block w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
             placeholder="Enter new password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -102,7 +102,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
             name="confirmPassword"
             type="password"
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="mt-1 block w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
             placeholder="Re-enter new password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -124,7 +124,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
         >
           {isSubmitting ? 'Resetting...' : 'Reset password'}
         </button>
@@ -132,7 +132,7 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
 
       <div className="mt-6 text-center text-sm text-gray-600">
         <span>Remembered your password? </span>
-        <Link to="/auth?mode=login" className="font-medium text-blue-600 hover:text-blue-500">
+        <Link to="/auth?mode=login" className="font-medium text-primary hover:text-primary/80">
           Sign in
         </Link>
       </div>

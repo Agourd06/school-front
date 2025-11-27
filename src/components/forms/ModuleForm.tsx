@@ -125,7 +125,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
         value={formData.title}
         onChange={handleChange}
         error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Input
@@ -136,7 +136,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
         onChange={handleChange}
         error={errors.volume}
         
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Input
@@ -146,7 +146,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
         value={formData.coefficient}
         onChange={handleChange}
         error={errors.coefficient}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select
@@ -158,7 +158,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
           value: opt.value,
           label: opt.label,
         }))}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div>

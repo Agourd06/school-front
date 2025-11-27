@@ -28,14 +28,16 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
     Idstudent: number | string | '';
     Idattestation: number | string | '';
     dateask: string;
-    datedelivery: string;
+    datedelivery?: string;
+    description?: string;
     Status: number;
   }) => {
     const payload = {
       Idstudent: Number(formData.Idstudent),
       Idattestation: Number(formData.Idattestation),
       dateask: formData.dateask || undefined,
-      datedelivery: formData.datedelivery || undefined,
+      datedelivery: formData.datedelivery ? formData.datedelivery : undefined,
+      description: formData.description?.trim() ? formData.description.trim() : undefined,
       Status: formData.Status,
     };
     try {
@@ -69,7 +71,11 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
         onCancel={onClose}
         isSubmitting={createMutation.isPending || updateMutation.isPending}
         students={students as Array<{ id: number; first_name?: string; last_name?: string; email?: string }>}
-        attestations={attestations as Array<{ id: number; title: string }>}
+        attestations={attestations.map((att) => ({
+          id: att.id,
+          title: att.title,
+          description: att.description ?? null,
+        }))}
       />
     </BaseModal>
   );

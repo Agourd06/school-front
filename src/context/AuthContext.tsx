@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authApi } from '../api/auth';
+import { companyApi } from '../api/company';
+import { applyThemeToDocument, mergeTheme, defaultTheme } from '../theme/colors';
 
 interface Company {
   id: number;
   name: string;
   email?: string | null;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
 }
 
 interface User {
@@ -45,6 +49,18 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const normalizeCompany = (company?: Company | null | Record<string, unknown>): Company | null => {
+  if (!company) return null;
+  const raw = company as Company & { primary_color?: string | null; secondary_color?: string | null };
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email ?? null,
+    primaryColor: raw.primaryColor ?? raw.primary_color ?? null,
+    secondaryColor: raw.secondaryColor ?? raw.secondary_color ?? null,
+  };
+};
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -60,7 +76,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const parsedUser = JSON.parse(storedUser);
         setToken(storedToken);
-        setUser(parsedUser);
+        setUser({
+          ...parsedUser,
+          company: normalizeCompany(parsedUser.company),
+        });
+        applyThemeToDocument(
+          mergeTheme({
+            primary: parsedUser?.company?.primaryColor ?? defaultTheme.primary,
+            secondary: parsedUser?.company?.secondaryColor ?? defaultTheme.secondary,
+            accent: parsedUser?.company?.secondaryColor ?? defaultTheme.secondary,
+          })
+        );
         console.log('Loaded user from localStorage:', parsedUser);
       } catch (error) {
         console.error('Error parsing stored user:', error);
@@ -70,6 +96,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (user?.company) {
+      applyThemeToDocument(
+        mergeTheme({
+          primary: user.company.primaryColor ?? defaultTheme.primary,
+          secondary: user.company.secondaryColor ?? defaultTheme.secondary,
+          accent: user.company.secondaryColor ?? defaultTheme.secondary,
+        })
+      );
+    } else {
+      applyThemeToDocument(defaultTheme);
+    }
+  }, [user?.company]);
+
+  useEffect(() => {
+    if (
+      !user ||
+      !user.company_id ||
+      (user.company &&
+        user.company.primaryColor &&
+        user.company.secondaryColor)
+    ) {
+      return;
+    }
+
+    const fetchCompany = async () => {
+      try {
+        const company = await companyApi.getById(user.company_id!);
+        setUser((prev) => {
+          if (!prev) return prev;
+          const nextUser = { ...prev, company };
+          localStorage.setItem('user', JSON.stringify(nextUser));
+          return nextUser;
+        });
+      } catch (error) {
+        console.error('Failed to fetch company colors:', error);
+      }
+    };
+
+    fetchCompany();
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -92,7 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         username: userData.username,
         role: userData.role,
         company_id: userData.company_id ?? null,
-        company: userData.company ?? null,
+        company: normalizeCompany(userData.company),
       };
 
 
@@ -100,6 +168,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(user);
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      applyThemeToDocument(
+        mergeTheme({
+          primary: user.company?.primaryColor ?? defaultTheme.primary,
+          secondary: user.company?.secondaryColor ?? defaultTheme.secondary,
+          accent: user.company?.secondaryColor ?? defaultTheme.secondary,
+        })
+      );
       console.log('Login successful, user set:', user);
     } catch (error) {
       console.error('Login error:', error);
@@ -132,6 +207,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    applyThemeToDocument(defaultTheme);
   };
 
   const forgotPassword = async (email: string) => {

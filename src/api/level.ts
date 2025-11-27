@@ -92,7 +92,8 @@ export const levelApi = {
 
   async create(payload: CreateLevelRequest): Promise<Level> {
     // company_id is automatically set by backend from authenticated user - DO NOT send it
-    const { company_id: _ignored, ...rest } = payload;
+    const { company_id: _companyId, ...rest } = payload;
+    void _companyId;
     const body: CreateLevelRequest = {
       status: 1,
       ...rest,
@@ -106,7 +107,8 @@ export const levelApi = {
 
   async update(id: number, payload: UpdateLevelRequest): Promise<Level> {
     // company_id is automatically set by backend from authenticated user - DO NOT send it
-    const { company_id: _ignored, ...rest } = payload;
+    const { company_id: _companyId, ...rest } = payload;
+    void _companyId;
     const { data } = await api.patch(`/levels/${id}`, rest);
     return data;
   },

@@ -9,6 +9,7 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import StudentAttestationModal from '../modals/StudentAttestationModal';
 import DeleteModal from '../modals/DeleteModal';
+import BaseModal from '../modals/BaseModal';
 import { EditButton, DeleteButton, Button } from '../ui';
 import type { StudentAttestation } from '../../api/studentAttestation';
 import type { Attestation } from '../../api/attestation';
@@ -58,6 +59,7 @@ const StudentAttestationsSection: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStudentAttestation, setEditingStudentAttestation] = useState<StudentAttestation | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentAttestation | null>(null);
+  const [detailsAttestation, setDetailsAttestation] = useState<StudentAttestation | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const params = useMemo(
@@ -152,6 +154,14 @@ const StudentAttestationsSection: React.FC = () => {
     setAlert(null);
   };
 
+  const openDetailsModal = (studentAttestation: StudentAttestation) => {
+    setDetailsAttestation(studentAttestation);
+  };
+
+  const closeDetailsModal = () => {
+    setDetailsAttestation(null);
+  };
+
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     setAlert(null);
@@ -232,7 +242,7 @@ const StudentAttestationsSection: React.FC = () => {
         )}
       
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-body">
           <SearchSelect
             label="Status"
             value={filters.status}
@@ -257,13 +267,13 @@ const StudentAttestationsSection: React.FC = () => {
             isClearable
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700">Search</label>
+            <label className="block text-sm font-medium text-heading">Search</label>
             <input
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
               placeholder="Search by student or attestation..."
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary bg-card"
             />
           </div>
         </div>
@@ -326,6 +336,13 @@ const StudentAttestationsSection: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openDetailsModal(sa)}
+                            className="inline-flex items-center rounded-md border border-primary/30 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                          >
+                            Attestation
+                          </button>
                           <EditButton onClick={() => openEditModal(sa)} />
                           <DeleteButton onClick={() => requestDelete(sa)} />
                         </div>
@@ -364,6 +381,52 @@ const StudentAttestationsSection: React.FC = () => {
         onConfirm={handleConfirmDelete}
         isLoading={deleteStudentAttestationMut.isPending}
       />
+
+      {detailsAttestation && (
+        <BaseModal
+          isOpen
+          onClose={closeDetailsModal}
+          title={`Attestation Details: ${getAttestationLabel(detailsAttestation)}`}
+          className="sm:max-w-3xl"
+        >
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Student</h3>
+              <p className="text-gray-700">{getStudentLabel(detailsAttestation)}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Attestation</h3>
+              <p className="text-gray-700">{getAttestationLabel(detailsAttestation)}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Request Notes</h3>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      detailsAttestation.description?.trim()
+                        ? detailsAttestation.description
+                        : '<p class="text-gray-500 italic">No notes provided for this student attestation.</p>',
+                  }}
+                />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">Attestation Template</h3>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      detailsAttestation.attestation?.description?.trim()
+                        ? detailsAttestation.attestation.description
+                        : '<p class="text-gray-500 italic">No template description available.</p>',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </BaseModal>
+      )}
     </div>
   );
 };

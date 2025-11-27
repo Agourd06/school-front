@@ -19,22 +19,20 @@ const Input: React.FC<InputProps> = ({
   return (
     <div>
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
+        <label htmlFor={inputId} className="block text-sm font-medium text-heading">
           {label}
         </label>
       )}
       <input
         id={inputId}
         disabled={disabled}
-        className={`mt-1 block w-full px-3 py-2 border rounded-md ${
-          error
-            ? 'border-red-300'
-            : 'border-gray-300'
-        } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''} ${className}`}
+        className={`mt-1 block w-full rounded-md border bg-card px-3 py-2 text-sm text-body placeholder:text-muted shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary ${
+          error ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border'
+        } ${disabled ? 'cursor-not-allowed bg-muted-foreground text-muted' : ''} ${className}`}
         {...props}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {helperText && !error && <p className="mt-1 text-xs text-gray-500">{helperText}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {helperText && !error && <p className="mt-1 text-xs text-muted">{helperText}</p>}
     </div>
   );
 };

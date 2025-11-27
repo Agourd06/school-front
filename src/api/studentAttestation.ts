@@ -7,7 +7,8 @@ export interface StudentAttestation {
   Idstudent: number;
   Idattestation: number;
   dateask?: string;
-  datedelivery?: string;
+  datedelivery?: string | null;
+  description?: string | null;
   Status?: number;
   companyid: number;
   created_at?: string;
@@ -33,7 +34,8 @@ export interface CreateStudentAttestationRequest {
   Idstudent: number;
   Idattestation: number;
   dateask?: string;
-  datedelivery?: string;
+  datedelivery?: string | null;
+  description?: string | null;
   Status?: number;
   companyid?: number; // Optional - backend sets it from authenticated user
 }

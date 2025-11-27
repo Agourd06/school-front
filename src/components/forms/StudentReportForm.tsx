@@ -50,7 +50,6 @@ interface StudentReportFormProps {
   };
   disableStudentSelect?: boolean;
   disablePeriodSelect?: boolean;
-  onViewReportDetails?: (studentId: number) => void;
 }
 
 const StudentReportForm: React.FC<StudentReportFormProps> = ({
@@ -65,7 +64,6 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
   contextInfo,
   disableStudentSelect = false,
   disablePeriodSelect = false,
-  onViewReportDetails,
 }) => {
   const [form, setForm] = useState<StudentReportFormData>({
     school_year_id: '',
@@ -80,7 +78,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
   const [preview, setPreview] = useState<{ src: string; label: string } | null>(null);
   const [studentDetailsModalOpen, setStudentDetailsModalOpen] = useState(false);
 
-  const selectedStudentId = form.student_id && form.student_id !== '' ? Number(form.student_id) : undefined;
+  const selectedStudentId = typeof form.student_id === 'number' ? form.student_id : undefined;
   const { data: studentDetailsData, isLoading: studentDetailsLoading } = useQuery({
     queryKey: ['studentDetails', selectedStudentId],
     queryFn: () => studentsApi.getDetails(selectedStudentId!),
@@ -160,7 +158,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
       {contextInfo && (
-        <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-blue-700 space-x-2 flex flex-wrap gap-2">
+        <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary space-x-2 flex flex-wrap gap-2">
           {contextInfo.year && <span className="font-semibold">Year:</span>}
           {contextInfo.year && <span>{contextInfo.year}</span>}
           {contextInfo.period && (
@@ -186,7 +184,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
               <button
                 type="button"
                 onClick={() => setStudentDetailsModalOpen(true)}
-                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition"
+                className="p-1 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition"
                 title="View student details"
               >
                 <Eye className="h-4 w-4" />
@@ -222,7 +220,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setStudentDetailsModalOpen(true)}
-                  className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition"
+                  className="p-1 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition"
                   title="View student details"
                 >
                   <Eye className="h-4 w-4" />
@@ -248,7 +246,6 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
             value={form.mention}
             onChange={(e) => setForm((prev) => ({ ...prev, mention: e.target.value }))}
             placeholder="Optional mention (e.g. Très Bien)"
-            className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <Select
@@ -259,8 +256,25 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
             value: option.value,
             label: option.label,
           }))}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+      </div>
+
+      <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-primary font-semibold">Promotion status</p>
+          <p className="text-sm text-heading">
+            Mark this student as <strong>passed</strong> to promote them.
+          </p>
+        </div>
+        <label className="inline-flex items-center gap-3 text-heading font-semibold text-base">
+          <input
+            type="checkbox"
+            checked={form.passed}
+            onChange={(e) => setForm((prev) => ({ ...prev, passed: e.target.checked }))}
+            className="h-6 w-6 rounded-md border-primary/40 text-primary focus:ring-primary/60"
+          />
+          <span>Passed</span>
+        </label>
       </div>
 
       <div>
@@ -271,18 +285,6 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
           placeholder="Optional notes about the student's progress"
           rows={10}
         />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <input
-            type="checkbox"
-            checked={form.passed}
-            onChange={(e) => setForm((prev) => ({ ...prev, passed: e.target.checked }))}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          Passed
-        </label>
       </div>
 
       {serverError && (
@@ -353,13 +355,13 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
           )}
 
           {diploma && (
-            <section className="rounded-2xl border border-gray-200 p-4 space-y-4 bg-gradient-to-br from-white to-blue-50/40">
+            <section className="rounded-2xl border border-gray-200 p-4 space-y-4 bg-gradient-to-br from-card to-primary/5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-blue-500">Academic Record</p>
-                  <h4 className="text-lg font-semibold text-gray-900 mt-1">{diploma.title || 'Diploma'}</h4>
+                  <p className="text-xs uppercase tracking-wide text-primary">Academic Record</p>
+                  <h4 className="text-lg font-semibold text-heading mt-1">{diploma.title || 'Diploma'}</h4>
                 </div>
-                <span className="text-xs rounded-full bg-blue-100 px-3 py-0.5 text-blue-700 font-semibold">
+                <span className="text-xs rounded-full bg-primary/10 px-3 py-0.5 text-primary font-semibold">
                   {diploma.status === 1 ? 'Active' : diploma.status === -1 ? 'Archived' : 'Draft'}
                 </span>
               </div>
@@ -439,8 +441,8 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
           {contact && (
             <section className="rounded-lg border border-gray-200 p-3 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-gray-900">Contact</h4>
-                <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                <h4 className="text-sm font-semibold text-heading">Contact</h4>
+                <span className="text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary">
                   {contact.status === 1 ? 'Active' : contact.status === -1 ? 'Archived' : 'Draft'}
                 </span>
               </div>
@@ -474,8 +476,8 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
           {linkType && (
             <section className="rounded-lg border border-gray-200 p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-gray-900">Link Type</h4>
-                <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
+                <h4 className="text-sm font-semibold text-heading">Link Type</h4>
+                <span className="text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary">
                   {linkType.status === 1 ? 'Active' : linkType.status === 0 ? 'Disabled' : 'Draft'}
                 </span>
               </div>
@@ -505,7 +507,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
           <button
             type="button"
             onClick={() => setPreview(null)}
-            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+            className="px-4 py-2 text-sm font-medium text-primary hover:text-primary/80"
           >
             Close Preview
           </button>

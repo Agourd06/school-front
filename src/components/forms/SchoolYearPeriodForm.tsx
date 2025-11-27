@@ -179,8 +179,8 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
               })),
             ]}
             error={errors.schoolYearId}
-            className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              isSchoolYearLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+            className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+              isSchoolYearLocked ? 'bg-muted cursor-not-allowed' : ''
             }`}
           />
         )}
@@ -193,7 +193,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
         onChange={(e) => setTitle(e.target.value)}
         required
         error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -204,7 +204,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
           onChange={(e) => setStartDate(e.target.value)}
           required
           error={errors.start_date}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Input
           label="End Date"
@@ -213,7 +213,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
           onChange={(e) => setEndDate(e.target.value)}
           required
           error={errors.end_date || errors.date}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
 
@@ -226,7 +226,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
           { value: 'ongoing', label: 'Ongoing' },
           { value: 'completed', label: 'Completed' },
         ]}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select
@@ -237,7 +237,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
           value: option.value,
           label: option.label,
         }))}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div className="flex justify-end space-x-3 pt-4">

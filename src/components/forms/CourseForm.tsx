@@ -125,28 +125,25 @@ const CourseForm: React.FC<CourseFormProps> = ({
         value={formData.title}
         onChange={handleChange}
         error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
 
       <Input
-        label="Volume (optional)"
+        label="Volume "
         type="number"
         name="volume"
         value={formData.volume}
         onChange={handleChange}
         error={errors.volume}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
 
       <Input
-        label="Coefficient (optional)"
+        label="Coefficient "
         type="number"
         step="0.1"
         name="coefficient"
         value={formData.coefficient}
         onChange={handleChange}
         error={errors.coefficient}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
 
       <Select
@@ -158,11 +155,10 @@ const CourseForm: React.FC<CourseFormProps> = ({
           value: opt.value,
           label: opt.label,
         }))}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
       />
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="description" className="block text-sm font-medium text-heading mb-2">
           Description
         </label>
         <RichTextEditor

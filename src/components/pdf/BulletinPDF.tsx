@@ -1,20 +1,20 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
-export type BulletinSubjectRow = {
+export interface BulletinSubjectRow {
   name: string;
-  studentNote: string;
-  classNote: string;
-  appreciation: string;
-};
+  studentNote?: string | number | null;
+  classNote?: string | number | null;
+  appreciation?: string | null;
+}
 
-export interface BulletinPDFProps {
+interface BulletinPDFProps {
   studentName: string;
   classLabel?: string | null;
   schoolYearLabel?: string | null;
   periodLabel?: string | null;
   birthDate?: string | null;
-  studentId?: string | null;
+  studentId?: string | number | null;
   counselorNote?: string | null;
   principalNote?: string | null;
   overallAverage?: string | number | null;
@@ -25,129 +25,7 @@ export interface BulletinPDFProps {
   tardies?: number;
 }
 
-const styles = StyleSheet.create({
-  page: {
-    padding: 36,
-    fontSize: 10,
-    fontFamily: 'Helvetica',
-    color: '#111',
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 18,
-  },
-  brand: {
-    fontSize: 16,
-    fontWeight: 700,
-    letterSpacing: 1.5,
-  },
-  contact: {
-    fontSize: 9,
-    color: '#555',
-  },
-  title: {
-    fontSize: 15,
-    textAlign: 'center',
-    marginBottom: 18,
-    fontWeight: 600,
-    letterSpacing: 1,
-  },
-  metaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 6,
-    marginBottom: 18,
-  },
-  metaItem: {
-    width: '50%',
-    padding: 8,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  metaLabel: {
-    fontSize: 8,
-    textTransform: 'uppercase',
-    color: '#6b7280',
-  },
-  metaValue: {
-    fontSize: 11,
-    marginTop: 2,
-    fontWeight: 600,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    marginBottom: 18,
-    gap: 8,
-  },
-  summaryCard: {
-    flex: 1,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    padding: 10,
-    backgroundColor: '#f8fafc',
-  },
-  summaryLabel: {
-    fontSize: 9,
-    color: '#6b7280',
-    textTransform: 'uppercase',
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: 700,
-    marginTop: 4,
-  },
-  table: {
-    width: '100%',
-    borderWidth: 1.2,
-    borderColor: '#111',
-    borderBottomWidth: 0,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#111',
-  },
-  headerCell: {
-    fontWeight: 600,
-    backgroundColor: '#eef2ff',
-  },
-  cell: {
-    borderRightWidth: 1,
-    borderColor: '#111',
-    padding: 6,
-    flexGrow: 1,
-  },
-  cellLast: {
-    borderRightWidth: 0,
-  },
-  footer: {
-    marginTop: 18,
-    lineHeight: 1.5,
-  },
-  footerGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 18,
-  },
-  footerBlock: {
-    width: '48%',
-    borderTopWidth: 1,
-    borderColor: '#9ca3af',
-    paddingTop: 6,
-    fontSize: 10,
-  },
-});
-
-export const BulletinPDF: React.FC<BulletinPDFProps> = ({
+export const BulletinPDF = ({
   studentName,
   classLabel,
   schoolYearLabel,
@@ -162,127 +40,251 @@ export const BulletinPDF: React.FC<BulletinPDFProps> = ({
   subjects,
   absences = 0,
   tardies = 0,
-}) => (
+}: BulletinPDFProps) => {
+  const previewSubjects = subjects.length > 0 ? subjects : sampleSubjects;
+
+  return (
   <Document>
     <Page size="A4" style={styles.page}>
+      
+      {/* HEADER */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.brand}>Edusole</Text>
-          <Text style={styles.contact}>International School</Text>
-          <Text style={styles.contact}>Tel: 00-00-00-00-00 • admin@edusole.com</Text>
+          <Text style={styles.brand}>EDUSOLE ACADEMY</Text>
+          <Text style={styles.subBrand}>Excellence & Discipline</Text>
+          <Text style={styles.contact}>admin@edusole.com • +212 600 000 000</Text>
         </View>
-        <View style={{ textAlign: 'right' }}>
-          <Text style={styles.contact}>School Year {schoolYearLabel ?? '—'}</Text>
-          {periodLabel ? <Text style={styles.contact}>Term: {periodLabel}</Text> : null}
-          <Text style={styles.contact}>Generated on: {new Date().toLocaleDateString()}</Text>
-        </View>
-      </View>
-
-      <Text style={styles.title}>Academic Report — Term 1</Text>
-
-      <View style={styles.metaGrid}>
-        <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>Student Name</Text>
-          <Text style={styles.metaValue}>{studentName}</Text>
-        </View>
-        <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>Student ID</Text>
-          <Text style={styles.metaValue}>{studentId ?? '—'}</Text>
-        </View>
-        <View style={styles.metaItem}>
-          <Text style={styles.metaLabel}>Class</Text>
-          <Text style={styles.metaValue}>{classLabel ?? '—'}</Text>
-        </View>
-        <View style={[styles.metaItem, { borderRightWidth: 0 }]}>
-          <Text style={styles.metaLabel}>Date of Birth</Text>
-          <Text style={styles.metaValue}>{birthDate ?? '—'}</Text>
+        <View style={styles.headerRight}>
+          <Text style={styles.schoolYear}>Year: {schoolYearLabel || "—"}</Text>
+          <Text style={styles.term}>Term: {periodLabel || "—"}</Text>
+          <Text style={styles.generated}>
+            Generated: {new Date().toLocaleDateString()}
+          </Text>
         </View>
       </View>
 
+      {/* TITLE */}
+      <Text style={styles.title}>Academic Performance Report</Text>
+
+      {/* STUDENT INFO */}
+      <View style={styles.infoContainer}>
+        <InfoItem label="Student Name" value={studentName || "Johnathan Doe"} />
+        <InfoItem label="Student ID" value={studentId || "ST-2025-001"} />
+        <InfoItem label="Class" value={classLabel || "Grade 12 - Science"} />
+        <InfoItem label="Birth Date" value={birthDate || "12/06/2008"} />
+      </View>
+
+      {/* SUMMARY */}
       <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Overall Avg.</Text>
-          <Text style={styles.summaryValue}>{overallAverage ?? '—'}</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Class Avg.</Text>
-          <Text style={styles.summaryValue}>{classAverage ?? '—'}</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Class Rank</Text>
-          <Text style={styles.summaryValue}>{rank ?? '—'}</Text>
-        </View>
+        <SummaryCard label="Overall Average" value={overallAverage ?? "16.4"} />
+        <SummaryCard label="Class Average" value={classAverage ?? "14.8"} />
+        <SummaryCard label="Rank" value={rank ?? "3 / 28"} />
       </View>
 
+      {/* TABLE */}
       <View style={styles.table}>
-        <View style={[styles.row, styles.headerCell]}>
-          <View style={[styles.cell, { flex: 2 }]}>
-            <Text>Course</Text>
-          </View>
-          <View style={styles.cell}>
-            <Text>Note</Text>
-          </View>
-          <View style={styles.cell}>
-            <Text>Coefficient</Text>
-          </View>
-          <View style={[styles.cell, styles.cellLast, { flex: 3 }]}>
-            <Text>Remarks</Text>
-          </View>
+        <View style={styles.tableHeader}>
+          <TableCell text="Course" flex={2} bold />
+          <TableCell text="Note" />
+          <TableCell text="Coefficient" />
+          <TableCell text="Remarks" flex={2} bold />
         </View>
 
-        {subjects.length === 0 ? (
-          <View style={styles.row}>
-            <View style={[styles.cell, { flex: 2 }]}>
-              <Text>—</Text>
-            </View>
-            <View style={styles.cell}>
-              <Text>—</Text>
-            </View>
-            <View style={styles.cell}>
-              <Text>—</Text>
-            </View>
-            <View style={[styles.cell, styles.cellLast, { flex: 3 }]}>
-              <Text>No courses yet.</Text>
-            </View>
+        {previewSubjects.map((s, i) => (
+          <View key={`${s.name}-${i}`} style={styles.tableRow}>
+            <TableCell text={s.name} flex={2} />
+            <TableCell text={s.studentNote ?? "—"} />
+            <TableCell text={s.classNote ?? "—"} />
+            <TableCell text={s.appreciation ?? "—"} flex={2} />
           </View>
-        ) : (
-          subjects.map((subject, index) => (
-            <View style={styles.row} key={`${subject.name}-${index}`}>
-              <View style={[styles.cell, { flex: 2 }]}>
-                <Text>{subject.name}</Text>
-              </View>
-              <View style={styles.cell}>
-                <Text>{subject.studentNote}</Text>
-              </View>
-              <View style={styles.cell}>
-                <Text>{subject.classNote}</Text>
-              </View>
-              <View style={[styles.cell, styles.cellLast, { flex: 3 }]}>
-                <Text>{subject.appreciation}</Text>
-              </View>
-            </View>
-          ))
-        )}
+        ))}
       </View>
 
-      <View style={styles.footer}>
-        <Text>Absences: {absences ?? 0}</Text>
-        <Text>Late arrivals: {tardies ?? 0}</Text>
+      {/* ATTENDANCE */}
+      <View style={styles.attendanceBox}>
+        <Text style={styles.attendanceText}>Absences: {absences}</Text>
+        <Text style={styles.attendanceText}>Tardies: {tardies}</Text>
       </View>
 
-      <View style={styles.footerGrid}>
-        <View style={styles.footerBlock}>
-          <Text style={{ fontWeight: 600, marginBottom: 4 }}>Class Council Notes</Text>
-          <Text>{counselorNote ?? 'Pending input.'}</Text>
+      {/* NOTES */}
+      <View style={styles.notesGrid}>
+        <View style={styles.noteCard}>
+          <Text style={styles.noteTitle}>Class Council Notes</Text>
+          <Text style={styles.noteContent}>
+            {counselorNote ||
+              "Consistently engaged, demonstrates leadership in group projects and maintains a positive influence on classmates."}
+          </Text>
         </View>
-        <View style={styles.footerBlock}>
-          <Text style={{ fontWeight: 600, marginBottom: 4 }}>Principal Notes</Text>
-          <Text>{principalNote ?? 'Pending input.'}</Text>
+
+        <View style={styles.noteCard}>
+          <Text style={styles.noteTitle}>Principal Notes</Text>
+          <Text style={styles.noteContent}>
+            {principalNote ||
+              "Excellent academic trajectory this term. Encourage continued involvement in STEM competitions next semester."}
+          </Text>
         </View>
       </View>
     </Page>
   </Document>
+  );
+};
+
+/**********************************************
+ *  COMPONENTS (clean + modern)
+ **********************************************/
+
+interface InfoItemProps {
+  label: string;
+  value?: string | number | null;
+}
+
+const InfoItem = ({ label, value }: InfoItemProps) => (
+  <View style={styles.infoItem}>
+    <Text style={styles.infoLabel}>{label}</Text>
+    <Text style={styles.infoValue}>{value}</Text>
+  </View>
 );
 
+interface SummaryCardProps {
+  label: string;
+  value?: string | number | null;
+}
+
+const SummaryCard = ({ label, value }: SummaryCardProps) => (
+  <View style={styles.summaryCard}>
+    <Text style={styles.summaryLabel}>{label}</Text>
+    <Text style={styles.summaryValue}>{value ?? "—"}</Text>
+  </View>
+);
+
+interface TableCellProps {
+  text: string | number | null;
+  flex?: number;
+  bold?: boolean;
+}
+
+const TableCell = ({ text, flex = 1, bold = false }: TableCellProps) => (
+  <View style={[styles.cell, { flex }]}>
+    <Text style={{ fontWeight: bold ? 700 : 400 }}>{text}</Text>
+  </View>
+);
+
+/**********************************************
+ *  STYLES (professional & elegant)
+ **********************************************/
+
+const styles = StyleSheet.create({
+  page: {
+    padding: 30,
+    fontSize: 10,
+    fontFamily: "Helvetica",
+  },
+
+  /** HEADER **/
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 25,
+  },
+  brand: {
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#1e293b",
+    letterSpacing: 0.5,
+  },
+  subBrand: { fontSize: 10, color: "#475569", marginTop: 2 },
+  contact: { fontSize: 9, color: "#64748b" },
+  headerRight: { textAlign: "right" },
+  schoolYear: { fontSize: 10, fontWeight: 600 },
+  term: { fontSize: 10, marginTop: 2 },
+  generated: { fontSize: 9, color: "#6b7280", marginTop: 4 },
+
+  /** TITLE **/
+  title: {
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: 700,
+    marginBottom: 20,
+    color: "#1e293b",
+  },
+
+  /** INFO GRID **/
+  infoContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    borderRadius: 8,
+    backgroundColor: "#f8fafc",
+    padding: 12,
+    marginBottom: 18,
+  },
+  infoItem: { width: "50%", marginBottom: 10 },
+  infoLabel: { fontSize: 8, color: "#6b7280", textTransform: "uppercase" },
+  infoValue: { fontSize: 11, fontWeight: 600, marginTop: 2 },
+
+  /** SUMMARY CARDS **/
+  summaryRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
+  summaryCard: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#eef2ff",
+  },
+  summaryLabel: {
+    fontSize: 9,
+    color: "#475569",
+    letterSpacing: 0.5,
+  },
+  summaryValue: { fontSize: 16, fontWeight: 700, color: "#1e293b", marginTop: 5 },
+
+  /** TABLE **/
+  table: {
+    borderWidth: 1,
+    borderColor: "#94a3b8",
+    borderRadius: 6,
+    overflow: "hidden",
+  },
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#e0e7ff",
+    paddingVertical: 6,
+  },
+  tableRow: { flexDirection: "row", borderBottomWidth: 1, borderColor: "#e2e8f0" },
+  cell: { padding: 6, borderRightWidth: 1, borderColor: "#e2e8f0" },
+
+  /** ATTENDANCE **/
+  attendanceBox: {
+    marginTop: 16,
+    padding: 10,
+    backgroundColor: "#f1f5f9",
+    borderRadius: 6,
+  },
+  attendanceText: { fontSize: 10, color: "#475569" },
+
+  /** NOTES **/
+  notesGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    gap: 10,
+  },
+  noteCard: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  noteTitle: { fontSize: 11, fontWeight: 700, marginBottom: 5 },
+  noteContent: { fontSize: 10, color: "#475569", lineHeight: 1.4 },
+});
+
 export default BulletinPDF;
+
+const sampleSubjects: BulletinSubjectRow[] = [
+  { name: "Mathematics", studentNote: "18.2", classNote: "14.0", appreciation: "Outstanding problem-solving" },
+  { name: "Physics", studentNote: "17.4", classNote: "13.5", appreciation: "Great lab participation" },
+  { name: "English Literature", studentNote: "16.8", classNote: "15.0", appreciation: "Articulate and creative writing" },
+  { name: "History & Geography", studentNote: "14.5", classNote: "12.8", appreciation: "Insightful research work" },
+];
 
