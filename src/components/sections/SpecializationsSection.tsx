@@ -405,7 +405,16 @@ const SpecializationsSection: React.FC = () => {
       <SpecializationModal
         isOpen={modalOpen}
         onClose={handleModalClose}
-        specialization={editingSpecialization ?? undefined}
+        specialization={
+          editingSpecialization
+            ? ({
+                ...editingSpecialization,
+                program: editingSpecialization.program ?? undefined,
+                description: editingSpecialization.description ?? undefined,
+                status: editingSpecialization.status ?? 1,
+              } as import('../forms/SpecializationForm').Specialization)
+            : undefined
+        }
         initialProgramId={selectedProgramId ?? undefined}
       />
 

@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './users';
-export * from './company';
+// Export Company from company.ts explicitly to avoid conflict with auth.ts
+export type { Company, CreateCompanyRequest, UpdateCompanyRequest } from './company';
 export * from './course';
 export * from './module';
 export * from './schoolYear';

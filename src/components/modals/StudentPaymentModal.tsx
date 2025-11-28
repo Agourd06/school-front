@@ -2,6 +2,7 @@ import React from 'react';
 import BaseModal from './BaseModal';
 import type { StudentPayment, StudentPaymentStatus } from '../../api/studentPayment';
 import { StudentPaymentForm, type StudentPaymentFormData } from '../forms';
+import type { SearchSelectOption } from '../inputs/SearchSelect';
 
 export interface StudentPaymentFormValues {
   student_id: number | '';

@@ -70,8 +70,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
 
-    console.log('Loading from localStorage - token:', storedToken ? 'exists' : 'missing', 'user:', storedUser ? 'exists' : 'missing');
-
     if (storedToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
@@ -87,9 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             accent: parsedUser?.company?.secondaryColor ?? defaultTheme.secondary,
           })
         );
-        console.log('Loaded user from localStorage:', parsedUser);
       } catch (error) {
-        console.error('Error parsing stored user:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
@@ -132,7 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return nextUser;
         });
       } catch (error) {
-        console.error('Failed to fetch company colors:', error);
+        // Silently fail - company colors are optional
       }
     };
 
@@ -142,9 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      console.log('Logging in with:', { email });
       const data = await authApi.login({ email, password });
-      console.log('Login response:', data);
 
       // Handle your backend's response structure: {access_token, user: {id, email, username, role}}
       const token = data.token;
@@ -175,9 +169,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           accent: user.company?.secondaryColor ?? defaultTheme.secondary,
         })
       );
-      console.log('Login successful, user set:', user);
     } catch (error) {
-      console.error('Login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -195,7 +187,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // localStorage.setItem('user', JSON.stringify(data.user));
       await login(email, password);
     } catch (error) {
-      console.error('Registration error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -214,7 +205,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authApi.forgotPassword({ email });
     } catch (error) {
-      console.error('Forgot password error:', error);
       throw error;
     }
   };
@@ -223,7 +213,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authApi.resetPassword(resetToken, { password });
     } catch (error) {
-      console.error('Reset password error:', error);
       throw error;
     }
   };
@@ -232,7 +221,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await authApi.changePassword({ currentPassword, newPassword, confirmPassword });
     } catch (error) {
-      console.error('Change password error:', error);
       throw error;
     }
   };

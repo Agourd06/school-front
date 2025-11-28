@@ -35,76 +35,81 @@ export type DashboardTab =
   | 'studentAttestations'
   | 'classCourses';
 
-const UsersSection = React.lazy(() => import('../components/sections/UsersSection'));
-const CompaniesSection = React.lazy(() => import('../components/sections/CompaniesSection'));
-const ProgramsSection = React.lazy(() => import('../components/sections/ProgramsSection'));
-const SpecializationsSection = React.lazy(() => import('../components/sections/SpecializationsSection'));
-const LevelsSection = React.lazy(() => import('../components/sections/LevelsSection'));
-const ClassesSection = React.lazy(() => import('../components/sections/ClassesSection'));
-const CoursesSection = React.lazy(() => import('../components/sections/CoursesSection'));
-const ModulesSection = React.lazy(() => import('../components/sections/ModulesSection'));
-const SchoolYearsSection = React.lazy(() => import('../components/sections/SchoolYearsSection'));
-const SchoolYearPeriodsSection = React.lazy(() => import('../components/sections/SchoolYearPeriodsSection'));
-const ClassRoomsSection = React.lazy(() => import('../components/sections/ClassRoomsSection'));
-const StudentsSection = React.lazy(() => import('../components/sections/StudentsSection'));
-const ClassStudentsSection = React.lazy(() => import('../components/sections/ClassStudentsSection'));
-const PlanningSection = React.lazy(() => import('../components/sections/PlanningSection'));
-const StudentReportsSection = React.lazy(() => import('../components/sections/StudentReportsSection'));
-const StudentPresenceSection = React.lazy(() => import('../components/sections/StudentPresenceSection'));
-const StudentNotesSection = React.lazy(() => import('../components/sections/StudentNotesSection'));
-const StudentReportDetailsSection = React.lazy(() => import('../components/sections/StudentReportDetailsSection'));
-const PlanningSessionTypesSection = React.lazy(() => import('../components/sections/PlanningSessionTypesSection'));
-const TeachersSection = React.lazy(() => import('../components/sections/TeachersSection'));
-const AdministratorsSection = React.lazy(() => import('../components/sections/AdministratorsSection'));
-const StudentLinkTypesSection = React.lazy(() => import('../components/sections/StudentLinkTypesSection'));
-const StudentContactsSection = React.lazy(() => import('../components/sections/StudentContactsSection'));
-const StudentDiplomesSection = React.lazy(() => import('../components/sections/StudentDiplomesSection'));
-const LevelPricingsSection = React.lazy(() => import('../components/sections/LevelPricingsSection'));
-const StudentPaymentsSection = React.lazy(() => import('../components/sections/StudentPaymentsSection'));
-const AttestationsSection = React.lazy(() => import('../components/sections/AttestationsSection'));
-const StudentAttestationsSection = React.lazy(() => import('../components/sections/StudentAttestationsSection'));
-const ClassCoursesSection = React.lazy(() => import('../components/sections/ClassCoursesSection'));
+// Component cache to avoid recreating lazy components
+const componentCache = new Map<DashboardTab, React.LazyExoticComponent<React.FC>>();
 
-const sectionComponents: Record<DashboardTab, React.LazyExoticComponent<React.FC>> = {
-  users: UsersSection,
-  companies: CompaniesSection,
-  programs: ProgramsSection,
-  specializations: SpecializationsSection,
-  levels: LevelsSection,
-  classes: ClassesSection,
-  courses: CoursesSection,
-  modules: ModulesSection,
-  schoolYears: SchoolYearsSection,
-  schoolYearPeriods: SchoolYearPeriodsSection,
-  classRooms: ClassRoomsSection,
-  students: StudentsSection,
-  classStudents: ClassStudentsSection,
-  planning: PlanningSection,
-  studentReports: StudentReportsSection,
-  studentPresence: StudentPresenceSection,
-  studentNotes: StudentNotesSection,
-  studentReportDetails: StudentReportDetailsSection,
-  planningSessionTypes: PlanningSessionTypesSection,
-  teachers: TeachersSection,
-  administrators: AdministratorsSection,
-  studentLinkTypes: StudentLinkTypesSection,
-  studentContacts: StudentContactsSection,
-  studentDiplomes: StudentDiplomesSection,
-  levelPricings: LevelPricingsSection,
-  studentPayments: StudentPaymentsSection,
-  attestations: AttestationsSection,
-  studentAttestations: StudentAttestationsSection,
-  classCourses: ClassCoursesSection,
+// Dynamic component loader - only loads components when needed
+const loadSectionComponent = (tab: DashboardTab): React.LazyExoticComponent<React.FC> => {
+  // Return cached component if it exists
+  if (componentCache.has(tab)) {
+    return componentCache.get(tab)!;
+  }
+
+  const componentMap: Record<DashboardTab, () => Promise<{ default: React.FC }>> = {
+    users: () => import('../components/sections/UsersSection'),
+    companies: () => import('../components/sections/CompaniesSection'),
+    programs: () => import('../components/sections/ProgramsSection'),
+    specializations: () => import('../components/sections/SpecializationsSection'),
+    levels: () => import('../components/sections/LevelsSection'),
+    classes: () => import('../components/sections/ClassesSection'),
+    courses: () => import('../components/sections/CoursesSection'),
+    modules: () => import('../components/sections/ModulesSection'),
+    schoolYears: () => import('../components/sections/SchoolYearsSection'),
+    schoolYearPeriods: () => import('../components/sections/SchoolYearPeriodsSection'),
+    classRooms: () => import('../components/sections/ClassRoomsSection'),
+    students: () => import('../components/sections/StudentsSection'),
+    classStudents: () => import('../components/sections/ClassStudentsSection'),
+    planning: () => import('../components/sections/PlanningSection'),
+    studentReports: () => import('../components/sections/StudentReportsSection'),
+    studentPresence: () => import('../components/sections/StudentPresenceSection'),
+    studentNotes: () => import('../components/sections/StudentNotesSection'),
+    studentReportDetails: () => import('../components/sections/StudentReportDetailsSection'),
+    planningSessionTypes: () => import('../components/sections/PlanningSessionTypesSection'),
+    teachers: () => import('../components/sections/TeachersSection'),
+    administrators: () => import('../components/sections/AdministratorsSection'),
+    studentLinkTypes: () => import('../components/sections/StudentLinkTypesSection'),
+    studentContacts: () => import('../components/sections/StudentContactsSection'),
+    studentDiplomes: () => import('../components/sections/StudentDiplomesSection'),
+    levelPricings: () => import('../components/sections/LevelPricingsSection'),
+    studentPayments: () => import('../components/sections/StudentPaymentsSection'),
+    attestations: () => import('../components/sections/AttestationsSection'),
+    studentAttestations: () => import('../components/sections/StudentAttestationsSection'),
+    classCourses: () => import('../components/sections/ClassCoursesSection'),
+  };
+
+  const loader = componentMap[tab] || (() => import('../components/sections/StudentsSection'));
+  const lazyComponent = React.lazy(loader);
+  
+  // Cache the component for future use
+  componentCache.set(tab, lazyComponent);
+  
+  return lazyComponent;
 };
 
 const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab }) => {
-  const [activeTab, setActiveTab] = useState<DashboardTab>(initialTab || 'users');
+  // Filter out 'users' and 'companies' from allowed tabs
+  const getAllowedTab = (tab: DashboardTab | undefined): DashboardTab => {
+    if (!tab || tab === 'users' || tab === 'companies') {
+      return 'students'; // Default to students if invalid or restricted tab
+    }
+    return tab;
+  };
+
+  const [activeTab, setActiveTab] = useState<DashboardTab>(getAllowedTab(initialTab));
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const { setNavigateToPeriods } = useSchoolYear();
   const { setNavigateToSpecializations, setNavigateBackToPrograms } = useProgram();
   const { setNavigateToLevels, setNavigateBackToSpecializations } = useSpecialization();
 
-  const SectionComponent = useMemo(() => sectionComponents[activeTab], [activeTab]);
+  // Prevent navigation to restricted tabs
+  const handleTabChange = (tab: DashboardTab) => {
+    if (tab !== 'users' && tab !== 'companies') {
+      setActiveTab(tab);
+    }
+  };
+
+  // Dynamically load component only when tab changes
+  const SectionComponent = useMemo(() => loadSectionComponent(activeTab), [activeTab]);
 
   useEffect(() => {
     setNavigateToPeriods(() => {
@@ -130,7 +135,7 @@ const DashboardContent: React.FC<{ initialTab?: DashboardTab }> = ({ initialTab 
     <div className="min-h-screen bg-surface flex">
       <Sidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         onToggleCollapse={toggleSidebarVisibility}
         isCollapsed={!isSidebarVisible}
       />

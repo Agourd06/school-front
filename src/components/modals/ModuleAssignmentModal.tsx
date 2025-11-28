@@ -163,7 +163,8 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
         // Wait a bit for cache invalidation to propagate, then refetch
         await new Promise((resolve) => setTimeout(resolve, 100));
         await refetchAssignments();
-      } catch (error: unknown) {
+      } catch (err: unknown) {
+        const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
         // Check if the error is because the module is already assigned (409)
         // The API layer should handle restoration of soft-deleted relationships
         // If we still get a 409 error here, it means the relationship exists and is active
@@ -235,7 +236,8 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
       await refetchAssignments();
       setDeleteModalOpen(false);
       setModuleToDelete(null);
-    } catch (error: unknown) {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
       // Rollback on error
       updateAssignedState((prev) => [...prev, moduleToDelete]);
       console.error("Failed to remove module from course:", error);
@@ -358,7 +360,8 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
       handleCloseEditModule();
       // Refetch to ensure we have the latest data from the server
       await refetchAssignments();
-    } catch (error: unknown) {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
       console.error("Failed to update module assignment:", error);
       // Rollback on error - refetch to get the correct state
       await refetchAssignments();

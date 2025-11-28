@@ -51,6 +51,15 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
     await onSubmit(formData as StudentReportFormValues);
   };
 
+  // Convert API type to form type (null -> undefined)
+  const formInitialData = initialData
+    ? {
+        ...initialData,
+        remarks: initialData.remarks ?? undefined,
+        mention: initialData.mention ?? undefined,
+      }
+    : undefined;
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -59,7 +68,7 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
       className="sm:max-w-4xl"
     >
       <StudentReportForm
-        initialData={initialData}
+        initialData={formInitialData}
         onSubmit={handleSubmit}
         onCancel={onClose}
         isSubmitting={isSubmitting}

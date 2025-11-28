@@ -276,7 +276,6 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
         const created = await createLinkTypeMut.mutateAsync({
           title: linkTypeTitle,
           status: linkTypeStatus,
-          student_id: studentId,
         });
         setCurrentLinkType(created);
         linkTypeId = created.id;

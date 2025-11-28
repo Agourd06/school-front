@@ -9,7 +9,6 @@ import RegistrationPage from './pages/RegistrationPage';
 
 const App: React.FC = () => {
   const { user, isLoading } = useAuth();
-  
 
   if (isLoading) {
     return (
@@ -62,8 +61,6 @@ const App: React.FC = () => {
           element={<Navigate to={user ? "/dashboard" : "/auth"} />} 
         />
       </Routes>
-      
-      
     </div>
   );
 };

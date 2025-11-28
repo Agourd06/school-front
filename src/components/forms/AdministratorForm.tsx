@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { validateRequired } from '../modals/validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, FileInput, Button } from '../ui';
@@ -55,6 +55,10 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
   serverError,
   classRooms,
 }) => {
+  // Track the initial data ID to prevent unnecessary resets
+  const initialDataIdRef = useRef<number | null>(null);
+  const isInitializedRef = useRef(false);
+
   const [form, setForm] = useState<AdministratorFormData>({
     gender: '',
     first_name: '',
@@ -75,43 +79,63 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
   const [pictureFile, setPictureFile] = useState<File | null>(null);
 
   useEffect(() => {
-    if (initialData) {
-      setForm({
-        gender: initialData.gender || '',
-        first_name: initialData.first_name || '',
-        last_name: initialData.last_name || '',
-        birthday: initialData.birthday || '',
-        email: initialData.email || '',
-        phone: initialData.phone || '',
-        address: initialData.address || '',
-        city: initialData.city || '',
-        country: initialData.country || '',
-        nationality: initialData.nationality || '',
-        picture: initialData.picture || '',
-        status: typeof initialData.status === 'number' ? initialData.status : 1,
-        company_id: initialData.company_id ?? '',
-        class_room_id: initialData.class_room_id ?? '',
-      });
-    } else {
-      setForm({
-        gender: '',
-        first_name: '',
-        last_name: '',
-        birthday: '',
-        email: '',
-        phone: '',
-        address: '',
-        city: '',
-        country: '',
-        nationality: '',
-        picture: '',
-        status: 1,
-        company_id: '',
-        class_room_id: '',
-      });
+    // Get the current initialData ID (or null if no initialData)
+    const currentInitialDataId = initialData?.id ?? null;
+    
+    // Only reset form if:
+    // 1. We haven't initialized yet, OR
+    // 2. The initialData ID has changed (different record being edited)
+    const shouldReset = !isInitializedRef.current || initialDataIdRef.current !== currentInitialDataId;
+
+    if (shouldReset) {
+      if (initialData) {
+        setForm({
+          gender: initialData.gender || '',
+          first_name: initialData.first_name || '',
+          last_name: initialData.last_name || '',
+          birthday: initialData.birthday || '',
+          email: initialData.email || '',
+          phone: initialData.phone || '',
+          address: initialData.address || '',
+          city: initialData.city || '',
+          country: initialData.country || '',
+          nationality: initialData.nationality || '',
+          picture: initialData.picture || '',
+          status: typeof initialData.status === 'number' ? initialData.status : 1,
+          company_id: initialData.company_id ?? '',
+          class_room_id: initialData.class_room_id ?? '',
+        });
+      } else {
+        setForm({
+          gender: '',
+          first_name: '',
+          last_name: '',
+          birthday: '',
+          email: '',
+          phone: '',
+          address: '',
+          city: '',
+          country: '',
+          nationality: '',
+          picture: '',
+          status: 1,
+          company_id: '',
+          class_room_id: '',
+        });
+      }
+      setErrors({});
+      setPictureFile(null);
+      
+      // Update refs
+      initialDataIdRef.current = currentInitialDataId;
+      isInitializedRef.current = true;
     }
-    setErrors({});
-    setPictureFile(null);
+
+    // Reset refs when initialData becomes null/undefined (modal closed)
+    if (!initialData && isInitializedRef.current) {
+      initialDataIdRef.current = null;
+      isInitializedRef.current = false;
+    }
   }, [initialData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

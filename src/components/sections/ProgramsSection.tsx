@@ -307,7 +307,19 @@ const ProgramsSection: React.FC = () => {
         />
       </div>
 
-      <ProgramModal isOpen={programModalOpen} onClose={closeProgramModal} program={editingProgram ?? undefined} />
+      <ProgramModal
+        isOpen={programModalOpen}
+        onClose={closeProgramModal}
+        program={
+          editingProgram
+            ? ({
+                ...editingProgram,
+                description: editingProgram.description ?? undefined,
+                status: editingProgram.status ?? 1,
+              } as import('../forms/ProgramForm').Program)
+            : undefined
+        }
+      />
 
       {descriptionModal && (
         <DescriptionModal

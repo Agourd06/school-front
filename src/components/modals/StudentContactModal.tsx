@@ -5,6 +5,7 @@ import { useStudentLinkTypes } from '../../hooks/useStudentLinkTypes';
 import { useStudents } from '../../hooks/useStudents';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
 import { StudentContactForm, type StudentContact } from '../forms';
+import type { Student } from '../../api/students';
 
 interface Props {
   isOpen: boolean;
@@ -56,6 +57,12 @@ const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
     onClose();
   };
 
+  // Memoize linkTypes to prevent unnecessary re-renders
+  const memoizedLinkTypes = useMemo(
+    () => (linkTypes?.data || []) as Array<{ id: number; title: string }>,
+    [linkTypes?.data]
+  );
+
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={item ? 'Edit Contact' : 'Add Contact'}>
       <StudentContactForm
@@ -64,7 +71,7 @@ const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
         onCancel={onClose}
         isSubmitting={createMut.isPending || updateMut.isPending}
         studentOptions={studentOptions}
-        linkTypes={(linkTypes?.data || []) as Array<{ id: number; title: string }>}
+        linkTypes={memoizedLinkTypes}
       />
     </BaseModal>
   );

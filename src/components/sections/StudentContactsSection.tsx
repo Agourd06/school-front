@@ -271,19 +271,33 @@ const StudentContactsSection: React.FC = () => {
           </table>
         </div>
         <Pagination
-          currentPage={meta.page}
-          totalPages={meta.totalPages}
-          totalItems={meta.total}
-          itemsPerPage={meta.limit}
-          hasNext={meta.hasNext}
-          hasPrevious={meta.hasPrevious}
+          currentPage={meta.page ?? 1}
+          totalPages={meta.totalPages ?? 1}
+          totalItems={meta.total ?? 0}
+          itemsPerPage={meta.limit ?? 10}
+          hasNext={meta.hasNext ?? false}
+          hasPrevious={meta.hasPrevious ?? false}
           onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
           onPageSizeChange={(limit) => setPagination({ page: 1, limit })}
           isLoading={isLoading}
         />
       </div>
 
-      <StudentContactModal isOpen={modalOpen} onClose={handleModalClose} item={editingContact ?? undefined} />
+      <StudentContactModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        item={
+          editingContact
+            ? ({
+                ...editingContact,
+                studentlinktypeId:
+                  typeof editingContact.studentlinktypeId === 'string'
+                    ? Number(editingContact.studentlinktypeId) || undefined
+                    : editingContact.studentlinktypeId,
+              } as import('../forms/StudentContactForm').StudentContact)
+            : undefined
+        }
+      />
 
       <DeleteModal
         isOpen={!!deleteTarget}

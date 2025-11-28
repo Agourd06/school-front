@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import BaseModal from './BaseModal';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
 import type { StudentReportDetail as StudentReportDetailFromAPI, StudentReportDetailStatus } from '../../api/studentReportDetail';
@@ -36,12 +36,27 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
   courseOptions,
   serverError,
 }) => {
-  const disableTeacherSelect = Boolean(initialData?.teacher_id);
-  const disableCourseSelect = Boolean(initialData?.course_id);
+  // Check if teacher/course are already set (from direct field or relation)
+  const hasTeacherId = Boolean(initialData?.teacher_id ?? initialData?.teacher?.id);
+  const hasCourseId = Boolean(initialData?.course_id ?? initialData?.course?.id);
+  const disableTeacherSelect = hasTeacherId;
+  const disableCourseSelect = hasCourseId;
 
   const handleSubmit = async (formData: StudentReportDetailFormData) => {
     await onSubmit(formData as StudentReportDetailFormValues);
   };
+
+  // Memoize form initial data to prevent unnecessary re-renders and form resets
+  const formInitialData = useMemo(() => {
+    if (!initialData) return undefined;
+    return {
+      ...initialData,
+      teacher_id: initialData.teacher_id ?? initialData.teacher?.id ?? undefined,
+      course_id: initialData.course_id ?? initialData.course?.id ?? undefined,
+      teacher: initialData.teacher ?? undefined,
+      course: initialData.course ?? undefined,
+    };
+  }, [initialData?.id, initialData?.teacher_id, initialData?.teacher?.id, initialData?.course_id, initialData?.course?.id, initialData?.remarks, initialData?.note, initialData?.status]);
 
   return (
     <BaseModal
@@ -51,7 +66,7 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
       className="sm:max-w-4xl"
     >
       <StudentReportDetailForm
-        initialData={initialData}
+        initialData={formInitialData}
         reportId={reportId}
         onSubmit={handleSubmit}
         onCancel={onClose}

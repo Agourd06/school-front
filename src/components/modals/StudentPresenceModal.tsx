@@ -2,6 +2,7 @@ import React from 'react';
 import BaseModal from './BaseModal';
 import type { PresenceValue, StudentPresence, StudentPresenceStatus } from '../../api/studentPresence';
 import { StudentPresenceForm, type StudentPresenceFormData } from '../forms';
+import type { SearchSelectOption } from '../inputs/SearchSelect';
 
 export interface StudentPresenceFormValues {
   student_planning_id: number | '';

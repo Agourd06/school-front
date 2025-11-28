@@ -149,7 +149,7 @@ const PlanningSection: React.FC = () => {
     return map;
   }, [classes]);
 
-  const classOptions = useMemo(() => mapOptions(classes?.data || [], 'title'), [classes]);
+  const classOptions = useMemo(() => mapOptions((classes?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [classes]);
   const formClassOptions = useMemo(() => {
     const yearId = form.school_year_id ? Number(form.school_year_id) : null;
     const periodId = form.period ? Number(form.period) : null;
@@ -174,9 +174,9 @@ const PlanningSection: React.FC = () => {
     [teachers]
   );
   const roomOptions = useMemo(() => mapOptions(rooms?.data || [], 'title'), [rooms]);
-  const specializationOptions = useMemo(() => mapOptions(specs?.data || [], 'title'), [specs]);
-  const yearOptions = useMemo(() => mapOptions(schoolYears?.data || [], 'title'), [schoolYears]);
-  const periodOptions = useMemo(() => mapOptions(periods?.data || [], 'title'), [periods]);
+  const specializationOptions = useMemo(() => mapOptions((specs?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [specs]);
+  const yearOptions = useMemo(() => mapOptions((schoolYears?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [schoolYears]);
+  const periodOptions = useMemo(() => mapOptions((periods?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [periods]);
   const sessionTypeOptions = useMemo(
     () =>
       (sessionTypesResp?.data || []).map((type) => ({
@@ -205,7 +205,7 @@ const PlanningSection: React.FC = () => {
 
   const classCourseParams = useMemo(() => {
     if (!form.class_id) return null;
-    return { class_id: Number(form.class_id), status: 1, limit: 100 };
+    return { class_id: Number(form.class_id), status: 1 as import('../../api/classCourse').ClassCourseStatus, limit: 100 };
   }, [form.class_id]);
 
   const {

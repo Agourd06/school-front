@@ -164,7 +164,7 @@ export const planningStudentApi = {
   async create(payload: PlanningStudentPayload): Promise<PlanningStudentEntry> {
     // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
     // Backend will verify all related entities (teacher, specialization, class, class room, planning session type, school year) belong to the same company
-    const body = ensureCompanyId(payload);
+    const body = ensureCompanyId(payload as unknown as Record<string, unknown>) as unknown as PlanningStudentPayload;
     const { data } = await api.post('/students-plannings', body);
     return data;
   },
@@ -172,7 +172,7 @@ export const planningStudentApi = {
   async update(id: number, payload: UpdatePlanningStudentPayload): Promise<PlanningStudentEntry> {
     // Ensure company_id is set from authenticated user (backend will verify it matches)
     // If updating related entities, backend will verify they belong to the same company
-    const body = ensureCompanyId(payload);
+    const body = ensureCompanyId(payload as unknown as Record<string, unknown>) as unknown as UpdatePlanningStudentPayload;
     const { data } = await api.patch(`/students-plannings/${id}`, body);
     return data;
   },

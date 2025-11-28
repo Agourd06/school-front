@@ -5,6 +5,9 @@ import RichTextEditor from '../inputs/RichTextEditor';
 import SearchSelect from '../inputs/SearchSelect';
 import BaseModal from '../modals/BaseModal';
 import { Eye } from 'lucide-react';
+import { formatStudentDataForAttestation, type SimplifiedClass } from '../../utils/formatStudentDataForAttestation';
+import { useStudentWithClass } from '../../hooks/useStudents';
+import type { Student } from '../../api/students';
 
 export interface StudentAttestationFormData {
   Idstudent: number | string | '';
@@ -33,7 +36,7 @@ interface StudentAttestationFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   serverError?: string | null;
-  students: Array<{ id: number; first_name?: string; last_name?: string; email?: string }>;
+  students: Array<{ id: number; first_name?: string; last_name?: string; email?: string; birthday?: string }>;
   attestations: Array<{ id: number; title: string; description?: string | null }>;
 }
 
@@ -85,6 +88,82 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
     [attestations, form.Idattestation]
   );
 
+  const selectedStudent = useMemo(
+    () => (form.Idstudent ? students.find((s) => s.id === Number(form.Idstudent)) : undefined),
+    [students, form.Idstudent]
+  );
+
+  // Fetch student with class data (includes specialization, level, schoolYear) - optimized endpoint
+  const { data: studentWithClassData } = useStudentWithClass(
+    typeof form.Idstudent === 'number' ? form.Idstudent : 0
+  );
+
+  // Extract student and class from the response
+  const studentFromApi = studentWithClassData?.student;
+  const studentClass: SimplifiedClass | null | undefined = studentWithClassData?.class || undefined;
+
+  // Combine student data with attestation description when both are selected
+  useEffect(() => {
+    // Use student data from API if available (has class info), otherwise use selected student from list
+    const studentToUse = studentFromApi || selectedStudent;
+    
+    if (selectedAttestation?.description && studentToUse) {
+      // Create student object with all required fields
+      const studentData: Student = {
+        id: studentToUse.id,
+        first_name: studentToUse.first_name || '',
+        last_name: studentToUse.last_name || '',
+        email: studentToUse.email || '',
+        birthday: studentToUse.birthday,
+        created_at: '',
+        updated_at: '',
+      };
+
+      // Format student data first (this goes at the top)
+      const studentDataLines = formatStudentDataForAttestation({
+        student: studentData,
+        class: studentClass,
+      });
+
+      // Get the attestation description (this goes after student data)
+      const attestationDescription = selectedAttestation.description || '';
+      
+      // Combine: Student data FIRST, then attestation description
+      const combinedDescription = studentDataLines + 
+        (attestationDescription.trim() ? '\n\n' + attestationDescription : '');
+
+      setForm((prev) => ({
+        ...prev,
+        description: combinedDescription,
+      }));
+    } else if (selectedAttestation?.description && !studentToUse) {
+      // If only attestation is selected, use description as-is
+      setForm((prev) => ({
+        ...prev,
+        description: selectedAttestation.description || '',
+      }));
+    } else if (!selectedAttestation && studentToUse) {
+      // If only student is selected, show just student data
+      const studentData: Student = {
+        id: studentToUse.id,
+        first_name: studentToUse.first_name || '',
+        last_name: studentToUse.last_name || '',
+        email: studentToUse.email || '',
+        birthday: studentToUse.birthday,
+        created_at: '',
+        updated_at: '',
+      };
+      const studentDataLines = formatStudentDataForAttestation({
+        student: studentData,
+        class: studentClass,
+      });
+      setForm((prev) => ({
+        ...prev,
+        description: studentDataLines,
+      }));
+    }
+  }, [selectedAttestation, selectedStudent, studentFromApi, studentClass]);
+
   const updateField = (name: string, value: string | number | '') => {
     const newValue =
       name === 'Status' || name === 'Idstudent' || name === 'Idattestation'
@@ -94,14 +173,7 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
         : value;
 
     setForm((prev) => {
-      const updatedForm = { ...prev, [name]: newValue };
-
-      if (name === 'Idattestation') {
-        const selected = attestations.find((a) => a.id === Number(value));
-        updatedForm.description = selected?.description ?? '';
-      }
-
-      return updatedForm;
+      return { ...prev, [name]: newValue };
     });
 
     if (errors[name] && name !== 'datedelivery') {
@@ -152,20 +224,46 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-heading">Student *</label>
-          <SearchSelect
-            value={form.Idstudent}
-            onChange={(value) => handleSearchSelectChange('Idstudent', value)}
-            options={[
-              { value: '', label: 'Select a student' },
-              ...students.map((s) => ({
-                value: s.id,
-                label: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `Student #${s.id}`,
-              })),
-            ]}
-            error={errors.Idstudent}
-            placeholder="Search student..."
-          />
+          <label className="block text-sm font-medium text-heading mb-1">Student *</label>
+          {initialData ? (
+            // Show read-only student info when editing
+            <div className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-body">
+              {selectedStudent ? (
+                <div className="space-y-1">
+                  <p className="font-medium">
+                    {`${selectedStudent.first_name ?? ''} ${selectedStudent.last_name ?? ''}`.trim() || 
+                     selectedStudent.email || 
+                     `Student #${selectedStudent.id}`}
+                  </p>
+                  {selectedStudent.email && (
+                    <p className="text-xs text-muted">{selectedStudent.email}</p>
+                  )}
+                  {selectedStudent.birthday && (
+                    <p className="text-xs text-muted">
+                      Born: {new Date(selectedStudent.birthday).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted italic">Student information not available</p>
+              )}
+            </div>
+          ) : (
+            // Show SearchSelect when creating
+            <SearchSelect
+              value={form.Idstudent}
+              onChange={(value) => handleSearchSelectChange('Idstudent', value)}
+              options={[
+                { value: '', label: 'Select a student' },
+                ...students.map((s) => ({
+                  value: s.id,
+                  label: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `Student #${s.id}`,
+                })),
+              ]}
+              error={errors.Idstudent}
+              placeholder="Search student..."
+            />
+          )}
         </div>
         <div>
           <div className="flex items-center justify-between">

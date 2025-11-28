@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateTeacher, useUpdateTeacher } from '../../hooks/useTeachers';
 import { useClassRooms } from '../../hooks/useClassRooms';
@@ -58,6 +58,12 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
     onClose();
   };
 
+  // Memoize classRooms to prevent unnecessary re-renders
+  const memoizedClassRooms = useMemo(
+    () => (classRooms?.data || []) as Array<{ id: number; code: string; title: string }>,
+    [classRooms?.data]
+  );
+
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Teacher' : 'Add Teacher'}>
       <TeacherForm
@@ -65,7 +71,7 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
         onSubmit={handleSubmit}
         onCancel={onClose}
         isSubmitting={createMutation.isPending || updateMutation.isPending}
-        classRooms={(classRooms?.data || []) as Array<{ id: number; code: string; title: string }>}
+        classRooms={memoizedClassRooms}
       />
     </BaseModal>
   );

@@ -12,6 +12,7 @@ import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import { EditButton, DeleteButton, Button, Input } from '../ui';
 import type { Level } from '../../api/level';
+import type { Program } from '../../api/program';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useSpecialization } from '../../context/SpecializationContext';
 

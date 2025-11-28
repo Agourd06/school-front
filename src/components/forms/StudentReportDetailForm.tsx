@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
@@ -25,6 +25,8 @@ export interface StudentReportDetail {
   remarks?: string | null;
   note?: number | string | null;
   status: StudentReportDetailStatus;
+  teacher?: { id: number; first_name?: string | null; last_name?: string | null; email?: string | null } | null;
+  course?: { id: number; title?: string | null; code?: string | null } | null;
 }
 
 const statusOptionsSelect = STATUS_OPTIONS_FORM.map((opt) => ({ value: opt.value, label: opt.label }));
@@ -54,6 +56,10 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
   disableTeacherSelect = false,
   disableCourseSelect = false,
 }) => {
+  // Track the initial data ID to prevent unnecessary resets
+  const initialDataIdRef = useRef<number | null>(null);
+  const isInitializedRef = useRef(false);
+
   const [form, setForm] = useState<StudentReportDetailFormData>({
     student_report_id: reportId,
     teacher_id: '',
@@ -65,29 +71,72 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (initialData) {
-      const normalizedStatus = statusOptionsSelect.some((opt) => opt.value === initialData.status)
-        ? initialData.status
-        : 2;
-      setForm({
-        student_report_id: initialData.student_report_id,
-        teacher_id: initialData.teacher_id ?? '',
-        course_id: initialData.course_id ?? '',
-        remarks: initialData.remarks ?? '',
-        note: initialData.note ?? '',
-        status: normalizedStatus,
-      });
-    } else {
-      setForm({
-        student_report_id: reportId,
-        teacher_id: '',
-        course_id: '',
-        remarks: '',
-        note: '',
-        status: 2,
-      });
+    // Get the current initialData ID (or null if no initialData)
+    const currentInitialDataId = initialData?.id ?? null;
+    
+    // Only reset form if:
+    // 1. We haven't initialized yet, OR
+    // 2. The initialData ID has changed (different record being edited)
+    const shouldReset = !isInitializedRef.current || initialDataIdRef.current !== currentInitialDataId;
+
+    if (shouldReset) {
+      if (initialData) {
+        const normalizedStatus = statusOptionsSelect.some((opt) => opt.value === initialData.status)
+          ? initialData.status
+          : 2;
+        // Convert note to number or empty string
+        const normalizedNote: number | '' = 
+          initialData.note === null || initialData.note === undefined
+            ? ''
+            : typeof initialData.note === 'string'
+            ? initialData.note === '' ? '' : Number(initialData.note) || ''
+            : initialData.note;
+        // Extract teacher_id from teacher_id field or teacher relation
+        // Handle null, undefined, and ensure it's a number when present
+        let teacherId: number | '' = '';
+        if (initialData.teacher_id !== null && initialData.teacher_id !== undefined) {
+          teacherId = Number(initialData.teacher_id);
+        } else if (initialData.teacher?.id !== null && initialData.teacher?.id !== undefined) {
+          teacherId = Number(initialData.teacher.id);
+        }
+        
+        // Extract course_id from course_id field or course relation
+        let courseId: number | '' = '';
+        if (initialData.course_id !== null && initialData.course_id !== undefined) {
+          courseId = Number(initialData.course_id);
+        } else if (initialData.course?.id !== null && initialData.course?.id !== undefined) {
+          courseId = Number(initialData.course.id);
+        }
+        setForm({
+          student_report_id: initialData.student_report_id,
+          teacher_id: teacherId,
+          course_id: courseId,
+          remarks: initialData.remarks ?? '',
+          note: normalizedNote,
+          status: normalizedStatus,
+        });
+      } else {
+        setForm({
+          student_report_id: reportId,
+          teacher_id: '',
+          course_id: '',
+          remarks: '',
+          note: '',
+          status: 2,
+        });
+      }
+      setErrors({});
+      
+      // Update refs
+      initialDataIdRef.current = currentInitialDataId;
+      isInitializedRef.current = true;
     }
-    setErrors({});
+
+    // Reset refs when initialData becomes null/undefined (modal closed)
+    if (!initialData && isInitializedRef.current) {
+      initialDataIdRef.current = null;
+      isInitializedRef.current = false;
+    }
   }, [initialData, reportId]);
 
   const validate = () => {
@@ -98,9 +147,10 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
   };
 
   const handleSelectChange = (field: 'teacher_id' | 'course_id') => (value: number | '' | string) => {
+    const normalizedValue: number | '' = value === '' || value === null || value === undefined ? '' : Number(value);
     setForm((prev) => ({
       ...prev,
-      [field]: value === '' ? '' : Number(value),
+      [field]: normalizedValue,
     }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));

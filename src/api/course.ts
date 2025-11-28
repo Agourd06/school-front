@@ -65,11 +65,7 @@ const fetchCourses = async (params: FilterParams = {}): Promise<PaginatedRespons
   const queryString = queryParams.toString();
   const url = queryString ? `/course?${queryString}` : '/course';
 
-  console.log('Courses API request params:', params);
-  console.log('Courses API request URL:', url);
-
   const response = await api.get(url);
-  console.log('Courses API response:', response.data);
 
   if (Array.isArray(response.data)) {
     return {

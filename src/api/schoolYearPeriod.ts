@@ -48,7 +48,7 @@ export const schoolYearPeriodApi = {
     validateDates(data.start_date, data.end_date);
     // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
     // Backend will verify the school year belongs to the same company
-    const body = ensureCompanyId(data);
+    const body = ensureCompanyId(data as unknown as Record<string, unknown>) as unknown as CreateSchoolYearPeriodRequest;
     const response = await api.post('/school-year-periods', body);
     return response.data;
   },
@@ -163,7 +163,7 @@ export const schoolYearPeriodApi = {
     validateDates(data.start_date, data.end_date);
     // Ensure company_id is set from authenticated user (backend will verify it matches)
     // If updating schoolYearId, backend will verify the new school year belongs to the same company
-    const body = ensureCompanyId(data);
+    const body = ensureCompanyId(data as unknown as Record<string, unknown>) as unknown as UpdateSchoolYearPeriodRequest;
     const response = await api.patch(`/school-year-periods/${id}`, body);
     return response.data;
   },

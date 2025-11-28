@@ -8,6 +8,8 @@ import ContactStep from './student/ContactStep';
 import LinkTypeStep from './student/LinkTypeStep';
 import StepProgress from './student/StepProgress';
 import { STEPS } from './student/constants';
+import type { PaginatedResponse } from '../../types/api';
+import type { StudentLinkType } from '../../api/studentLinkType';
 
 interface Props {
   isOpen: boolean;
@@ -99,7 +101,7 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void }> = ({ onCl
           <ContactStep
             form={contactForm}
             errors={contactErrors}
-            linkTypesData={linkTypesData}
+            linkTypesData={linkTypesData as PaginatedResponse<StudentLinkType> | null | undefined}
             studentName={studentName}
             onFormChange={(field, value) => setContactForm({ ...contactForm, [field]: value })}
             onSubmit={handlers.handleContactSubmit}

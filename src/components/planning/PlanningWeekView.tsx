@@ -370,9 +370,6 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                     <p className="text-base text-gray-900 font-semibold">
                                       {entry.course?.title || `Course #${entry.course_id}`}
                                     </p>
-                                    {entry.course?.volume && (
-                                      <p className="text-xs text-gray-500 mt-0.5">Volume: {entry.course.volume}</p>
-                                    )}
                                   </div>
                                 </div>
 

@@ -5,6 +5,7 @@ import {
   useUpdateClassRoom,
 } from "../../hooks/useClassRooms";
 import { ClassRoomForm, type ClassRoom } from "../forms";
+import type { CreateClassRoomRequest } from "../../api/classRoom";
 
 interface ClassRoomModalProps {
   isOpen: boolean;

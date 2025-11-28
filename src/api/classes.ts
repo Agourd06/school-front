@@ -59,16 +59,17 @@ const toPaginated = (raw: unknown): PaginatedResponse<ClassEntity> => {
       },
     };
   }
-  const meta = raw?.meta || {};
+  const rawObj = raw as { data?: ClassEntity[]; meta?: { page?: number; limit?: number; total?: number; totalPages?: number; lastPage?: number; hasNext?: boolean; hasPrevious?: boolean } };
+  const meta = rawObj?.meta || {};
   const totalPages = meta.totalPages ?? meta.lastPage ?? 1;
   const page = meta.page ?? 1;
-  const limit = meta.limit ?? (Array.isArray(raw?.data) ? raw.data.length : 10);
+  const limit = meta.limit ?? (Array.isArray(rawObj?.data) ? rawObj.data.length : 10);
   return {
-    data: raw?.data || [],
+    data: rawObj?.data || [],
     meta: {
       page,
       limit,
-      total: meta.total ?? (Array.isArray(raw?.data) ? raw.data.length : 0),
+      total: meta.total ?? (Array.isArray(rawObj?.data) ? rawObj.data.length : 0),
       totalPages,
       hasNext: meta.hasNext ?? page < totalPages,
       hasPrevious: meta.hasPrevious ?? page > 1,

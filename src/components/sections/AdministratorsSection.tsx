@@ -314,7 +314,18 @@ const AdministratorsSection: React.FC = () => {
         />
       </div>
 
-      <AdministratorModal isOpen={modalOpen} onClose={handleModalClose} administrator={editingAdministrator ?? undefined} />
+      <AdministratorModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        administrator={
+          editingAdministrator
+            ? ({
+                ...editingAdministrator,
+                status: editingAdministrator.status ?? 1,
+              } as import('../forms/AdministratorForm').Administrator)
+            : undefined
+        }
+      />
 
       <DeleteModal
         isOpen={!!deleteTarget}

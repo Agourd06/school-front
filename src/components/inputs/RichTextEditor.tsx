@@ -33,6 +33,28 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   const editorHeight = useMemo(() => `${Math.max(rows * 1.6, 8)}rem`, [rows]);
 
+  // Memoize options to prevent re-initialization issues
+  const editorOptions = useMemo(
+    () => ({
+      buttonList: [
+        ['undo', 'redo'],
+        ['bold', 'italic', 'underline', 'strike'],
+        ['fontColor', 'hiliteColor'],
+        ['fontSize', 'formatBlock'],
+        ['align', 'list', 'link'],
+        ['removeFormat'],
+      ],
+      fontSize: [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48],
+      minHeight: '200px',
+      maxHeight: '600px',
+      resizingBar: true,
+      showPathLabel: false,
+      // Disable charCounter to avoid the getCharCount function error
+      charCounter: false,
+    }),
+    []
+  );
+
   if (!isClient || !cssLoaded) {
     return fallbackView;
   }
@@ -45,23 +67,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           setContents={value}
           height={editorHeight}
           placeholder={placeholder}
-          setOptions={{
-            buttonList: [
-              ['undo', 'redo'],
-              ['bold', 'italic', 'underline', 'strike'],
-              ['fontColor', 'hiliteColor'],
-              ['fontSize', 'formatBlock'],
-              ['align', 'list', 'link'],
-              ['removeFormat'],
-            ],
-            fontSize: [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48],
-            minHeight: '200px',
-            maxHeight: '600px',
-            resizingBar: true,
-            showPathLabel: false,
-            charCounter: true,
-            charCounterLabel: 'Characters: ',
-          }}
+          setOptions={editorOptions}
         />
       </Suspense>
     </div>

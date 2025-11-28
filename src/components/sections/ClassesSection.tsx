@@ -15,6 +15,9 @@ import type { SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import DescriptionModal from '../modals/DescriptionModal';
 import type { ClassEntity } from '../../api/classes';
+import type { Program } from '../../api/program';
+import type { Specialization } from '../../api/specialization';
+import type { Level } from '../../api/level';
 
 const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';

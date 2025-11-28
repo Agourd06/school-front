@@ -1,6 +1,8 @@
 import React from 'react';
 import StudentStepForm from '../../forms/StudentStepForm';
 import type { StudentFormData } from './types';
+import type { ClassRoom } from '../../api/classRoom';
+import type { PaginatedResponse } from '../../types/api';
 
 interface StudentStepProps {
   form: StudentFormData;

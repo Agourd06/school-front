@@ -375,7 +375,21 @@ const SchoolYearPeriodsSection: React.FC = () => {
         <SchoolYearPeriodModal
         isOpen={modalOpen}
         onClose={handleModalClose}
-        period={editingPeriod ?? undefined}
+        period={
+          editingPeriod
+            ? ({
+                ...editingPeriod,
+                schoolYear: editingPeriod.schoolYear
+                  ? {
+                      id: editingPeriod.schoolYear.id,
+                      title: editingPeriod.schoolYear.title,
+                      start_date: (editingPeriod.schoolYear as { start_date?: string })?.start_date,
+                      end_date: (editingPeriod.schoolYear as { end_date?: string })?.end_date,
+                    }
+                  : undefined,
+              } as import('../forms/SchoolYearPeriodForm').SchoolYearPeriod)
+            : undefined
+        }
           initialSchoolYearId={selectedSchoolYearId ?? undefined}
         />
       )}

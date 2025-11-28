@@ -1,17 +1,10 @@
 import api from './axios';
 import type { User } from './users';
+import type { Company } from './company';
 
 export interface LoginRequest {
   email: string;
   password: string;
-}
-
-export interface Company {
-  id: number;
-  name: string;
-  email?: string | null;
-  primaryColor?: string | null;
-  secondaryColor?: string | null;
 }
 
 export interface LoginResponse {

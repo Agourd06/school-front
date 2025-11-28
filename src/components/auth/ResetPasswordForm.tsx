@@ -43,8 +43,20 @@ const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ token }) => {
       setSuccess(true);
       setPassword('');
       setConfirmPassword('');
-    } catch {
-      setError('Failed to reset password. Please try again or request a new reset link.');
+    } catch (err) {
+      const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+      const serverMsg = axiosError?.response?.data?.message;
+      let errorMessage = 'Failed to reset password. Please try again or request a new reset link.';
+      
+      if (Array.isArray(serverMsg)) {
+        errorMessage = serverMsg.join(', ');
+      } else if (typeof serverMsg === 'string') {
+        errorMessage = serverMsg;
+      } else if (axiosError?.message) {
+        errorMessage = axiosError.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

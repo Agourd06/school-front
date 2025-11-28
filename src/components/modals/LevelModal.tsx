@@ -4,6 +4,8 @@ import { useCreateLevel, useUpdateLevel } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations, useSpecialization as useSpecializationById } from '../../hooks/useSpecializations';
 import { LevelForm, type Level } from '../forms';
+import type { Program } from '../../api/program';
+import type { Specialization } from '../../api/specialization';
 
 interface LevelModalProps {
   isOpen: boolean;
@@ -89,7 +91,8 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
       }
       onClose();
     } catch (err: unknown) {
-      setFormError(err?.response?.data?.message || 'Failed to save level');
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      setFormError(error?.response?.data?.message || 'Failed to save level');
     }
   };
 

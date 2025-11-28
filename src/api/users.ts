@@ -48,11 +48,7 @@ export const usersApi = {
     const queryString = queryParams.toString();
     const url = queryString ? `/users?${queryString}` : '/users';
     
-    console.log('Users API request params:', params);
-    console.log('Users API request URL:', url);
-    
     const response = await api.get(url);
-    console.log('Users API response:', response.data);
     
     // Handle both direct array and wrapped response formats
     if (Array.isArray(response.data)) {

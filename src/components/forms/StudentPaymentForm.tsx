@@ -165,7 +165,8 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
   const filteredLevelPricingOptions = useMemo(() => {
     if (!form.level_id) return levelPricingOptions;
     return levelPricingOptions.filter((option) => {
-      const levelId = option.data?.level_id ?? option.data?.levelId;
+      const data = option.data as { level_id?: number; levelId?: number } | undefined;
+      const levelId = data?.level_id ?? data?.levelId;
       if (levelId === undefined || levelId === null) return true;
       return Number(levelId) === Number(form.level_id);
     });
@@ -175,6 +176,12 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
   const schoolYearValue = useMemo(() => form.school_year_id ?? '', [form.school_year_id]);
   const levelValue = useMemo(() => form.level_id ?? '', [form.level_id]);
   const levelPricingValue = useMemo(() => form.level_pricing_id ?? '', [form.level_pricing_id]);
+
+  // Get selected student for display when editing
+  const selectedStudent = useMemo(() => {
+    if (!form.student_id) return null;
+    return studentOptions.find((opt) => Number(opt.value) === Number(form.student_id));
+  }, [studentOptions, form.student_id]);
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -223,14 +230,33 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SearchSelect
-          label="Student"
-          value={studentValue}
-          onChange={handleSelectChange('student_id')}
-          options={studentOptions}
-          placeholder="Select student"
-          error={errors.student_id}
-        />
+        <div>
+          <label className="block text-sm font-medium text-heading mb-1">Student *</label>
+          {initialData ? (
+            // Show read-only student info when editing
+            <div className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-body">
+              {selectedStudent ? (
+                <div className="space-y-1">
+                  <p className="font-medium">{selectedStudent.label}</p>
+                  {selectedStudent.data && typeof selectedStudent.data === 'object' && 'email' in selectedStudent.data && (
+                    <p className="text-xs text-muted">{String(selectedStudent.data.email)}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted italic">Student information not available</p>
+              )}
+            </div>
+          ) : (
+            // Show SearchSelect when creating
+            <SearchSelect
+              value={studentValue}
+              onChange={handleSelectChange('student_id')}
+              options={studentOptions}
+              placeholder="Select student"
+              error={errors.student_id}
+            />
+          )}
+        </div>
         <SearchSelect
           label="School Year"
           value={schoolYearValue}

@@ -72,11 +72,12 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
           }}
           placeholder={placeholder}
           value={selectedOption ? { value: selectedOption.value, label: selectedOption.label } : null}
-          onChange={(opt: SearchSelectOption | null) => {
-            if (!opt) {
+          onChange={(opt) => {
+            const selected = opt as SearchSelectOption | null;
+            if (!selected) {
               onChange('');
             } else {
-              onChange(opt.value);
+              onChange(selected.value);
             }
           }}
           styles={{

@@ -48,7 +48,12 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
     try {
       await onSubmit({ title, status });
     } catch (err: unknown) {
-      setError(err?.response?.data?.message || 'Failed to save');
+      const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+      const serverMsg = axiosError?.response?.data?.message;
+      const errorMessage = Array.isArray(serverMsg) 
+        ? serverMsg.join(', ') 
+        : (typeof serverMsg === 'string' ? serverMsg : 'Failed to save');
+      setError(errorMessage);
     }
   };
 

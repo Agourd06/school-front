@@ -13,6 +13,7 @@ import BaseModal from '../modals/BaseModal';
 import { EditButton, DeleteButton, Button } from '../ui';
 import type { StudentAttestation } from '../../api/studentAttestation';
 import type { Attestation } from '../../api/attestation';
+import type { Student } from '../../api/students';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
 const EMPTY_META = {

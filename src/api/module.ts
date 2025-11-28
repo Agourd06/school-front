@@ -77,11 +77,7 @@ export const moduleApi = {
     const queryString = queryParams.toString();
     const url = queryString ? `/module?${queryString}` : '/module';
     
-    console.log('Modules API request params:', params);
-    console.log('Modules API request URL:', url);
-    
     const response = await api.get(url);
-    console.log('Modules API response:', response.data);
     
     // Handle both direct array and wrapped response formats
     if (Array.isArray(response.data)) {

@@ -97,10 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     title: string;
     items: Array<{ tab: SidebarProps['activeTab']; label: string }>;
   }> = [
-    {
-      title: 'Organization',
-      items: [{ tab: 'companies', label: 'Companies' }],
-    },
+  
     {
       title: 'Academic Setup',
       items: [
@@ -263,34 +260,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* Users Section */}
-          <div className="mb-6">
-            <button
-              onClick={() => onTabChange("users")}
-              className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
-                activeTab === "users"
-                  ? "bg-primary/10 text-primary border-l-4 border-primary"
-                  : "text-heading hover:bg-muted hover:text-heading"
-              }`}
-            >
-              <div className="flex items-center">
-                <svg
-                  className="w-5 h-5 mr-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  />
-                </svg>
-                Users
-              </div>
-            </button>
-          </div>
+
 
           {/* Parameters Section */}
           <div className="mb-6 flex-1 overflow-y-auto pr-2">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
@@ -53,6 +53,10 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
   studentOptions,
   linkTypes,
 }) => {
+  // Track the initial data ID to prevent unnecessary resets
+  const initialDataIdRef = useRef<number | null>(null);
+  const isInitializedRef = useRef(false);
+
   const [form, setForm] = useState<StudentContactFormData>({
     firstname: '',
     lastname: '',
@@ -71,36 +75,56 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
   const isEditing = !!initialData;
 
   useEffect(() => {
-    if (initialData) {
-      setForm({
-        firstname: initialData.firstname || '',
-        lastname: initialData.lastname || '',
-        birthday: initialData.birthday || '',
-        email: initialData.email || '',
-        phone: initialData.phone || '',
-        adress: initialData.adress || '',
-        city: initialData.city || '',
-        country: initialData.country || '',
-        student_id: initialData.student_id ?? '',
-        studentlinktypeId: initialData.studentlinktypeId ?? '',
-        status: typeof initialData.status === 'number' ? initialData.status : 1,
-      });
-    } else {
-      setForm({
-        firstname: '',
-        lastname: '',
-        birthday: '',
-        email: '',
-        phone: '',
-        adress: '',
-        city: '',
-        country: '',
-        student_id: '',
-        studentlinktypeId: '',
-        status: 1,
-      });
+    // Get the current initialData ID (or null if no initialData)
+    const currentInitialDataId = initialData?.id ?? null;
+    
+    // Only reset form if:
+    // 1. We haven't initialized yet, OR
+    // 2. The initialData ID has changed (different record being edited)
+    const shouldReset = !isInitializedRef.current || initialDataIdRef.current !== currentInitialDataId;
+
+    if (shouldReset) {
+      if (initialData) {
+        setForm({
+          firstname: initialData.firstname || '',
+          lastname: initialData.lastname || '',
+          birthday: initialData.birthday || '',
+          email: initialData.email || '',
+          phone: initialData.phone || '',
+          adress: initialData.adress || '',
+          city: initialData.city || '',
+          country: initialData.country || '',
+          student_id: initialData.student_id ?? '',
+          studentlinktypeId: initialData.studentlinktypeId ?? '',
+          status: typeof initialData.status === 'number' ? initialData.status : 1,
+        });
+      } else {
+        setForm({
+          firstname: '',
+          lastname: '',
+          birthday: '',
+          email: '',
+          phone: '',
+          adress: '',
+          city: '',
+          country: '',
+          student_id: '',
+          studentlinktypeId: '',
+          status: 1,
+        });
+      }
+      setErrors({});
+      
+      // Update refs
+      initialDataIdRef.current = currentInitialDataId;
+      isInitializedRef.current = true;
     }
-    setErrors({});
+
+    // Reset refs when initialData becomes null/undefined (modal closed)
+    if (!initialData && isInitializedRef.current) {
+      initialDataIdRef.current = null;
+      isInitializedRef.current = false;
+    }
   }, [initialData]);
 
   const validate = () => {

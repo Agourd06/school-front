@@ -56,14 +56,14 @@ export const studentContactApi = {
   async create(payload: CreateStudentContactRequest): Promise<StudentContact> {
     // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
     // Backend will verify the student belongs to the same company
-    const body = ensureCompanyId(payload);
+    const body = ensureCompanyId(payload as unknown as Record<string, unknown>) as unknown as CreateStudentContactRequest;
     const { data } = await api.post('/student-contact', body);
     return data;
   },
   async update(id: number, payload: UpdateStudentContactRequest): Promise<StudentContact> {
     // Ensure company_id is set from authenticated user (backend will verify it matches)
     // If updating student_id, backend will verify the new student belongs to the same company
-    const body = ensureCompanyId(payload);
+    const body = ensureCompanyId(payload as unknown as Record<string, unknown>) as unknown as UpdateStudentContactRequest;
     const { data } = await api.patch(`/student-contact/${id}`, body);
     return data;
   },

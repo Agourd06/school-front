@@ -38,14 +38,14 @@ export const studentLinkTypeApi = {
 
   async create(payload: CreateStudentLinkTypeRequest): Promise<StudentLinkType> {
     // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
-    const body = ensureCompanyId(payload);
+    const body = ensureCompanyId(payload as unknown as Record<string, unknown>) as unknown as CreateStudentLinkTypeRequest;
     const { data } = await api.post('/studentlinktype', body);
     return data;
   },
 
   async update(id: number, payload: UpdateStudentLinkTypeRequest): Promise<StudentLinkType> {
     // Ensure company_id is set from authenticated user (backend will verify it matches)
-    const body = ensureCompanyId(payload);
+    const body = ensureCompanyId(payload as unknown as Record<string, unknown>) as unknown as UpdateStudentLinkTypeRequest;
     const { data } = await api.patch(`/studentlinktype/${id}`, body);
     return data;
   },

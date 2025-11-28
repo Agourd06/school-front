@@ -193,16 +193,34 @@ export const studentsApi = {
       updated_at: string;
     } | null;
   }> {
-    console.log('🔍 Fetching student details for ID:', id);
     const response = await api.get(`/students/${id}/details`);
-    console.log('📥 API Raw Response:', response);
-    console.log('📦 API Response Data:', response.data);
-    console.log('🔑 API Response Data Keys:', Object.keys(response.data || {}));
-    console.log('👤 Student ID in response:', response.data?.student?.id);
-    console.log('📞 API Contact:', response.data?.contact);
-    console.log('🔗 API LinkType:', response.data?.linkType);
-    console.log('✅ Contact exists?', response.data?.contact !== null && response.data?.contact !== undefined);
-    console.log('✅ LinkType exists?', response.data?.linkType !== null && response.data?.linkType !== undefined);
+    return response.data;
+  },
+
+  /**
+   * Get student with their active class and related data (specialization, level, schoolYear)
+   * This endpoint is optimized for attestation generation
+   */
+  async getWithClass(id: number): Promise<{
+    student: Student;
+    class: {
+      id: number;
+      title: string;
+      specialization: {
+        id: number;
+        title: string;
+      } | null;
+      level: {
+        id: number;
+        title: string;
+      } | null;
+      schoolYear: {
+        id: number;
+        title: string;
+      } | null;
+    } | null;
+  }> {
+    const response = await api.get(`/students/${id}/with-class`);
     return response.data;
   },
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateAdministrator, useUpdateAdministrator } from '../../hooks/useAdministrators';
 import { useClassRooms } from '../../hooks/useClassRooms';
@@ -63,6 +63,12 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({
     onClose();
   };
 
+  // Memoize classRooms to prevent unnecessary re-renders
+  const memoizedClassRooms = useMemo(
+    () => (classRooms?.data || []) as Array<{ id: number; code: string; title: string }>,
+    [classRooms?.data]
+  );
+
   return (
     <BaseModal
       isOpen={isOpen}
@@ -74,7 +80,7 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({
         onSubmit={handleSubmit}
         onCancel={onClose}
         isSubmitting={createMutation.isPending || updateMutation.isPending}
-        classRooms={(classRooms?.data || []) as Array<{ id: number; code: string; title: string }>}
+        classRooms={memoizedClassRooms}
       />
     </BaseModal>
   );

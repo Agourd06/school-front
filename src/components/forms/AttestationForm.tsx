@@ -18,35 +18,6 @@ interface AttestationFormProps {
   serverError?: string | null;
 }
 
-// Default template with required titles
-const DEFAULT_DESCRIPTION_TEMPLATE = `<p><strong>e-comercial Name♯</strong></p>
-<p><strong>e-comercial Date♯</strong></p>
-<p><strong>e-comercial Class♯</strong></p>`;
-
-// Ensure the three required titles are always present in the description
-const ensureRequiredTitles = (description: string): string => {
-  if (!description || description.trim() === '') {
-    return DEFAULT_DESCRIPTION_TEMPLATE;
-  }
-
-  // Check if all three titles are present
-  const hasName = description.includes('e-comercial Name♯') || description.includes('e-comercial Name');
-  const hasDate = description.includes('e-comercial Date♯') || description.includes('e-comercial Date');
-  const hasClass = description.includes('e-comercial Class♯') || description.includes('e-comercial Class');
-
-  // If all are present, return as is
-  if (hasName && hasDate && hasClass) {
-    return description;
-  }
-
-  // Otherwise, prepend the missing titles
-  const missingTitles: string[] = [];
-  if (!hasName) missingTitles.push('<p><strong>e-comercial Name♯</strong></p>');
-  if (!hasDate) missingTitles.push('<p><strong>e-comercial Date♯</strong></p>');
-  if (!hasClass) missingTitles.push('<p><strong>e-comercial Class♯</strong></p>');
-
-  return missingTitles.join('\n') + '\n' + description;
-};
 
 const AttestationForm: React.FC<AttestationFormProps> = ({
   initialData,
@@ -65,18 +36,15 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
 
   useEffect(() => {
     if (initialData) {
-      // Ensure required titles are present when editing
-      const description = ensureRequiredTitles(initialData.description || '');
       setForm({
         title: initialData.title || '',
-        description,
+        description: initialData.description || '',
         statut: typeof initialData.statut === 'number' ? initialData.statut : 1,
       });
     } else {
-      // Use default template for new attestations
       setForm({ 
         title: '', 
-        description: DEFAULT_DESCRIPTION_TEMPLATE, 
+        description: '', 
         statut: 1 
       });
     }
@@ -94,9 +62,8 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
   };
 
   const handleDescriptionChange = (html: string) => {
-    // Ensure required titles are always present when user edits
-    const descriptionWithTitles = ensureRequiredTitles(html);
-    setForm((prev) => ({ ...prev, description: descriptionWithTitles }));
+    // Just update the description - no placeholder replacement needed
+    setForm((prev) => ({ ...prev, description: html }));
     if (errors.description) setErrors((prev) => ({ ...prev, description: '' }));
   };
 

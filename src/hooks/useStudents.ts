@@ -67,4 +67,16 @@ export const useStudentsWithoutReport = (params?: GetStudentsWithoutReportParams
   });
 };
 
+/**
+ * Get student with their active class and related data (specialization, level, schoolYear)
+ * Optimized for attestation generation - returns student + class in one request
+ */
+export const useStudentWithClass = (id: number) => {
+  return useQuery({
+    queryKey: ['students', id, 'with-class'],
+    queryFn: () => studentsApi.getWithClass(id),
+    enabled: !!id,
+  });
+};
+
 export default useStudents;

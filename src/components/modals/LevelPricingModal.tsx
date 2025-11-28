@@ -2,6 +2,7 @@ import React from 'react';
 import BaseModal from './BaseModal';
 import { LevelPricingForm } from '../forms';
 import type { LevelPricing, LevelPricingStatus } from '../../api/levelPricing';
+import type { SearchSelectOption } from '../inputs/SearchSelect';
 
 export interface LevelPricingFormValues {
   level_id: number | '';

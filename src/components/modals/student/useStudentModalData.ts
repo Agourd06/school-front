@@ -4,6 +4,9 @@ import { useClassRooms } from '../../../hooks/useClassRooms';
 import { useStudentLinkTypes } from '../../../hooks/useStudentLinkTypes';
 import { initialStudentForm, initialDiplomeForm, initialContactForm } from './constants';
 import type { StudentFormData, DiplomeFormData, ContactFormData } from './types';
+import type { StudentDiplome } from '../../../api/studentDiplome';
+import type { StudentContact } from '../../../api/studentContact';
+import type { StudentLinkType } from '../../../api/studentLinkType';
 
 export const useStudentModalData = (studentId: number) => {
   const [studentForm, setStudentForm] = useState<StudentFormData>(initialStudentForm);
@@ -29,35 +32,6 @@ export const useStudentModalData = (studentId: number) => {
   const { data: studentDetailsData, refetch: refetchStudentDetails } = useStudentDetails(studentId || 0);
   const { data: linkTypesData } = useStudentLinkTypes({ page: 1, limit: 100 });
 
-  // Log which student ID we're fetching
-  useEffect(() => {
-    if (studentId) {
-      console.log('🎯 StudentModal: Fetching details for student ID:', studentId);
-    }
-  }, [studentId]);
-
-  // Log student details for debugging
-  useEffect(() => {
-    if (studentDetailsData) {
-      console.log('=== Student Details Debug ===');
-      console.log('Full Student Details Data:', JSON.stringify(studentDetailsData, null, 2));
-      console.log('Student Details Data Type:', typeof studentDetailsData);
-      console.log('Student Details Data Keys:', Object.keys(studentDetailsData));
-      console.log('Student:', studentDetailsData.student);
-      console.log('Diploma:', studentDetailsData.diploma);
-      console.log('Contact:', studentDetailsData.contact);
-      console.log('Contact Type:', typeof studentDetailsData.contact);
-      console.log('Contact is null?', studentDetailsData.contact === null);
-      console.log('Contact is undefined?', studentDetailsData.contact === undefined);
-      console.log('Link Type:', studentDetailsData.linkType);
-      console.log('Link Type Type:', typeof studentDetailsData.linkType);
-      console.log('Link Type is null?', studentDetailsData.linkType === null);
-      console.log('Link Type is undefined?', studentDetailsData.linkType === undefined);
-      console.log('===========================');
-    } else {
-      console.log('Student Details Data is null/undefined:', studentDetailsData);
-    }
-  }, [studentDetailsData]);
 
   // Load existing data when editing using the new unified endpoint
   useEffect(() => {

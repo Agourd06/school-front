@@ -82,8 +82,15 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
             accept="image/*"
             onChange={(file) => {
               if (file) {
-                const e = { target: { files: [file] } } as React.ChangeEvent<HTMLInputElement>;
-                onPictureChange(e);
+                // Create a synthetic event object that matches ChangeEvent<HTMLInputElement>
+                const syntheticEvent = {
+                  target: {
+                    files: [file],
+                    value: '',
+                  },
+                  currentTarget: {} as HTMLInputElement,
+                } as unknown as React.ChangeEvent<HTMLInputElement>;
+                onPictureChange(syntheticEvent);
               }
             }}
             currentFileUrl={previewUrl || undefined}

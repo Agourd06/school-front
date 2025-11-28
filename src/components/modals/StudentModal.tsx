@@ -9,6 +9,8 @@ import LinkTypeStep from './student/LinkTypeStep';
 import StepProgress from './student/StepProgress';
 import { STEPS } from './student/constants';
 import type { Student } from '../../api/students';
+import type { PaginatedResponse } from '../../types/api';
+import type { StudentLinkType } from '../../api/studentLinkType';
 
 interface StudentModalProps {
   isOpen: boolean;
@@ -91,7 +93,7 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             currentDiplomePicture1={studentDetailsData?.diploma?.diplome_picture_1}
             currentDiplomePicture2={studentDetailsData?.diploma?.diplome_picture_2}
             studentName={studentName}
-            onFormChange={(field, value) => setDiplomeForm((prev) => ({ ...prev, [field]: value }))}
+            onFormChange={(field, value) => setDiplomeForm({ ...diplomeForm, [field]: value })}
             onFile1Change={setDiplomeFile1}
             onFile2Change={setDiplomeFile2}
             onSubmit={handlers.handleDiplomeSubmit}
@@ -107,9 +109,9 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
           <ContactStep
             form={contactForm}
             errors={contactErrors}
-            linkTypesData={linkTypesData}
+            linkTypesData={linkTypesData as PaginatedResponse<StudentLinkType> | null | undefined}
             studentName={studentName}
-            onFormChange={(field, value) => setContactForm((prev) => ({ ...prev, [field]: value }))}
+            onFormChange={(field, value) => setContactForm({ ...contactForm, [field]: value })}
             onSubmit={handlers.handleContactSubmit}
             onBack={() => setStepIndex(1)}
             onSkip={() => setStepIndex(3)}
@@ -152,8 +154,14 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
 
 const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student }) => {
   // This modal is only for editing - requires a student ID
-  if (!student?.id) {
+  // Only check and warn when modal is actually open to avoid unnecessary warnings
+  if (isOpen && !student?.id) {
     console.warn('StudentModal requires a student with an ID for editing');
+    return null;
+  }
+
+  // Don't render if modal is closed or student is missing
+  if (!isOpen || !student?.id) {
     return null;
   }
 

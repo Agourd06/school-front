@@ -312,7 +312,18 @@ const TeachersSection: React.FC = () => {
         />
       </div>
 
-      <TeacherModal isOpen={modalOpen} onClose={handleModalClose} teacher={editingTeacher ?? undefined} />
+      <TeacherModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        teacher={
+          editingTeacher
+            ? ({
+                ...editingTeacher,
+                status: editingTeacher.status ?? 1,
+              } as import('../forms/TeacherForm').Teacher)
+            : undefined
+        }
+      />
 
       <DeleteModal
         isOpen={!!deleteTarget}

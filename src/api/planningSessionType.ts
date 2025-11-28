@@ -95,14 +95,14 @@ export const planningSessionTypeApi = {
 
   async create(payload: CreatePlanningSessionTypePayload): Promise<PlanningSessionType> {
     // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
-    const body = ensureCompanyId(payload);
+    const body = ensureCompanyId(payload as unknown as Record<string, unknown>) as unknown as CreatePlanningSessionTypePayload;
     const { data } = await api.post('/planning-session-types', body);
     return data;
   },
 
   async update(id: number, payload: UpdatePlanningSessionTypePayload): Promise<PlanningSessionType> {
     // Ensure company_id is set from authenticated user (backend will verify it matches)
-    const body = ensureCompanyId(payload);
+    const body = ensureCompanyId(payload as unknown as Record<string, unknown>) as unknown as UpdatePlanningSessionTypePayload;
     const { data } = await api.patch(`/planning-session-types/${id}`, body);
     return data;
   },

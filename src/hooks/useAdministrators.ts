@@ -21,7 +21,7 @@ export const useAdministrator = (id: number) => {
 export const useCreateAdministrator = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateAdministratorRequest) => administratorsApi.create(data),
+    mutationFn: (data: CreateAdministratorRequest | FormData) => administratorsApi.create(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['administrators'] }),
   });
 };

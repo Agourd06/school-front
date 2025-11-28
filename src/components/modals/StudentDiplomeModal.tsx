@@ -45,11 +45,11 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
     file1: File | null,
     file2: File | null
   ) => {
-    const payload: { title: string; school: string; diplome?: string; annee?: string; country?: string; city?: string; student_id: number | string; status: number; diplome_picture_1?: File; diplome_picture_2?: File } = {
+    const payload: { title: string; school: string; diplome?: string; annee?: string; country?: string; city?: string; student_id: number | string; status?: number | string; diplome_picture_1?: File; diplome_picture_2?: File } = {
       ...formData,
       annee: formData.annee ? String(formData.annee) : undefined,
       student_id: formData.student_id,
-      status: formData.status != null ? String(formData.status) : undefined,
+      status: formData.status != null ? formData.status : undefined,
     };
     if (file1) payload.diplome_picture_1 = file1;
     if (file2) payload.diplome_picture_2 = file2;

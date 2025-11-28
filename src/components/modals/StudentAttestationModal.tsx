@@ -4,6 +4,8 @@ import { useCreateStudentAttestation, useUpdateStudentAttestation } from '../../
 import { useStudents } from '../../hooks/useStudents';
 import { useAttestations } from '../../hooks/useAttestations';
 import { StudentAttestationForm, type StudentAttestation } from '../forms';
+import type { Student } from '../../api/students';
+import type { Attestation } from '../../api/attestation';
 
 interface StudentAttestationModalProps {
   isOpen: boolean;
@@ -48,13 +50,14 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
       }
       onClose();
     } catch (err: unknown) {
-      const errorMessage = err?.response?.data?.message;
+      const error = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+      const errorMessage = error?.response?.data?.message;
       if (Array.isArray(errorMessage)) {
         throw new Error(errorMessage.join(', '));
       } else if (typeof errorMessage === 'string') {
         throw new Error(errorMessage);
       } else {
-        throw new Error(err?.message || 'Failed to save student attestation');
+        throw new Error(error?.message || 'Failed to save student attestation');
       }
     }
   };
@@ -70,7 +73,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
         onSubmit={handleSubmit}
         onCancel={onClose}
         isSubmitting={createMutation.isPending || updateMutation.isPending}
-        students={students as Array<{ id: number; first_name?: string; last_name?: string; email?: string }>}
+        students={students as Array<{ id: number; first_name?: string; last_name?: string; email?: string; birthday?: string }>}
         attestations={attestations.map((att) => ({
           id: att.id,
           title: att.title,
