@@ -184,15 +184,15 @@ const TeachersSection: React.FC = () => {
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
               alert.type === 'success'
-                ? 'border-green-200 bg-green-50 text-green-700'
-                : 'border-red-200 bg-red-50 text-red-700'
+                ? 'border-success-light bg-success-light text-success-dark'
+                : 'border-danger-light bg-danger-light text-danger-dark'
             }`}
           >
             {alert.message}
           </div>
         )}
         {error && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          <div className="mt-4 rounded-md border border-danger-light bg-danger-light px-4 py-2 text-sm text-danger-dark">
             {(error as Error).message}
           </div>
         )}
@@ -212,7 +212,7 @@ const TeachersSection: React.FC = () => {
               value={filters.search}
               onChange={handleSearchChange}
               placeholder="Search by name or email..."
-              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
         </div>
       </div>

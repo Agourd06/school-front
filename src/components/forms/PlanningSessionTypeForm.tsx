@@ -112,7 +112,7 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
         maxLength={150}
         placeholder="e.g. Laboratory Session"
         error={errors.title}
-        className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
       />
 
       <Input
@@ -123,7 +123,7 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
         maxLength={50}
         placeholder="e.g. LAB"
         error={errors.type}
-        className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -135,7 +135,7 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
           onChange={handleInputChange('coefficient')}
           placeholder="Optional"
           error={errors.coefficient}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Select
           label="Status"
@@ -145,12 +145,12 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
             value: option.value,
             label: option.label,
           }))}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}

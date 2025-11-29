@@ -71,9 +71,9 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white border-t border-gray-200">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-card border-t border-border">
       {/* Items info */}
-      <div className="text-sm text-gray-700">
+      <div className="text-sm text-body">
         Showing <span className="font-medium">{startItem}</span> to{' '}
         <span className="font-medium">{endItem}</span> of{' '}
         <span className="font-medium">{totalItems}</span> results
@@ -82,7 +82,7 @@ const Pagination: React.FC<PaginationProps> = ({
       <div className="flex items-center gap-4">
         {/* Page size selector */}
         <div className="flex items-center gap-2">
-          <label htmlFor="pageSize" className="text-sm text-gray-700">
+          <label htmlFor="pageSize" className="text-sm text-body">
             Show:
           </label>
           <select
@@ -90,7 +90,7 @@ const Pagination: React.FC<PaginationProps> = ({
             value={itemsPerPage}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             disabled={isLoading}
-            className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="custom-select px-2 py-1 text-sm border border-border rounded-md bg-card text-body focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {pageSizeOptions.map((size) => (
               <option key={size} value={size}>
@@ -106,7 +106,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!hasPrevious || isLoading}
-            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 text-sm font-medium text-muted bg-card border border-border rounded-l-md hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
@@ -115,15 +115,15 @@ const Pagination: React.FC<PaginationProps> = ({
           {getPageNumbers().map((page, index) => (
             <React.Fragment key={index}>
               {page === '...' ? (
-                <span className="px-3 py-1 text-sm text-gray-500">...</span>
+                <span className="px-3 py-1 text-sm text-muted">...</span>
               ) : (
                 <button
                   onClick={() => onPageChange(page as number)}
                   disabled={isLoading}
-                  className={`px-3 py-1 text-sm font-medium border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`px-3 py-1 text-sm font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${
                     page === currentPage
-                      ? 'text-white bg-blue-600 border-blue-600'
-                      : 'text-gray-700 bg-white hover:bg-gray-50'
+                      ? 'text-primary-foreground bg-primary border-primary'
+                      : 'text-body bg-card hover:bg-surface'
                   }`}
                 >
                   {page}
@@ -136,7 +136,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!hasNext || isLoading}
-            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 text-sm font-medium text-muted bg-card border border-border rounded-r-md hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Next
           </button>

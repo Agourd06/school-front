@@ -51,26 +51,26 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
+      {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
       <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
         <div className="relative mx-auto sm:mx-0">
           {previewUrl ? (
             <img
               src={previewUrl}
               alt="Student picture preview"
-              className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-blue-100"
+              className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-primary-light"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-gray-50 text-xs font-medium text-gray-400">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-border bg-surface text-xs font-medium text-muted">
               Add photo
             </div>
           )}
           <label
             htmlFor={pictureInputId}
-            className="absolute bottom-0 right-0 inline-flex cursor-pointer items-center rounded-full bg-white/95 px-2 py-1 text-xs font-semibold text-blue-600 shadow"
+            className="absolute bottom-0 right-0 inline-flex cursor-pointer items-center rounded-full bg-white/95 px-2 py-1 text-xs font-semibold text-primary shadow"
           >
             Change
           </label>
@@ -96,7 +96,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
             currentFileUrl={previewUrl || undefined}
             error={errors.picture}
             helperText="JPG, PNG, GIF, WEBP up to 2MB."
-            className="rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="rounded-md shadow-sm focus:border-primary focus:ring-primary"
           />
         </div>
       </div>

@@ -147,19 +147,19 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">School Year</label>
+        <label className="block text-sm font-medium text-heading">School Year</label>
         {isSchoolYearLocked && (selectedSchoolYear || initialData?.schoolYear) ? (
-          <div className="mt-1 p-3 bg-gray-50 border border-gray-300 rounded-md">
-            <div className="text-sm font-medium text-gray-900">
+          <div className="mt-1 p-3 bg-surface border border-border rounded-md">
+            <div className="text-sm font-medium text-heading">
               {selectedSchoolYear?.title || initialData?.schoolYear?.title || 'N/A'}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted mt-1">
               {formatDateWithMonthDay(
                 selectedSchoolYear?.start_date || initialData?.schoolYear?.start_date || ''
               )}{' '}
@@ -179,7 +179,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
               })),
             ]}
             error={errors.schoolYearId}
-            className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+            className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm appearance-none ${
               isSchoolYearLocked ? 'bg-muted cursor-not-allowed' : ''
             }`}
           />
@@ -226,7 +226,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
           { value: 'ongoing', label: 'Ongoing' },
           { value: 'completed', label: 'Completed' },
         ]}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        className="shadow-sm appearance-none focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select

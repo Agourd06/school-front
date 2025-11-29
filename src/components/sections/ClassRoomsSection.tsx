@@ -26,11 +26,11 @@ const statusFilterOptions: SearchSelectOption[] = [
 ];
 
 const statusStyles: Record<number, string> = {
-  2: 'bg-yellow-100 text-yellow-800',
-  1: 'bg-green-100 text-green-800',
-  0: 'bg-gray-200 text-gray-700',
-  [-1]: 'bg-purple-100 text-purple-700',
-  [-2]: 'bg-red-100 text-red-700',
+  2: 'bg-warning-badge',
+  1: 'bg-success-badge',
+  0: 'bg-muted-badge',
+  [-1]: 'bg-accent-badge',
+  [-2]: 'bg-danger-badge',
 };
 
 const extractErrorMessage = (err: unknown): string => {
@@ -145,8 +145,8 @@ const ClassRoomsSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Classrooms</h1>
-            <p className="text-sm text-gray-500">Manage classrooms and their capacity.</p>
+            <h1 className="text-xl font-semibold text-heading">Classrooms</h1>
+            <p className="text-sm text-muted">Manage classrooms and their capacity.</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -166,15 +166,15 @@ const ClassRoomsSection: React.FC = () => {
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
               alert.type === 'success'
-                ? 'border-green-200 bg-green-50 text-green-700'
-                : 'border-red-200 bg-red-50 text-red-700'
+                ? 'border-success-light bg-success-light text-success-dark'
+                : 'border-danger-light bg-danger-light text-danger-dark'
             }`}
           >
             {alert.message}
           </div>
         )}
         {error && (
-          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+          <div className="mt-4 rounded-md border border-danger-light bg-danger-light px-4 py-2 text-sm text-danger-dark">
             {(error as Error).message}
           </div>
         )}
@@ -195,7 +195,7 @@ const ClassRoomsSection: React.FC = () => {
               value={filters.search}
               onChange={handleSearchChange}
               placeholder="Search by code or title..."
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -205,19 +205,19 @@ const ClassRoomsSection: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
                   Code
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
                   Title
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
                   Capacity
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
                   Status
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted">
                   Actions
                 </th>
               </tr>
@@ -225,13 +225,13 @@ const ClassRoomsSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-muted">
                     Loading classrooms…
                   </td>
                 </tr>
               ) : classRooms.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-muted">
                     No classrooms found.
                   </td>
                 </tr>
@@ -240,10 +240,10 @@ const ClassRoomsSection: React.FC = () => {
                   const statusValue = typeof classRoom.status === 'number' ? classRoom.status : 0;
                   return (
                     <tr key={classRoom.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{classRoom.code}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-heading">{classRoom.code}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{classRoom.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        <span className="font-semibold text-gray-900">{classRoom.capacity}</span>
+                        <span className="font-semibold text-heading">{classRoom.capacity}</span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span

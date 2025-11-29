@@ -102,16 +102,16 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {(formError || serverError) && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {formError || serverError}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Program</label>
+        <label className="block text-sm font-medium text-heading">Program</label>
         {isProgramLocked && (selectedProgram || initialData?.program) ? (
-          <div className="mt-1 p-3 bg-gray-50 border border-gray-300 rounded-md">
-            <div className="text-sm font-medium text-gray-900">
+          <div className="mt-1 p-3 bg-surface border border-border rounded-md">
+            <div className="text-sm font-medium text-heading">
               {selectedProgram?.title || initialData?.program?.title || 'N/A'}
             </div>
           </div>
@@ -126,8 +126,8 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
               ...programs.map((p) => ({ value: p.id, label: p.title })),
             ]}
             error={errors.program_id}
-            className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-              isProgramLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+            className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+              isProgramLocked ? 'bg-muted-foreground cursor-not-allowed' : ''
             }`}
           />
         )}
@@ -139,7 +139,7 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
         value={form.title}
         onChange={handleChange}
         error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select
@@ -151,11 +151,11 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
           value: opt.value,
           label: opt.label,
         }))}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label className="block text-sm font-medium text-heading mb-1">Description</label>
         <RichTextEditor
           value={form.description}
           onChange={(html) => {

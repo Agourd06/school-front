@@ -179,7 +179,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
       {initialData && (
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <label className="block text-sm font-medium text-gray-700">Student</label>
+            <label className="block text-sm font-medium text-heading">Student</label>
             {selectedStudentId && (
               <button
                 type="button"
@@ -215,7 +215,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
         {!initialData && (
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <label className="block text-sm font-medium text-gray-700">Student</label>
+              <label className="block text-sm font-medium text-heading">Student</label>
               {selectedStudentId && (
                 <button
                   type="button"
@@ -278,7 +278,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+        <label className="block text-sm font-medium text-heading mb-2">Remarks</label>
         <RichTextEditor
           value={form.remarks}
           onChange={(content) => setForm((prev) => ({ ...prev, remarks: content }))}
@@ -288,7 +288,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
       </div>
 
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}
@@ -312,7 +312,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
       }
     >
       {studentDetailsLoading ? (
-        <div className="py-8 text-center text-sm text-gray-500">Loading student details…</div>
+        <div className="py-8 text-center text-sm text-muted">Loading student details…</div>
       ) : (
         <div className="space-y-5">
           {student && (
@@ -326,36 +326,36 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                   />
                 )}
                 <div>
-                  <p className="text-base font-semibold text-gray-900">
+                  <p className="text-base font-semibold text-heading">
                     {`${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || student.email || `#${student.id}`}
                   </p>
-                  <p className="text-sm text-gray-500">{student.email}</p>
-                  {student.phone && <p className="text-sm text-gray-500">{student.phone}</p>}
+                  <p className="text-sm text-muted">{student.email}</p>
+                  {student.phone && <p className="text-sm text-muted">{student.phone}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-gray-500 uppercase text-xs">Nationality</p>
-                  <p className="text-gray-900">{student.nationality || '—'}</p>
+                  <p className="text-muted uppercase text-xs">Nationality</p>
+                  <p className="text-heading">{student.nationality || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500 uppercase text-xs">Birthday</p>
-                  <p className="text-gray-900">{student.birthday || '—'}</p>
+                  <p className="text-muted uppercase text-xs">Birthday</p>
+                  <p className="text-heading">{student.birthday || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500 uppercase text-xs">City</p>
-                  <p className="text-gray-900">{student.city || '—'}</p>
+                  <p className="text-muted uppercase text-xs">City</p>
+                  <p className="text-heading">{student.city || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500 uppercase text-xs">Country</p>
-                  <p className="text-gray-900">{student.country || '—'}</p>
+                  <p className="text-muted uppercase text-xs">Country</p>
+                  <p className="text-heading">{student.country || '—'}</p>
                 </div>
               </div>
             </section>
           )}
 
           {diploma && (
-            <section className="rounded-2xl border border-gray-200 p-4 space-y-4 bg-gradient-to-br from-card to-primary/5">
+            <section className="rounded-2xl border border-border p-4 space-y-4 bg-gradient-to-br from-card to-primary/5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-primary">Academic Record</p>
@@ -366,21 +366,21 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                 </span>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-body">
                   <p>
-                    <span className="text-gray-500">Diploma:</span> {diploma.diplome || '—'}
+                    <span className="text-muted">Diploma:</span> {diploma.diplome || '—'}
                   </p>
                   <p>
-                    <span className="text-gray-500">School:</span> {diploma.school || '—'}
+                    <span className="text-muted">School:</span> {diploma.school || '—'}
                   </p>
                   <p>
-                    <span className="text-gray-500">Year:</span> {diploma.annee || '—'}
+                    <span className="text-muted">Year:</span> {diploma.annee || '—'}
                   </p>
                   <p>
-                    <span className="text-gray-500">Status:</span> {diploma.status ?? '—'}
+                    <span className="text-muted">Status:</span> {diploma.status ?? '—'}
                   </p>
                   <p className="sm:col-span-2">
-                    <span className="text-gray-500">Location:</span>{' '}
+                    <span className="text-muted">Location:</span>{' '}
                     {[diploma.city, diploma.country].filter(Boolean).join(', ') || '—'}
                   </p>
                 </div>
@@ -429,7 +429,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                       )}
                     </>
                   ) : (
-                    <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed border-gray-300 text-xs text-gray-500">
+                    <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed border-border text-xs text-muted">
                       No diploma images uploaded.
                     </div>
                   )}
@@ -439,59 +439,59 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
           )}
 
           {contact && (
-            <section className="rounded-lg border border-gray-200 p-3 space-y-3">
+            <section className="rounded-lg border border-border p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-heading">Contact</h4>
                 <span className="text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary">
                   {contact.status === 1 ? 'Active' : contact.status === -1 ? 'Archived' : 'Draft'}
                 </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-body">
                 <p>
-                  <span className="text-gray-500">Name:</span>{' '}
+                  <span className="text-muted">Name:</span>{' '}
                   {`${contact.firstname ?? ''} ${contact.lastname ?? ''}`.trim() || '—'}
                 </p>
                 <p>
-                  <span className="text-gray-500">Birthday:</span> {contact.birthday || '—'}
-                </p>
-                <p>
-                  <span className="text-gray-500">Email:</span> {contact.email || '—'}
-                </p>
-                <p>
-                  <span className="text-gray-500">Phone:</span> {contact.phone || '—'}
-                </p>
-                <p>
-                  <span className="text-gray-500">Address:</span> {contact.adress || '—'}
-                </p>
-                <p>
-                  <span className="text-gray-500">City:</span> {contact.city || '—'}
-                </p>
-                <p>
-                  <span className="text-gray-500">Country:</span> {contact.country || '—'}
+                  <span className="text-muted">Birthday:</span> {contact.birthday || '—'}
+                  </p>
+                  <p>
+                  <span className="text-muted">Email:</span> {contact.email || '—'}
+                  </p>
+                  <p>
+                  <span className="text-muted">Phone:</span> {contact.phone || '—'}
+                  </p>
+                  <p>
+                  <span className="text-muted">Address:</span> {contact.adress || '—'}
+                  </p>
+                  <p>
+                  <span className="text-muted">City:</span> {contact.city || '—'}
+                  </p>
+                  <p>
+                  <span className="text-muted">Country:</span> {contact.country || '—'}
                 </p>
               </div>
             </section>
           )}
 
           {linkType && (
-            <section className="rounded-lg border border-gray-200 p-3 space-y-2">
+            <section className="rounded-lg border border-border p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-heading">Link Type</h4>
                 <span className="text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary">
                   {linkType.status === 1 ? 'Active' : linkType.status === 0 ? 'Disabled' : 'Draft'}
                 </span>
               </div>
-              <p className="text-sm text-gray-700">
-                <span className="text-gray-500">Title:</span> {linkType.title || '—'}
+              <p className="text-sm text-body">
+                <span className="text-muted">Title:</span> {linkType.title || '—'}
               </p>
               {linkType.student_id && (
-                <p className="text-xs text-gray-500">Linked student ID: {linkType.student_id}</p>
+                <p className="text-xs text-muted">Linked student ID: {linkType.student_id}</p>
               )}
             </section>
           )}
 
           {!student && !diploma && !contact && (
-            <p className="text-sm text-gray-500">No details available for this student.</p>
+            <p className="text-sm text-muted">No details available for this student.</p>
           )}
         </div>
       )}

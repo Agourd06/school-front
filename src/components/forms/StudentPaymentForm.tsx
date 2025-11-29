@@ -302,7 +302,7 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
           onChange={handleAmountChange}
           placeholder="Total amount"
           error={errors.amount}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
           label="Payment"
@@ -313,7 +313,7 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
           onChange={handlePaymentChange}
           placeholder="Amount paid"
           error={errors.payment}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
           label="Date"
@@ -321,7 +321,7 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
           value={form.date}
           onChange={handleInputChange('date')}
           error={errors.date}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
@@ -338,7 +338,7 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
             ...modeOptions.map((option) => ({ value: option, label: option })),
           ]}
           error={errors.mode}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
           label="Reference (optional)"
@@ -348,7 +348,7 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
           maxLength={100}
           placeholder="Transaction reference"
           error={errors.reference}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Select
           label="Status"
@@ -359,12 +359,12 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
             label: option.label,
           }))}
           error={errors.status}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}

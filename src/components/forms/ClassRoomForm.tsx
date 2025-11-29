@@ -85,7 +85,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}
@@ -96,7 +96,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
         value={form.code}
         onChange={handleChange}
         error={errors.code}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Input
@@ -105,7 +105,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
         value={form.title}
         onChange={handleChange}
         error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Input
@@ -115,7 +115,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
         value={form.capacity}
         onChange={handleChange}
         error={errors.capacity}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select
@@ -127,7 +127,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
           value: opt.value,
           label: opt.label,
         }))}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div className="flex justify-end space-x-3 pt-4">

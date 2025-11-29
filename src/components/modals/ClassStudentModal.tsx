@@ -360,7 +360,7 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, class
                     {...provided.droppableProps}
                     className={`min-h-[320px] p-4 border-2 border-dashed rounded-lg transition-colors ${
                       snapshot.isDraggingOver
-                        ? 'border-blue-400 bg-blue-50'
+                        ? 'border-primary bg-primary-light'
                         : 'border-gray-300 bg-gray-50'
                     } ${(isAssignedLoading || !selectedClassId) ? 'opacity-70' : ''}`}
                   >
@@ -459,7 +459,7 @@ const ClassStudentModal: React.FC<Props> = ({ isOpen, onClose, assignment, class
                               <button
                                 type="button"
                                 onClick={() => handleAssign(item.id)}
-                                className="text-sm text-blue-600 hover:text-blue-800"
+                                className="text-sm text-primary hover:text-primary"
                                 disabled={isMutationLoading || !selectedClassId}
                               >
                                 Assign

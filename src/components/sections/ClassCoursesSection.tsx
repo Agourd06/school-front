@@ -281,8 +281,8 @@ const ClassCoursesSection: React.FC = () => {
         <div
           className={`rounded-md border px-4 py-2 text-sm ${
             alert.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-success-light bg-success-light text-success-dark'
+              : 'border-danger-light bg-danger-light text-danger-dark'
           }`}
         >
           {alert.message}
@@ -332,11 +332,11 @@ const ClassCoursesSection: React.FC = () => {
           placeholder="All teachers"
         />
         <div>
-          <label className="block text-sm font-medium text-gray-700">All-day</label>
+          <label className="block text-sm font-medium text-body">All-day</label>
           <select
             value={filters.allday}
             onChange={handleAlldayChange}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="custom-select mt-1 block w-full rounded-md border border-border bg-card text-body px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
           >
             <option value="">All sessions</option>
             <option value="true">All-day only</option>
@@ -350,7 +350,7 @@ const ClassCoursesSection: React.FC = () => {
             value={filters.search}
             onChange={handleSearchChange}
             placeholder="Title, description, or teacher"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           />
         </div>
       </div>
@@ -394,7 +394,7 @@ const ClassCoursesSection: React.FC = () => {
                       <div>{course.title}</div>
                       <button
                         type="button"
-                        className="text-xs text-blue-600 hover:underline"
+                        className="text-xs text-primary hover:underline"
                         onClick={() =>
                           setDescriptionPreview({
                             title: course.title ?? `Course #${course.id}`,

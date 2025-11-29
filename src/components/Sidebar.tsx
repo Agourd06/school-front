@@ -218,7 +218,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   aria-label={isCollapsed ? 'Show sidebar' : 'Hide sidebar'}
-                  className="hidden sm:inline-flex items-center justify-center rounded-full border border-border p-2 text-muted hover:bg-muted hover:text-heading transition"
+                  className="hidden sm:inline-flex items-center justify-center rounded-full border border-border p-2 text-muted hover:bg-primary-transparent hover:text-primary transition"
                   onClick={onToggleCollapse}
                 >
                   <svg
@@ -240,7 +240,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 type="button"
                 aria-label="Close sidebar"
-                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-muted"
+                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-primary-transparent-50 hover:text-primary transition-colors"
                 onClick={closeMobile}
               >
                 <svg
@@ -266,7 +266,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="mb-6 flex-1 overflow-y-auto pr-2">
             <button
               onClick={toggleParameters}
-              className="w-full text-left px-4 py-3 rounded-lg font-medium transition-colors text-heading hover:bg-muted hover:text-heading"
+              className="w-full text-left px-4 py-3 rounded-lg font-medium transition-colors text-heading hover:bg-primary-transparent hover:text-primary"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -318,7 +318,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <div key={group.title} className="space-y-1">
                       <button
                         onClick={() => toggleGroup(group.title)}
-                        className="flex w-full items-center justify-between rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted hover:bg-muted hover:text-heading"
+                        className="flex w-full items-center justify-between rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted hover:bg-primary-transparent hover:text-primary transition-colors"
                       >
                         <span>{group.title}</span>
                         <svg
@@ -340,8 +340,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 onClick={() => onTabChange(item.tab)}
                                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                                   isActive
-                                    ? 'bg-primary/10 text-primary font-medium'
-                                    : 'text-muted hover:bg-muted hover:text-heading'
+                                    ? 'bg-primary-transparent text-primary font-medium'
+                                    : 'text-muted hover:bg-primary-transparent hover:text-primary'
                                 }`}
                               >
                                 {item.label}

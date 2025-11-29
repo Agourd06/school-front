@@ -17,7 +17,7 @@ const StepProgress: React.FC<StepProgressProps> = ({ steps, currentIndex }) => {
             ? 'border-green-400 bg-green-50 text-green-700 shadow-sm'
             : 'border-gray-200 bg-white text-gray-500';
         const badgeClasses = isActive
-          ? 'bg-blue-600 text-white'
+          ? 'bg-primary text-primary-foreground'
           : isCompleted
             ? 'bg-green-500 text-white'
             : 'bg-gray-200 text-gray-600';

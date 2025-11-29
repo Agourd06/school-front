@@ -249,7 +249,7 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{serverError}</div>
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">{serverError}</div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -352,17 +352,17 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
         <input
           id="allday"
           type="checkbox"
-          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
           checked={form.allday}
           onChange={handleInputChange('allday')}
         />
-        <label htmlFor="allday" className="text-sm font-medium text-gray-700">
+        <label htmlFor="allday" className="text-sm font-medium text-body">
           All-day session
         </label>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Description (optional)</label>
+        <label className="block text-sm font-medium text-body mb-2">Description (optional)</label>
         <RichTextEditor value={form.description} onChange={handleDescriptionChange} placeholder="Provide additional details..." rows={6} />
       </div>
 

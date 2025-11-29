@@ -97,7 +97,7 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {(formError || serverError) && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {formError || serverError}
         </div>
       )}

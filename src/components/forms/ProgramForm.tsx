@@ -80,7 +80,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {(formError || serverError) && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {formError || serverError}
         </div>
       )}
@@ -91,7 +91,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
         value={form.title}
         onChange={handleChange}
         error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select
@@ -103,11 +103,11 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
           value: opt.value,
           label: opt.label,
         }))}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label className="block text-sm font-medium text-heading mb-1">Description</label>
         <RichTextEditor
           value={form.description}
           onChange={(html) => setForm((prev) => ({ ...prev, description: html }))}

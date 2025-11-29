@@ -181,7 +181,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {(serverError || errors.form) && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError || errors.form}
         </div>
       )}
@@ -196,7 +196,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
           isClearable={isEditing}
           disabled={isEditing}
         />
-        {errors.student_id && <p className="mt-1 text-sm text-red-600">{errors.student_id}</p>}
+        {errors.student_id && <p className="mt-1 text-sm text-danger">{errors.student_id}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

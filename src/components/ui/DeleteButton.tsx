@@ -19,7 +19,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({
       onClick={(e) => onClick(e)}
       disabled={disabled}
       title={title}
-      className={`inline-flex items-center justify-center rounded-md border border-danger px-2.5 py-1.5 text-xs font-medium text-danger hover:bg-[rgba(239,68,68,0.08)] focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`inline-flex items-center justify-center rounded-md border border-danger px-2.5 py-1.5 text-xs font-medium text-danger hover:bg-danger-light focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       <svg
         className="w-4 h-4"

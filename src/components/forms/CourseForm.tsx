@@ -113,7 +113,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}
@@ -167,7 +167,7 @@ const CourseForm: React.FC<CourseFormProps> = ({
           placeholder="Enter course description..."
           rows={8}
         />
-        {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+        {errors.description && <p className="mt-1 text-sm text-danger">{errors.description}</p>}
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">

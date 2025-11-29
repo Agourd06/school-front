@@ -27,7 +27,7 @@ const StudentLinkTypeStepForm: React.FC<StudentLinkTypeStepFormProps> = ({
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Title"

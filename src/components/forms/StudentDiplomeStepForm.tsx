@@ -74,13 +74,13 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
+      {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Student"
           value={studentName}
           disabled
-          className="bg-gray-100 border-gray-200"
+          className="bg-muted-foreground border-border"
         />
         <Select
           label="Status"
@@ -135,13 +135,13 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Diplome picture 1</label>
+            <label className="block text-sm font-medium text-heading">Diplome picture 1</label>
             <div className="mt-1 flex items-start gap-3">
               {previewUrl1 && (
                 <img
                   src={previewUrl1}
                   alt="Diplome picture 1 preview"
-                  className="h-16 w-16 rounded object-cover border-2 border-gray-300 flex-shrink-0"
+                  className="h-16 w-16 rounded object-cover border-2 border-border flex-shrink-0"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
@@ -158,13 +158,13 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Diplome picture 2</label>
+            <label className="block text-sm font-medium text-heading">Diplome picture 2</label>
             <div className="mt-1 flex items-start gap-3">
               {previewUrl2 && (
                 <img
                   src={previewUrl2}
                   alt="Diplome picture 2 preview"
-                  className="h-16 w-16 rounded object-cover border-2 border-gray-300 flex-shrink-0"
+                  className="h-16 w-16 rounded object-cover border-2 border-border flex-shrink-0"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}

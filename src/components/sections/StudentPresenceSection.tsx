@@ -58,7 +58,7 @@ const presenceLabel: Record<string, string> = {
 
 const presenceStyles: Record<string, string> = {
   present: 'border-green-200 bg-green-50 text-green-800',
-  absent: 'border-red-200 bg-red-50 text-red-700',
+  absent: 'border-danger-light bg-danger-light text-danger-dark',
   late: 'border-yellow-200 bg-yellow-50 text-yellow-800',
   excused: 'border-purple-200 bg-purple-50 text-purple-800',
 };
@@ -483,7 +483,7 @@ const StudentPresenceSection: React.FC = () => {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Student Presence</h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted">
             Select a planning session to mark students as present or absent and manage remarks.
           </p>
         </div>
@@ -495,8 +495,8 @@ const StudentPresenceSection: React.FC = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-1.5 text-xs font-semibold rounded-full transition ${
                 activeTab === tab
-                  ? 'bg-white text-blue-600 shadow'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-card text-primary shadow'
+                  : 'text-muted hover:text-body'
               }`}
             >
               {tab === 'presence' ? 'Presence' : 'Notes'}
@@ -507,7 +507,7 @@ const StudentPresenceSection: React.FC = () => {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Planning date</label>
+          <label className="mb-1 block text-sm font-medium text-body">Planning date</label>
           <input
             type="date"
             value={planningDate}
@@ -517,7 +517,7 @@ const StudentPresenceSection: React.FC = () => {
               setAlert(null);
               setNoteEditor({ presence: null, note: '-1', remarks: '' });
             }}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-md border border-border bg-card text-body px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
         <SearchSelect
@@ -537,31 +537,31 @@ const StudentPresenceSection: React.FC = () => {
         />
 
         {planningDetail && (
-          <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900 shadow-inner">
-            <p className="text-xs uppercase tracking-wide text-blue-500 mb-2">Planning details</p>
+          <div className="rounded-2xl border border-primary-light bg-primary-light p-4 text-sm text-heading shadow-inner">
+            <p className="text-xs uppercase tracking-wide text-primary mb-2">Planning details</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <div>
-                <p className="text-xs text-blue-500">Class</p>
+                <p className="text-xs text-primary">Class</p>
                 <p className="font-semibold">{planningDetail.classTitle}</p>
               </div>
               <div>
-                <p className="text-xs text-blue-500">Period</p>
+                <p className="text-xs text-primary">Period</p>
                 <p className="font-semibold">{planningDetail.period}</p>
               </div>
               <div>
-                <p className="text-xs text-blue-500">Date</p>
+                <p className="text-xs text-primary">Date</p>
                 <p className="font-semibold">{planningDetail.date}</p>
               </div>
               <div>
-                <p className="text-xs text-blue-500">Time</p>
+                <p className="text-xs text-primary">Time</p>
                 <p className="font-semibold">{planningDetail.time}</p>
               </div>
               <div>
-                <p className="text-xs text-blue-500">Teacher</p>
+                <p className="text-xs text-primary">Teacher</p>
                 <p className="font-semibold">{planningDetail.teacher}</p>
               </div>
               <div>
-                <p className="text-xs text-blue-500">Classroom</p>
+                <p className="text-xs text-primary">Classroom</p>
                 <p className="font-semibold">{planningDetail.classroom}</p>
               </div>
             </div>
@@ -573,8 +573,8 @@ const StudentPresenceSection: React.FC = () => {
         <div
           className={`rounded-md border px-4 py-2 text-sm ${
             alert.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-success-light bg-success-light text-success-dark'
+              : 'border-danger-light bg-danger-light text-danger-dark'
           }`}
         >
           {alert.message}
@@ -594,7 +594,7 @@ const StudentPresenceSection: React.FC = () => {
 
       {activeTab === 'presence' ? (
         !selectedPlanningId ? (
-          <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+          <div className="rounded-2xl border border-dashed border-border bg-card text-body bg-gray-50 p-6 text-center text-sm text-muted">
             {planningDate
               ? planningOptions.length
                 ? 'Select a planning session to load class roster and manage student presence.'
@@ -607,22 +607,22 @@ const StudentPresenceSection: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Class roster · Absent / Not yet marked</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted">
                     {absentPresences.length} student{absentPresences.length === 1 ? '' : 's'}
                   </p>
                 </div>
               </div>
               {presenceLoading || classStudentsLoading ? (
-                <div className="py-12 text-center text-sm text-gray-500">Loading students…</div>
+                <div className="py-12 text-center text-sm text-muted">Loading students…</div>
               ) : absentPresences.length === 0 ? (
-                <div className="py-12 text-center text-sm text-gray-500">Everyone is marked present.</div>
+                <div className="py-12 text-center text-sm text-muted">Everyone is marked present.</div>
               ) : (
                 <>
                   <ul className="space-y-3">
                     {absentPagination.slice.map((presence) => renderPresenceItem(presence, 'left', false))}
                   </ul>
                   {absentPresences.length > PAGE_SIZE && (
-                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
                       <span>
                         Showing {absentPagination.startIndex}–{absentPagination.endIndex} of {absentPresences.length}
                       </span>
@@ -657,22 +657,22 @@ const StudentPresenceSection: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Present students</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted">
                     {presentPresences.length} student{presentPresences.length === 1 ? '' : 's'}
                   </p>
                 </div>
               </div>
               {presenceLoading || classStudentsLoading ? (
-                <div className="py-12 text-center text-sm text-gray-500">Loading students…</div>
+                <div className="py-12 text-center text-sm text-muted">Loading students…</div>
               ) : presentPresences.length === 0 ? (
-                <div className="py-12 text-center text-sm text-gray-500">Mark students as present to see them here.</div>
+                <div className="py-12 text-center text-sm text-muted">Mark students as present to see them here.</div>
               ) : (
                 <>
                   <ul className="space-y-3">
                     {presentPagination.slice.map((presence) => renderPresenceItem(presence, 'right', false))}
                   </ul>
                   {presentPresences.length > PAGE_SIZE && (
-                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
+                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
                       <span>
                         Showing {presentPagination.startIndex}–{presentPagination.endIndex} of {presentPresences.length}
                       </span>
@@ -705,7 +705,7 @@ const StudentPresenceSection: React.FC = () => {
           </div>
         )
       ) : !selectedPlanningId ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+        <div className="rounded-2xl border border-dashed border-border bg-card text-body bg-gray-50 p-6 text-center text-sm text-muted">
           {planningDate
             ? planningOptions.length
               ? 'Select a planning session to review and edit notes.'
@@ -724,22 +724,22 @@ const StudentPresenceSection: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-gray-900">Present students · Notes</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   {presentPresences.length} student{presentPresences.length === 1 ? '' : 's'}
                 </p>
               </div>
             </div>
             {presenceLoading || classStudentsLoading ? (
-              <div className="py-12 text-center text-sm text-gray-500">Loading students…</div>
+              <div className="py-12 text-center text-sm text-muted">Loading students…</div>
             ) : presentPresences.length === 0 ? (
-              <div className="py-12 text-center text-sm text-gray-500">Mark students as present to manage notes.</div>
+              <div className="py-12 text-center text-sm text-muted">Mark students as present to manage notes.</div>
             ) : (
               <>
                 <ul className="space-y-3">
                   {presentPagination.slice.map((presence) => renderPresenceItem(presence, 'right', true))}
                 </ul>
                 {presentPresences.length > PAGE_SIZE && (
-                  <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500">
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
                     <span>
                       Showing {presentPagination.startIndex}–{presentPagination.endIndex} of {presentPresences.length}
                     </span>
@@ -787,20 +787,20 @@ const StudentPresenceSection: React.FC = () => {
             }}
           >
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+              <label className="block text-sm font-medium text-body mb-1">Note</label>
               <input
                 type="number"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-md border border-border bg-card text-body px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 value={noteEditor.note}
                 onChange={(event) => setNoteEditor((prev) => ({ ...prev, note: event.target.value }))}
                 placeholder="-1"
               />
-              <p className="mt-1 text-xs text-gray-500">Use -1 to indicate no note was provided.</p>
+              <p className="mt-1 text-xs text-muted">Use -1 to indicate no note was provided.</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+              <label className="block text-sm font-medium text-body mb-1">Remarks</label>
               <textarea
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-md border border-border bg-card text-body px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 rows={4}
                 value={noteEditor.remarks}
                 onChange={(event) => setNoteEditor((prev) => ({ ...prev, remarks: event.target.value }))}
@@ -817,7 +817,7 @@ const StudentPresenceSection: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:brightness-95"
               >
                 Save
               </button>

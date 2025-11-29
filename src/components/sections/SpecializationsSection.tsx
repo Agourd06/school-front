@@ -31,11 +31,11 @@ const statusFilterOptions: SearchSelectOption[] = [
 ];
 
 const statusStyles: Record<number, string> = {
-  2: 'bg-yellow-100 text-yellow-800',
-  1: 'bg-green-100 text-green-800',
-  0: 'bg-gray-200 text-gray-700',
-  [-1]: 'bg-purple-100 text-purple-700',
-  [-2]: 'bg-red-100 text-red-700',
+  2: 'bg-warning-badge',
+  1: 'bg-success-badge',
+  0: 'bg-muted-badge',
+  [-1]: 'bg-accent-badge',
+  [-2]: 'bg-danger-badge',
 };
 
 const stripHtml = (input?: string | null): string => {
@@ -243,8 +243,8 @@ const SpecializationsSection: React.FC = () => {
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
               alert.type === 'success'
-                ? 'border-green-200 bg-green-50 text-green-700'
-                : 'border-red-200 bg-red-50 text-red-700'
+                ? 'border-success-light bg-success-light text-success-dark'
+                : 'border-danger-light bg-danger-light text-danger-dark'
             }`}
           >
             {alert.message}
@@ -280,7 +280,7 @@ const SpecializationsSection: React.FC = () => {
               value={filters.search}
               onChange={handleSearchChange}
               placeholder="Search by specialization title..."
-              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
         </div>
@@ -350,7 +350,7 @@ const SpecializationsSection: React.FC = () => {
                                 navigateToLevels();
                               }
                             }}
-                            className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                            className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
                             title="View levels"
                           >
                           

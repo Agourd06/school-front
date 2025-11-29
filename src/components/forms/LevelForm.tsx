@@ -138,22 +138,22 @@ const LevelForm: React.FC<LevelFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Program & Specialization *</label>
+        <label className="block text-sm font-medium text-heading">Program & Specialization *</label>
         {isProgramLocked && fetchedProgram && (selectedSpecialization || initialData?.specialization) ? (
           <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-3 bg-gray-50 border border-gray-300 rounded-md">
-              <div className="text-xs font-medium text-gray-500 mb-1">Program</div>
-              <div className="text-sm font-medium text-gray-900">{fetchedProgram?.title || 'N/A'}</div>
+            <div className="p-3 bg-surface border border-border rounded-md">
+              <div className="text-xs font-medium text-muted mb-1">Program</div>
+              <div className="text-sm font-medium text-heading">{fetchedProgram?.title || 'N/A'}</div>
             </div>
-            <div className="p-3 bg-gray-50 border border-gray-300 rounded-md">
-              <div className="text-xs font-medium text-gray-500 mb-1">Specialization</div>
-              <div className="text-sm font-medium text-gray-900">
+            <div className="p-3 bg-surface border border-border rounded-md">
+              <div className="text-xs font-medium text-muted mb-1">Specialization</div>
+              <div className="text-sm font-medium text-heading">
                 {selectedSpecialization?.title || initialData?.specialization?.title || 'N/A'}
               </div>
             </div>
@@ -161,7 +161,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Program</label>
+              <label className="block text-xs font-medium text-body mb-1">Program</label>
               <Select
                 name="program_id"
                 value={form.program_id}
@@ -171,13 +171,13 @@ const LevelForm: React.FC<LevelFormProps> = ({
                   { value: '', label: 'All programs' },
                   ...programs.map((program) => ({ value: program.id, label: program.title })),
                 ]}
-                className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                  isProgramLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+                className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+                  isProgramLocked ? 'bg-muted-foreground cursor-not-allowed' : ''
                 }`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Specialization</label>
+              <label className="block text-xs font-medium text-body mb-1">Specialization</label>
               <Select
                 name="specialization_id"
                 value={form.specialization_id}
@@ -188,8 +188,8 @@ const LevelForm: React.FC<LevelFormProps> = ({
                   ...specializations.map((spec) => ({ value: spec.id, label: spec.title })),
                 ]}
                 error={errors.specialization_id}
-                className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                  isSpecializationLocked ? 'bg-gray-100 cursor-not-allowed' : ''
+                className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+                  isSpecializationLocked ? 'bg-muted-foreground cursor-not-allowed' : ''
                 }`}
               />
             </div>
@@ -203,7 +203,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
         value={form.title}
         onChange={handleChange}
         error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -213,7 +213,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
           value={form.level}
           onChange={handleChange}
           error={errors.level}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
           label="Status"
@@ -224,12 +224,12 @@ const LevelForm: React.FC<LevelFormProps> = ({
             value: opt.value,
             label: opt.label,
           }))}
-          className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label className="block text-sm font-medium text-heading mb-1">Description</label>
         <RichTextEditor
           value={form.description}
           onChange={(html) => {

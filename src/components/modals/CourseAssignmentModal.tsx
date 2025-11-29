@@ -403,7 +403,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       <div className="p-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
             <span className="ml-2 text-gray-600">Loading courses...</span>
           </div>
         ) : error ? (
@@ -443,7 +443,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                       {...provided.droppableProps}
                       className={`min-h-[300px] p-4 border-2 border-dashed rounded-lg transition-colors ${
                         snapshot.isDraggingOver
-                          ? 'border-blue-400 bg-blue-50'
+                          ? 'border-primary bg-primary-light'
                           : 'border-gray-300 bg-gray-50'
                       } ${isAnyMutationPending ? 'opacity-60 pointer-events-none' : ''}`}
                     >
@@ -467,12 +467,12 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                                 >
                                   {isItemLoading && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-md">
-                                      <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                                      <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
                                     </div>
                                   )}
                                   <div className="flex items-center gap-2 flex-1">
                                     <svg
-                                      className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 flex-shrink-0"
+                                      className="w-4 h-4 text-gray-400 cursor-pointer hover:text-primary flex-shrink-0"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -548,13 +548,13 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                                 >
                                   {isItemLoading && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-md z-10">
-                                      <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                                      <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
                                     </div>
                                   )}
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <svg
-                                        className="w-4 h-4 text-gray-400 cursor-pointer hover:text-blue-600 flex-shrink-0 mt-0.5"
+                                        className="w-4 h-4 text-gray-400 cursor-pointer hover:text-primary flex-shrink-0 mt-0.5"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -685,7 +685,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                     setEditErrors((prev) => ({ ...prev, volume: "" }));
                   }
                 }}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
                   editErrors.volume ? "border-red-300" : "border-gray-300"
                 }`}
                 placeholder="Enter volume"
@@ -713,7 +713,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                     setEditErrors((prev) => ({ ...prev, coefficient: "" }));
                   }
                 }}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
                   editErrors.coefficient ? "border-red-300" : "border-gray-300"
                 }`}
                 placeholder="Enter coefficient"
@@ -735,7 +735,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                 type="button"
                 onClick={handleSaveCourseEdit}
                 disabled={updateModuleCourse.isPending}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary text-primary-foreground disabled:opacity-50"
               >
                 {updateModuleCourse.isPending ? "Saving..." : "Save"}
               </button>

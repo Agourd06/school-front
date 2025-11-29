@@ -174,7 +174,7 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
           maxLength={150}
           placeholder="Enter pricing title"
           error={errors.title}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
@@ -188,7 +188,7 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
           onChange={handleAmountChange}
           placeholder="Enter amount"
           error={errors.amount}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
           label="Occurrences"
@@ -199,7 +199,7 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
           onChange={handleOccurrencesChange}
           placeholder="Number of occurrences"
           error={errors.occurrences}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Select
           label="Status"
@@ -210,26 +210,26 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
             label: option.label,
           }))}
           error={errors.status}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex items-center gap-3 pt-6 md:pt-8">
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <label className="flex items-center gap-2 text-sm font-medium text-heading">
             <input
               type="checkbox"
               checked={form.every_month}
               onChange={(event) => setForm((prev) => ({ ...prev, every_month: event.target.checked }))}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
             />
             Monthly billing
           </label>
-          <span className="text-xs text-gray-500">Toggle to repeat every month</span>
+          <span className="text-xs text-muted">Toggle to repeat every month</span>
         </div>
       </div>
 
-      {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+      {serverError && <p className="text-sm text-danger">{serverError}</p>}
 
       <div className="flex justify-end space-x-3">
         <Button

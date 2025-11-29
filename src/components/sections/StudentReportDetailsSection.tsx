@@ -35,11 +35,11 @@ const EMPTY_META = {
 };
 
 const statusStyles: Record<number, string> = {
-  2: 'bg-yellow-100 text-yellow-800',
-  1: 'bg-green-100 text-green-800',
-  0: 'bg-gray-200 text-gray-700',
-  [-1]: 'bg-purple-100 text-purple-700',
-  [-2]: 'bg-red-100 text-red-700',
+  2: 'bg-warning-badge',
+  1: 'bg-success-badge',
+  0: 'bg-muted-badge',
+  [-1]: 'bg-accent-badge',
+  [-2]: 'bg-danger-badge',
 };
 
 const extractErrorMessage = (err: unknown): string => {
@@ -320,8 +320,8 @@ const StudentReportDetailsSection: React.FC = () => {
         <div
           className={`rounded-md border px-4 py-2 text-sm ${
             alert.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-success-light bg-success-light text-success-dark'
+              : 'border-danger-light bg-danger-light text-danger-dark'
           }`}
         >
           {alert.message}
@@ -373,7 +373,7 @@ const StudentReportDetailsSection: React.FC = () => {
                 reports.map((report) => {
                   const isSelected = report.id === selectedReportId;
                   return (
-                    <tr key={report.id} className={isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}>
+                    <tr key={report.id} className={isSelected ? 'bg-primary-light' : 'hover:bg-gray-50'}>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         <div className="font-medium">{formatStudentName(report)}</div>
                         <div className="text-xs text-gray-500">#{report.id}</div>
@@ -395,7 +395,7 @@ const StudentReportDetailsSection: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setSelectedReportId(isSelected ? null : report.id)}
-                          className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                          className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
                         >
                           {isSelected ? 'Hide details' : 'View details'}
                         </button>
@@ -524,7 +524,7 @@ const StudentReportDetailsSection: React.FC = () => {
                                 detail.remarks || ''
                               )
                             }
-                            className="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                            className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
                           >
                             View remarks
                           </button>

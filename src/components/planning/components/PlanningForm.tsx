@@ -348,7 +348,7 @@ const PlanningForm: React.FC<PlanningFormProps> = ({
             <div>
               <label className="block text-sm font-medium text-heading mb-1">Status</label>
               <select
-                className="block w-full px-3 py-2 text-sm border border-border rounded-md"
+                className="custom-select block w-full px-3 py-2 text-sm border border-border bg-card text-body rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                 value={form.status}
                 onChange={(e) => setForm((prev) => ({ ...prev, status: Number(e.target.value) as typeof form.status }))}
               >

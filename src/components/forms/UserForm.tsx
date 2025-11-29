@@ -108,7 +108,7 @@ const UserForm: React.FC<UserFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}
@@ -120,7 +120,7 @@ const UserForm: React.FC<UserFormProps> = ({
         value={formData.username}
         onChange={handleChange}
         error={errors.username}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Input
@@ -130,7 +130,7 @@ const UserForm: React.FC<UserFormProps> = ({
         value={formData.email}
         onChange={handleChange}
         error={errors.email}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select
@@ -142,7 +142,7 @@ const UserForm: React.FC<UserFormProps> = ({
           { value: 'user', label: 'User' },
           { value: 'admin', label: 'Admin' },
         ]}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Input
@@ -152,7 +152,7 @@ const UserForm: React.FC<UserFormProps> = ({
         value={formData.password}
         onChange={handleChange}
         error={errors.password}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <div className="flex justify-end space-x-3 pt-4">

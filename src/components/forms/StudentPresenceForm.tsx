@@ -184,7 +184,7 @@ const StudentPresenceForm: React.FC<StudentPresenceFormProps> = ({
             value: option.value,
             label: option.label,
           }))}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
           label="Note"
@@ -193,12 +193,12 @@ const StudentPresenceForm: React.FC<StudentPresenceFormProps> = ({
           onChange={handleNoteChange}
           placeholder="Enter note (e.g., 15.5)"
           error={errors.note}
-          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+        <label className="block text-sm font-medium text-heading mb-2">Remarks</label>
         <RichTextEditor
           value={form.remarks}
           onChange={(content) => setForm((prev) => ({ ...prev, remarks: content }))}
@@ -216,11 +216,11 @@ const StudentPresenceForm: React.FC<StudentPresenceFormProps> = ({
           label: option.label,
         }))}
         error={errors.status}
-        className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
       />
 
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}

@@ -156,12 +156,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
   const descriptionEditor = (
     <div>
       <div className="mb-1 flex items-center justify-between gap-3">
-        <label className="block text-sm font-medium text-gray-700 mb-0">Description</label>
+        <label className="block text-sm font-medium text-heading mb-0">Description</label>
         {onDescriptionPreview && (
           <button
             type="button"
             onClick={onDescriptionPreview}
-            className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            className="inline-flex items-center rounded-md border border-success-light px-3 py-1.5 text-xs font-medium text-success hover:bg-success-light focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
           >
             View details
           </button>
@@ -179,7 +179,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}
@@ -238,8 +238,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
             })),
           ]}
           error={errors.school_year_period_id}
-          className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-            !form.school_year_id ? 'bg-gray-100 cursor-not-allowed' : ''
+          className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+            !form.school_year_id ? 'bg-muted-foreground cursor-not-allowed' : ''
           }`}
         />
       </div>
@@ -274,8 +274,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
             })),
           ]}
           error={errors.specialization_id}
-          className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-            !form.program_id ? 'bg-gray-100 cursor-not-allowed' : ''
+          className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+            !form.program_id ? 'bg-muted-foreground cursor-not-allowed' : ''
           }`}
         />
       </div>
@@ -294,8 +294,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
           })),
         ]}
         error={errors.level_id}
-        className={`shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-          !form.specialization_id ? 'bg-gray-100 cursor-not-allowed' : ''
+        className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+          !form.specialization_id ? 'bg-muted-foreground cursor-not-allowed' : ''
         }`}
       />
 

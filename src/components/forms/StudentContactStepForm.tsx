@@ -31,13 +31,13 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
 }) => {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {errors.form && <p className="text-sm text-red-600">{errors.form}</p>}
+      {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Student"
           value={studentName}
           disabled
-          className="bg-gray-100 border-gray-200"
+          className="bg-muted-foreground border-border"
         />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

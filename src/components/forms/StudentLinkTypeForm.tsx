@@ -60,13 +60,13 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {serverError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
         </div>
       )}
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {error}
         </div>
       )}
@@ -78,7 +78,7 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Parent, Guardian, etc."
         error={error}
-        className="shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select

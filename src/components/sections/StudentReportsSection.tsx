@@ -1151,8 +1151,8 @@ const StudentReportsSection: React.FC = () => {
         <div
           className={`rounded-md border px-4 py-2 text-sm ${
             alert.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-success-light bg-success-light text-success-dark'
+              : 'border-danger-light bg-danger-light text-danger-dark'
           }`}
         >
           {alert.message}
