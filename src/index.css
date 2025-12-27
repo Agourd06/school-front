@@ -225,9 +225,9 @@
 }
 
 /* Preserve inline styles from rich text editor */
-.rt-content [style] {
+/* .rt-content [style] { */
   /* Allow inline styles to work */
-}
+/* } */
 
 /* Custom utility classes for transparent primary color backgrounds */
 /* Using rgba with CSS variable fallback for maximum compatibility */
