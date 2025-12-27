@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    port: 5173, // Frontend dev server port
+  },
   css: {
     postcss: './postcss.config.js',
   },
