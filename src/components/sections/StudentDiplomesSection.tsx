@@ -346,7 +346,12 @@ const StudentDiplomesSection: React.FC = () => {
         />
       </div>
 
-      <StudentDiplomeModal isOpen={modalOpen} onClose={handleModalClose} item={editingDiplome ?? undefined} />
+      <StudentDiplomeModal isOpen={modalOpen} onClose={handleModalClose} item={editingDiplome ? { 
+        ...editingDiplome, 
+        status: editingDiplome.status ?? 1,
+        diplome_picture_1: editingDiplome.diplome_picture_1 ?? undefined,
+        diplome_picture_2: editingDiplome.diplome_picture_2 ?? undefined,
+      } : undefined} />
 
       {detailsDiplome && (
         <StudentDiplomeDetailsModal isOpen={detailsModalOpen} onClose={closeDetailsModal} item={detailsDiplome} />

@@ -253,7 +253,7 @@ const StudentLinkTypesSection: React.FC = () => {
         />
       </div>
 
-      <StudentLinkTypeModal isOpen={modalOpen} onClose={handleModalClose} item={editingLinkType ?? undefined} />
+      <StudentLinkTypeModal isOpen={modalOpen} onClose={handleModalClose} item={editingLinkType ? { ...editingLinkType, status: editingLinkType.status ?? 1 } : undefined} />
 
       <DeleteModal
         isOpen={!!deleteTarget}

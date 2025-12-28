@@ -273,5 +273,4 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 // Memoize component to prevent unnecessary re-renders
 export default React.memo(CustomSelect);
-export type { SelectOption, CustomSelectProps };
 

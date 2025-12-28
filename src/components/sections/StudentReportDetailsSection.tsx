@@ -8,6 +8,7 @@ import { EditButton, DeleteButton, Button } from '../ui';
 import type { StudentReport } from '../../api/studentReport';
 import type { StudentReportDetail } from '../../api/studentReportDetail';
 import type { Teacher } from '../../api/teachers';
+import type { Course } from '../../api/course';
 import {
   useStudentReports,
   useStudentReport,

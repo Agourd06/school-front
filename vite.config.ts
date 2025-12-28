@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173, // Frontend dev server port
+    port: 5174, // Frontend dev server port
   },
   css: {
     postcss: './postcss.config.js',

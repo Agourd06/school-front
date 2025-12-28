@@ -1,6 +1,7 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useModulesForCourse } from './useModuleCourse';
 import { moduleApi } from '../api/module';
+import { courseApi } from '../api/course';
 import type { Module } from '../api/module';
 import type { ModuleCourse } from '../api/moduleCourse';
 

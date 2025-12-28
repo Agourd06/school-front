@@ -238,9 +238,9 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
               {selectedStudent ? (
                 <div className="space-y-1">
                   <p className="font-medium">{selectedStudent.label}</p>
-                  {selectedStudent.data && typeof selectedStudent.data === 'object' && 'email' in selectedStudent.data && (
-                    <p className="text-xs text-muted">{String(selectedStudent.data.email)}</p>
-                  )}
+                  {selectedStudent.data && typeof selectedStudent.data === 'object' && selectedStudent.data !== null && 'email' in selectedStudent.data ? (
+                    <p className="text-xs text-muted">{String((selectedStudent.data as { email?: unknown }).email ?? '')}</p>
+                  ) : null}
                 </div>
               ) : (
                 <p className="text-muted italic">Student information not available</p>

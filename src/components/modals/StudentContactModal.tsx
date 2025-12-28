@@ -45,10 +45,23 @@ const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
     studentlinktypeId: number | string | '';
     status: number;
   }) => {
-    const payload: { firstname: string; lastname: string; birthday?: string; email?: string; phone?: string; adress?: string; city?: string; country?: string; student_id?: number; studentlinktypeId?: number; status: number } = { ...formData };
-    if (payload.studentlinktypeId === '') delete payload.studentlinktypeId;
-    if (payload.student_id === '') delete payload.student_id;
-    else payload.student_id = Number(payload.student_id);
+    const payload: { firstname: string; lastname: string; birthday?: string; email?: string; phone?: string; adress?: string; city?: string; country?: string; student_id?: number; studentlinktypeId?: number; status: number } = {
+      firstname: formData.firstname,
+      lastname: formData.lastname,
+      birthday: formData.birthday,
+      email: formData.email,
+      phone: formData.phone,
+      adress: formData.adress,
+      city: formData.city,
+      country: formData.country,
+      status: formData.status,
+    };
+    if (formData.studentlinktypeId !== '' && formData.studentlinktypeId !== null && formData.studentlinktypeId !== undefined) {
+      payload.studentlinktypeId = typeof formData.studentlinktypeId === 'string' ? Number(formData.studentlinktypeId) : formData.studentlinktypeId;
+    }
+    if (formData.student_id !== '' && formData.student_id !== null && formData.student_id !== undefined) {
+      payload.student_id = typeof formData.student_id === 'string' ? Number(formData.student_id) : formData.student_id;
+    }
     if (item?.id) {
       await updateMut.mutateAsync({ id: item.id, data: payload });
     } else {

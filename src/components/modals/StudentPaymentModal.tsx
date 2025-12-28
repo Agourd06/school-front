@@ -56,7 +56,11 @@ const StudentPaymentModal: React.FC<StudentPaymentModalProps> = ({
       className="sm:max-w-4xl"
     >
       <StudentPaymentForm
-        initialData={initialData}
+        initialData={initialData ? { 
+          ...initialData, 
+          level_pricing_id: initialData.level_pricing_id ?? undefined,
+          reference: initialData.reference ?? undefined,
+        } : undefined}
         onSubmit={handleSubmit}
         onCancel={onClose}
         isSubmitting={isSubmitting}

@@ -18,6 +18,8 @@ import type { ClassEntity } from '../../api/classes';
 import type { Program } from '../../api/program';
 import type { Specialization } from '../../api/specialization';
 import type { Level } from '../../api/level';
+import type { SchoolYear } from '../../api/schoolYear';
+import type { SchoolYearPeriod } from '../../api/schoolYearPeriod';
 
 const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
@@ -263,7 +265,7 @@ const ClassesSection: React.FC = () => {
       <DataTableGeneric
         title="Classes"
         state={state}
-        onAdd={() => openModal(null)}
+        onAdd={() => openModal(undefined)}
         onEdit={(item) => openModal(item)}
         onDelete={requestDelete}
         onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
@@ -295,11 +297,6 @@ const ClassesSection: React.FC = () => {
                       <StatusBadge value={cls.status} />
                     </div>
                     <p className="mt-1 text-sm text-muted">
-                      {cls.code ? (
-                        <span className="inline-flex items-center rounded-full bg-primary-light px-2.5 py-0.5 text-xs font-medium text-primary">
-                          {cls.code}
-                        </span>
-                      ) : null}
                     </p>
                     <div className="mt-3 grid grid-cols-1 gap-3 text-xs text-muted sm:grid-cols-2">
                       <span>Program: <span className="font-medium text-heading">{programTitle}</span></span>
@@ -346,7 +343,19 @@ const ClassesSection: React.FC = () => {
       />
 
       {modal.type === 'class' && (
-        <ClassModal isOpen onClose={closeModal} classItem={modal.data} descriptionPosition="bottom" />
+        <ClassModal 
+          isOpen 
+          onClose={closeModal} 
+          classItem={modal.data ? {
+            ...modal.data,
+            program: modal.data.program ?? undefined,
+            specialization: modal.data.specialization ?? undefined,
+            level: modal.data.level ?? undefined,
+            schoolYear: modal.data.schoolYear ?? undefined,
+            schoolYearPeriod: modal.data.schoolYearPeriod ?? undefined,
+          } : undefined} 
+          descriptionPosition="bottom" 
+        />
       )}
 
       <DeleteModal

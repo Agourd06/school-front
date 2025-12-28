@@ -124,7 +124,7 @@ const toPaginated = (raw: unknown): PaginatedResponse<StudentReport> => {
   const page = meta.page ?? 1;
   const limit = meta.limit ?? (Array.isArray(data) ? data.length : 10);
   const total = meta.total ?? (Array.isArray(data) ? data.length : 0);
-  const totalPages = meta.totalPages ?? meta.lastPage ?? (limit > 0 ? Math.max(1, Math.ceil(total / limit)) : 1);
+  const totalPages = meta.totalPages ?? (limit > 0 ? Math.max(1, Math.ceil(total / limit)) : 1);
 
   return {
     data,

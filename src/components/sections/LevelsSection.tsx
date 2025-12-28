@@ -13,6 +13,7 @@ import DescriptionModal from '../modals/DescriptionModal';
 import { EditButton, DeleteButton, Button, Input } from '../ui';
 import type { Level } from '../../api/level';
 import type { Program } from '../../api/program';
+import type { Specialization } from '../../api/specialization';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useSpecialization } from '../../context/SpecializationContext';
 
@@ -403,7 +404,16 @@ const LevelsSection: React.FC = () => {
       <LevelModal
         isOpen={modalOpen}
         onClose={handleModalClose}
-        level={editingLevel ?? undefined}
+        level={editingLevel ? { 
+          ...editingLevel, 
+          description: editingLevel.description ?? undefined,
+          status: editingLevel.status ?? 1,
+          specialization: editingLevel.specialization ? {
+            id: editingLevel.specialization.id,
+            title: editingLevel.specialization.title,
+            program: editingLevel.specialization.program ?? undefined,
+          } : undefined,
+        } : undefined}
         initialSpecializationId={selectedSpecializationId ?? undefined}
       />
 

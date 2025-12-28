@@ -325,7 +325,7 @@ const StudentAttestationsSection: React.FC = () => {
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{getStudentLabel(sa)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{getAttestationLabel(sa)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{formatDate(sa.dateask)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{formatDate(sa.datedelivery)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{formatDate(sa.datedelivery ?? undefined)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -371,7 +371,12 @@ const StudentAttestationsSection: React.FC = () => {
       <StudentAttestationModal
         isOpen={modalOpen}
         onClose={handleModalClose}
-        studentAttestation={editingStudentAttestation ?? undefined}
+        studentAttestation={editingStudentAttestation ? {
+          ...editingStudentAttestation,
+          Status: editingStudentAttestation.Status ?? 1,
+          student: editingStudentAttestation.student ? { id: editingStudentAttestation.student.id } : undefined,
+          attestation: editingStudentAttestation.attestation ? { id: editingStudentAttestation.attestation.id } : undefined,
+        } : undefined}
       />
 
       <DeleteModal

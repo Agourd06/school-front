@@ -1,8 +1,9 @@
 import React from 'react';
 import { useCreateUser, useUpdateUser } from '../../hooks/useUsers';
+import { useCompanyId } from '../../hooks/useCompanyId';
 import BaseModal from './BaseModal';
 import { UserForm, type User } from '../forms';
-import type { UpdateUserRequest } from '../../api/user';
+import type { UpdateUserRequest } from '../../api/users';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -13,12 +14,13 @@ interface UserModalProps {
 const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
+  const companyId = useCompanyId();
 
   const isEditing = !!user;
 
   const handleSubmit = async (formData: { username: string; email: string; password: string; role: 'user' | 'admin' }) => {
     if (isEditing && user) {
-      const updateData: UpdateUserRequest = {
+      const updateData: UpdateUserRequest & { password?: string } = {
         username: formData.username,
         email: formData.email,
         role: formData.role,
@@ -26,7 +28,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
 
       // Only include password if it's provided
       if (formData.password.trim()) {
-        updateData.password = formData.password;
+        (updateData as { password: string }).password = formData.password;
       }
 
       await updateUser.mutateAsync({ id: user.id, ...updateData });
@@ -36,6 +38,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
         email: formData.email,
         password: formData.password,
         role: formData.role,
+        company_id: companyId,
       });
     }
     onClose();

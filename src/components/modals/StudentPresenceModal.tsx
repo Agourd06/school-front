@@ -46,7 +46,7 @@ const StudentPresenceModal: React.FC<StudentPresenceModalProps> = ({
       className="sm:max-w-4xl"
     >
       <StudentPresenceForm
-        initialData={initialData}
+        initialData={initialData ? { ...initialData, remarks: initialData.remarks ?? undefined } : undefined}
         onSubmit={handleSubmit}
         onCancel={onClose}
         isSubmitting={isSubmitting}
