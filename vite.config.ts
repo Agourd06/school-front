@@ -63,6 +63,13 @@ export default defineConfig({
             if (id.includes('suneditor') && !id.includes('suneditor-react')) {
               return 'editor-vendor';
             }
+            // PDF libraries - split aggressively as they're large
+            if (id.includes('@react-pdf/renderer') || id.includes('@react-pdf')) {
+              return 'pdf-vendor';
+            }
+            if (id.includes('jspdf') || id.includes('jspdf-autotable')) {
+              return 'pdf-lib-vendor';
+            }
             // Other vendor libraries - split large ones separately
             if (id.includes('axios')) {
               return 'axios-vendor';
@@ -70,17 +77,20 @@ export default defineConfig({
             if (id.includes('@hello-pangea/dnd')) {
               return 'dnd-vendor';
             }
-            if (id.includes('@react-pdf/renderer')) {
-              return 'pdf-vendor';
-            }
             if (id.includes('framer-motion')) {
               return 'motion-vendor';
             }
-            // Split jspdf separately as it can be large
-            if (id.includes('jspdf')) {
-              return 'pdf-lib-vendor';
+            // Split remaining vendor into 2 chunks to reduce circular dependency issues
+            // This prevents one huge chunk with potential initialization order problems
+            // Extract package name from path
+            const packageMatch = id.match(/node_modules[\/\\](@[^\/\\]+[\/\\])?([^\/\\]+)/);
+            if (packageMatch) {
+              const packageName = (packageMatch[1] || '') + packageMatch[2];
+              // Simple hash-based splitting to create 2 balanced chunks
+              // This avoids grouping related packages that might have circular deps
+              const hash = packageName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              return hash % 2 === 0 ? 'vendor-1' : 'vendor-2';
             }
-            // Other vendor libraries
             return 'vendor';
           }
         },
@@ -100,6 +110,8 @@ export default defineConfig({
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true,
+      // Better handling of circular dependencies
+      strictRequires: false,
     },
   },
   // Optimize dependencies pre-bundling
