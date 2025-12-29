@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // CRITICAL: Force single React instance to prevent "Cannot set properties of undefined" errors
+  // This ensures suneditor-react and other libraries use the same React instance
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
   server: {
     port: 5174, // Frontend dev server port
   },
@@ -23,7 +28,22 @@ export default defineConfig({
         manualChunks: (id) => {
           // Split node_modules into separate chunks for better caching
           if (id.includes('node_modules')) {
-            // Check specific packages first before general patterns
+            // CRITICAL: Bundle suneditor-react with React to access React internals
+            // This must be checked BEFORE other react-* packages
+            if (id.includes('suneditor-react')) {
+              return 'react-vendor';
+            }
+            // React core libraries - check for exact package paths (most specific first)
+            // Use path separators to match exact packages, not packages with "react" in name
+            if (
+              id.includes('/react/') || 
+              id.includes('/react-dom/') ||
+              id.includes('\\react\\') || 
+              id.includes('\\react-dom\\')
+            ) {
+              return 'react-vendor';
+            }
+            // Other React ecosystem packages (check specific packages before general patterns)
             if (id.includes('react-router-dom')) {
               return 'react-router';
             }
@@ -33,24 +53,22 @@ export default defineConfig({
             if (id.includes('@tanstack/react-query')) {
               return 'query-vendor';
             }
+            // SunEditor core (without react wrapper)
+            if (id.includes('suneditor') && !id.includes('suneditor-react')) {
+              return 'editor-vendor';
+            }
+            // Other vendor libraries
             if (id.includes('axios')) {
               return 'axios-vendor';
             }
             if (id.includes('@hello-pangea/dnd')) {
               return 'dnd-vendor';
             }
-            if (id.includes('suneditor')) {
-              return 'editor-vendor';
-            }
             if (id.includes('@react-pdf/renderer')) {
               return 'pdf-vendor';
             }
             if (id.includes('framer-motion')) {
               return 'motion-vendor';
-            }
-            // React core libraries - check after specific packages
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
             }
             // Other vendor libraries
             return 'vendor';
@@ -84,8 +102,10 @@ export default defineConfig({
       'react-select',
       '@tanstack/react-query',
       'axios',
+      'suneditor-react',
+      'suneditor',
     ],
-    // Force optimization to avoid circular dependency issues
-    force: true,
+    // REMOVED force: true - it causes React duplication in production builds
+    // which defeats resolve.dedupe and causes the "Activity" undefined error
   },
 })
