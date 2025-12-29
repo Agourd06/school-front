@@ -43,10 +43,16 @@ export default defineConfig({
             ) {
               return 'react-vendor';
             }
-            // Other React ecosystem packages (check specific packages before general patterns)
-            if (id.includes('react-router-dom')) {
+            // React Router - use path separators to match exact package
+            if (
+              id.includes('/react-router-dom/') ||
+              id.includes('/react-router/') ||
+              id.includes('\\react-router-dom\\') ||
+              id.includes('\\react-router\\')
+            ) {
               return 'react-router';
             }
+            // Other React ecosystem packages (check specific packages before general patterns)
             if (id.includes('lucide-react') || id.includes('react-select')) {
               return 'ui-vendor';
             }
@@ -57,7 +63,7 @@ export default defineConfig({
             if (id.includes('suneditor') && !id.includes('suneditor-react')) {
               return 'editor-vendor';
             }
-            // Other vendor libraries
+            // Other vendor libraries - split large ones separately
             if (id.includes('axios')) {
               return 'axios-vendor';
             }
@@ -69,6 +75,10 @@ export default defineConfig({
             }
             if (id.includes('framer-motion')) {
               return 'motion-vendor';
+            }
+            // Split jspdf separately as it can be large
+            if (id.includes('jspdf')) {
+              return 'pdf-lib-vendor';
             }
             // Other vendor libraries
             return 'vendor';
