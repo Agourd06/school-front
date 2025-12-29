@@ -7,6 +7,10 @@ export default defineConfig({
   server: {
     port: 5174, // Frontend dev server port
   },
+  preview: {
+    host: 'appedusolfron.muntadaa.online',
+    port: 3833,
+  },
   css: {
     postcss: './postcss.config.js',
   },
@@ -19,20 +23,34 @@ export default defineConfig({
         manualChunks: (id) => {
           // Split node_modules into separate chunks for better caching
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-              return 'react-vendor';
+            // Check specific packages first before general patterns
+            if (id.includes('react-router-dom')) {
+              return 'react-router';
             }
             if (id.includes('lucide-react') || id.includes('react-select')) {
               return 'ui-vendor';
             }
-            if (id.includes('@tanstack/react-query') || id.includes('axios')) {
+            if (id.includes('@tanstack/react-query')) {
               return 'query-vendor';
+            }
+            if (id.includes('axios')) {
+              return 'axios-vendor';
             }
             if (id.includes('@hello-pangea/dnd')) {
               return 'dnd-vendor';
             }
             if (id.includes('suneditor')) {
               return 'editor-vendor';
+            }
+            if (id.includes('@react-pdf/renderer')) {
+              return 'pdf-vendor';
+            }
+            if (id.includes('framer-motion')) {
+              return 'motion-vendor';
+            }
+            // React core libraries - check after specific packages
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react-vendor';
             }
             // Other vendor libraries
             return 'vendor';
@@ -48,8 +66,13 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     // Disable source maps in production for smaller builds
     sourcemap: false,
-    // Target modern browsers for smaller output
-    target: 'es2015',
+    // Target modern browsers - updated to es2020 for better compatibility
+    target: 'es2020',
+    // CommonJS options to handle circular dependencies better
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
   },
   // Optimize dependencies pre-bundling
   optimizeDeps: {
@@ -62,5 +85,7 @@ export default defineConfig({
       '@tanstack/react-query',
       'axios',
     ],
+    // Force optimization to avoid circular dependency issues
+    force: true,
   },
 })

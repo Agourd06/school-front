@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Get API URL from environment variable, fallback to localhost for development
 // Backend has global prefix 'api', so we append it to the base URL
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL;
 const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
 const api = axios.create({

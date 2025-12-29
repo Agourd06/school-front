@@ -57,8 +57,22 @@ src/
 
 2. **Set up environment variables:**
    Create a `.env` file in the root directory:
+   
+   **For local development:**
    ```
-   VITE_API_URL=http://localhost:3000/api
+   VITE_API_URL=http://localhost:3000
+   ```
+   
+   **For production (deployed backend):**
+   ```
+   VITE_API_URL=https://your-backend-domain.com
+   ```
+   
+   **Note:** The `/api` prefix is automatically added by the application. Just provide the base URL (without `/api`).
+   
+   **Example for production:**
+   ```
+   VITE_API_URL=https://appedusolback.muntadaa.online
    ```
 
 3. **Start the development server:**
@@ -124,8 +138,49 @@ The project uses modern React patterns:
 
 ## Build for Production
 
+**Important:** The `dist` folder is not included in Git (it's in `.gitignore`). After pulling the project, you must build it:
+
+### Step 1: Configure Backend URL
+
+Before building, make sure your `.env` file has the correct production backend URL:
+
 ```bash
+# .env file
+VITE_API_URL=https://your-deployed-backend-domain.com
+```
+
+**Note:** 
+- Don't include `/api` in the URL - it's added automatically
+- The `.env` file is in `.gitignore` for security
+- Each environment (dev/prod) should have its own `.env` file
+
+### Step 2: Build the Application
+
+```bash
+# Build the production bundle
 npm run build
 ```
 
 The built files will be in the `dist` directory, ready for deployment.
+
+### Step 3: Deploy
+
+The `dist` folder contains all the static files needed for deployment. You can:
+- Upload `dist` contents to your web server
+- Use `npm start` or `npm run start:prod` to serve it with Vite preview
+
+### Running Production Build Locally
+
+To test the production build locally:
+
+```bash
+# Build first
+npm run build
+
+# Then serve the production build
+npm run start:prod
+# or
+npm start
+```
+
+This will serve the built files from the `dist` directory on your configured domain/port.
