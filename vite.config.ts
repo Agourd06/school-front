@@ -21,7 +21,15 @@ export default defineConfig({
     postcss: './postcss.config.js',
   },
   build: {
-    // Let Vite/Rollup handle chunking automatically - avoids circular dependency issues
+    // Use terser instead of esbuild - more compatible with third-party libraries
+    // esbuild is too aggressive and breaks libraries like SunEditor
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        defaults: false, // Avoid breaking third-party libs
+      },
+      mangle: false, // VERY IMPORTANT - prevents breaking runtime bindings
+    } as any, // Type assertion needed - Vite's terser types may be incomplete
     sourcemap: false,
     target: 'es2020',
     chunkSizeWarningLimit: 2000,

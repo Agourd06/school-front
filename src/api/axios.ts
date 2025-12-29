@@ -1,8 +1,11 @@
 import axios from 'axios';
 
-// Get API URL from environment variable, fallback to localhost for development
+// Get API URL from environment variable
 // Backend has global prefix 'api', so we append it to the base URL
 const API_BASE = import.meta.env.VITE_API_URL;
+if (!API_BASE) {
+  throw new Error('VITE_API_URL environment variable is not set. Please configure it in your .env file or Vercel environment variables.');
+}
 const API_URL = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
 
 const api = axios.create({
