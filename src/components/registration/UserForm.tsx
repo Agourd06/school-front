@@ -57,7 +57,7 @@ const UserForm: React.FC<UserFormProps> = ({ data, companyName, onChange, onSubm
           placeholder="jane@example.com"
         />
         <p className="mt-1 text-xs text-muted">
-          A password will be automatically generated and sent to this email
+          An invitation email with a password setup link will be sent to this email
         </p>
       </div>
 

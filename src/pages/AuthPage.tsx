@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   LoginForm, 
-  RegisterForm, 
   ForgotPasswordForm, 
   AuthLayout 
 } from '../components/auth';
 
-type AuthMode = 'login' | 'register' | 'forgot-password';
+type AuthMode = 'login' | 'forgot-password';
 
 interface AuthFormProps {
   onSuccess?: () => void;
@@ -23,11 +22,6 @@ const AUTH_CONFIG: Record<
     buttonLabel: 'Login',
     Component: LoginForm,
   },
-  register: {
-    title: 'Create your account',
-    buttonLabel: 'Register',
-    Component: RegisterForm,
-  },
   'forgot-password': {
     title: 'Reset your password',
     buttonLabel: 'Reset',
@@ -37,16 +31,22 @@ const AUTH_CONFIG: Record<
 
 const AuthPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const {  Component } = AUTH_CONFIG[authMode];
 
   // Handle URL-based mode switching
   useEffect(() => {
-    const mode = searchParams.get('mode') as AuthMode;
-    if (mode && ['login', 'register', 'forgot-password'].includes(mode)) {
-      setAuthMode(mode);
+    const mode = searchParams.get('mode');
+    // Redirect register mode to /register page
+    if (mode === 'register') {
+      navigate('/register', { replace: true });
+      return;
     }
-  }, [searchParams]);
+    if (mode && ['login', 'forgot-password'].includes(mode)) {
+      setAuthMode(mode as AuthMode);
+    }
+  }, [searchParams, navigate]);
 
   const handleModeChange = (mode: AuthMode) => {
     setAuthMode(mode);
@@ -67,25 +67,13 @@ const AuthPage: React.FC = () => {
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
               <button
-                onClick={() => handleModeChange('register')}
+                onClick={() => navigate('/register')}
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
                 Sign up
               </button>
             </p>
           </div>
-        );
-      case 'register':
-        return (
-          <p className="text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <button
-              onClick={() => handleModeChange('login')}
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              Sign in
-            </button>
-          </p>
         );
       case 'forgot-password':
         return (

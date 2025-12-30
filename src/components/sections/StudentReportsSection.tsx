@@ -25,7 +25,8 @@ import type { SortKey } from '../reportSection/types';
 import { getFileUrl } from '../../utils/apiConfig';
 import { studentReportDetailApi } from '../../api/studentReportDetail';
 import CoursesNotesModal from '../reportSection/CoursesNotesModal';
-import { exportStudentReportPdf } from '../../utils/exportStudentReportPdf.tsx';
+// Dynamic import for PDF export to reduce initial bundle size
+// @react-pdf/renderer is a large library (~2MB), so we only load it when needed
 
 type ErrorWithMessage = {
   response?: {
@@ -939,6 +940,9 @@ const StudentReportsSection: React.FC = () => {
           ? (numericNotes.reduce((sum, value) => sum + value, 0) / numericNotes.length).toFixed(2)
           : null;
 
+      // Dynamically import PDF export function to reduce initial bundle size
+      const { exportStudentReportPdf } = await import('../../utils/exportStudentReportPdf.tsx');
+      
       await exportStudentReportPdf({
         studentName,
         studentId: studentEntry?.student?.id ? String(studentEntry.student.id) : String(report.student_id ?? '—'),

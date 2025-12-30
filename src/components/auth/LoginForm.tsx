@@ -76,10 +76,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
       persistentError = '';
       onSuccess?.();
     } catch (err: unknown) {
-      // Simple, clear error message for any login failure
-      // Store error in persistent storage (survives remounts)
-      persistentError = errorMessage;
-      setError(errorMessage);
+      // Check if user needs to set password first
+      const axiosError = err as { response?: { data?: { message?: string } }; message?: string };
+      const backendMessage = axiosError?.response?.data?.message || '';
+      
+      // If backend indicates user needs to set password, show helpful message
+      if (typeof backendMessage === 'string' && 
+          (backendMessage.toLowerCase().includes('set your password') || 
+           backendMessage.toLowerCase().includes('set password') ||
+           backendMessage.toLowerCase().includes('password invitation'))) {
+        const passwordSetMessage = 'Please check your email for the password invitation link to set your password first.';
+        persistentError = passwordSetMessage;
+        setError(passwordSetMessage);
+      } else {
+        // Simple, clear error message for any other login failure
+        // Store error in persistent storage (survives remounts)
+        persistentError = errorMessage;
+        setError(errorMessage);
+      }
       
       // Restore error after isLoading changes
       setTimeout(() => {
@@ -196,7 +210,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
             <span className="text-sm text-gray-600">
               Don't have an account?{' '}
               <Link
-                to="/auth?mode=register"
+                to="/register"
                 className="font-medium text-primary hover:text-primary/80"
               >
                 Sign up

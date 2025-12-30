@@ -6,6 +6,7 @@ import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import RegistrationPage from './pages/RegistrationPage';
+import SetPasswordPage from './pages/SetPasswordPage';
 
 const App: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -45,6 +46,10 @@ const App: React.FC = () => {
         <Route 
           path="/reset-password" 
           element={user ? <Navigate to="/dashboard" /> : <><Navbar /><div className="pt-16"><ResetPasswordPage /></div></>} 
+        />
+        <Route 
+          path="/set-password" 
+          element={user ? <Navigate to="/dashboard" /> : <SetPasswordPage />} 
         />
         {/* Protected routes with Navbar */}
         <Route 

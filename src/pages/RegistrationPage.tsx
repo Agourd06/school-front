@@ -108,11 +108,11 @@ const RegistrationPage: React.FC = () => {
         email: userData.email.trim(),
         role: userData.role,
         company_id: createdCompanyId,
-        // Password is optional - backend will auto-generate and send via email (like forgot password)
+        // Password is not provided - backend will send invitation email with token link
       };
 
-      // Backend will auto-generate password and send via email using the same mailing system
-      // Password is NOT returned in the response for security - only sent via email
+      // Backend will send an invitation email with a token link to set password
+      // User must click the link and set their password before they can login
       await usersApi.create(payload);
       
       setStep('success');

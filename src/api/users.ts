@@ -77,14 +77,14 @@ export const usersApi = {
   create: async (data: CreateUserRequest): Promise<User> => {
     const response = await api.post('/users', data);
     
-    // Backend returns: { user: {...}, generatedPassword?: "..." }
-    // We only return the user - password is sent via email only (security best practice)
+    // Backend returns: { user: {...} }
+    // Invitation email with token link is sent to user's email
+    // User must click the link to set their password
     const responseData = response.data as { 
-      user: User; 
-      generatedPassword?: string; // Present in response but not used in frontend
+      user: User;
     };
     
-    // Return only the user object - password is sent via email
+    // Return only the user object - invitation email is sent separately
     return responseData.user;
   },
 

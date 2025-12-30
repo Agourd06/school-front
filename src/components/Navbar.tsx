@@ -68,7 +68,7 @@ const Navbar: React.FC = () => {
                   Login
                 </Link>
                 <Link
-                  to="/auth?mode=register"
+                  to="/register"
                   className="px-3 py-2 rounded-md text-sm font-medium bg-transparent border border-primary-foreground/60 text-primary-foreground hover:bg-primary-foreground hover:text-primary transition-colors"
                 >
                   Register

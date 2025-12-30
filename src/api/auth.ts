@@ -50,6 +50,26 @@ export interface ChangePasswordRequest {
   confirmPassword: string;
 }
 
+export interface ValidateTokenRequest {
+  token: string;
+}
+
+export interface ValidateTokenResponse {
+  valid: boolean;
+  email: string;
+  username: string;
+}
+
+export interface SetPasswordRequest {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface SetPasswordResponse {
+  message: string;
+}
+
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
     const response = await api.post('/auth/login', data);
@@ -80,6 +100,16 @@ export const authApi = {
 
   getProfile: async (): Promise<{ message: string; user: User }> => {
     const response = await api.get('/profile');
+    return response.data;
+  },
+
+  validateToken: async (data: ValidateTokenRequest): Promise<ValidateTokenResponse> => {
+    const response = await api.post('/auth/validate-token', data);
+    return response.data;
+  },
+
+  setPassword: async (data: SetPasswordRequest): Promise<SetPasswordResponse> => {
+    const response = await api.post('/auth/set-password', data);
     return response.data;
   },
 };

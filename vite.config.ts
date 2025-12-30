@@ -32,7 +32,7 @@ export default defineConfig({
     } as any, // Type assertion needed - Vite's terser types may be incomplete
     sourcemap: false,
     target: 'es2020',
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 2500, // Increased to allow lazy-loaded PDF chunk (~2MB)
     // ⛔ NO manualChunks - let Vite decide to avoid TDZ errors
   },
   // Optimize dependencies pre-bundling
