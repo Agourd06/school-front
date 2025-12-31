@@ -1,5 +1,6 @@
 import api from './axios';
 import type { PaginatedResponse, FilterParams } from '../types/api';
+import type { Profile } from '../types/profile';
 
 // Forward declaration
 interface Company {
@@ -12,7 +13,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  role: 'user' | 'admin';
+  profile: Profile;
   status?: number;
   company_id?: number;
   created_at?: string;
@@ -24,14 +25,14 @@ export interface CreateUserRequest {
   username: string;
   password?: string; // Optional - backend will auto-generate if not provided
   email: string;
-  role?: 'user' | 'admin';
+  profile?: Profile;
   company_id: number; // Required for public registration
 }
 
 export interface UpdateUserRequest {
   username?: string;
   email?: string;
-  role?: 'user' | 'admin';
+  profile?: Profile;
   status?: number;
   company_id?: number;
 }

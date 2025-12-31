@@ -109,6 +109,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           value={form.email}
           onChange={onChange}
           error={errors.email}
+          helperText="A user account with profile 'student' will be automatically created and a password invitation email will be sent to this address."
         />
         <Input
           label="Phone"

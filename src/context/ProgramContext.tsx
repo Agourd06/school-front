@@ -1,14 +1,13 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
 interface ProgramContextType {
   selectedProgramId: number | null;
   setSelectedProgramId: (id: number | null) => void;
   clearSelectedProgram: () => void;
-  navigateToSpecializations?: () => void;
-  setNavigateToSpecializations: (fn: () => void) => void;
-  navigateBackToPrograms?: () => void;
-  setNavigateBackToPrograms: (fn: () => void) => void;
+  navigateToSpecializations: (programId?: number) => void;
+  navigateBackToPrograms: () => void;
 }
 
 const ProgramContext = createContext<ProgramContextType | undefined>(undefined);
@@ -27,9 +26,8 @@ interface ProgramProviderProps {
 }
 
 export const ProgramProvider: React.FC<ProgramProviderProps> = ({ children }) => {
+  const navigate = useNavigate();
   const [selectedProgramId, setSelectedProgramIdState] = useState<number | null>(null);
-  const [navigateToSpecializations, setNavigateToSpecializationsState] = useState<(() => void) | undefined>(undefined);
-  const [navigateBackToPrograms, setNavigateBackToProgramsState] = useState<(() => void) | undefined>(undefined);
 
   const setSelectedProgramId = useCallback((id: number | null) => {
     setSelectedProgramIdState(id);
@@ -39,13 +37,16 @@ export const ProgramProvider: React.FC<ProgramProviderProps> = ({ children }) =>
     setSelectedProgramIdState(null);
   }, []);
 
-  const setNavigateToSpecializations = useCallback((fn: () => void) => {
-    setNavigateToSpecializationsState(() => fn);
-  }, []);
+  const navigateToSpecializations = useCallback((programId?: number) => {
+    if (programId) {
+      setSelectedProgramIdState(programId);
+    }
+    navigate('/specializations');
+  }, [navigate]);
 
-  const setNavigateBackToPrograms = useCallback((fn: () => void) => {
-    setNavigateBackToProgramsState(() => fn);
-  }, []);
+  const navigateBackToPrograms = useCallback(() => {
+    navigate('/programs');
+  }, [navigate]);
 
   return (
     <ProgramContext.Provider
@@ -54,9 +55,7 @@ export const ProgramProvider: React.FC<ProgramProviderProps> = ({ children }) =>
         setSelectedProgramId,
         clearSelectedProgram,
         navigateToSpecializations,
-        setNavigateToSpecializations,
         navigateBackToPrograms,
-        setNavigateBackToPrograms,
       }}
     >
       {children}

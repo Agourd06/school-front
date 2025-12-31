@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { authApi } from '../api/auth';
 import { companyApi } from '../api/company';
 import { applyThemeToDocument, mergeTheme, defaultTheme } from '../theme/colors';
+import type { Profile } from '../types/profile';
 
 interface Company {
   id: number;
@@ -16,7 +17,7 @@ interface User {
   id: number;
   email: string;
   username: string;
-  role: string;
+  profile: Profile;
   company_id?: number | null;
   company?: Company | null;
 }
@@ -25,7 +26,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string, role?: 'user' | 'admin') => Promise<void>;
+  register: (username: string, email: string, password: string, profile?: Profile) => Promise<void>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
@@ -73,9 +74,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (storedToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
+        
+        // Migration: Convert old 'role' field to 'profile' if needed
+        // Map old 'user' role to 'admin' profile (default), 'admin' stays as 'admin'
+        let profile: Profile = parsedUser.profile;
+        if (!profile && parsedUser.role) {
+          // Migrate from old role system
+          // Both 'user' and 'admin' roles map to 'admin' profile (administrateur has access to everything)
+          profile = 'admin';
+          // Update localStorage with migrated data
+          parsedUser.profile = profile;
+          delete parsedUser.role;
+          localStorage.setItem('user', JSON.stringify(parsedUser));
+        } else if (!profile) {
+          // Default to 'admin' (administrateur) if neither profile nor role exists
+          // Admin has access to everything
+          profile = 'admin';
+          parsedUser.profile = profile;
+          localStorage.setItem('user', JSON.stringify(parsedUser));
+        }
+        
         setToken(storedToken);
         setUser({
           ...parsedUser,
+          profile,
           company: normalizeCompany(parsedUser.company),
         });
         applyThemeToDocument(
@@ -140,7 +162,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       const data = await authApi.login({ email, password });
 
-      // Handle your backend's response structure: {access_token, user: {id, email, username, role}}
+      // Handle your backend's response structure: {access_token, user: {id, email, username, profile}}
       const token = data.token;
       const userData = data.user;
 
@@ -152,7 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         id: userData.id!,
         email: userData.email,
         username: userData.username,
-        role: userData.role,
+        profile: userData.profile,
         company_id: userData.company_id ?? null,
         company: normalizeCompany(userData.company),
       };
@@ -176,10 +198,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (username: string, email: string, password: string, role: 'user' | 'admin' = 'user') => {
+  const register = async (username: string, email: string, password: string, profile: Profile = 'admin') => {
     try {
       setIsLoading(true);
-      await authApi.register({ username, email, password, role });
+      await authApi.register({ username, email, password, profile });
       // Note: Registration doesn't return a token, user needs to login
       // setToken(data.token);
       // setUser(data.user);

@@ -64,6 +64,7 @@ api.interceptors.response.use(
                            currentPath === '/signup' ||
                            currentPath === '/auth' ||
                            currentPath.startsWith('/reset-password') ||
+                           currentPath.startsWith('/set-password') ||
                            currentPath.startsWith('/login');
       
       // Only redirect if it's NOT an auth endpoint and NOT a public route

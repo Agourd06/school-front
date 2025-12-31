@@ -122,6 +122,13 @@ const StudentsSection: React.FC = () => {
     refetchStudents();
   };
 
+  const handleStudentCreated = (studentEmail: string) => {
+    setAlert({
+      type: 'success',
+      message: `Student created successfully! A user account with profile 'student' has been automatically created and a password invitation email has been sent to ${studentEmail}.`,
+    });
+  };
+
   const requestDelete = (student: Student) => {
     setDeleteTarget(student);
     setAlert(null);
@@ -308,7 +315,7 @@ const StudentsSection: React.FC = () => {
       <StudentModal isOpen={modalOpen} onClose={handleModalClose} student={editingStudent ?? undefined} />
 
       {onboardingOpen && (
-        <StudentOnboardingModal isOpen onClose={handleOnboardingClose} />
+        <StudentOnboardingModal isOpen onClose={handleOnboardingClose} onStudentCreated={handleStudentCreated} />
       )}
 
       <DeleteModal

@@ -4,7 +4,6 @@ export interface CompanyFormData {
   name: string;
   email: string;
   phone: string;
-  website: string;
   primaryColor: string;
   secondaryColor: string;
 }
@@ -58,34 +57,18 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ data, onChange, onSubmit, loa
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="company-phone" className="block text-sm font-medium text-heading mb-2">
-            Phone Number
-          </label>
-          <input
-            id="company-phone"
-            type="tel"
-            value={data.phone}
-            onChange={handleChange('phone')}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder="+1-444-555-1212"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="company-website" className="block text-sm font-medium text-heading mb-2">
-            Website
-          </label>
-          <input
-            id="company-website"
-            type="url"
-            value={data.website}
-            onChange={handleChange('website')}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder="https://acmeschools.com"
-          />
-        </div>
+      <div>
+        <label htmlFor="company-phone" className="block text-sm font-medium text-heading mb-2">
+          Phone Number
+        </label>
+        <input
+          id="company-phone"
+          type="tel"
+          value={data.phone}
+          onChange={handleChange('phone')}
+          className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+          placeholder="+1-444-555-1212"
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -133,7 +116,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ data, onChange, onSubmit, loa
         disabled={loading}
         className="w-full bg-primary text-primary-foreground py-3 px-4 rounded-lg font-semibold hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
-        {loading ? 'Creating...' : 'Continue to User Account'}
+        {loading ? 'Creating...' : 'Continue'}
       </button>
     </form>
   );

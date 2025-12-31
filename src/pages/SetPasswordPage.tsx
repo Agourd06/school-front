@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth';
 import Navbar from '../components/Navbar';
+import { useAuth } from '../hooks/useAuth';
 
 const SetPasswordPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const token = searchParams.get('token');
 
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,14 @@ const SetPasswordPage: React.FC = () => {
   });
   const [submitLoading, setSubmitLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // If user is logged in and there's no token, redirect to dashboard
+  // If there's a token, allow password setup even if logged in (e.g., admin creating student)
+  useEffect(() => {
+    if (!token && user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [token, user, navigate]);
 
   // Validate token on mount
   useEffect(() => {

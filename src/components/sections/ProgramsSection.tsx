@@ -134,10 +134,7 @@ const ProgramsSection: React.FC = () => {
     if (target.closest('button') || target.closest('td:last-child')) {
       return;
     }
-    setSelectedProgramId(program.id);
-    if (navigateToSpecializations) {
-      navigateToSpecializations();
-    }
+    navigateToSpecializations(program.id);
   };
 
   return (

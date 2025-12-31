@@ -55,7 +55,7 @@ const extractErrorMessage = (err: unknown): string => {
 
 const SpecializationsSection: React.FC = () => {
   const { selectedProgramId, navigateBackToPrograms, clearSelectedProgram } = useProgram();
-  const { setSelectedSpecializationId, navigateToLevels } = useSpecializationContext();
+  const { navigateToLevels } = useSpecializationContext();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
@@ -195,10 +195,7 @@ const SpecializationsSection: React.FC = () => {
     if (target.closest('button') || target.closest('td:last-child')) {
       return;
     }
-    setSelectedSpecializationId(specialization.id);
-    if (navigateToLevels) {
-      navigateToLevels();
-    }
+    navigateToLevels(specialization.id);
   };
 
   return (
@@ -345,10 +342,7 @@ const SpecializationsSection: React.FC = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedSpecializationId(spec.id);
-                              if (navigateToLevels) {
-                                navigateToLevels();
-                              }
+                              navigateToLevels(spec.id);
                             }}
                             className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
                             title="View levels"

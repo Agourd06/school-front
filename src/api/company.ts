@@ -1,11 +1,12 @@
 import api from './axios';
 import type { FilterParams, PaginatedResponse } from '../types/api';
+import type { Profile } from '../types/profile';
 // Forward declarations to avoid circular imports
 interface User {
   id: number;
   username: string;
   email: string;
-  role: 'user' | 'admin';
+  profile: Profile;
   company_id?: number;
 }
 

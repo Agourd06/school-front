@@ -5,119 +5,85 @@ import { usersApi } from '../api/users';
 import type { CreateCompanyRequest } from '../api/company';
 import type { CreateUserRequest } from '../api/users';
 import {
-  RegistrationProgress,
   ErrorAlert,
-  CompanyForm,
-  UserForm,
   RegistrationSuccess,
-  type CompanyFormData,
-  type UserFormData,
 } from '../components/registration';
+import CombinedRegistrationForm, { type CombinedRegistrationFormData } from '../components/registration/CombinedRegistrationForm';
 import { applyThemeToDocument, mergeTheme, defaultTheme } from '../theme/colors';
+import { PROFILE_DEFAULT } from '../types/profile';
+// Note: PROFILE_DEFAULT is now 'admin' (administrateur) - has access to everything
 
-type Step = 'company' | 'user' | 'success';
+type Step = 'form' | 'success';
 
 const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>('company');
+  const [step, setStep] = useState<Step>('form');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [companyData, setCompanyData] = useState<CompanyFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    website: '',
+  const [formData, setFormData] = useState<CombinedRegistrationFormData>({
+    companyName: '',
+    companyEmail: '',
+    companyPhone: '',
     primaryColor: defaultTheme.primary,
     secondaryColor: defaultTheme.secondary,
-  });
-  const [userData, setUserData] = useState<UserFormData>({
     username: '',
-    email: '',
-    role: 'user',
+    userEmail: '',
   });
-  const [createdCompanyId, setCreatedCompanyId] = useState<number | null>(null);
+  const [createdCompanyName, setCreatedCompanyName] = useState<string>('');
 
   useEffect(() => {
     applyThemeToDocument(
       mergeTheme({
-        primary: companyData.primaryColor,
-        secondary: companyData.secondaryColor,
-        accent: companyData.secondaryColor,
+        primary: formData.primaryColor,
+        secondary: formData.secondaryColor,
+        accent: formData.secondaryColor,
       })
     );
-  }, [companyData.primaryColor, companyData.secondaryColor]);
+  }, [formData.primaryColor, formData.secondaryColor]);
 
-  const handleCompanySubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const payload: CreateCompanyRequest = {
-        name: companyData.name.trim(),
-        email: companyData.email.trim(),
-        phone: companyData.phone.trim() || undefined,
-        website: companyData.website.trim() || undefined,
-        primaryColor: companyData.primaryColor,
-        secondaryColor: companyData.secondaryColor,
+      // Step 1: Create company
+      const companyPayload: CreateCompanyRequest = {
+        name: formData.companyName.trim(),
+        email: formData.companyEmail.trim(),
+        phone: formData.companyPhone.trim() || undefined,
+        primaryColor: formData.primaryColor,
+        secondaryColor: formData.secondaryColor,
       };
 
-      const company = await companyApi.create(payload);
+      const company = await companyApi.create(companyPayload);
+      
       if (company.primaryColor || company.secondaryColor) {
         applyThemeToDocument(
           mergeTheme({
-            primary: company.primaryColor ?? companyData.primaryColor,
-            secondary: company.secondaryColor ?? companyData.secondaryColor,
-            accent: company.secondaryColor ?? companyData.secondaryColor,
+            primary: company.primaryColor ?? formData.primaryColor,
+            secondary: company.secondaryColor ?? formData.secondaryColor,
+            accent: company.secondaryColor ?? formData.secondaryColor,
           })
         );
       }
-      setCreatedCompanyId(company.id);
-      setStep('user');
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
-      const dataMessage = axiosError?.response?.data?.message;
-      if (Array.isArray(dataMessage)) {
-        setError(dataMessage.join(', '));
-      } else if (typeof dataMessage === 'string') {
-        setError(dataMessage);
-      } else if (typeof axiosError.message === 'string') {
-        setError(axiosError.message);
-      } else {
-        setError('Failed to create company. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleUserSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    if (!createdCompanyId) {
-      setError('Company ID is missing. Please start over.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const payload: CreateUserRequest = {
-        username: userData.username.trim(),
-        email: userData.email.trim(),
-        role: userData.role,
-        company_id: createdCompanyId,
+      // Step 2: Create user (always admin profile)
+      const userPayload: CreateUserRequest = {
+        username: formData.username.trim(),
+        email: formData.userEmail.trim(),
+        profile: PROFILE_DEFAULT, // Always admin profile
+        company_id: company.id,
         // Password is not provided - backend will send invitation email with token link
       };
 
       // Backend will send an invitation email with a token link to set password
-      // User must click the link and set their password before they can login
-      await usersApi.create(payload);
+      await usersApi.create(userPayload);
       
+      setCreatedCompanyName(company.name);
       setStep('success');
     } catch (err: unknown) {
-      console.error('User creation error:', err);
+      console.error('Registration error:', err);
       
       const axiosError = err as { 
         response?: { 
@@ -132,7 +98,7 @@ const RegistrationPage: React.FC = () => {
       };
       
       // Extract error message
-      let errorMessage = 'Failed to create user account. Please try again.';
+      let errorMessage = 'Failed to create account. Please try again.';
       
       if (axiosError.response) {
         const dataMessage = axiosError.response.data?.message;
@@ -158,11 +124,6 @@ const RegistrationPage: React.FC = () => {
     }
   };
 
-  const handleBackToCompany = () => {
-    setStep('company');
-    setError(null);
-  };
-
   const handleGoToLogin = () => {
     navigate('/auth?mode=login');
   };
@@ -182,37 +143,24 @@ const RegistrationPage: React.FC = () => {
           <p className="text-lg text-gray-600">Get started with your school management system</p>
         </div>
 
-        <RegistrationProgress currentStep={step} />
-
         {/* Main Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 sm:p-10">
           {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
-          {step === 'company' && (
-            <CompanyForm
-              data={companyData}
-              onChange={setCompanyData}
-              onSubmit={handleCompanySubmit}
-              loading={loading}
-            />
-          )}
-
-          {step === 'user' && (
-            <UserForm
-              data={userData}
-              companyName={companyData.name}
-              onChange={setUserData}
-              onSubmit={handleUserSubmit}
-              onBack={handleBackToCompany}
+          {step === 'form' && (
+            <CombinedRegistrationForm
+              data={formData}
+              onChange={setFormData}
+              onSubmit={handleSubmit}
               loading={loading}
             />
           )}
 
           {step === 'success' && (
             <RegistrationSuccess
-              companyName={companyData.name}
-              userEmail={userData.email}
-              username={userData.username}
+              companyName={createdCompanyName}
+              userEmail={formData.userEmail}
+              username={formData.username}
               onGoToLogin={handleGoToLogin}
             />
           )}

@@ -14,9 +14,10 @@ import type { StudentLinkType } from '../../api/studentLinkType';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onStudentCreated?: (studentEmail: string) => void;
 }
 
-const StudentOnboardingModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCreated?: (studentEmail: string) => void }> = ({ onClose, onStudentCreated }) => {
   const [stepIndex, setStepIndex] = useState(0);
   const {
     studentForm,
@@ -51,6 +52,7 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void }> = ({ onCl
     onFinish: () => {
       onClose();
     },
+    onStudentCreated,
   });
 
   const handleStudentPicture = handlers.handleStudentPicture;
@@ -144,11 +146,11 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void }> = ({ onCl
   );
 };
 
-const StudentOnboardingModal: React.FC<Props> = ({ isOpen, onClose }) => {
+const StudentOnboardingModal: React.FC<Props> = ({ isOpen, onClose, onStudentCreated }) => {
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Add Student">
       <StudentModalProvider initialStudentId={null}>
-        <StudentOnboardingModalContent onClose={onClose} />
+        <StudentOnboardingModalContent onClose={onClose} onStudentCreated={onStudentCreated} />
       </StudentModalProvider>
     </BaseModal>
   );

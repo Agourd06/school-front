@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
 interface SchoolYearContextType {
   selectedSchoolYearId: number | null;
   setSelectedSchoolYearId: (id: number | null) => void;
   clearSelectedSchoolYear: () => void;
-  navigateToPeriods?: () => void;
-  setNavigateToPeriods: (fn: () => void) => void;
+  navigateToPeriods: (schoolYearId?: number) => void;
 }
 
 const SchoolYearContext = createContext<SchoolYearContextType | undefined>(undefined);
@@ -25,8 +25,8 @@ interface SchoolYearProviderProps {
 }
 
 export const SchoolYearProvider: React.FC<SchoolYearProviderProps> = ({ children }) => {
+  const navigate = useNavigate();
   const [selectedSchoolYearId, setSelectedSchoolYearIdState] = useState<number | null>(null);
-  const [navigateToPeriods, setNavigateToPeriodsState] = useState<(() => void) | undefined>(undefined);
 
   const setSelectedSchoolYearId = useCallback((id: number | null) => {
     setSelectedSchoolYearIdState(id);
@@ -36,9 +36,12 @@ export const SchoolYearProvider: React.FC<SchoolYearProviderProps> = ({ children
     setSelectedSchoolYearIdState(null);
   }, []);
 
-  const setNavigateToPeriods = useCallback((fn: () => void) => {
-    setNavigateToPeriodsState(() => fn);
-  }, []);
+  const navigateToPeriods = useCallback((schoolYearId?: number) => {
+    if (schoolYearId) {
+      setSelectedSchoolYearIdState(schoolYearId);
+    }
+    navigate('/school-year-periods');
+  }, [navigate]);
 
   return (
     <SchoolYearContext.Provider
@@ -47,7 +50,6 @@ export const SchoolYearProvider: React.FC<SchoolYearProviderProps> = ({ children
         setSelectedSchoolYearId,
         clearSelectedSchoolYear,
         navigateToPeriods,
-        setNavigateToPeriods,
       }}
     >
       {children}

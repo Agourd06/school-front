@@ -174,10 +174,7 @@ const SchoolYearsSection: React.FC = () => {
     if (target.closest('button') || target.closest('td:last-child')) {
       return;
     }
-    setSelectedSchoolYearId(schoolYear.id);
-    if (navigateToPeriods) {
-      navigateToPeriods();
-    }
+    navigateToPeriods(schoolYear.id);
   };
 
   return (

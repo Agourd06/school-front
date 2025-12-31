@@ -1,68 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { tabToRoutePath, routePathToTab, type RouteTab } from "../utils/routeMapping";
 
 interface SidebarProps {
-  activeTab:
-    | "users"
-    | "companies"
-    | "programs"
-    | "specializations"
-    | "levels"
-    | "classes"
-    | "classStudents"
-    | "planning"
-    | "studentReports"
-    | "studentPresence"
-    | "studentNotes"
-    | "studentReportDetails"
-    | "planningSessionTypes"
-    | "levelPricings"
-    | "studentPayments"
-    | "courses"
-    | "modules"
-    | "schoolYears"
-    | "schoolYearPeriods"
-    | "classRooms"
-    | "students"
-    | "teachers"
-    | "administrators"
-    | "studentLinkTypes"
-    | "studentContacts"
-    | "studentDiplomes"
-    | "attestations"
-    | "studentAttestations"
-    | "classCourses";
-  onTabChange: (
-    tab:
-      | "users"
-      | "companies"
-      | "programs"
-      | "specializations"
-      | "levels"
-      | "classes"
-      | "classStudents"
-      | "planning"
-      | "studentReports"
-      | "studentPresence"
-      | "studentNotes"
-      | "studentReportDetails"
-      | "planningSessionTypes"
-      | "levelPricings"
-      | "studentPayments"
-      | "courses"
-      | "modules"
-      | "schoolYears"
-      | "schoolYearPeriods"
-      | "classRooms"
-      | "students"
-      | "teachers"
-      | "administrators"
-      | "studentLinkTypes"
-      | "studentContacts"
-      | "studentDiplomes"
-      | "attestations"
-      | "studentAttestations"
-      | "classCourses"
-  ) => void;
+  activeTab: RouteTab;
+  onTabChange: (tab: RouteTab) => void;
   onToggleCollapse?: () => void;
   isCollapsed?: boolean;
 }
@@ -73,9 +15,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   isCollapsed,
 }) => {
+  const location = useLocation();
   const [isParametersOpen, setIsParametersOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+  // Determine active tab from current route
+  const currentRouteTab = routePathToTab(location.pathname) || activeTab;
 
   const toggleParameters = () => {
     setIsParametersOpen(!isParametersOpen);
@@ -149,8 +95,13 @@ const Sidebar: React.FC<SidebarProps> = ({
         { tab: 'students', label: 'Students' },
         { tab: 'teachers', label: 'Teachers' },
         { tab: 'classStudents', label: 'Class Students' },
-
+        { tab: 'users', label: 'Users' },
+        { tab: 'companies', label: 'Companies' },
       ],
+    },
+    {
+      title: 'Settings',
+      items: [],
     },
     // {
     //   title: 'Finance',
@@ -333,19 +284,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                       {isGroupOpen && (
                         <div className="ml-4 space-y-1 border-l border-border pl-4">
                           {group.items.map((item) => {
-                            const isActive = activeTab === item.tab;
+                            const route = tabToRoutePath(item.tab);
+                            const isActive = currentRouteTab === item.tab;
                             return (
-                              <button
+                              <Link
                                 key={item.tab}
-                                onClick={() => onTabChange(item.tab)}
-                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                                to={route}
+                                onClick={() => {
+                                  onTabChange(item.tab);
+                                  closeMobile();
+                                }}
+                                className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                                   isActive
                                     ? 'bg-primary-transparent text-primary font-medium'
                                     : 'text-muted hover:bg-primary-transparent hover:text-primary'
                                 }`}
                               >
                                 {item.label}
-                              </button>
+                              </Link>
                             );
                           })}
                         </div>
@@ -355,6 +311,40 @@ const Sidebar: React.FC<SidebarProps> = ({
                 })}
               </div>
             )}
+          </div>
+
+          {/* Settings Link */}
+          <div className="mt-auto pt-4 border-t border-border">
+            <Link
+              to="/settings"
+              onClick={closeMobile}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === '/settings'
+                  ? 'bg-primary-transparent text-primary'
+                  : 'text-muted hover:bg-primary-transparent hover:text-primary'
+              }`}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              Settings
+            </Link>
           </div>
         </div>
       </div>

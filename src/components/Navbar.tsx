@@ -49,9 +49,13 @@ const Navbar: React.FC = () => {
                   <span className="text-sm font-semibold">{displayName}</span>
                   <span className="text-xs text-primary-foreground/70">Welcome back</span>
                 </div>
-                <div className="h-10 w-10 flex items-center justify-center rounded-full bg-white/20 text-sm font-semibold uppercase">
+                <Link
+                  to="/profile"
+                  className="h-10 w-10 flex items-center justify-center rounded-full bg-white/20 text-sm font-semibold uppercase hover:bg-white/30 transition-colors cursor-pointer"
+                  title="View Profile"
+                >
                   {initials || 'U'}
-                </div>
+                </Link>
                 <button
                   onClick={logout}
                   className="px-3 py-2 rounded-md text-sm font-medium bg-primary-foreground/10 border border-primary-foreground/30 hover:bg-primary-foreground/20 transition-colors"

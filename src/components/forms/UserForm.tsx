@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Input, Select, Button } from '../ui';
+import type { Profile } from '../../types/profile';
+import { PROFILE_DEFAULT, PROFILE_OPTIONS } from '../../types/profile';
 
 export interface UserFormData {
   username: string;
   email: string;
   password: string;
-  role: 'user' | 'admin';
+  profile: Profile;
 }
 
 export interface User {
   id: number;
   username: string;
   email: string;
-  role: 'user' | 'admin';
+  profile: Profile;
   company_id?: number;
   created_at?: string;
   updated_at?: string;
@@ -37,7 +39,7 @@ const UserForm: React.FC<UserFormProps> = ({
     username: '',
     email: '',
     password: '',
-    role: 'user',
+    profile: PROFILE_DEFAULT,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -49,14 +51,14 @@ const UserForm: React.FC<UserFormProps> = ({
         username: initialData.username || '',
         email: initialData.email || '',
         password: '',
-        role: (initialData.role as 'user' | 'admin') || 'user',
+        profile: initialData.profile || PROFILE_DEFAULT,
       });
     } else {
       setFormData({
         username: '',
         email: '',
         password: '',
-        role: 'user',
+        profile: PROFILE_DEFAULT,
       });
     }
     setErrors({});
@@ -134,14 +136,11 @@ const UserForm: React.FC<UserFormProps> = ({
       />
 
       <Select
-        label="Role"
-        name="role"
-        value={formData.role}
+        label="Profile"
+        name="profile"
+        value={formData.profile}
         onChange={handleChange}
-        options={[
-          { value: 'user', label: 'User' },
-          { value: 'admin', label: 'Admin' },
-        ]}
+        options={PROFILE_OPTIONS}
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 

@@ -1,6 +1,7 @@
 import api from './axios';
 import type { User } from './users';
 import type { Company } from './company';
+import type { Profile } from '../types/profile';
 
 export interface LoginRequest {
   email: string;
@@ -13,7 +14,7 @@ export interface LoginResponse {
     id?: number;
     email: string;
     username: string;
-    role: string;
+    profile: Profile;
     company_id?: number | null;
     company?: Company | null;
   };
@@ -23,7 +24,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   username: string;
-  role?: 'user' | 'admin';
+  profile?: Profile;
 }
 
 export interface RegisterResponse {
@@ -32,7 +33,7 @@ export interface RegisterResponse {
     id: number;
     email: string;
     username: string;
-    role: string;
+    profile: Profile;
   };
 }
 

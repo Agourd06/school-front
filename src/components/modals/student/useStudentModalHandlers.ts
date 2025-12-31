@@ -9,10 +9,11 @@ import type { StudentFormData } from './types';
 interface UseStudentModalHandlersProps {
   onStepComplete: (nextStep: number) => void;
   onFinish: () => void;
+  onStudentCreated?: (studentEmail: string) => void;
 }
 
 export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => {
-  const { onStepComplete, onFinish } = props;
+  const { onStepComplete, onFinish, onStudentCreated } = props;
   
   const {
     studentId,
@@ -128,6 +129,12 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
         // Set the student ID in context for subsequent steps
         if (result?.id) {
           setStudentId(result.id);
+        }
+        // Note: Backend automatically creates a user account with profile 'student'
+        // and sends a password invitation email to the student's email address
+        // Notify parent component about successful creation
+        if (onStudentCreated && result?.email) {
+          onStudentCreated(result.email);
         }
       }
       await refetchStudentDetails();

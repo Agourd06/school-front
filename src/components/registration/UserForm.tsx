@@ -1,9 +1,11 @@
 import React from 'react';
+import type { Profile } from '../../types/profile';
+import { PROFILE_OPTIONS } from '../../types/profile';
 
 export interface UserFormData {
   username: string;
   email: string;
-  role: 'user' | 'admin';
+  profile: Profile;
 }
 
 interface UserFormProps {
@@ -17,7 +19,7 @@ interface UserFormProps {
 
 const UserForm: React.FC<UserFormProps> = ({ data, companyName, onChange, onSubmit, onBack, loading }) => {
   const handleChange = (field: keyof UserFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = field === 'role' ? e.target.value as 'user' | 'admin' : e.target.value;
+    const value = field === 'profile' ? e.target.value as Profile : e.target.value;
     onChange({ ...data, [field]: value });
   };
 
@@ -62,18 +64,21 @@ const UserForm: React.FC<UserFormProps> = ({ data, companyName, onChange, onSubm
       </div>
 
       <div>
-        <label htmlFor="role" className="block text-sm font-medium text-heading mb-2">
-          Role <span className="text-red-500">*</span>
+        <label htmlFor="profile" className="block text-sm font-medium text-heading mb-2">
+          Profile <span className="text-red-500">*</span>
         </label>
         <select
-          id="role"
+          id="profile"
           required
-          value={data.role}
-          onChange={handleChange('role')}
+          value={data.profile}
+          onChange={handleChange('profile')}
           className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
         >
-          <option value="user">User</option>
-          <option value="admin">Administrator</option>
+          {PROFILE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
       </div>
 

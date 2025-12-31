@@ -18,12 +18,12 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
 
   const isEditing = !!user;
 
-  const handleSubmit = async (formData: { username: string; email: string; password: string; role: 'user' | 'admin' }) => {
+  const handleSubmit = async (formData: { username: string; email: string; password: string; profile: string }) => {
     if (isEditing && user) {
       const updateData: UpdateUserRequest & { password?: string } = {
         username: formData.username,
         email: formData.email,
-        role: formData.role,
+        profile: formData.profile as any,
       };
 
       // Only include password if it's provided
@@ -37,7 +37,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        role: formData.role,
+        profile: formData.profile as any,
         company_id: companyId,
       });
     }

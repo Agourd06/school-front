@@ -7,6 +7,7 @@ import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
 import { EditButton, DeleteButton } from '../ui';
 import type { User } from '../../api/users';
+import { getProfileLabel } from '../../types/profile';
 
 const UsersSection: React.FC = () => {
   const [state, setState] = React.useState<ListState<User>>({
@@ -94,24 +95,33 @@ const UsersSection: React.FC = () => {
         addButtonText="Add User"
         searchPlaceholder="Search by name or email..."
         filterOptions={STATUS_OPTIONS}
-        renderRow={(user: User, onEdit, onDelete, index) => (
-          <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                <p className="text-sm text-gray-500">{user.email}</p>
-                <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-                  <span>Status:</span>
-                  <StatusBadge value={user.status} />
+        renderRow={(user: User, onEdit, onDelete, index) => {
+          const profileLabel = getProfileLabel(user.profile);
+          return (
+            <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{user.username}</p>
+                  <p className="text-sm text-gray-500">{user.email}</p>
+                  <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <span>Profile:</span>
+                      <span className="font-medium text-gray-700 capitalize">{profileLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>Status:</span>
+                      <StatusBadge value={user.status} />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <EditButton onClick={() => onEdit(user)} />
+                  <DeleteButton onClick={() => onDelete(user.id)} />
                 </div>
               </div>
-              <div className="flex space-x-2">
-                <EditButton onClick={() => onEdit(user)} />
-                <DeleteButton onClick={() => onDelete(user.id)} />
-              </div>
-            </div>
-          </li>
-        )}
+            </li>
+          );
+        }}
       />
 
       {modal.type === 'user' && (
