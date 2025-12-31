@@ -41,6 +41,8 @@ export interface Company {
   company_id?: number;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  country?: string | null;
+  city?: string | null;
   created_at?: string;
   updated_at?: string;
   users?: User[];
@@ -58,6 +60,8 @@ export interface CreateCompanyRequest {
   company_id?: number;
   primaryColor?: string;
   secondaryColor?: string;
+  country?: string;
+  city?: string;
 }
 
 export interface UpdateCompanyRequest {
@@ -70,6 +74,8 @@ export interface UpdateCompanyRequest {
   company_id?: number;
   primaryColor?: string;
   secondaryColor?: string;
+  country?: string;
+  city?: string;
 }
 
 export interface GetCompaniesParams extends FilterParams {
@@ -80,6 +86,8 @@ const normalizeCompany = (company: Company & { primary_color?: string | null; se
   ...company,
   primaryColor: company.primaryColor ?? company.primary_color ?? null,
   secondaryColor: company.secondaryColor ?? company.secondary_color ?? null,
+  country: company.country ?? null,
+  city: company.city ?? null,
 });
 
 const toPaginated = (raw: unknown): PaginatedResponse<Company> => {

@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { countriesApi } from '../../api/countries';
 
 export interface CombinedRegistrationFormData {
   // Company fields
   companyName: string;
   companyEmail: string;
   companyPhone: string;
-  primaryColor: string;
-  secondaryColor: string;
+  country: string;
+  city: string;
   // User fields
   username: string;
   userEmail: string;
@@ -25,8 +26,53 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
   onSubmit,
   loading,
 }) => {
+  const [countries, setCountries] = useState<Array<{ name: string }>>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  useEffect(() => {
+    // Load countries on mount
+    const loadCountries = async () => {
+      setLoadingCountries(true);
+      try {
+        const countriesList = await countriesApi.getCountries();
+        setCountries(countriesList.sort((a, b) => a.name.localeCompare(b.name)));
+      } catch (error) {
+        console.error('Failed to load countries:', error);
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+    loadCountries();
+  }, []);
+
+  useEffect(() => {
+    // Load cities when country changes
+    if (data.country) {
+      const loadCities = async () => {
+        setLoadingCities(true);
+        setCities([]);
+        onChange({ ...data, city: '' }); // Reset city when country changes
+        try {
+          const citiesList = await countriesApi.getCities(data.country);
+          setCities(citiesList);
+        } catch (error) {
+          console.error('Failed to load cities:', error);
+        } finally {
+          setLoadingCities(false);
+        }
+      };
+      loadCities();
+    } else {
+      setCities([]);
+      onChange({ ...data, city: '' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.country]);
+
   const handleChange = (field: keyof CombinedRegistrationFormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     onChange({ ...data, [field]: e.target.value });
   };
@@ -88,41 +134,52 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="company-primary-color" className="block text-sm font-medium text-heading mb-2">
-              Primary color
+            <label htmlFor="company-country" className="block text-sm font-medium text-heading mb-2">
+              Country
             </label>
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-3">
-              <input
-                id="company-primary-color"
-                type="color"
-                value={data.primaryColor}
-                onChange={handleChange('primaryColor')}
-                className="h-12 w-12 rounded-lg border border-gray-300 bg-white shadow-sm"
-              />
-              <div>
-                <p className="text-sm font-medium text-heading">Brand accents & buttons</p>
-                <p className="text-xs text-muted">Used for primary actions everywhere</p>
-              </div>
-            </div>
+            <select
+              id="company-country"
+              value={data.country}
+              onChange={handleChange('country')}
+              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+            >
+              <option value="">Select a country</option>
+              {loadingCountries ? (
+                <option disabled>Loading countries...</option>
+              ) : (
+                countries.map((country) => (
+                  <option key={country.name} value={country.name}>
+                    {country.name}
+                  </option>
+                ))
+              )}
+            </select>
           </div>
 
           <div>
-            <label htmlFor="company-secondary-color" className="block text-sm font-medium text-heading mb-2">
-              Secondary color
+            <label htmlFor="company-city" className="block text-sm font-medium text-heading mb-2">
+              City
             </label>
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-3">
-              <input
-                id="company-secondary-color"
-                type="color"
-                value={data.secondaryColor}
-                onChange={handleChange('secondaryColor')}
-                className="h-12 w-12 rounded-lg border border-gray-300 bg-white shadow-sm"
-              />
-              <div>
-                <p className="text-sm font-medium text-heading">Highlights & links</p>
-                <p className="text-xs text-muted">Used for secondary buttons and states</p>
-              </div>
-            </div>
+            <select
+              id="company-city"
+              value={data.city}
+              onChange={handleChange('city')}
+              disabled={!data.country || loadingCities}
+              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">
+                {!data.country
+                  ? 'Select a country first'
+                  : loadingCities
+                  ? 'Loading cities...'
+                  : 'Select a city'}
+              </option>
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

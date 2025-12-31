@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { companyApi } from '../api/company';
 import { usersApi } from '../api/users';
@@ -9,7 +9,6 @@ import {
   RegistrationSuccess,
 } from '../components/registration';
 import CombinedRegistrationForm, { type CombinedRegistrationFormData } from '../components/registration/CombinedRegistrationForm';
-import { applyThemeToDocument, mergeTheme, defaultTheme } from '../theme/colors';
 import { PROFILE_DEFAULT } from '../types/profile';
 // Note: PROFILE_DEFAULT is now 'admin' (administrateur) - has access to everything
 
@@ -24,22 +23,12 @@ const RegistrationPage: React.FC = () => {
     companyName: '',
     companyEmail: '',
     companyPhone: '',
-    primaryColor: defaultTheme.primary,
-    secondaryColor: defaultTheme.secondary,
+    country: '',
+    city: '',
     username: '',
     userEmail: '',
   });
   const [createdCompanyName, setCreatedCompanyName] = useState<string>('');
-
-  useEffect(() => {
-    applyThemeToDocument(
-      mergeTheme({
-        primary: formData.primaryColor,
-        secondary: formData.secondaryColor,
-        accent: formData.secondaryColor,
-      })
-    );
-  }, [formData.primaryColor, formData.secondaryColor]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,21 +41,11 @@ const RegistrationPage: React.FC = () => {
         name: formData.companyName.trim(),
         email: formData.companyEmail.trim(),
         phone: formData.companyPhone.trim() || undefined,
-        primaryColor: formData.primaryColor,
-        secondaryColor: formData.secondaryColor,
+        country: formData.country.trim() || undefined,
+        city: formData.city.trim() || undefined,
       };
 
       const company = await companyApi.create(companyPayload);
-      
-      if (company.primaryColor || company.secondaryColor) {
-        applyThemeToDocument(
-          mergeTheme({
-            primary: company.primaryColor ?? formData.primaryColor,
-            secondary: company.secondaryColor ?? formData.secondaryColor,
-            accent: company.secondaryColor ?? formData.secondaryColor,
-          })
-        );
-      }
 
       // Step 2: Create user (always admin profile)
       const userPayload: CreateUserRequest = {

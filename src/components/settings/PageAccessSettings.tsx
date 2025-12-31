@@ -102,15 +102,10 @@ const PageAccessSettings: React.FC = () => {
       const currentPages = await pagesApi.getPagesForProfile(selectedProfile);
       const currentIds = new Set(currentPages.map(p => p.id));
 
-      // Get all pages to compare (we need all page IDs, not just current page)
-      // Load all pages without pagination to get complete list
-      const allPagesResponse = await pagesApi.getAll({ page: 1, limit: 1000 });
-      const allPageIds = new Set(allPagesResponse.data.map(p => p.id));
-
       // Find pages to add (in assignedPageIds but not in currentIds)
       const toAdd: number[] = [];
       assignedPageIds.forEach((pageId) => {
-        if (!currentIds.has(pageId) && allPageIds.has(pageId)) {
+        if (!currentIds.has(pageId)) {
           toAdd.push(pageId);
         }
       });
