@@ -7,8 +7,9 @@ import { useCourseAssignments } from '../../hooks/useCourseAssignments';
 import { useAddCourseToModule, useRemoveCourseFromModule, useReorderCourseInModule } from '../../hooks/useIndividualAssignments';
 import { useUpdateModuleCourse } from '../../hooks/useModuleCourse';
 import { useCourse } from '../../hooks/useCourses';
-import { useModule } from '../../hooks/useModules';
+import { useModule, useUpdateModule } from '../../hooks/useModules';
 import { DeleteButton } from '../ui';
+import { RefreshCw } from 'lucide-react';
 import type { Course as CourseEntity } from '../../api/course';
 
 // Import DropResult type separately
@@ -48,6 +49,9 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<AssignmentCourse | null>(null);
 
+  // Track last synced volume - starts with module's current volume
+  const [lastSyncedVolume, setLastSyncedVolume] = useState<number | null>(null);
+
   // React Query hooks
   const { data: courseAssignments, isLoading, error, refetch: refetchAssignments } = useCourseAssignments(moduleId);
   const addCourseToModule = useAddCourseToModule();
@@ -60,11 +64,12 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   const { data: selectedCourse } = useCourse(selectedCourseId || 0);
 
   // Fetch module data for details
-  const { data: module } = useModule(moduleId);
+  const { data: module, refetch: refetchModule } = useModule(moduleId);
   const [moduleDescriptionModal, setModuleDescriptionModal] = useState(false);
+  const updateModule = useUpdateModule();
 
   // Check if any mutation is pending
-  const isAnyMutationPending = addCourseToModule.isPending || removeCourseFromModule.isPending || reorderCourseInModule.isPending;
+  const isAnyMutationPending = addCourseToModule.isPending || removeCourseFromModule.isPending || reorderCourseInModule.isPending || updateModule.isPending;
 
   // Initialize local state when data changes
   const normalizeAssigned = (items: AssignmentCourse[] = []) =>
@@ -79,6 +84,13 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       setUnassignedCourses(courseAssignments.unassigned || []);
     }
   }, [courseAssignments]);
+
+  // Initialize lastSyncedVolume when module data is available (only once on mount)
+  useEffect(() => {
+    if (module?.volume !== null && module?.volume !== undefined && lastSyncedVolume === null) {
+      setLastSyncedVolume(module.volume);
+    }
+  }, [module?.volume, lastSyncedVolume]);
 
   const updateAssignedState = (updater: (current: AssignmentCourse[]) => AssignmentCourse[]) => {
     setAssignedCourses(prev => normalizeAssigned(updater(prev)));
@@ -122,20 +134,22 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
         { 
           ...course, 
           assignment_created_at: new Date().toISOString(),
-          assignment_volume: module?.volume ?? null,
-          assignment_coefficient: module?.coefficient ?? null,
+          assignment_volume: course.volume ?? null,
+          assignment_coefficient: course.coefficient ?? null,
         },
       ]);
 
-      // Call API to add course to module with volume and coefficient from the module
+      // Call API to add course to module with volume and coefficient from the course
       try {
         setLoadingItemId(courseId);
         await addCourseToModule.mutateAsync({
           moduleId,
           courseId,
-          volume: module?.volume ?? null,
-          coefficient: module?.coefficient ?? null,
+          volume: course.volume ?? null,
+          coefficient: course.coefficient ?? null,
         });
+        // Reset sync state - volume needs to be synced again
+        setLastSyncedVolume(null);
         // Wait a bit for cache invalidation to propagate, then refetch
         await new Promise((resolve) => setTimeout(resolve, 100));
         await refetchAssignments();
@@ -207,6 +221,8 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
         moduleId,
         courseId: courseToDelete.id,
       });
+      // Reset sync state - volume needs to be synced again
+      setLastSyncedVolume(null);
       // Wait a bit for cache invalidation to propagate, then refetch
       await new Promise((resolve) => setTimeout(resolve, 100));
       await refetchAssignments();
@@ -342,6 +358,40 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       // Rollback on error - refetch to get the correct state
       await refetchAssignments();
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to update course assignment";
+      alert(`Error: ${errorMessage}`);
+    }
+  };
+
+  // Calculate total volume from assigned courses
+  const calculatedVolume = assignedCourses.reduce((sum, course) => {
+    const volume = course.assignment_volume !== null && course.assignment_volume !== undefined 
+      ? course.assignment_volume 
+      : (course.volume !== null && course.volume !== undefined ? course.volume : 0);
+    return sum + (typeof volume === 'number' ? volume : 0);
+  }, 0);
+
+  // Check if volume is synced - only synced if lastSyncedVolume is set and matches calculated volume
+  const isVolumeSynced = lastSyncedVolume !== null && lastSyncedVolume === calculatedVolume;
+
+  // Handle volume sync
+  const handleSyncVolume = async () => {
+    if (!module) return;
+    
+    try {
+      await updateModule.mutateAsync({
+        id: moduleId,
+        volume: calculatedVolume,
+      });
+      // Update last synced volume to the current calculated volume
+      setLastSyncedVolume(calculatedVolume);
+      // Refetch module data to update the UI
+      await refetchModule();
+      // Also refetch assignments to ensure everything is in sync
+      await refetchAssignments();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      console.error("Failed to sync module volume:", error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to sync module volume";
       alert(`Error: ${errorMessage}`);
     }
   };
@@ -515,9 +565,29 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
 
               {/* Assigned Courses */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  {moduleTitle} assigned to <span className="font-medium text-red-600">{assignedCourses.length}</span> Courses
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    {moduleTitle} assigned to <span className="font-medium text-red-600">{assignedCourses.length}</span> Courses
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={handleSyncVolume}
+                    disabled={isVolumeSynced || updateModule.isPending}
+                    className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                      isVolumeSynced
+                        ? 'bg-green-100 text-green-700 border border-green-200 cursor-default'
+                        : 'bg-orange-100 text-orange-700 border border-orange-200 hover:bg-orange-200'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    title={
+                      isVolumeSynced
+                        ? `Volume synced (${calculatedVolume})`
+                        : `Sync volume: ${module?.volume ?? 0} → ${calculatedVolume}`
+                    }
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${updateModule.isPending ? 'animate-spin' : ''}`} />
+                    <span>{isVolumeSynced ? 'Synced' : 'Pending Sync'}</span>
+                  </button>
+                </div>
                 <Droppable droppableId="assigned">
                   {(provided, snapshot) => (
                     <div
@@ -569,18 +639,26 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                                       </svg>
                                       <div className="flex-1">
                                         <p className="text-sm font-medium text-gray-900">{course.title}</p>
-                                        {/* Display volume and coefficient before the date */}
-                                        {(course.assignment_volume !== null && course.assignment_volume !== undefined) ||
-                                        (course.assignment_coefficient !== null && course.assignment_coefficient !== undefined) ? (
-                                          <div className="mt-1 flex items-center gap-4 text-xs text-gray-600">
-                                            {course.assignment_volume !== null && course.assignment_volume !== undefined && (
-                                              <span>Volume: <span className="font-medium text-gray-900">{course.assignment_volume}</span></span>
-                                            )}
-                                            {course.assignment_coefficient !== null && course.assignment_coefficient !== undefined && (
-                                              <span>Coefficient: <span className="font-medium text-gray-900">{course.assignment_coefficient}</span></span>
-                                            )}
-                                          </div>
-                                        ) : null}
+                                        {/* Display volume and coefficient - use assignment_volume if available, otherwise use course volume */}
+                                        {(() => {
+                                          const displayVolume = course.assignment_volume !== null && course.assignment_volume !== undefined 
+                                            ? course.assignment_volume 
+                                            : (course.volume !== null && course.volume !== undefined ? course.volume : null);
+                                          const displayCoefficient = course.assignment_coefficient !== null && course.assignment_coefficient !== undefined 
+                                            ? course.assignment_coefficient 
+                                            : (course.coefficient !== null && course.coefficient !== undefined ? course.coefficient : null);
+                                          
+                                          return (displayVolume !== null || displayCoefficient !== null) ? (
+                                            <div className="mt-1 flex items-center gap-4 text-xs text-gray-600">
+                                              {displayVolume !== null && (
+                                                <span>Volume: <span className="font-medium text-gray-900">{displayVolume}</span></span>
+                                              )}
+                                              {displayCoefficient !== null && (
+                                                <span>Coefficient: <span className="font-medium text-gray-900">{displayCoefficient}</span></span>
+                                              )}
+                                            </div>
+                                          ) : null;
+                                        })()}
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2">

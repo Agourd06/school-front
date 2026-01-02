@@ -25,26 +25,61 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
     volume: string;
     coefficient: string;
     status: number;
+    pdf_file?: File | null;
   }) => {
     const descriptionToSave = formData.description.trim() || undefined;
+    const hasPdf = formData.pdf_file instanceof File;
 
-    if (isEditing && module) {
-      await updateModule.mutateAsync({
-        id: module.id,
-        title: formData.title,
-        description: descriptionToSave,
-        volume: formData.volume ? Number(formData.volume) : undefined,
-        coefficient: formData.coefficient ? Number(formData.coefficient) : undefined,
-        status: formData.status,
-      });
+    // If PDF is provided, use FormData
+    if (hasPdf) {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      if (descriptionToSave) {
+        formDataToSend.append('description', descriptionToSave);
+      }
+      // Only append volume if it has a valid value
+      if (formData.volume !== undefined && formData.volume !== null && formData.volume !== '') {
+        const volumeNum = typeof formData.volume === 'number' ? formData.volume : Number(formData.volume);
+        if (!isNaN(volumeNum) && volumeNum >= 0) {
+          formDataToSend.append('volume', volumeNum.toString());
+        }
+      }
+      // Only append coefficient if it has a valid value
+      if (formData.coefficient !== undefined && formData.coefficient !== null && formData.coefficient !== '') {
+        const coeffNum = typeof formData.coefficient === 'number' ? formData.coefficient : Number(formData.coefficient);
+        if (!isNaN(coeffNum) && coeffNum >= 0) {
+          formDataToSend.append('coefficient', coeffNum.toString());
+        }
+      }
+      // Always send status as a number string (required field)
+      formDataToSend.append('status', formData.status.toString());
+      formDataToSend.append('pdf_file', formData.pdf_file);
+
+      if (isEditing && module) {
+        await updateModule.mutateAsync({ id: module.id, formData: formDataToSend });
+      } else {
+        await createModule.mutateAsync(formDataToSend as any);
+      }
     } else {
-      await createModule.mutateAsync({
-        title: formData.title,
-        description: descriptionToSave,
-        volume: formData.volume ? Number(formData.volume) : undefined,
-        coefficient: formData.coefficient ? Number(formData.coefficient) : undefined,
-        status: formData.status,
-      });
+      // No PDF, use regular JSON
+      if (isEditing && module) {
+        await updateModule.mutateAsync({
+          id: module.id,
+          title: formData.title,
+          description: descriptionToSave,
+          volume: formData.volume ? Number(formData.volume) : undefined,
+          coefficient: formData.coefficient ? Number(formData.coefficient) : undefined,
+          status: formData.status,
+        });
+      } else {
+        await createModule.mutateAsync({
+          title: formData.title,
+          description: descriptionToSave,
+          volume: formData.volume ? Number(formData.volume) : undefined,
+          coefficient: formData.coefficient ? Number(formData.coefficient) : undefined,
+          status: formData.status,
+        });
+      }
     }
 
     onClose();

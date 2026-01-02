@@ -9,7 +9,8 @@ import ModuleModal from '../modals/ModuleModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import CourseAssignmentModal from '../modals/CourseAssignmentModal';
-import { EditButton, DeleteButton, Button } from '../ui';
+import { EditButton, DeleteButton, Button, PdfActions } from '../ui';
+import { Info } from 'lucide-react';
 import type { Module } from '../../api/module';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -250,6 +251,9 @@ const ModulesSection: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  PDF Document
+                </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
@@ -258,13 +262,13 @@ const ModulesSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
                     Loading modules…
                   </td>
                 </tr>
               ) : modules.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
                     No modules found.
                   </td>
                 </tr>
@@ -298,15 +302,19 @@ const ModulesSection: React.FC = () => {
                           {STATUS_VALUE_LABEL[statusValue] ?? `Status ${statusValue}`}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <PdfActions pdfPath={module.pdf_file} fileName={module.title} />
+                      </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           {hasDescription && (
                             <button
                               type="button"
                               onClick={() => openDescriptionModal(module)}
-                              className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50"
+                              className="inline-flex items-center justify-center rounded-md border border-green-200 p-1.5 text-green-600 hover:bg-green-50 transition-colors"
+                              title="View Details"
                             >
-                              Details
+                              <Info className="h-4 w-4" />
                             </button>
                           )}
                           <button

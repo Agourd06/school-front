@@ -33,8 +33,13 @@ export const useUpdateCourse = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, ...data }: UpdateCourseRequest & { id: number }) => 
-      courseApi.update(id, data),
+    mutationFn: (data: (UpdateCourseRequest & { id: number }) | { id: number; formData: FormData }) => {
+      if ('formData' in data && data.formData instanceof FormData) {
+        return courseApi.update(data.id, data.formData);
+      }
+      const { id, ...rest } = data as UpdateCourseRequest & { id: number };
+      return courseApi.update(id, rest);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
     },

@@ -27,6 +27,7 @@ export interface Course {
   coefficient?: number;
   status: number;
   company_id?: number;
+  pdf_file?: string | null;
   created_at?: string;
   updated_at?: string;
   company?: Company;
@@ -124,16 +125,28 @@ export const courseApi = {
     return response.data;
   },
 
-  create: async (data: CreateCourseRequest): Promise<Course> => {
-    // company_id is automatically set by backend from authenticated user - DO NOT send it
+  create: async (data: CreateCourseRequest | FormData): Promise<Course> => {
+    // If FormData, send directly (for PDF uploads)
+    if (data instanceof FormData) {
+      const response = await api.post('/course', data);
+      return response.data;
+    }
+    
+    // Otherwise, send as JSON (backward compatibility)
     const { company_id: _companyId, ...rest } = data;
     void _companyId;
     const response = await api.post('/course', rest);
     return response.data;
   },
 
-  update: async (id: number, data: UpdateCourseRequest): Promise<Course> => {
-    // company_id is automatically set by backend from authenticated user - DO NOT send it
+  update: async (id: number, data: UpdateCourseRequest | FormData): Promise<Course> => {
+    // If FormData, send directly (for PDF uploads)
+    if (data instanceof FormData) {
+      const response = await api.patch(`/course/${id}`, data);
+      return response.data;
+    }
+    
+    // Otherwise, send as JSON (backward compatibility)
     const { company_id: _companyId, ...rest } = data;
     void _companyId;
     const response = await api.patch(`/course/${id}`, rest);

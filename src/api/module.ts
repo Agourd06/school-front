@@ -28,6 +28,7 @@ export interface Module {
   coefficient?: number;
   status: number;
   company_id?: number;
+  pdf_file?: string | null;
   created_at?: string;
   updated_at?: string;
   company?: Company;
@@ -103,16 +104,28 @@ export const moduleApi = {
     return response.data;
   },
 
-  create: async (data: CreateModuleRequest): Promise<Module> => {
-    // company_id is automatically set by backend from authenticated user - DO NOT send it
+  create: async (data: CreateModuleRequest | FormData): Promise<Module> => {
+    // If FormData, send directly (for PDF uploads)
+    if (data instanceof FormData) {
+      const response = await api.post('/module', data);
+      return response.data;
+    }
+    
+    // Otherwise, send as JSON (backward compatibility)
     const { company_id: _companyId, ...rest } = data;
     void _companyId;
     const response = await api.post('/module', rest);
     return response.data;
   },
 
-  update: async (id: number, data: UpdateModuleRequest): Promise<Module> => {
-    // company_id is automatically set by backend from authenticated user - DO NOT send it
+  update: async (id: number, data: UpdateModuleRequest | FormData): Promise<Module> => {
+    // If FormData, send directly (for PDF uploads)
+    if (data instanceof FormData) {
+      const response = await api.patch(`/module/${id}`, data);
+      return response.data;
+    }
+    
+    // Otherwise, send as JSON (backward compatibility)
     const { company_id: _companyId, ...rest } = data;
     void _companyId;
     const response = await api.patch(`/module/${id}`, rest);

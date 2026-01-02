@@ -33,8 +33,13 @@ export const useUpdateModule = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, ...data }: UpdateModuleRequest & { id: number }) => 
-      moduleApi.update(id, data),
+    mutationFn: (data: (UpdateModuleRequest & { id: number }) | { id: number; formData: FormData }) => {
+      if ('formData' in data && data.formData instanceof FormData) {
+        return moduleApi.update(data.id, data.formData);
+      }
+      const { id, ...rest } = data as UpdateModuleRequest & { id: number };
+      return moduleApi.update(id, rest);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['modules'] });
     },

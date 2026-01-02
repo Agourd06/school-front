@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
-import { Input, Select, Button } from '../ui';
+import { Input, Select, Button, PdfFileInput } from '../ui';
+import { validatePdfFile } from '../../utils/pdfValidation';
 
 export interface ModuleFormData {
   title: string;
@@ -9,6 +10,7 @@ export interface ModuleFormData {
   volume: string;
   coefficient: string;
   status: number;
+  pdf_file?: File | null;
 }
 
 export interface Module {
@@ -18,6 +20,7 @@ export interface Module {
   volume?: number;
   coefficient?: number;
   status: number;
+  pdf_file?: string | null;
 }
 
 interface ModuleFormProps {
@@ -41,6 +44,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
     volume: '',
     coefficient: '',
     status: 1,
+    pdf_file: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -52,6 +56,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
         volume: initialData.volume ? initialData.volume.toString() : '',
         coefficient: initialData.coefficient ? initialData.coefficient.toString() : '',
         status: initialData.status || 1,
+        pdf_file: null,
       });
     } else {
       setFormData({
@@ -60,6 +65,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
         volume: '',
         coefficient: '',
         status: 1,
+        pdf_file: null,
       });
     }
     setErrors({});
@@ -80,8 +86,29 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
       newErrors.coefficient = 'Coefficient must be a positive number';
     }
 
+    // Validate PDF file if provided
+    if (formData.pdf_file) {
+      const validation = validatePdfFile(formData.pdf_file);
+      if (!validation.isValid && validation.error) {
+        newErrors.pdf_file = validation.error;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handlePdfChange = (file: File | null, error?: string) => {
+    setFormData((prev) => ({ ...prev, pdf_file: file }));
+    if (error) {
+      setErrors((prev) => ({ ...prev, pdf_file: error }));
+    } else if (errors.pdf_file) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.pdf_file;
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,37 +155,47 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
-      <Input
-        label="Volume"
-        type="number"
-        name="volume"
-        value={formData.volume}
-        onChange={handleChange}
-        error={errors.volume}
-        
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
+      {/* Volume (disabled), Coefficient, and Status on the same line */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Input
+          label="Volume"
+          type="number"
+          name="volume"
+          value={formData.volume}
+          onChange={handleChange}
+          error={errors.volume}
+          disabled
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm opacity-60 cursor-not-allowed"
+        />
+        <Input
+          label="Coefficient"
+          type="number"
+          name="coefficient"
+          value={formData.coefficient}
+          onChange={handleChange}
+          error={errors.coefficient}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+        <Select
+          label="Status"
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          options={STATUS_OPTIONS_FORM.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+      </div>
 
-      <Input
-        label="Coefficient "
-        type="number"
-        name="coefficient"
-        value={formData.coefficient}
-        onChange={handleChange}
-        error={errors.coefficient}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
-
-      <Select
-        label="Status"
-        name="status"
-        value={formData.status}
-        onChange={handleChange}
-        options={STATUS_OPTIONS_FORM.map((opt) => ({
-          value: opt.value,
-          label: opt.label,
-        }))}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+      {/* PDF Upload */}
+      <PdfFileInput
+        label="PDF Document"
+        value={formData.pdf_file}
+        onChange={handlePdfChange}
+        existingPdfPath={initialData?.pdf_file}
+        error={errors.pdf_file}
       />
 
       <div>
