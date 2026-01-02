@@ -18,6 +18,9 @@ interface DiplomeStepProps {
   onSkip: () => void;
   isSubmitting: boolean;
   hasDiplome: boolean;
+  justSaved?: boolean;
+  onAddAnother?: () => void;
+  onContinue?: () => void;
 }
 
 const DiplomeStep: React.FC<DiplomeStepProps> = (props) => {

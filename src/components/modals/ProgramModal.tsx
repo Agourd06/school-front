@@ -15,23 +15,46 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
 
   const isEditing = !!program;
 
-  const handleSubmit = async (formData: { title: string; description: string; status: number }) => {
+  const handleSubmit = async (formData: { title: string; description: string; status: number; pdf_file?: File | null }) => {
     const descriptionToSave = formData.description.trim() || undefined;
-    if (isEditing && program) {
-      await updateMutation.mutateAsync({
-        id: program.id,
-        data: {
+    const hasPdf = formData.pdf_file instanceof File;
+
+    // If PDF is provided, use FormData
+    if (hasPdf) {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title.trim());
+      if (descriptionToSave) {
+        formDataToSend.append('description', descriptionToSave);
+      }
+      formDataToSend.append('status', formData.status.toString());
+      formDataToSend.append('pdf_file', formData.pdf_file);
+
+      if (isEditing && program) {
+        await updateMutation.mutateAsync({
+          id: program.id,
+          formData: formDataToSend,
+        });
+      } else {
+        await createMutation.mutateAsync(formDataToSend as any);
+      }
+    } else {
+      // No PDF, use regular JSON
+      if (isEditing && program) {
+        await updateMutation.mutateAsync({
+          id: program.id,
+          data: {
+            title: formData.title.trim(),
+            description: descriptionToSave,
+            status: formData.status,
+          },
+        });
+      } else {
+        await createMutation.mutateAsync({
           title: formData.title.trim(),
           description: descriptionToSave,
           status: formData.status,
-        },
-      });
-    } else {
-      await createMutation.mutateAsync({
-        title: formData.title.trim(),
-        description: descriptionToSave,
-        status: formData.status,
-      });
+        });
+      }
     }
     onClose();
   };

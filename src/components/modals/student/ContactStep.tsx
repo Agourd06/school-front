@@ -15,6 +15,9 @@ interface ContactStepProps {
   onSkip: () => void;
   isSubmitting: boolean;
   hasContact: boolean;
+  justSaved?: boolean;
+  onAddAnother?: () => void;
+  onContinue?: () => void;
 }
 
 const ContactStep: React.FC<ContactStepProps> = (props) => {

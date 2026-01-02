@@ -9,6 +9,7 @@ export interface Specialization {
   status?: number;
   description?: string | null;
   company_id?: number;
+  pdf_file?: string | null;
   created_at?: string;
   updated_at?: string;
   program?: {
@@ -85,9 +86,14 @@ export const specializationApi = {
     return data;
   },
 
-  async create(payload: CreateSpecializationRequest): Promise<Specialization> {
-    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
-    // Backend will verify the program belongs to the same company
+  async create(payload: CreateSpecializationRequest | FormData): Promise<Specialization> {
+    // If FormData, send directly (for PDF uploads)
+    if (payload instanceof FormData) {
+      const { data } = await api.post('/specializations', payload);
+      return data;
+    }
+    
+    // Otherwise, send as JSON
     const body = ensureCompanyId({
       status: 1,
       ...payload,
@@ -100,9 +106,14 @@ export const specializationApi = {
     return data;
   },
 
-  async update(id: number, payload: UpdateSpecializationRequest): Promise<Specialization> {
-    // Ensure company_id is set from authenticated user (backend will verify it matches)
-    // If updating program_id, backend will verify the new program belongs to the same company
+  async update(id: number, payload: UpdateSpecializationRequest | FormData): Promise<Specialization> {
+    // If FormData, send directly (for PDF uploads)
+    if (payload instanceof FormData) {
+      const { data } = await api.patch(`/specializations/${id}`, payload);
+      return data;
+    }
+    
+    // Otherwise, send as JSON
     const body = ensureCompanyId(payload);
     const { data } = await api.patch(`/specializations/${id}`, body);
     return data;

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
-import { Input, Select, Button } from '../ui';
+import { Input, Select, Button, PdfFileInput } from '../ui';
+import { validatePdfFile } from '../../utils/pdfValidation';
 
 export interface SpecializationFormData {
   title: string;
   program_id: number | string | '';
   status: number;
   description: string;
+  pdf_file?: File | null;
 }
 
 export interface Specialization {
@@ -17,6 +19,7 @@ export interface Specialization {
   program?: { id: number; title: string };
   status: number;
   description?: string;
+  pdf_file?: string | null;
 }
 
 interface SpecializationFormProps {
@@ -47,6 +50,7 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
     program_id: '',
     status: 1,
     description: '',
+    pdf_file: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
@@ -58,6 +62,7 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
         program_id: initialData.program_id ?? initialData.program?.id ?? '',
         status: typeof initialData.status === 'number' ? initialData.status : 1,
         description: initialData.description || '',
+        pdf_file: null,
       });
     } else {
       setForm({
@@ -65,6 +70,7 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
         program_id: initialProgramId ?? '',
         status: 1,
         description: '',
+        pdf_file: null,
       });
     }
     setErrors({});
@@ -84,8 +90,30 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
     const next: Record<string, string> = {};
     if (!form.title.trim()) next.title = 'Title is required';
     if (!form.program_id) next.program_id = 'Program is required';
+    
+    // Validate PDF file if provided
+    if (form.pdf_file) {
+      const validation = validatePdfFile(form.pdf_file);
+      if (!validation.isValid && validation.error) {
+        next.pdf_file = validation.error;
+      }
+    }
+    
     setErrors(next);
     return Object.keys(next).length === 0;
+  };
+
+  const handlePdfChange = (file: File | null, error?: string) => {
+    setForm((prev) => ({ ...prev, pdf_file: file }));
+    if (error) {
+      setErrors((prev) => ({ ...prev, pdf_file: error }));
+    } else if (errors.pdf_file) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.pdf_file;
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,6 +180,15 @@ const SpecializationForm: React.FC<SpecializationFormProps> = ({
           label: opt.label,
         }))}
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+      />
+
+      {/* PDF Upload */}
+      <PdfFileInput
+        label="PDF Document"
+        value={form.pdf_file}
+        onChange={handlePdfChange}
+        existingPdfPath={initialData?.pdf_file}
+        error={errors.pdf_file}
       />
 
       <div>

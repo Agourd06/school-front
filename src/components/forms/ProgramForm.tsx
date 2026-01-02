@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
-import { Input, Select, Button } from '../ui';
+import { Input, Select, Button, PdfFileInput } from '../ui';
+import { validatePdfFile } from '../../utils/pdfValidation';
 
 export interface ProgramFormData {
   title: string;
   description: string;
   status: number;
+  pdf_file?: File | null;
 }
 
 export interface Program {
@@ -14,6 +16,7 @@ export interface Program {
   title: string;
   description?: string;
   status: number;
+  pdf_file?: string | null;
 }
 
 interface ProgramFormProps {
@@ -35,6 +38,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
     title: '',
     description: '',
     status: 1,
+    pdf_file: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
@@ -45,9 +49,10 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
         title: initialData.title || '',
         description: initialData.description || '',
         status: typeof initialData.status === 'number' ? initialData.status : 1,
+        pdf_file: null,
       });
     } else {
-      setForm({ title: '', description: '', status: 1 });
+      setForm({ title: '', description: '', status: 1, pdf_file: null });
     }
     setErrors({});
     setFormError('');
@@ -62,8 +67,30 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
   const validate = () => {
     const nextErrors: Record<string, string> = {};
     if (!form.title.trim()) nextErrors.title = 'Title is required';
+    
+    // Validate PDF file if provided
+    if (form.pdf_file) {
+      const validation = validatePdfFile(form.pdf_file);
+      if (!validation.isValid && validation.error) {
+        nextErrors.pdf_file = validation.error;
+      }
+    }
+    
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
+  };
+
+  const handlePdfChange = (file: File | null, error?: string) => {
+    setForm((prev) => ({ ...prev, pdf_file: file }));
+    if (error) {
+      setErrors((prev) => ({ ...prev, pdf_file: error }));
+    } else if (errors.pdf_file) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.pdf_file;
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,6 +131,15 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
           label: opt.label,
         }))}
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+      />
+
+      {/* PDF Upload */}
+      <PdfFileInput
+        label="PDF Document"
+        value={form.pdf_file}
+        onChange={handlePdfChange}
+        existingPdfPath={initialData?.pdf_file}
+        error={errors.pdf_file}
       />
 
       <div>

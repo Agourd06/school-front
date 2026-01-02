@@ -4,7 +4,6 @@ export const STEPS: Step[] = [
   { key: 'student', label: 'Student', description: 'Basic details' },
   { key: 'diplome', label: 'Diplome', description: 'Academic record' },
   { key: 'contact', label: 'Contact', description: 'Guardian / emergency contact' },
-  { key: 'linkType', label: 'Link Type', description: 'Relationship type' },
 ];
 
 export const initialStudentForm = {
@@ -20,7 +19,6 @@ export const initialStudentForm = {
   nationality: '',
   picture: '',
   status: 1 as number,
-  class_room_id: '' as number | '',
 };
 
 export const initialDiplomeForm = {

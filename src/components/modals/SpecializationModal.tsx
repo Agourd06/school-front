@@ -38,18 +38,40 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({
     program_id: number | string | '';
     status: number;
     description: string;
+    pdf_file?: File | null;
   }) => {
     const descriptionToSave = formData.description.trim() || undefined;
-    const payload = {
-      title: formData.title,
-      program_id: Number(formData.program_id),
-      status: formData.status,
-      description: descriptionToSave,
-    };
-    if (isEditing && specialization) {
-      await updateMutation.mutateAsync({ id: specialization.id, data: payload });
+    const hasPdf = formData.pdf_file instanceof File;
+
+    // If PDF is provided, use FormData
+    if (hasPdf) {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('program_id', Number(formData.program_id).toString());
+      formDataToSend.append('status', formData.status.toString());
+      if (descriptionToSave) {
+        formDataToSend.append('description', descriptionToSave);
+      }
+      formDataToSend.append('pdf_file', formData.pdf_file);
+
+      if (isEditing && specialization) {
+        await updateMutation.mutateAsync({ id: specialization.id, formData: formDataToSend });
+      } else {
+        await createMutation.mutateAsync(formDataToSend as any);
+      }
     } else {
-      await createMutation.mutateAsync(payload);
+      // No PDF, use regular JSON
+      const payload = {
+        title: formData.title,
+        program_id: Number(formData.program_id),
+        status: formData.status,
+        description: descriptionToSave,
+      };
+      if (isEditing && specialization) {
+        await updateMutation.mutateAsync({ id: specialization.id, data: payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
     }
     onClose();
   };

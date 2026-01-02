@@ -8,6 +8,7 @@ export interface Program {
   description?: string | null;
   status?: number;
   company_id?: number | null;
+  pdf_file?: string | null;
   created_at?: string;
   updated_at?: string;
   specializations?: Array<{ id: number; title: string; [key: string]: unknown }>;
@@ -73,8 +74,14 @@ export const programApi = {
     return data;
   },
 
-  async create(payload: CreateProgramRequest): Promise<Program> {
-    // Ensure company_id is set from authenticated user (backend will also set it, but we include it for consistency)
+  async create(payload: CreateProgramRequest | FormData): Promise<Program> {
+    // If FormData, send directly (for PDF uploads)
+    if (payload instanceof FormData) {
+      const { data } = await api.post('/programs', payload);
+      return data;
+    }
+    
+    // Otherwise, send as JSON
     const body = ensureCompanyId({
       status: 1,
       ...payload,
@@ -87,8 +94,14 @@ export const programApi = {
     return data;
   },
 
-  async update(id: number, payload: UpdateProgramRequest): Promise<Program> {
-    // Ensure company_id is set from authenticated user (backend will verify it matches)
+  async update(id: number, payload: UpdateProgramRequest | FormData): Promise<Program> {
+    // If FormData, send directly (for PDF uploads)
+    if (payload instanceof FormData) {
+      const { data } = await api.patch(`/programs/${id}`, payload);
+      return data;
+    }
+    
+    // Otherwise, send as JSON
     const body = ensureCompanyId(payload);
     const { data } = await api.patch(`/programs/${id}`, body);
     return data;

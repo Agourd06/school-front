@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import { ProgramModal, DeleteModal, DescriptionModal } from '../modals';
-import { EditButton, DeleteButton, Button } from '../ui';
+import { EditButton, DeleteButton, Button, PdfActions } from '../ui';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
@@ -203,6 +203,9 @@ const ProgramsSection: React.FC = () => {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Title</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  PDF Document
+                </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
@@ -211,13 +214,13 @@ const ProgramsSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
                     Loading programs…
                   </td>
                 </tr>
               ) : programs.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
                     No programs found.
                   </td>
                 </tr>
@@ -240,6 +243,9 @@ const ProgramsSection: React.FC = () => {
                         >
                           {STATUS_VALUE_LABEL[statusValue] ?? `Status ${statusValue}`}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <PdfActions pdfPath={program.pdf_file} fileName={program.title} />
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">

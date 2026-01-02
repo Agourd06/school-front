@@ -81,7 +81,7 @@ const App: React.FC = () => {
           element={<Navigate to="/auth?mode=login" />} 
         />
         <Route 
-          path="/register" 
+          path="/registerMyschool" 
           element={
             user ? (
               user.profile === 'student' ? (
@@ -96,7 +96,7 @@ const App: React.FC = () => {
         />
         <Route 
           path="/signup" 
-          element={<Navigate to="/register" />} 
+          element={<Navigate to="/registerMyschool" />} 
         />
         <Route 
           path="/forgot-password" 

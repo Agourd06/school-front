@@ -33,6 +33,8 @@ interface SchoolYearPeriodFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   serverError?: string | null;
+  ongoingWarning?: string | null;
+  onDismissWarning?: () => void;
   schoolYears: Array<{ id: number; title: string; start_date?: string; end_date?: string }>;
   selectedSchoolYear?: { id: number; title: string; start_date?: string; end_date?: string } | null;
   isSchoolYearLocked?: boolean;
@@ -59,6 +61,8 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
   onCancel,
   isSubmitting = false,
   serverError,
+  ongoingWarning,
+  onDismissWarning,
   schoolYears,
   selectedSchoolYear,
   isSchoolYearLocked = false,
@@ -151,6 +155,30 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
           {serverError}
         </div>
       )}
+      {ongoingWarning && (
+        <div className="rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+          <div className="flex items-start gap-2">
+            <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex-1">
+              <p>{ongoingWarning}</p>
+            </div>
+            {onDismissWarning && (
+              <button
+                type="button"
+                onClick={onDismissWarning}
+                className="text-yellow-600 hover:text-yellow-800 flex-shrink-0"
+                aria-label="Dismiss warning"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-heading">School Year</label>
@@ -217,28 +245,30 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
         />
       </div>
 
-      <Select
-        label="Lifecycle Status"
-        value={lifecycleStatus}
-        onChange={(e) => setLifecycleStatus(e.target.value as 'planned' | 'ongoing' | 'completed')}
-        options={[
-          { value: 'planned', label: 'Planned' },
-          { value: 'ongoing', label: 'Ongoing' },
-          { value: 'completed', label: 'Completed' },
-        ]}
-        className="shadow-sm appearance-none focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Select
+          label="Lifecycle Status"
+          value={lifecycleStatus}
+          onChange={(e) => setLifecycleStatus(e.target.value as 'planned' | 'ongoing' | 'completed')}
+          options={[
+            { value: 'planned', label: 'Planned' },
+            { value: 'ongoing', label: 'Ongoing' },
+            { value: 'completed', label: 'Completed' },
+          ]}
+          className="shadow-sm appearance-none focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
 
-      <Select
-        label="Status"
-        value={status}
-        onChange={(e) => setStatus(Number(e.target.value))}
-        options={STATUS_OPTIONS_FORM.map((option) => ({
-          value: option.value,
-          label: option.label,
-        }))}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
+        <Select
+          label="Status"
+          value={status}
+          onChange={(e) => setStatus(Number(e.target.value))}
+          options={STATUS_OPTIONS_FORM.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+      </div>
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>

@@ -1,4 +1,4 @@
-export type StepKey = 'student' | 'diplome' | 'contact' | 'linkType';
+export type StepKey = 'student' | 'diplome' | 'contact';
 
 export interface Step {
   key: StepKey;
@@ -19,7 +19,6 @@ export interface StudentFormData {
   nationality: string;
   picture: string;
   status: number;
-  class_room_id: number | '';
 }
 
 export interface DiplomeFormData {

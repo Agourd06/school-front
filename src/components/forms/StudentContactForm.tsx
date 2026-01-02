@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
+import { countriesApi } from '../../api/countries';
 
 export interface StudentContactFormData {
   firstname: string;
@@ -71,6 +72,10 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
     status: 1,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [countries, setCountries] = useState<Array<{ name: string }>>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
 
   const isEditing = !!initialData;
 
@@ -126,6 +131,46 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
       isInitializedRef.current = false;
     }
   }, [initialData]);
+
+  // Load countries on mount
+  useEffect(() => {
+    const loadCountries = async () => {
+      setLoadingCountries(true);
+      try {
+        const countriesList = await countriesApi.getCountries();
+        setCountries(countriesList.sort((a, b) => a.name.localeCompare(b.name)));
+      } catch (error) {
+        console.error('Failed to load countries:', error);
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+    loadCountries();
+  }, []);
+
+  // Load cities when country changes
+  useEffect(() => {
+    if (form.country) {
+      const loadCities = async () => {
+        setLoadingCities(true);
+        setCities([]);
+        setForm((prev) => ({ ...prev, city: '' })); // Reset city when country changes
+        try {
+          const citiesList = await countriesApi.getCities(form.country);
+          setCities(citiesList);
+        } catch (error) {
+          console.error('Failed to load cities:', error);
+        } finally {
+          setLoadingCities(false);
+        }
+      };
+      loadCities();
+    } else {
+      setCities([]);
+      setForm((prev) => ({ ...prev, city: '' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.country]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -223,6 +268,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
           name="birthday"
           value={form.birthday}
           onChange={handleChange}
+          max={new Date().toISOString().split('T')[0]}
         />
         <Input
           label="Email"
@@ -265,24 +311,42 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Input
-          label="Adress"
-          name="adress"
-          value={form.adress}
-          onChange={handleChange}
-        />
-        <Input
-          label="City"
-          name="city"
-          value={form.city}
-          onChange={handleChange}
-        />
-        <Input
+      <Input
+        label="Address"
+        name="adress"
+        value={form.adress}
+        onChange={handleChange}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <SearchSelect
           label="Country"
-          name="country"
-          value={form.country}
-          onChange={handleChange}
+          value={form.country || ''}
+          onChange={(value) => {
+            setForm((prev) => ({ ...prev, country: value as string }));
+            if (errors.country) setErrors((prev) => ({ ...prev, country: '' }));
+          }}
+          options={countries.map((country) => ({
+            value: country.name,
+            label: country.name,
+          }))}
+          placeholder={loadingCountries ? 'Loading countries...' : 'Search country...'}
+          isLoading={loadingCountries}
+        />
+        <SearchSelect
+          label="City"
+          value={form.city || ''}
+          onChange={(value) => {
+            setForm((prev) => ({ ...prev, city: value as string }));
+            if (errors.city) setErrors((prev) => ({ ...prev, city: '' }));
+          }}
+          options={cities.map((city) => ({
+            value: city,
+            label: city,
+          }))}
+          placeholder={!form.country ? 'Select a country first' : loadingCities ? 'Loading cities...' : 'Search city...'}
+          disabled={!form.country || loadingCities}
+          isLoading={loadingCities}
         />
       </div>
 

@@ -14,7 +14,7 @@ export const useSpecialization = (id: number) =>
 export const useCreateSpecialization = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CreateSpecializationRequest) => specializationApi.create(payload),
+    mutationFn: (payload: CreateSpecializationRequest | FormData) => specializationApi.create(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['specializations'] }),
   });
 };
@@ -22,7 +22,13 @@ export const useCreateSpecialization = () => {
 export const useUpdateSpecialization = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateSpecializationRequest }) => specializationApi.update(id, data),
+    mutationFn: (data: (UpdateSpecializationRequest & { id: number }) | { id: number; formData: FormData }) => {
+      if ('formData' in data && data.formData instanceof FormData) {
+        return specializationApi.update(data.id, data.formData);
+      }
+      const { id, ...rest } = data as UpdateSpecializationRequest & { id: number };
+      return specializationApi.update(id, rest);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['specializations'] }),
   });
 };

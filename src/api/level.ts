@@ -9,6 +9,7 @@ export interface Level {
   status?: number;
   company_id?: number;
   specialization_id: number;
+  pdf_file?: string | null;
   specialization?: {
     id: number;
     title: string;
@@ -90,8 +91,14 @@ export const levelApi = {
     return data;
   },
 
-  async create(payload: CreateLevelRequest): Promise<Level> {
-    // company_id is automatically set by backend from authenticated user - DO NOT send it
+  async create(payload: CreateLevelRequest | FormData): Promise<Level> {
+    // If FormData, send directly (for PDF uploads)
+    if (payload instanceof FormData) {
+      const { data } = await api.post('/levels', payload);
+      return data;
+    }
+    
+    // Otherwise, send as JSON
     const { company_id: _companyId, ...rest } = payload;
     void _companyId;
     const body: CreateLevelRequest = {
@@ -105,8 +112,14 @@ export const levelApi = {
     return data;
   },
 
-  async update(id: number, payload: UpdateLevelRequest): Promise<Level> {
-    // company_id is automatically set by backend from authenticated user - DO NOT send it
+  async update(id: number, payload: UpdateLevelRequest | FormData): Promise<Level> {
+    // If FormData, send directly (for PDF uploads)
+    if (payload instanceof FormData) {
+      const { data } = await api.patch(`/levels/${id}`, payload);
+      return data;
+    }
+    
+    // Otherwise, send as JSON
     const { company_id: _companyId, ...rest } = payload;
     void _companyId;
     const { data } = await api.patch(`/levels/${id}`, rest);

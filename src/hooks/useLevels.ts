@@ -14,7 +14,7 @@ export const useLevel = (id: number) =>
 export const useCreateLevel = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CreateLevelRequest) => levelApi.create(payload),
+    mutationFn: (payload: CreateLevelRequest | FormData) => levelApi.create(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['levels'] }),
   });
 };
@@ -22,7 +22,13 @@ export const useCreateLevel = () => {
 export const useUpdateLevel = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateLevelRequest }) => levelApi.update(id, data),
+    mutationFn: (data: (UpdateLevelRequest & { id: number }) | { id: number; formData: FormData }) => {
+      if ('formData' in data && data.formData instanceof FormData) {
+        return levelApi.update(data.id, data.formData);
+      }
+      const { id, ...rest } = data as UpdateLevelRequest & { id: number };
+      return levelApi.update(id, rest);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['levels'] }),
   });
 };

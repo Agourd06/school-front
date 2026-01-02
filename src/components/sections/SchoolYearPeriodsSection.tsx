@@ -99,8 +99,19 @@ const SchoolYearPeriodsSection: React.FC = () => {
     refetch: refetchPeriods,
   } = useSchoolYearPeriods(params);
 
+  // Check for ongoing periods for the selected school year
+  const {
+    data: ongoingPeriodsResp,
+  } = useSchoolYearPeriods({
+    schoolYearId: selectedSchoolYearId ?? undefined,
+    lifecycle_status: 'ongoing',
+    limit: 100,
+  });
+
   const periods = periodsResp?.data ?? [];
   const meta = periodsResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
+  const ongoingPeriods = ongoingPeriodsResp?.data ?? [];
+  const hasNoOngoingPeriods = selectedSchoolYearId !== null && selectedSchoolYearId !== undefined && ongoingPeriods.length === 0;
 
   const deletePeriodMut = useDeleteSchoolYearPeriod();
 
@@ -239,6 +250,19 @@ const SchoolYearPeriodsSection: React.FC = () => {
         {error && (
           <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
             {(error as Error).message}
+          </div>
+        )}
+        {hasNoOngoingPeriods && selectedSchoolYear && (
+          <div className="mt-4 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div>
+                <p className="font-semibold mb-1">Warning: School Year "{selectedSchoolYear.title}" has no ongoing period</p>
+                <p>It is recommended to have one ongoing period per school year. Please set one period to 'ongoing' status.</p>
+              </div>
+            </div>
           </div>
         )}
       

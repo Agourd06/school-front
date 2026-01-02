@@ -9,7 +9,7 @@ import Pagination from '../Pagination';
 import SpecializationModal from '../modals/SpecializationModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
-import { EditButton, DeleteButton, Button, Input } from '../ui';
+import { EditButton, DeleteButton, Button, Input, PdfActions } from '../ui';
 import type { Specialization } from '../../api/specialization';
 import type { Program } from '../../api/program';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
@@ -296,6 +296,9 @@ const SpecializationsSection: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  PDF Document
+                </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
@@ -304,13 +307,13 @@ const SpecializationsSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
                     Loading specializations…
                   </td>
                 </tr>
               ) : specializations.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
                     No specializations found.
                   </td>
                 </tr>
@@ -335,6 +338,9 @@ const SpecializationsSection: React.FC = () => {
                         >
                           {STATUS_VALUE_LABEL[statusValue] ?? `Status ${statusValue}`}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <PdfActions pdfPath={spec.pdf_file} fileName={spec.title} />
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">

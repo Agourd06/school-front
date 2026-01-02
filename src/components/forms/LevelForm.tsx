@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
-import { Input, Select, Button } from '../ui';
+import { Input, Select, Button, PdfFileInput } from '../ui';
+import { validatePdfFile } from '../../utils/pdfValidation';
 
 export interface LevelFormData {
   title: string;
@@ -10,6 +11,7 @@ export interface LevelFormData {
   specialization_id: number | string | '';
   program_id: number | string | '';
   status: number;
+  pdf_file?: File | null;
 }
 
 export interface Level {
@@ -20,6 +22,7 @@ export interface Level {
   specialization_id?: number;
   specialization?: { id: number; title: string; program?: { id: number; title: string }; program_id?: number };
   status: number;
+  pdf_file?: string | null;
 }
 
 interface LevelFormProps {
@@ -56,10 +59,11 @@ const LevelForm: React.FC<LevelFormProps> = ({
   const [form, setForm] = useState<LevelFormData>({
     title: '',
     description: '',
-    level: '',
+    level: '1',
     specialization_id: '',
     program_id: '',
     status: 1,
+    pdf_file: null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -73,15 +77,17 @@ const LevelForm: React.FC<LevelFormProps> = ({
         specialization_id: initialData.specialization_id ?? specialization?.id ?? '',
         program_id: specialization?.program?.id ?? specialization?.program_id ?? '',
         status: typeof initialData.status === 'number' ? initialData.status : 1,
+        pdf_file: null,
       });
     } else {
       setForm({
         title: '',
         description: '',
-        level: '',
+        level: '1',
         specialization_id: initialSpecializationId ?? '',
         program_id: selectedSpecialization?.program_id ?? '',
         status: 1,
+        pdf_file: null,
       });
     }
     setErrors({});
@@ -121,8 +127,30 @@ const LevelForm: React.FC<LevelFormProps> = ({
     if (!form.title.trim()) next.title = 'Title is required';
     if (!form.specialization_id) next.specialization_id = 'Specialization is required';
     if (form.level && isNaN(Number(form.level))) next.level = 'Level must be a number';
+    
+    // Validate PDF file if provided
+    if (form.pdf_file) {
+      const validation = validatePdfFile(form.pdf_file);
+      if (!validation.isValid && validation.error) {
+        next.pdf_file = validation.error;
+      }
+    }
+    
     setErrors(next);
     return Object.keys(next).length === 0;
+  };
+
+  const handlePdfChange = (file: File | null, error?: string) => {
+    setForm((prev) => ({ ...prev, pdf_file: file }));
+    if (error) {
+      setErrors((prev) => ({ ...prev, pdf_file: error }));
+    } else if (errors.pdf_file) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.pdf_file;
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,6 +255,15 @@ const LevelForm: React.FC<LevelFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
+
+      {/* PDF Upload */}
+      <PdfFileInput
+        label="PDF Document"
+        value={form.pdf_file}
+        onChange={handlePdfChange}
+        existingPdfPath={initialData?.pdf_file}
+        error={errors.pdf_file}
+      />
 
       <div>
         <label className="block text-sm font-medium text-heading mb-1">Description</label>

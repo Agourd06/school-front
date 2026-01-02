@@ -38,11 +38,6 @@ const AuthPage: React.FC = () => {
   // Handle URL-based mode switching
   useEffect(() => {
     const mode = searchParams.get('mode');
-    // Redirect register mode to /register page
-    if (mode === 'register') {
-      navigate('/register', { replace: true });
-      return;
-    }
     if (mode && ['login', 'forgot-password'].includes(mode)) {
       setAuthMode(mode as AuthMode);
     }
@@ -64,15 +59,6 @@ const AuthPage: React.FC = () => {
             >
               Forgot your password?
             </button>
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button
-                onClick={() => navigate('/register')}
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
-                Sign up
-              </button>
-            </p>
           </div>
         );
       case 'forgot-password':

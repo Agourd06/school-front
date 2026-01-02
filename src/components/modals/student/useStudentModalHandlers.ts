@@ -4,6 +4,7 @@ import { useCreateStudentContact, useUpdateStudentContact } from '../../../hooks
 import { useCreateStudentLinkType, useUpdateStudentLinkType } from '../../../hooks/useStudentLinkTypes';
 import { validateRequired } from '../validations';
 import { useStudentModalContext } from './StudentModalContext';
+import { initialDiplomeForm, initialContactForm } from './constants';
 import type { StudentFormData } from './types';
 
 interface UseStudentModalHandlersProps {
@@ -25,13 +26,17 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     pictureFile,
     setPictureFile,
     diplomeForm,
+    setDiplomeForm,
     diplomeErrors,
     setDiplomeErrors,
     diplomeFile1,
+    setDiplomeFile1,
     diplomeFile2,
+    setDiplomeFile2,
     currentDiplome,
     setCurrentDiplome,
     contactForm,
+    setContactForm,
     contactErrors,
     setContactErrors,
     currentContact,
@@ -58,12 +63,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     const { name, value } = e.target;
     setStudentForm({
       ...studentForm,
-      [name]:
-        name === 'class_room_id'
-          ? value ? Number(value) : ''
-          : name === 'status'
-            ? Number(value)
-            : value,
+      [name]: name === 'status' ? Number(value) : value,
     } as StudentFormData);
     if (studentErrors[name]) setStudentErrors({ ...studentErrors, [name]: '' });
   };
@@ -115,7 +115,6 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     if (studentForm.country) formData.append('country', studentForm.country);
     if (studentForm.nationality) formData.append('nationality', studentForm.nationality);
     if (studentForm.status != null) formData.append('status', String(studentForm.status));
-    if (studentForm.class_room_id !== '') formData.append('class_room_id', String(studentForm.class_room_id));
     if (pictureFile) formData.append('picture', pictureFile, pictureFile.name);
 
     try {
@@ -142,7 +141,14 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       const message = axiosError?.response?.data?.message || 'Failed to save student';
-      setStudentErrors({ ...studentErrors, form: message });
+      const errors: Record<string, string> = { form: message };
+      
+      // Check if the error is related to email (duplicate email, etc.)
+      if (message.toLowerCase().includes('email')) {
+        errors.email = message;
+      }
+      
+      setStudentErrors(errors);
     }
   };
 
@@ -156,7 +162,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     return Object.keys(errors).length === 0;
   };
 
-  const handleDiplomeSubmit = async (event: React.FormEvent) => {
+  const handleDiplomeSubmit = async (event: React.FormEvent, onSuccess?: () => void) => {
     event.preventDefault();
     if (!validateDiplome()) return;
 
@@ -183,8 +189,13 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
         result = await createDiplomeMut.mutateAsync(payload);
         setCurrentDiplome(result);
       }
-      await refetchStudentDetails();
-      onStepComplete(2);
+      if (onSuccess) {
+        // Don't refetch yet when using Add Another flow - will refetch when continuing
+        onSuccess();
+      } else {
+        await refetchStudentDetails();
+        onStepComplete(2);
+      }
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       const message = axiosError?.response?.data?.message || 'Failed to save diplome';
@@ -202,7 +213,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     return Object.keys(errors).length === 0;
   };
 
-  const handleContactSubmit = async (event: React.FormEvent) => {
+  const handleContactSubmit = async (event: React.FormEvent, onSuccess?: () => void) => {
     event.preventDefault();
     if (!validateContact()) return;
 
@@ -247,8 +258,13 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
         result = await createContactMut.mutateAsync(payload);
         setCurrentContact(result);
       }
-      await refetchStudentDetails();
-      onStepComplete(3);
+      if (onSuccess) {
+        // Don't refetch yet when using Add Another flow - will refetch when continuing
+        onSuccess();
+      } else {
+        await refetchStudentDetails();
+        onFinish();
+      }
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       const message = axiosError?.response?.data?.message || 'Failed to save contact';
@@ -325,6 +341,21 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     }
   };
 
+  // Reset handlers for "Add Another" functionality
+  const resetDiplomeForm = () => {
+    setDiplomeForm(initialDiplomeForm);
+    setDiplomeFile1(null);
+    setDiplomeFile2(null);
+    setCurrentDiplome(null);
+    setDiplomeErrors({});
+  };
+
+  const resetContactForm = () => {
+    setContactForm(initialContactForm);
+    setCurrentContact(null);
+    setContactErrors({});
+  };
+
   return {
     // Student
     handleStudentChange,
@@ -335,11 +366,13 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
 
     // Diplome
     handleDiplomeSubmit,
+    resetDiplomeForm,
     createDiplomeMut,
     updateDiplomeMut,
 
     // Contact
     handleContactSubmit,
+    resetContactForm,
     createContactMut,
     updateContactMut,
 

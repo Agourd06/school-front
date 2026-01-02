@@ -60,7 +60,7 @@ api.interceptors.response.use(
       
       // Don't redirect on 401 if we're on a public registration page
       const currentPath = window.location.pathname;
-      const isPublicRoute = currentPath === '/register' || 
+      const isPublicRoute = currentPath === '/registerMyschool' || 
                            currentPath === '/signup' ||
                            currentPath === '/auth' ||
                            currentPath.startsWith('/reset-password') ||

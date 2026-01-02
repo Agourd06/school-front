@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import ColorSettings from '../components/settings/ColorSettings';
 import PageAccessSettings from '../components/settings/PageAccessSettings';
+import TypesSettings from '../components/settings/TypesSettings';
 
-type SettingsTab = 'colors' | 'access';
+type SettingsTab = 'colors' | 'access' | 'types';
 
 const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('colors');
@@ -10,6 +11,7 @@ const SettingsPage: React.FC = () => {
   const tabs: Array<{ id: SettingsTab; label: string }> = [
     { id: 'colors', label: 'Colors' },
     { id: 'access', label: 'Page Access' },
+    { id: 'types', label: 'Types' },
   ];
 
   return (
@@ -43,6 +45,7 @@ const SettingsPage: React.FC = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         {activeTab === 'colors' && <ColorSettings />}
         {activeTab === 'access' && <PageAccessSettings />}
+        {activeTab === 'types' && <TypesSettings />}
       </div>
     </div>
   );

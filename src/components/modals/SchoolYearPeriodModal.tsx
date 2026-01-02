@@ -1,8 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import BaseModal from "./BaseModal";
 import {
   useCreateSchoolYearPeriod,
   useUpdateSchoolYearPeriod,
+  useSchoolYearPeriods,
 } from "../../hooks/useSchoolYearPeriods";
 import { useSchoolYears, useSchoolYear } from "../../hooks/useSchoolYears";
 import type { GetAllSchoolYearsParams } from "../../api/schoolYear";
@@ -34,8 +35,20 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
 
   const createMutation = useCreateSchoolYearPeriod();
   const updateMutation = useUpdateSchoolYearPeriod();
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [ongoingWarning, setOngoingWarning] = useState<string | null>(null);
 
   const isSchoolYearLocked = !!period || !!initialSchoolYearId;
+
+  // Fetch ongoing periods for validation when we have a known schoolYearId
+  // When creating without a locked schoolYearId, we'll rely on API validation
+  const knownSchoolYearId = period?.schoolYearId || period?.schoolYear?.id || initialSchoolYearId;
+  const { data: ongoingPeriodsData } = useSchoolYearPeriods({
+    schoolYearId: knownSchoolYearId,
+    lifecycle_status: 'ongoing',
+    limit: 1000,
+  });
+  const knownOngoingPeriods = ongoingPeriodsData?.data ?? [];
 
   const handleSubmit = async (formData: {
     title: string;
@@ -45,8 +58,13 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
     schoolYearId: number | '';
     lifecycle_status: 'planned' | 'ongoing' | 'completed';
   }) => {
+    setServerError(null);
+    setOngoingWarning(null);
+
+    const targetSchoolYearId = Number(formData.schoolYearId);
+
     const payload = {
-      schoolYearId: Number(formData.schoolYearId),
+      schoolYearId: targetSchoolYearId,
       title: formData.title,
       start_date: formData.start_date,
       end_date: formData.end_date,
@@ -54,12 +72,58 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
       lifecycle_status: formData.lifecycle_status,
     };
 
-    if (period?.id) {
-      await updateMutation.mutateAsync({ id: period.id, ...payload });
-    } else {
-      await createMutation.mutateAsync(payload);
+    try {
+      // Check for ongoing conflicts if setting to ongoing
+      // Only do client-side check if we're checking the same schoolYearId we pre-fetched
+      // Otherwise, rely on API validation
+      if (formData.lifecycle_status === 'ongoing') {
+        if (targetSchoolYearId === knownSchoolYearId) {
+          const ongoingPeriodsInSameYear = knownOngoingPeriods.filter(
+            (p) => p.id !== period?.id
+          );
+          if (ongoingPeriodsInSameYear.length > 0) {
+            setServerError('There must be at most one ongoing period per school year. Another period in this school year is already ongoing.');
+            return;
+          }
+        }
+        // If checking a different schoolYearId, API will validate
+      }
+
+      // Check if changing the only ongoing period in the school year to another status
+      if (period && period.lifecycle_status === 'ongoing' && formData.lifecycle_status !== 'ongoing') {
+        const currentSchoolYearId = period.schoolYearId || period.schoolYear?.id;
+        if (currentSchoolYearId === knownSchoolYearId) {
+          const isOnlyOngoing = knownOngoingPeriods.length === 1 && knownOngoingPeriods[0].id === period.id;
+          if (isOnlyOngoing) {
+            const schoolYearTitle = selectedSchoolYear?.title || 'this school year';
+            setOngoingWarning(`Warning: This is the only ongoing period in ${schoolYearTitle}. After this change, there will be no ongoing periods for ${schoolYearTitle}. It is recommended to have one ongoing period per school year.`);
+            // Continue with submission (warning is informational, not blocking)
+          }
+        }
+        // If different schoolYearId, API validation will handle it
+      }
+
+      if (period?.id) {
+        await updateMutation.mutateAsync({ id: period.id, ...payload });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+      onClose();
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { message?: string | string[] } }; message?: string };
+      const dataMessage = axiosError?.response?.data?.message;
+      let errorMessage = 'An error occurred while saving the period.';
+      
+      if (Array.isArray(dataMessage)) {
+        errorMessage = dataMessage.join(', ');
+      } else if (typeof dataMessage === 'string') {
+        errorMessage = dataMessage;
+      } else if (typeof axiosError.message === 'string') {
+        errorMessage = axiosError.message;
+      }
+      
+      setServerError(errorMessage);
     }
-    onClose();
   };
 
   return (
@@ -73,6 +137,9 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
         onSubmit={handleSubmit}
         onCancel={onClose}
         isSubmitting={createMutation.isPending || updateMutation.isPending}
+        serverError={serverError}
+        ongoingWarning={ongoingWarning}
+        onDismissWarning={() => setOngoingWarning(null)}
         schoolYears={(yearsData?.data || []) as Array<{
           id: number;
           title: string;

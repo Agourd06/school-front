@@ -1,5 +1,6 @@
 import api from './axios';
 import { ensureCompanyId } from '../utils/companyScopedApi';
+import type { ClassroomType } from './classroomType';
 
 export type ClassRoom = {
   id: number;
@@ -7,6 +8,8 @@ export type ClassRoom = {
   title: string;
   capacity: number;
   status: number;
+  classroom_type_id?: number | null;
+  classroomType?: ClassroomType | null;
   company_id?: number;
   created_at: string;
   updated_at: string;
@@ -36,6 +39,7 @@ export type CreateClassRoomRequest = {
   title: string;
   capacity: number;
   status?: number;
+  classroom_type_id?: number | null;
   company_id?: number; // Optional - backend sets it from authenticated user
 };
 

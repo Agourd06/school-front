@@ -73,21 +73,46 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
     level: string;
     specialization_id: number | string | '';
     status: number;
+    pdf_file?: File | null;
   }) => {
     setFormError('');
     const descriptionToSave = formData.description.trim() || undefined;
-    const payload = {
-      title: formData.title,
-      description: descriptionToSave,
-      level: formData.level ? Number(formData.level) : undefined,
-      specialization_id: Number(formData.specialization_id),
-      status: formData.status,
-    };
+    const hasPdf = formData.pdf_file instanceof File;
+
     try {
-      if (level?.id) {
-        await updateMutation.mutateAsync({ id: level.id, data: payload });
+      // If PDF is provided, use FormData
+      if (hasPdf) {
+        const formDataToSend = new FormData();
+        formDataToSend.append('title', formData.title);
+        if (descriptionToSave) {
+          formDataToSend.append('description', descriptionToSave);
+        }
+        if (formData.level) {
+          formDataToSend.append('level', Number(formData.level).toString());
+        }
+        formDataToSend.append('specialization_id', Number(formData.specialization_id).toString());
+        formDataToSend.append('status', formData.status.toString());
+        formDataToSend.append('pdf_file', formData.pdf_file);
+
+        if (level?.id) {
+          await updateMutation.mutateAsync({ id: level.id, formData: formDataToSend });
+        } else {
+          await createMutation.mutateAsync(formDataToSend as any);
+        }
       } else {
-        await createMutation.mutateAsync(payload);
+        // No PDF, use regular JSON
+        const payload = {
+          title: formData.title,
+          description: descriptionToSave,
+          level: formData.level ? Number(formData.level) : undefined,
+          specialization_id: Number(formData.specialization_id),
+          status: formData.status,
+        };
+        if (level?.id) {
+          await updateMutation.mutateAsync({ id: level.id, data: payload });
+        } else {
+          await createMutation.mutateAsync(payload);
+        }
       }
       onClose();
     } catch (err: unknown) {

@@ -2,16 +2,15 @@ import React, { useState, useEffect, useId } from 'react';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Input, Select, FileInput, Button } from '../ui';
+import SearchSelect from '../inputs/SearchSelect';
+import { countriesApi } from '../../api/countries';
 import type { StudentFormData } from '../modals/student/types';
-import type { ClassRoom } from '../../api/classRoom';
-import type { PaginatedResponse } from '../../types/api';
 
 interface StudentStepFormProps {
   form: StudentFormData;
   errors: Record<string, string>;
   pictureFile: File | null;
   currentPictureUrl?: string | null;
-  classRooms: PaginatedResponse<ClassRoom> | null | undefined;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onPictureChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -24,7 +23,6 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
   errors,
   pictureFile,
   currentPictureUrl,
-  classRooms,
   onChange,
   onPictureChange,
   onSubmit,
@@ -33,6 +31,10 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const pictureInputId = useId();
+  const [countries, setCountries] = useState<Array<{ name: string }>>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
 
   // Show preview of newly selected file, or existing picture
   useEffect(() => {
@@ -48,6 +50,59 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
       setPreviewUrl(null);
     }
   }, [pictureFile, currentPictureUrl]);
+
+  // Load countries on mount
+  useEffect(() => {
+    const loadCountries = async () => {
+      setLoadingCountries(true);
+      try {
+        const countriesList = await countriesApi.getCountries();
+        setCountries(countriesList.sort((a, b) => a.name.localeCompare(b.name)));
+      } catch (error) {
+        console.error('Failed to load countries:', error);
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+    loadCountries();
+  }, []);
+
+  // Load cities when country changes
+  useEffect(() => {
+    if (form.country) {
+      const loadCities = async () => {
+        setLoadingCities(true);
+        setCities([]);
+        try {
+          const citiesList = await countriesApi.getCities(form.country);
+          setCities(citiesList);
+        } catch (error) {
+          console.error('Failed to load cities:', error);
+        } finally {
+          setLoadingCities(false);
+        }
+      };
+      loadCities();
+    } else {
+      setCities([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.country]);
+
+  // Handlers for SearchSelect (they use value callbacks instead of events)
+  const handleCountryChange = (value: string | '') => {
+    const fakeEvent = {
+      target: { name: 'country', value },
+    } as React.ChangeEvent<HTMLSelectElement>;
+    onChange(fakeEvent);
+  };
+
+  const handleCityChange = (value: string | '') => {
+    const fakeEvent = {
+      target: { name: 'city', value },
+    } as React.ChangeEvent<HTMLSelectElement>;
+    onChange(fakeEvent);
+  };
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -154,6 +209,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           name="birthday"
           value={form.birthday}
           onChange={onChange}
+          max={new Date().toISOString().split('T')[0]}
         />
       </div>
 
@@ -164,52 +220,49 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
         onChange={onChange}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Input
-          label="City"
-          name="city"
-          value={form.city}
-          onChange={onChange}
-        />
-        <Input
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <SearchSelect
           label="Country"
-          name="country"
-          value={form.country}
-          onChange={onChange}
+          value={form.country || ''}
+          onChange={handleCountryChange}
+          options={countries.map((country) => ({
+            value: country.name,
+            label: country.name,
+          }))}
+          placeholder={loadingCountries ? 'Loading countries...' : 'Search country...'}
+          isLoading={loadingCountries}
         />
-        <Input
-          label="Nationality"
-          name="nationality"
-          value={form.nationality}
-          onChange={onChange}
+        <SearchSelect
+          label="City"
+          value={form.city || ''}
+          onChange={handleCityChange}
+          options={cities.map((city) => ({
+            value: city,
+            label: city,
+          }))}
+          placeholder={!form.country ? 'Select a country first' : loadingCities ? 'Loading cities...' : 'Search city...'}
+          disabled={!form.country || loadingCities}
+          isLoading={loadingCities}
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
-          label="Status"
-          name="status"
-          value={form.status}
-          onChange={onChange}
-          options={STATUS_OPTIONS_FORM.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }))}
-        />
-        <Select
-          label="Class Room"
-          name="class_room_id"
-          value={form.class_room_id}
-          onChange={onChange}
-          options={[
-            { value: '', label: 'No class room' },
-            ...((classRooms?.data || []).map((cr: ClassRoom) => ({
-              value: cr.id,
-              label: `${cr.code} — ${cr.title}`,
-            })))
-          ]}
-        />
-      </div>
+      <Input
+        label="Nationality"
+        name="nationality"
+        value={form.nationality}
+        onChange={onChange}
+      />
+
+      <Select
+        label="Status"
+        name="status"
+        value={form.status}
+        onChange={onChange}
+        options={STATUS_OPTIONS_FORM.map((opt) => ({
+          value: opt.value,
+          label: opt.label,
+        }))}
+      />
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button

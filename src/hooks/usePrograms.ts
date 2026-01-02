@@ -15,7 +15,7 @@ export const useProgram = (id: number) =>
 export const useCreateProgram = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CreateProgramRequest) => programApi.create(payload),
+    mutationFn: (payload: CreateProgramRequest | FormData) => programApi.create(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['programs'] }),
   });
 };
@@ -23,7 +23,13 @@ export const useCreateProgram = () => {
 export const useUpdateProgram = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateProgramRequest }) => programApi.update(id, data),
+    mutationFn: (data: (UpdateProgramRequest & { id: number }) | { id: number; formData: FormData }) => {
+      if ('formData' in data && data.formData instanceof FormData) {
+        return programApi.update(data.id, data.formData);
+      }
+      const { id, ...rest } = data as UpdateProgramRequest & { id: number };
+      return programApi.update(id, rest);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['programs'] }),
   });
 };

@@ -1,14 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useStudentDetails } from '../../../hooks/useStudents';
-import { useClassRooms } from '../../../hooks/useClassRooms';
 import { useStudentLinkTypes } from '../../../hooks/useStudentLinkTypes';
 import { initialStudentForm, initialDiplomeForm, initialContactForm } from './constants';
 import type { StudentFormData, DiplomeFormData, ContactFormData } from './types';
 import type { StudentDiplome } from '../../../api/studentDiplome';
 import type { StudentContact } from '../../../api/studentContact';
 import type { StudentLinkType } from '../../../api/studentLinkType';
-import type { ClassRoom } from '../../../api/classRoom';
 import type { Student } from '../../../api/students';
 import type { PaginatedResponse } from '../../../types/api';
 
@@ -56,7 +54,6 @@ interface StudentModalContextValue {
   setCurrentLinkType: (linkType: StudentLinkType | null) => void;
 
   // External data
-  classRooms: PaginatedResponse<ClassRoom> | null | undefined;
   studentDetailsData: {
     student: Student;
     diploma: StudentDiplome | null;
@@ -102,7 +99,6 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
   const [linkTypeError, setLinkTypeError] = useState('');
   const [currentLinkType, setCurrentLinkType] = useState<StudentLinkType | null>(null);
 
-  const { data: classRooms } = useClassRooms({ page: 1, limit: 100 });
   const { data: studentDetailsData, refetch: refetchStudentDetailsRaw } = useStudentDetails(studentId || 0);
   const { data: linkTypesData } = useStudentLinkTypes({ page: 1, limit: 100 });
 
@@ -137,7 +133,6 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
           nationality: studentData.nationality || '',
           picture: studentData.picture || '',
           status: typeof studentData.status === 'number' ? studentData.status : 1,
-          class_room_id: studentData.class_room_id ?? '',
         });
       }
 
@@ -237,7 +232,6 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
     setLinkTypeError,
     currentLinkType,
     setCurrentLinkType,
-    classRooms,
     studentDetailsData,
     refetchStudentDetails,
     linkTypesData,

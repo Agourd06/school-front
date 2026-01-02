@@ -5,7 +5,6 @@ import { useStudentModalHandlers } from './student/useStudentModalHandlers';
 import StudentStep from './student/StudentStep';
 import DiplomeStep from './student/DiplomeStep';
 import ContactStep from './student/ContactStep';
-import LinkTypeStep from './student/LinkTypeStep';
 import StepProgress from './student/StepProgress';
 import { STEPS } from './student/constants';
 import type { PaginatedResponse } from '../../types/api';
@@ -19,6 +18,8 @@ interface Props {
 
 const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCreated?: (studentEmail: string) => void }> = ({ onClose, onStudentCreated }) => {
   const [stepIndex, setStepIndex] = useState(0);
+  const [justSavedDiplome, setJustSavedDiplome] = useState(false);
+  const [justSavedContact, setJustSavedContact] = useState(false);
   const {
     studentForm,
     studentErrors,
@@ -31,20 +32,14 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
     contactForm,
     contactErrors,
     currentContact,
-    linkTypeTitle,
-    linkTypeStatus,
-    linkTypeError,
-    currentLinkType,
-    classRooms,
     studentDetailsData,
     linkTypesData,
     studentName,
     setDiplomeForm,
     setContactForm,
-    setLinkTypeTitle,
-    setLinkTypeStatus,
     setDiplomeFile1,
     setDiplomeFile2,
+    refetchStudentDetails,
   } = useStudentModalContext();
 
   const handlers = useStudentModalHandlers({
@@ -59,6 +54,44 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
 
   const currentStep = STEPS[stepIndex];
 
+  // Handlers for diplome "Add Another" functionality
+  const handleDiplomeSubmitWrapper = async (e: React.FormEvent) => {
+    await handlers.handleDiplomeSubmit(e, () => {
+      setJustSavedDiplome(true);
+    });
+  };
+
+  const handleDiplomeAddAnother = () => {
+    handlers.resetDiplomeForm();
+    setJustSavedDiplome(false);
+  };
+
+  const handleDiplomeContinue = async () => {
+    setJustSavedDiplome(false);
+    // Refetch student details before continuing to get latest data
+    refetchStudentDetails();
+    setStepIndex(2);
+  };
+
+  // Handlers for contact "Add Another" functionality
+  const handleContactSubmitWrapper = async (e: React.FormEvent) => {
+    await handlers.handleContactSubmit(e, () => {
+      setJustSavedContact(true);
+    });
+  };
+
+  const handleContactAddAnother = () => {
+    handlers.resetContactForm();
+    setJustSavedContact(false);
+  };
+
+  const handleContactContinue = async () => {
+    setJustSavedContact(false);
+    // Refetch student details before continuing to get latest data
+    refetchStudentDetails();
+    onClose();
+  };
+
   const renderStepContent = () => {
     switch (currentStep.key) {
       case 'student':
@@ -68,7 +101,6 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
             errors={studentErrors}
             pictureFile={pictureFile}
             currentPictureUrl={undefined}
-            classRooms={classRooms}
             onChange={handlers.handleStudentChange}
             onPictureChange={handleStudentPicture}
             onSubmit={handlers.handleStudentSubmit}
@@ -90,11 +122,14 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
             onFormChange={(field, value) => setDiplomeForm({ ...diplomeForm, [field]: value })}
             onFile1Change={setDiplomeFile1}
             onFile2Change={setDiplomeFile2}
-            onSubmit={handlers.handleDiplomeSubmit}
+            onSubmit={handleDiplomeSubmitWrapper}
             onBack={() => setStepIndex(0)}
             onSkip={() => setStepIndex(2)}
             isSubmitting={handlers.createDiplomeMut.isPending || handlers.updateDiplomeMut.isPending}
             hasDiplome={!!currentDiplome}
+            justSaved={justSavedDiplome}
+            onAddAnother={handleDiplomeAddAnother}
+            onContinue={handleDiplomeContinue}
           />
         );
 
@@ -106,26 +141,14 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
             linkTypesData={linkTypesData as PaginatedResponse<StudentLinkType> | null | undefined}
             studentName={studentName}
             onFormChange={(field, value) => setContactForm({ ...contactForm, [field]: value })}
-            onSubmit={handlers.handleContactSubmit}
+            onSubmit={handleContactSubmitWrapper}
             onBack={() => setStepIndex(1)}
-            onSkip={() => setStepIndex(3)}
+            onSkip={onClose}
             isSubmitting={handlers.createContactMut.isPending || handlers.updateContactMut.isPending}
             hasContact={!!currentContact}
-          />
-        );
-
-      case 'linkType':
-        return (
-          <LinkTypeStep
-            title={linkTypeTitle}
-            status={linkTypeStatus}
-            error={linkTypeError}
-            onTitleChange={setLinkTypeTitle}
-            onStatusChange={setLinkTypeStatus}
-            onSubmit={handlers.handleLinkTypeSubmit}
-            onBack={() => setStepIndex(2)}
-            isSubmitting={handlers.createLinkTypeMut.isPending || handlers.updateLinkTypeMut.isPending}
-            hasLinkType={!!currentLinkType}
+            justSaved={justSavedContact}
+            onAddAnother={handleContactAddAnother}
+            onContinue={handleContactContinue}
           />
         );
 
