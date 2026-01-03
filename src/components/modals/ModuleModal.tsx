@@ -53,7 +53,9 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
       }
       // Always send status as a number string (required field)
       formDataToSend.append('status', formData.status.toString());
-      formDataToSend.append('pdf_file', formData.pdf_file);
+      if (formData.pdf_file instanceof File) {
+        formDataToSend.append('pdf_file', formData.pdf_file);
+      }
 
       if (isEditing && module) {
         await updateModule.mutateAsync({ id: module.id, formData: formDataToSend });

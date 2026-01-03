@@ -8,7 +8,6 @@ import type { StudentDiplome } from '../../../api/studentDiplome';
 import type { StudentContact } from '../../../api/studentContact';
 import type { StudentLinkType } from '../../../api/studentLinkType';
 import type { Student } from '../../../api/students';
-import type { PaginatedResponse } from '../../../types/api';
 
 interface StudentModalContextValue {
   // Student ID - the core value that flows through all steps

@@ -7,6 +7,7 @@ type SchoolYearPeriodFilterParams = FilterParams & {
   schoolYearId?: number;
   school_year_id?: number;
   school_year_period_id?: number;
+  lifecycle_status?: string;
 };
 
 export const useSchoolYearPeriods = (params: SchoolYearPeriodFilterParams = {}) => {

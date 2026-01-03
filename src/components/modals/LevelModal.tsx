@@ -92,7 +92,9 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
         }
         formDataToSend.append('specialization_id', Number(formData.specialization_id).toString());
         formDataToSend.append('status', formData.status.toString());
-        formDataToSend.append('pdf_file', formData.pdf_file);
+        if (formData.pdf_file instanceof File) {
+          formDataToSend.append('pdf_file', formData.pdf_file);
+        }
 
         if (level?.id) {
           await updateMutation.mutateAsync({ id: level.id, formData: formDataToSend });
@@ -109,7 +111,7 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
           status: formData.status,
         };
         if (level?.id) {
-          await updateMutation.mutateAsync({ id: level.id, data: payload });
+          await updateMutation.mutateAsync({ id: level.id, ...payload });
         } else {
           await createMutation.mutateAsync(payload);
         }

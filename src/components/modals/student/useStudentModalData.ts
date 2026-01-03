@@ -53,7 +53,6 @@ export const useStudentModalData = (studentId: number) => {
           nationality: studentData.nationality || '',
           picture: studentData.picture || '',
           status: typeof studentData.status === 'number' ? studentData.status : 1,
-          class_room_id: studentData.class_room_id ?? '',
         });
       }
 

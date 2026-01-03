@@ -27,7 +27,9 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
         formDataToSend.append('description', descriptionToSave);
       }
       formDataToSend.append('status', formData.status.toString());
-      formDataToSend.append('pdf_file', formData.pdf_file);
+      if (formData.pdf_file instanceof File) {
+        formDataToSend.append('pdf_file', formData.pdf_file);
+      }
 
       if (isEditing && program) {
         await updateMutation.mutateAsync({
@@ -42,11 +44,9 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
       if (isEditing && program) {
         await updateMutation.mutateAsync({
           id: program.id,
-          data: {
-            title: formData.title.trim(),
-            description: descriptionToSave,
-            status: formData.status,
-          },
+          title: formData.title.trim(),
+          description: descriptionToSave,
+          status: formData.status,
         });
       } else {
         await createMutation.mutateAsync({

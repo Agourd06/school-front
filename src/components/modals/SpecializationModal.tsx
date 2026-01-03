@@ -52,7 +52,9 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({
       if (descriptionToSave) {
         formDataToSend.append('description', descriptionToSave);
       }
-      formDataToSend.append('pdf_file', formData.pdf_file);
+      if (formData.pdf_file instanceof File) {
+        formDataToSend.append('pdf_file', formData.pdf_file);
+      }
 
       if (isEditing && specialization) {
         await updateMutation.mutateAsync({ id: specialization.id, formData: formDataToSend });
@@ -68,7 +70,7 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({
         description: descriptionToSave,
       };
       if (isEditing && specialization) {
-        await updateMutation.mutateAsync({ id: specialization.id, data: payload });
+        await updateMutation.mutateAsync({ id: specialization.id, ...payload });
       } else {
         await createMutation.mutateAsync(payload);
       }

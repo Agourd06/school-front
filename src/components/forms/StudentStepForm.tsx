@@ -90,16 +90,16 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
   }, [form.country]);
 
   // Handlers for SearchSelect (they use value callbacks instead of events)
-  const handleCountryChange = (value: string | '') => {
+  const handleCountryChange = (value: number | string | '') => {
     const fakeEvent = {
-      target: { name: 'country', value },
+      target: { name: 'country', value: String(value) },
     } as React.ChangeEvent<HTMLSelectElement>;
     onChange(fakeEvent);
   };
 
-  const handleCityChange = (value: string | '') => {
+  const handleCityChange = (value: number | string | '') => {
     const fakeEvent = {
-      target: { name: 'city', value },
+      target: { name: 'city', value: String(value) },
     } as React.ChangeEvent<HTMLSelectElement>;
     onChange(fakeEvent);
   };
