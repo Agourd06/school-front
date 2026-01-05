@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 // Common countries with phone codes, flag emojis, and example numbers
 const COUNTRIES = [
