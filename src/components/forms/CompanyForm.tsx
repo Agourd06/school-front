@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Input, Button } from '../ui';
+import PhoneInput from '../inputs/PhoneInput';
 
 export interface CompanyFormData {
   name: string;
@@ -131,12 +132,12 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
-      <Input
+      <PhoneInput
         label="Phone"
-        type="tel"
         name="phone"
         value={formData.phone}
         onChange={handleChange}
+        error={errors.phone}
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 

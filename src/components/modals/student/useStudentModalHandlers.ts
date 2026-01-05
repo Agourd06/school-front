@@ -65,7 +65,16 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       ...studentForm,
       [name]: name === 'status' ? Number(value) : value,
     } as StudentFormData);
-    if (studentErrors[name]) setStudentErrors({ ...studentErrors, [name]: '' });
+    // Clear error for this field when user starts typing
+    if (studentErrors[name]) {
+      const newErrors = { ...studentErrors };
+      delete newErrors[name];
+      // Also clear form error if it's the same as the field error
+      if (newErrors.form === studentErrors[name]) {
+        delete newErrors.form;
+      }
+      setStudentErrors(newErrors);
+    }
   };
 
   const handleStudentPicture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,7 +123,13 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     if (studentForm.city) formData.append('city', studentForm.city);
     if (studentForm.country) formData.append('country', studentForm.country);
     if (studentForm.nationality) formData.append('nationality', studentForm.nationality);
-    if (studentForm.status != null) formData.append('status', String(studentForm.status));
+    if (studentId) {
+      // When updating, allow status change
+      if (studentForm.status != null) formData.append('status', String(studentForm.status));
+    } else {
+      // When creating, always set status to 2 (pending)
+      formData.append('status', '2');
+    }
     if (pictureFile) formData.append('picture', pictureFile, pictureFile.name);
 
     try {
@@ -139,13 +154,25 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       await refetchStudentDetails();
       onStepComplete(1);
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } };
+      const axiosError = err as { response?: { data?: { message?: string; statusCode?: number } } };
       const message = axiosError?.response?.data?.message || 'Failed to save student';
-      const errors: Record<string, string> = { form: message };
+      const errors: Record<string, string> = {};
       
-      // Check if the error is related to email (duplicate email, etc.)
-      if (message.toLowerCase().includes('email')) {
+      // Check if the error is related to email validation (duplicate email, etc.)
+      const messageLower = message.toLowerCase();
+      if (
+        messageLower.includes('email') ||
+        messageLower.includes('student with email') ||
+        messageLower.includes('user with email') ||
+        messageLower.includes('already exists')
+      ) {
+        // Set error on email field for better UX
         errors.email = message;
+        // Also show as form error for visibility
+        errors.form = message;
+      } else {
+        // For other errors, show as form error
+        errors.form = message;
       }
       
       setStudentErrors(errors);

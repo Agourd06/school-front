@@ -3,6 +3,7 @@ import { validateRequired } from '../modals/validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Input, Select, Button } from '../ui';
+import PhoneInput from '../inputs/PhoneInput';
 
 export interface TeacherFormData {
   gender: string;
@@ -259,11 +260,12 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           error={errors.email}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
-        <Input
+        <PhoneInput
           label="Phone"
           name="phone"
           value={form.phone}
           onChange={handleChange}
+          error={errors.phone}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>

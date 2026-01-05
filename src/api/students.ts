@@ -117,6 +117,11 @@ export const studentsApi = {
     await api.delete(`/students/${id}`);
   },
 
+  async sendPasswordInvitation(id: number): Promise<{ message: string }> {
+    const response = await api.post(`/students/${id}/send-password-invitation`);
+    return response.data;
+  },
+
   /**
    * Get all students without active reports
    * Returns a plain array (not paginated) of students that don't have any active student report

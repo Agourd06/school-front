@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, Select, Button } from '../ui';
 import SearchSelect from '../inputs/SearchSelect';
+import PhoneInput from '../inputs/PhoneInput';
 import { countriesApi } from '../../api/countries';
 import type { ContactFormData } from '../modals/student/types';
 import type { StudentLinkType } from '../../api/studentLinkType';
@@ -153,10 +154,11 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
+        <PhoneInput
           label="Phone"
           value={form.phone}
           onChange={(e) => onFormChange('phone', e.target.value)}
+          error={errors.phone}
         />
         <div>
           <Select

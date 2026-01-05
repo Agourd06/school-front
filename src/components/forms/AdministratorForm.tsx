@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { validateRequired } from '../modals/validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, FileInput, Button } from '../ui';
+import PhoneInput from '../inputs/PhoneInput';
 
 export interface AdministratorFormData {
   gender: string;
@@ -258,11 +259,12 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
           onChange={handleChange}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
-        <Input
+        <PhoneInput
           label="Phone"
           name="phone"
           value={form.phone}
           onChange={handleChange}
+          error={errors.phone}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>

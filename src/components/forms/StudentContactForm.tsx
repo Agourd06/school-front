@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
+import PhoneInput from '../inputs/PhoneInput';
 import { countriesApi } from '../../api/countries';
 
 export interface StudentContactFormData {
@@ -295,11 +296,12 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
+        <PhoneInput
           label="Phone"
           name="phone"
           value={form.phone}
           onChange={handleChange}
+          error={errors.phone}
         />
         <div>
           <Select

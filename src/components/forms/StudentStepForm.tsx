@@ -3,6 +3,7 @@ import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Input, Select, Button } from '../ui';
 import SearchSelect from '../inputs/SearchSelect';
+import PhoneInput from '../inputs/PhoneInput';
 import { countriesApi } from '../../api/countries';
 import type { StudentFormData } from '../modals/student/types';
 
@@ -16,6 +17,7 @@ interface StudentStepFormProps {
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   isSubmitting: boolean;
+  isEditMode?: boolean;
 }
 
 const StudentStepForm: React.FC<StudentStepFormProps> = ({
@@ -28,6 +30,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
   onSubmit,
   onCancel,
   isSubmitting,
+  isEditMode = false,
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const pictureInputId = useId();
@@ -106,7 +109,11 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
+      {errors.form && (
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
+          {errors.form}
+        </div>
+      )}
       <div className="flex items-center gap-4">
         <div className="relative">
           {previewUrl ? (
@@ -152,11 +159,12 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           error={errors.email}
           helperText="A user account with profile 'student' will be automatically created and a password invitation email will be sent to this address."
         />
-        <Input
+        <PhoneInput
           label="Phone"
           name="phone"
           value={form.phone}
           onChange={onChange}
+          error={errors.phone}
         />
       </div>
 
@@ -240,18 +248,25 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
-          label="Status"
-          name="status"
-          value={form.status}
-          onChange={onChange}
-          options={STATUS_OPTIONS_FORM.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }))}
-        />
-      </div>
+      {isEditMode && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={onChange}
+            options={STATUS_OPTIONS_FORM.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+          />
+        </div>
+      )}
+      {!isEditMode && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          <strong>Note:</strong> New students are created with <strong>Pending</strong> status. They must set their password to become active.
+        </div>
+      )}
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button

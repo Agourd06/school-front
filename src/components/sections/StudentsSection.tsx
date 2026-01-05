@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   useStudents,
   useDeleteStudent,
+  useSendPasswordInvitation,
 } from '../../hooks/useStudents';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
@@ -12,6 +13,7 @@ import StatusBadge from '../../components/StatusBadge';
 import type { Student } from '../../api/students';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
+import { Mail } from 'lucide-react';
 
 const EMPTY_META = {
   page: 1,
@@ -83,6 +85,63 @@ const StudentsSection: React.FC = () => {
   const meta = studentsResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
   const deleteStudentMut = useDeleteStudent();
+  const sendInvitationMut = useSendPasswordInvitation();
+  const [invitationSentTimes, setInvitationSentTimes] = useState<Record<number, number>>({});
+
+  // Load invitation sent times from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('studentInvitationSentTimes');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        // Filter out entries older than 24 hours
+        const now = Date.now();
+        const filtered: Record<number, number> = {};
+        Object.entries(parsed).forEach(([id, time]) => {
+          const studentId = Number(id);
+          const sentTime = Number(time);
+          if (now - sentTime < 24 * 60 * 60 * 1000) {
+            filtered[studentId] = sentTime;
+          }
+        });
+        setInvitationSentTimes(filtered);
+        if (Object.keys(filtered).length !== Object.keys(parsed).length) {
+          localStorage.setItem('studentInvitationSentTimes', JSON.stringify(filtered));
+        }
+      } catch (e) {
+        // Invalid data, ignore
+      }
+    }
+  }, []);
+
+  const canSendInvitation = (studentId: number): boolean => {
+    const sentTime = invitationSentTimes[studentId];
+    if (!sentTime) return true;
+    const now = Date.now();
+    const hoursSinceSent = (now - sentTime) / (1000 * 60 * 60);
+    return hoursSinceSent >= 24;
+  };
+
+  const getTimeUntilCanSend = (studentId: number): number => {
+    const sentTime = invitationSentTimes[studentId];
+    if (!sentTime) return 0;
+    const now = Date.now();
+    const msUntilCanSend = 24 * 60 * 60 * 1000 - (now - sentTime);
+    return Math.max(0, Math.ceil(msUntilCanSend / (1000 * 60 * 60))); // hours
+  };
+
+  const handleSendPasswordInvitation = async (student: Student) => {
+    try {
+      await sendInvitationMut.mutateAsync(student.id);
+      const newTimes = { ...invitationSentTimes, [student.id]: Date.now() };
+      setInvitationSentTimes(newTimes);
+      localStorage.setItem('studentInvitationSentTimes', JSON.stringify(newTimes));
+      setAlert({ type: 'success', message: `Password invitation email sent to ${student.email}` });
+    } catch (err: unknown) {
+      const errorMessage = extractErrorMessage(err);
+      setAlert({ type: 'error', message: errorMessage });
+    }
+  };
 
   const openCreateModal = () => {
     setOnboardingOpen(true);
@@ -288,6 +347,25 @@ const StudentsSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
+                        {student.status === 2 && (
+                          <Button
+                            type="button"
+                            variant={canSendInvitation(student.id) ? 'primary' : 'secondary'}
+                            onClick={() => handleSendPasswordInvitation(student)}
+                            disabled={!canSendInvitation(student.id) || sendInvitationMut.isPending}
+                            className={`text-xs px-2 py-1 ${
+                              !canSendInvitation(student.id) ? 'opacity-60 cursor-not-allowed' : ''
+                            }`}
+                            title={
+                              canSendInvitation(student.id)
+                                ? 'Send password invitation email'
+                                : `Can send again in ${getTimeUntilCanSend(student.id)} hour(s)`
+                            }
+                          >
+                            <Mail className="h-3 w-3 mr-1 inline" />
+                            {canSendInvitation(student.id) ? 'Send Invitation' : `${getTimeUntilCanSend(student.id)}h`}
+                          </Button>
+                        )}
                         <EditButton onClick={() => openEditModal(student)} />
                         <DeleteButton onClick={() => requestDelete(student)} />
                       </div>

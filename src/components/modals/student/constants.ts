@@ -18,7 +18,7 @@ export const initialStudentForm = {
   country: '',
   nationality: '',
   picture: '',
-  status: 1 as number,
+  status: 2 as number, // Pending - student must set password to become active
 };
 
 export const initialDiplomeForm = {

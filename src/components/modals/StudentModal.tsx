@@ -22,6 +22,7 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const [justSavedDiplome, setJustSavedDiplome] = useState(false);
   const [justSavedContact, setJustSavedContact] = useState(false);
   const {
+    studentId,
     studentForm,
     studentErrors,
     pictureFile,
@@ -161,6 +162,7 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             onSubmit={handlers.handleStudentSubmit}
             onCancel={onClose}
             isSubmitting={handlers.createStudentMut.isPending || handlers.updateStudentMut.isPending}
+            isEditMode={!!studentId}
           />
         );
 

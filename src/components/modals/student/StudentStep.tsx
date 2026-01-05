@@ -12,6 +12,7 @@ interface StudentStepProps {
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   isSubmitting: boolean;
+  isEditMode?: boolean;
 }
 
 const StudentStep: React.FC<StudentStepProps> = (props) => {

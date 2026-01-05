@@ -42,6 +42,17 @@ export const useDeleteStudent = () => {
   });
 };
 
+export const useSendPasswordInvitation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => studentsApi.sendPasswordInvitation(id),
+    onSuccess: (_, studentId) => {
+      qc.invalidateQueries({ queryKey: ['students'] });
+      qc.invalidateQueries({ queryKey: ['students', studentId] });
+    },
+  });
+};
+
 /**
  * Get student with all related data (diploma, contact, linkType) in one request
  * Returns singular objects (not arrays) - null if they don't exist
