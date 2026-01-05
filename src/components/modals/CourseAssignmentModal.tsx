@@ -518,7 +518,6 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                           </div>
                         </div>
                       )}
-                    >
                       {unassignedCourses.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
                           No available courses
@@ -629,7 +628,6 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                           </div>
                         </div>
                       )}
-                    >
                       {assignedCourses.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
                           No assigned courses
