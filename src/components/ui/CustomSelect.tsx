@@ -225,11 +225,13 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
         {/* Custom dropdown menu */}
         {isOpen && !disabled && (
-          <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+          <div className={`absolute z-[9999] w-full mt-1 bg-card border border-border rounded-md shadow-lg ${
+            options.length <= 5 ? 'max-h-none overflow-visible' : 'max-h-60 overflow-auto'
+          }`}>
             <ul
               ref={listRef}
               role="listbox"
-              className="py-1"
+              className="py-1 min-h-0"
             >
               {options.map((option, index) => {
                 const isSelected = String(option.value) === String(value);

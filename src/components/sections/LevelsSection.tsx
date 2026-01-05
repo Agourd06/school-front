@@ -11,6 +11,7 @@ import LevelModal from '../modals/LevelModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import { EditButton, DeleteButton, Button, Input, PdfActions } from '../ui';
+import { Info } from 'lucide-react';
 import type { Level } from '../../api/level';
 import type { Program } from '../../api/program';
 import type { Specialization } from '../../api/specialization';
@@ -126,6 +127,12 @@ const LevelsSection: React.FC = () => {
     [specializationsResp]
   );
 
+  // Get the selected specialization name
+  const selectedSpecialization = useMemo(() => {
+    if (!selectedSpecializationId || !specializationsResp?.data) return null;
+    return specializationsResp.data.find((s: Specialization) => s.id === selectedSpecializationId);
+  }, [selectedSpecializationId, specializationsResp]);
+
   // Sync filter with context when context changes
   useEffect(() => {
     if (selectedSpecializationId && !filters.specialization) {
@@ -216,7 +223,14 @@ const LevelsSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Levels</h1>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Levels
+              {selectedSpecialization && (
+                <span className="text-base font-normal text-gray-600 ml-2">
+                  ({selectedSpecialization.title})
+                </span>
+              )}
+            </h1>
             <p className="text-sm text-gray-500">Manage levels and their associated specializations.</p>
           </div>
           <div className="flex items-center gap-3">
@@ -312,10 +326,10 @@ const LevelsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  Specialization
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Specialization
+                  Title
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Level Number
@@ -351,8 +365,11 @@ const LevelsSection: React.FC = () => {
                   const specializationTitle = level.specialization?.title || `Specialization #${level.specialization_id}`;
                   return (
                     <tr key={level.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <span className="text-gray-600 font-normal">{specializationTitle}</span>
+                       
+                      </td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{level.title}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{specializationTitle}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         {level.level !== null && level.level !== undefined ? (
                           <span className="font-semibold text-gray-900">{level.level}</span>
@@ -378,9 +395,10 @@ const LevelsSection: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => openDescriptionModal(level)}
-                              className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50"
+                              className="inline-flex items-center justify-center rounded-md border border-green-200 p-1.5 text-green-600 hover:bg-green-50 transition-colors"
+                              title="View Details"
                             >
-                              Details
+                              <Info className="h-4 w-4" />
                             </button>
                           )}
                           <EditButton onClick={() => openEditModal(level)} />

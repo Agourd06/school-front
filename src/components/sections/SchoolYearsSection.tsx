@@ -9,7 +9,7 @@ import SchoolYearModal from '../modals/SchoolYearModal';
 import DeleteModal from '../modals/DeleteModal';
 import { EditButton, DeleteButton, Input, Button } from '../ui';
 import type { SchoolYear } from '../../api/schoolYear';
-import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import { STATUS_OPTIONS } from '../../constants/status';
 import { useSchoolYear } from '../../context/SchoolYearContext';
 
 const EMPTY_META = {
@@ -33,19 +33,12 @@ const lifecycleStatusFilterOptions: SearchSelectOption[] = [
   { value: 'completed', label: 'Completed' },
 ];
 
-const lifecycleStatusStyles: Record<string, string> = {
-  planned: 'bg-primary-badge',
-  ongoing: 'bg-yellow-100 text-yellow-800',
-  completed: 'bg-green-100 text-green-800',
+const lifecycleRowBgStyles: Record<string, string> = {
+  ongoing: 'bg-green-100 hover:bg-green-200',
+  planned: 'bg-orange-100 hover:bg-orange-200',
+  completed: 'bg-gray-200 hover:bg-gray-300',
 };
 
-const statusStyles: Record<number, string> = {
-  2: 'bg-yellow-100 text-yellow-800',
-  1: 'bg-green-100 text-green-800',
-  0: 'bg-gray-200 text-gray-700',
-  [-1]: 'bg-purple-100 text-purple-700',
-  [-2]: 'bg-red-100 text-red-700',
-};
 
 const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
@@ -278,10 +271,6 @@ const SchoolYearsSection: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   End Date
                 </th>
-             
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
-                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Lifecycle Status
                 </th>
@@ -293,44 +282,31 @@ const SchoolYearsSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
                     Loading school years…
                   </td>
                 </tr>
               ) : schoolYears.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
                     No school years found.
                   </td>
                 </tr>
               ) : (
                 schoolYears.map((schoolYear) => {
-                  const statusValue = typeof schoolYear.status === 'number' ? schoolYear.status : 0;
+                  const lifecycleStatus = schoolYear.lifecycle_status || 'planned';
+                  const rowBgClass = lifecycleRowBgStyles[lifecycleStatus] || 'bg-white hover:bg-gray-50';
                   return (
                     <tr
                       key={schoolYear.id}
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className={`${rowBgClass} cursor-pointer`}
                       onClick={(e) => handleRowClick(schoolYear, e)}
                     >
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">{schoolYear.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{formatDate(schoolYear.start_date)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{formatDate(schoolYear.end_date)}</td>
-                    
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            statusStyles[statusValue] ?? 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          {STATUS_VALUE_LABEL[statusValue] ?? `Status ${statusValue}`}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
-                            lifecycleStatusStyles[schoolYear.lifecycle_status || 'planned'] ?? 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize text-gray-700">
                           {schoolYear.lifecycle_status || 'planned'}
                         </span>
                       </td>

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input, Select, Button } from '../ui';
 import SearchSelect from '../inputs/SearchSelect';
 import { countriesApi } from '../../api/countries';
 import type { ContactFormData } from '../modals/student/types';
 import type { StudentLinkType } from '../../api/studentLinkType';
+import type { StudentContact } from '../../api/studentContact';
 import type { PaginatedResponse } from '../../types/api';
+import { Pencil } from 'lucide-react';
 
 interface StudentContactStepFormProps {
   form: ContactFormData;
@@ -20,6 +23,9 @@ interface StudentContactStepFormProps {
   justSaved?: boolean;
   onAddAnother?: () => void;
   onContinue?: () => void;
+  allContacts?: StudentContact[];
+  onEditContact?: (contact: StudentContact) => void;
+  currentContactId?: number;
 }
 
 const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
@@ -36,11 +42,18 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
   justSaved = false,
   onAddAnother,
   onContinue,
+  allContacts = [],
+  onEditContact,
+  currentContactId,
 }) => {
+  const navigate = useNavigate();
   const [countries, setCountries] = useState<Array<{ name: string }>>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
+  
+  const linkTypes = linkTypesData?.data || [];
+  const hasLinkTypes = linkTypes.length > 0;
 
   // Load countries on mount
   useEffect(() => {
@@ -85,6 +98,20 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
+      
+      {!hasLinkTypes && (
+        <div className="rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800">
+          <strong>Warning:</strong> No link types available. Please create a link type first in{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="font-medium text-orange-900 hover:text-orange-950 underline cursor-pointer transition-colors"
+          >
+            settings &gt; types &gt; link types
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Student"
@@ -131,18 +158,33 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
           value={form.phone}
           onChange={(e) => onFormChange('phone', e.target.value)}
         />
-        <Select
-          label="Link type"
-          value={form.studentlinktypeId}
-          onChange={(e) => onFormChange('studentlinktypeId', e.target.value ? Number(e.target.value) : '')}
-          options={[
-            { value: '', label: 'Select link type' },
-            ...((linkTypesData?.data || []).map((lt: StudentLinkType) => ({
-              value: lt.id,
-              label: lt.title,
-            })))
-          ]}
-        />
+        <div>
+          <Select
+            label="Link type"
+            value={form.studentlinktypeId}
+            onChange={(e) => onFormChange('studentlinktypeId', e.target.value ? Number(e.target.value) : '')}
+            options={[
+              { value: '', label: 'Select link type' },
+              ...(linkTypes.map((lt: StudentLinkType) => ({
+                value: lt.id,
+                label: lt.title,
+              })))
+            ]}
+          />
+          {hasLinkTypes && (
+            <p className="mt-1 text-xs text-gray-500">
+              To create a type:{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/settings')}
+                className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
+              >
+                settings
+              </button>
+              {' > types > link types'}
+            </p>
+          )}
+        </div>
       </div>
 
       <Input
@@ -182,6 +224,59 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
           Contact saved successfully!
         </div>
       ) : null}
+
+      {allContacts.length > 0 && (
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Existing Contacts</h3>
+          <div className="space-y-2">
+            {allContacts.map((contact) => {
+              // Find the link type from linkTypesData
+              const linkType = linkTypesData?.data?.find(
+                (lt) => lt.id === contact.studentlinktypeId
+              );
+              
+              return (
+                <div
+                  key={contact.id}
+                  className={`flex items-center justify-between p-3 rounded-md border ${
+                    currentContactId === contact.id
+                      ? 'border-primary bg-primary/5'
+                      : 'border-gray-200 bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex-1">
+                    <div className="font-medium text-sm text-gray-900">
+                      {contact.firstname} {contact.lastname}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {contact.email && <span>{contact.email}</span>}
+                      {contact.email && contact.phone && <span className="mx-1">•</span>}
+                      {contact.phone && <span>{contact.phone}</span>}
+                      {linkType && (
+                        <>
+                          {(contact.email || contact.phone) && <span className="mx-1">•</span>}
+                          <span>{linkType.title}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {onEditContact && (
+                    <button
+                      type="button"
+                      onClick={() => onEditContact(contact)}
+                      className="ml-3 p-1.5 text-gray-400 hover:text-primary transition-colors"
+                      title="Edit contact"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between space-x-3 pt-4">
         <Button
           type="button"

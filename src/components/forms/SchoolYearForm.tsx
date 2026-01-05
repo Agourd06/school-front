@@ -198,7 +198,7 @@ const SchoolYearForm: React.FC<SchoolYearFormProps> = ({
             { value: 'ongoing', label: 'Ongoing' },
             { value: 'completed', label: 'Completed' },
           ]}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+          className="shadow-sm  focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
 
         <Select

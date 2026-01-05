@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
@@ -54,6 +55,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
   studentOptions,
   linkTypes,
 }) => {
+  const navigate = useNavigate();
   // Track the initial data ID to prevent unnecessary resets
   const initialDataIdRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
@@ -279,6 +281,19 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
         />
       </div>
 
+      {linkTypes.length === 0 && (
+        <div className="rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800">
+          <strong>Warning:</strong> No link types available. Please create a link type first in{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/settings')}
+            className="font-medium text-orange-900 hover:text-orange-950 underline cursor-pointer transition-colors"
+          >
+            settings &gt; types &gt; link types
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Phone"
@@ -286,19 +301,34 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
           value={form.phone}
           onChange={handleChange}
         />
-        <Select
-          label="Link type"
-          name="studentlinktypeId"
-          value={form.studentlinktypeId}
-          onChange={handleChange}
-          options={[
-            { value: '', label: 'None' },
-            ...linkTypes.map((lt) => ({
-              value: lt.id,
-              label: lt.title,
-            })),
-          ]}
-        />
+        <div>
+          <Select
+            label="Link type"
+            name="studentlinktypeId"
+            value={form.studentlinktypeId}
+            onChange={handleChange}
+            options={[
+              { value: '', label: 'None' },
+              ...linkTypes.map((lt) => ({
+                value: lt.id,
+                label: lt.title,
+              })),
+            ]}
+          />
+          {linkTypes.length > 0 && (
+            <p className="mt-1 text-xs text-gray-500">
+              To create a type:{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/settings')}
+                className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
+              >
+                settings
+              </button>
+              {' > types > link types'}
+            </p>
+          )}
+        </div>
         <Select
           label="Status"
           name="status"

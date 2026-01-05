@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { validateRequired, validatePositiveNumber } from '../modals/validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
@@ -37,6 +38,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const navigate = useNavigate();
   const [form, setForm] = useState<ClassRoomFormData>({
     code: '',
     title: '',
@@ -101,49 +103,64 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
         </div>
       )}
 
-      <Input
-        label="Code"
-        name="code"
-        value={form.code}
-        onChange={handleChange}
-        error={errors.code}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
-
-      <Input
-        label="Title"
-        name="title"
-        value={form.title}
-        onChange={handleChange}
-        error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
-
-      <Input
-        label="Capacity"
-        type="number"
-        name="capacity"
-        value={form.capacity}
-        onChange={handleChange}
-        error={errors.capacity}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
-          label="Type"
-          name="classroom_type_id"
-          value={form.classroom_type_id === '' || form.classroom_type_id === null || form.classroom_type_id === 0 ? '' : String(form.classroom_type_id)}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Input
+          label="Code"
+          name="code"
+          value={form.code}
           onChange={handleChange}
-          options={[
-            { value: '', label: 'No type' },
-            ...sortedClassroomTypes.map((t) => ({
-              value: String(t.id),
-              label: t.title,
-            })),
-          ]}
+          error={errors.code}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
+
+        <Input
+          label="Title"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+
+        <Input
+          label="Capacity"
+          type="number"
+          name="capacity"
+          value={form.capacity}
+          onChange={handleChange}
+          error={errors.capacity}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <Select
+            label="Type"
+            name="classroom_type_id"
+            value={form.classroom_type_id === '' || form.classroom_type_id === null || form.classroom_type_id === 0 ? '' : String(form.classroom_type_id)}
+            onChange={handleChange}
+            options={[
+              { value: '', label: 'No type' },
+              ...sortedClassroomTypes.map((t) => ({
+                value: String(t.id),
+                label: t.title,
+              })),
+            ]}
+            className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            To create a type:{' '}
+            <button
+              type="button"
+              onClick={() => navigate('/settings')}
+              className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
+            >
+              settings
+            </button>
+            {' > types > class room type'}
+          </p>
+        </div>
         <Select
           label="Status"
           name="status"

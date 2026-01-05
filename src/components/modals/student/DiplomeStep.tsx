@@ -1,6 +1,7 @@
 import React from 'react';
 import StudentDiplomeStepForm from '../../forms/StudentDiplomeStepForm';
 import type { DiplomeFormData } from './types';
+import type { StudentDiplome } from '../../../api/studentDiplome';
 
 interface DiplomeStepProps {
   form: DiplomeFormData;
@@ -21,6 +22,9 @@ interface DiplomeStepProps {
   justSaved?: boolean;
   onAddAnother?: () => void;
   onContinue?: () => void;
+  allDiplomes?: StudentDiplome[];
+  onEditDiplome?: (diplome: StudentDiplome) => void;
+  currentDiplomeId?: number;
 }
 
 const DiplomeStep: React.FC<DiplomeStepProps> = (props) => {

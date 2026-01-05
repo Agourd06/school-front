@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useStudentDetails } from '../../../hooks/useStudents';
 import { useStudentLinkTypes } from '../../../hooks/useStudentLinkTypes';
+import { useStudentContacts } from '../../../hooks/useStudentContacts';
+import { useStudentDiplomes } from '../../../hooks/useStudentDiplomes';
 import { initialStudentForm, initialDiplomeForm, initialContactForm } from './constants';
 import type { StudentFormData, DiplomeFormData, ContactFormData } from './types';
 import type { StudentDiplome } from '../../../api/studentDiplome';
@@ -61,6 +63,10 @@ interface StudentModalContextValue {
   } | null | undefined;
   refetchStudentDetails: () => void;
   linkTypesData: { data: StudentLinkType[]; meta: { page?: number; limit?: number; total?: number; totalPages?: number; hasNext?: boolean; hasPrevious?: boolean } } | null | undefined;
+  allContacts: StudentContact[];
+  allDiplomes: StudentDiplome[];
+  refetchContacts: () => void;
+  refetchDiplomes: () => void;
 
   // Computed values
   studentName: string;
@@ -100,10 +106,33 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
 
   const { data: studentDetailsData, refetch: refetchStudentDetailsRaw } = useStudentDetails(studentId || 0);
   const { data: linkTypesData } = useStudentLinkTypes({ page: 1, limit: 100 });
+  const { data: contactsData, refetch: refetchContactsRaw } = useStudentContacts({ 
+    page: 1, 
+    limit: 100 
+  });
+  const { data: diplomesData, refetch: refetchDiplomesRaw } = useStudentDiplomes({ 
+    student_id: studentId || undefined, 
+    page: 1, 
+    limit: 100 
+  });
 
   const refetchStudentDetails = () => {
     void refetchStudentDetailsRaw();
   };
+
+  const refetchContacts = () => {
+    void refetchContactsRaw();
+  };
+
+  const refetchDiplomes = () => {
+    void refetchDiplomesRaw();
+  };
+
+  // Filter contacts by student_id on the frontend since the API type doesn't include it
+  const allContacts = (contactsData?.data || []).filter(
+    (contact) => !studentId || contact.student_id === studentId
+  );
+  const allDiplomes = diplomesData?.data || [];
 
   // Update studentId when initialStudentId changes
   useEffect(() => {
@@ -234,6 +263,10 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
     studentDetailsData,
     refetchStudentDetails,
     linkTypesData,
+    allContacts,
+    allDiplomes,
+    refetchContacts,
+    refetchDiplomes,
     studentName,
     isEditMode,
   };

@@ -248,6 +248,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label="Lifecycle Status"
+          name="lifecycle_status"
           value={lifecycleStatus}
           onChange={(e) => setLifecycleStatus(e.target.value as 'planned' | 'ongoing' | 'completed')}
           options={[
@@ -255,7 +256,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
             { value: 'ongoing', label: 'Ongoing' },
             { value: 'completed', label: 'Completed' },
           ]}
-          className="shadow-sm appearance-none focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
 
         <Select

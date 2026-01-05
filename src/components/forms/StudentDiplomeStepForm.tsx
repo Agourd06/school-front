@@ -5,6 +5,8 @@ import { Input, Select, Button, FileInput } from '../ui';
 import SearchSelect from '../inputs/SearchSelect';
 import { countriesApi } from '../../api/countries';
 import type { DiplomeFormData } from '../modals/student/types';
+import type { StudentDiplome } from '../../api/studentDiplome';
+import { Pencil } from 'lucide-react';
 
 interface StudentDiplomeStepFormProps {
   form: DiplomeFormData;
@@ -25,6 +27,9 @@ interface StudentDiplomeStepFormProps {
   justSaved?: boolean;
   onAddAnother?: () => void;
   onContinue?: () => void;
+  allDiplomes?: StudentDiplome[];
+  onEditDiplome?: (diplome: StudentDiplome) => void;
+  currentDiplomeId?: number;
 }
 
 const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
@@ -46,6 +51,9 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
   justSaved = false,
   onAddAnother,
   onContinue,
+  allDiplomes = [],
+  onEditDiplome,
+  currentDiplomeId,
 }) => {
   const [previewUrl1, setPreviewUrl1] = useState<string | null>(null);
   const [previewUrl2, setPreviewUrl2] = useState<string | null>(null);
@@ -256,6 +264,52 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
           Diplome saved successfully!
         </div>
       ) : null}
+
+      {allDiplomes.length > 0 && (
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">Existing Diplomes</h3>
+          <div className="space-y-2">
+            {allDiplomes.map((diplome) => (
+              <div
+                key={diplome.id}
+                className={`flex items-center justify-between p-3 rounded-md border ${
+                  currentDiplomeId === diplome.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-gray-200 bg-white hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex-1">
+                  <div className="font-medium text-sm text-gray-900">
+                    {diplome.title} {diplome.school && `— ${diplome.school}`}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {diplome.diplome && <span>{diplome.diplome}</span>}
+                    {diplome.diplome && diplome.annee && <span className="mx-1">•</span>}
+                    {diplome.annee && <span>Year: {diplome.annee}</span>}
+                    {(diplome.city || diplome.country) && (
+                      <>
+                        {(diplome.diplome || diplome.annee) && <span className="mx-1">•</span>}
+                        <span>{diplome.city || ''}{diplome.city && diplome.country ? ', ' : ''}{diplome.country || ''}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {onEditDiplome && (
+                  <button
+                    type="button"
+                    onClick={() => onEditDiplome(diplome)}
+                    className="ml-3 p-1.5 text-gray-400 hover:text-primary transition-colors"
+                    title="Edit diplome"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between space-x-3 pt-4">
         <Button
           type="button"

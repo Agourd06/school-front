@@ -6,6 +6,7 @@ import { EditButton, DeleteButton, Button, PdfActions } from '../ui';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
+import { Info } from 'lucide-react';
 import type { Program } from '../../api/program';
 
 const EMPTY_META = {
@@ -271,9 +272,10 @@ const ProgramsSection: React.FC = () => {
                                 e.stopPropagation();
                                 openDescriptionModal(program);
                               }}
-                              className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50"
+                              className="inline-flex items-center justify-center rounded-md border border-green-200 p-1.5 text-green-600 hover:bg-green-50 transition-colors"
+                              title="View Details"
                             >
-                              Details
+                              <Info className="h-4 w-4" />
                             </button>
                           )}
                           <EditButton

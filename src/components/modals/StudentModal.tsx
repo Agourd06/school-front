@@ -35,11 +35,17 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     currentContact,
     studentDetailsData,
     linkTypesData,
+    allContacts,
+    allDiplomes,
+    refetchContacts,
+    refetchDiplomes,
     studentName,
     setDiplomeForm,
     setContactForm,
     setDiplomeFile1,
     setDiplomeFile2,
+    setCurrentDiplome,
+    setCurrentContact,
     refetchStudentDetails,
   } = useStudentModalContext();
 
@@ -65,38 +71,79 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   const handleDiplomeSubmitWrapper = async (e: React.FormEvent) => {
     await handlers.handleDiplomeSubmit(e, () => {
       setJustSavedDiplome(true);
+      refetchDiplomes(); // Refetch to update the list
     });
   };
 
   const handleDiplomeAddAnother = () => {
     handlers.resetDiplomeForm();
+    setCurrentDiplome(null);
+    setDiplomeFile1(null);
+    setDiplomeFile2(null);
     setJustSavedDiplome(false);
   };
 
   const handleDiplomeContinue = async () => {
     setJustSavedDiplome(false);
-    // Refetch student details before continuing to get latest data
+    // Refetch student details and diplomes before continuing to get latest data
     refetchStudentDetails();
+    refetchDiplomes();
     setStepIndex(2);
+  };
+
+  const handleEditDiplome = (diplome: typeof allDiplomes[0]) => {
+    setCurrentDiplome(diplome);
+    setDiplomeForm({
+      title: diplome.title || '',
+      school: diplome.school || '',
+      diplome: diplome.diplome || '',
+      annee: diplome.annee ? String(diplome.annee) : '',
+      country: diplome.country || '',
+      city: diplome.city || '',
+      status: diplome.status || 1,
+    });
+    setDiplomeFile1(null);
+    setDiplomeFile2(null);
+    setJustSavedDiplome(false);
   };
 
   // Handlers for contact "Add Another" functionality
   const handleContactSubmitWrapper = async (e: React.FormEvent) => {
     await handlers.handleContactSubmit(e, () => {
       setJustSavedContact(true);
+      refetchContacts(); // Refetch to update the list
     });
   };
 
   const handleContactAddAnother = () => {
     handlers.resetContactForm();
+    setCurrentContact(null);
     setJustSavedContact(false);
   };
 
   const handleContactContinue = async () => {
     setJustSavedContact(false);
-    // Refetch student details before continuing to get latest data
+    // Refetch student details and contacts before continuing to get latest data
     refetchStudentDetails();
+    refetchContacts();
     onClose();
+  };
+
+  const handleEditContact = (contact: typeof allContacts[0]) => {
+    setCurrentContact(contact);
+    setContactForm({
+      firstname: contact.firstname || '',
+      lastname: contact.lastname || '',
+      birthday: contact.birthday || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      adress: contact.adress || '',
+      city: contact.city || '',
+      country: contact.country || '',
+      studentlinktypeId: contact.studentlinktypeId ?? '',
+      status: contact.status || 1,
+    });
+    setJustSavedContact(false);
   };
 
   // Render step content based on current step
@@ -124,8 +171,8 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             errors={diplomeErrors}
             diplomeFile1={diplomeFile1}
             diplomeFile2={diplomeFile2}
-            currentDiplomePicture1={studentDetailsData?.diploma?.diplome_picture_1}
-            currentDiplomePicture2={studentDetailsData?.diploma?.diplome_picture_2}
+            currentDiplomePicture1={currentDiplome?.diplome_picture_1 || studentDetailsData?.diploma?.diplome_picture_1}
+            currentDiplomePicture2={currentDiplome?.diplome_picture_2 || studentDetailsData?.diploma?.diplome_picture_2}
             studentName={studentName}
             onFormChange={(field, value) => setDiplomeForm({ ...diplomeForm, [field]: value })}
             onFile1Change={setDiplomeFile1}
@@ -138,6 +185,9 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             justSaved={justSavedDiplome}
             onAddAnother={handleDiplomeAddAnother}
             onContinue={handleDiplomeContinue}
+            allDiplomes={allDiplomes}
+            onEditDiplome={handleEditDiplome}
+            currentDiplomeId={currentDiplome?.id}
           />
         );
 
@@ -157,6 +207,9 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             justSaved={justSavedContact}
             onAddAnother={handleContactAddAnother}
             onContinue={handleContactContinue}
+            allContacts={allContacts}
+            onEditContact={handleEditContact}
+            currentContactId={currentContact?.id}
           />
         );
 

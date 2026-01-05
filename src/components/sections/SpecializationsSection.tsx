@@ -10,6 +10,7 @@ import SpecializationModal from '../modals/SpecializationModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import { EditButton, DeleteButton, Button, Input, PdfActions } from '../ui';
+import { Info } from 'lucide-react';
 import type { Specialization } from '../../api/specialization';
 import type { Program } from '../../api/program';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
@@ -109,6 +110,12 @@ const SpecializationsSection: React.FC = () => {
     [programsResp]
   );
 
+  // Get the selected program name
+  const selectedProgram = useMemo(() => {
+    if (!selectedProgramId || !programsResp?.data) return null;
+    return programsResp.data.find((p: Program) => p.id === selectedProgramId);
+  }, [selectedProgramId, programsResp]);
+
   // Sync filter with context when context changes
   useEffect(() => {
     if (selectedProgramId && !filters.program) {
@@ -202,7 +209,14 @@ const SpecializationsSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Specializations</h1>
+            <h1 className="text-xl font-semibold text-gray-900">
+              Specializations
+              {selectedProgram && (
+                <span className="text-base font-normal text-gray-600 ml-2">
+                  ({selectedProgram.title})
+                </span>
+              )}
+            </h1>
             <p className="text-sm text-gray-500">Manage specializations and their associated programs.</p>
           </div>
           <div className="flex items-center gap-3">
@@ -288,10 +302,10 @@ const SpecializationsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  Program
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Program
+                  Title
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
@@ -328,8 +342,11 @@ const SpecializationsSection: React.FC = () => {
                       className="hover:bg-gray-50 cursor-pointer"
                       onClick={(e) => handleRowClick(spec, e)}
                     >
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{spec.title}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{programTitle}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <span className="text-gray-600 font-normal">{programTitle}</span>
+                        
+                      </td>
+                      <td className="px-4 py-3 text-sm font-normal text-gray-600">{spec.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -363,9 +380,10 @@ const SpecializationsSection: React.FC = () => {
                                 e.stopPropagation();
                                 openDescriptionModal(spec);
                               }}
-                              className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50"
+                              className="inline-flex items-center justify-center rounded-md border border-green-200 p-1.5 text-green-600 hover:bg-green-50 transition-colors"
+                              title="View Details"
                             >
-                              Details
+                              <Info className="h-4 w-4" />
                             </button>
                           )}
                           <EditButton

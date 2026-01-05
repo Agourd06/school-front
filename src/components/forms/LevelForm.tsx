@@ -225,16 +225,15 @@ const LevelForm: React.FC<LevelFormProps> = ({
         )}
       </div>
 
-      <Input
-        label="Title"
-        name="title"
-        value={form.title}
-        onChange={handleChange}
-        error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Input
+          label="Title"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
         <Input
           label="Level number"
           name="level"

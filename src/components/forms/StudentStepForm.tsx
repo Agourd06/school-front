@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useId } from 'react';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
-import { Input, Select, FileInput, Button } from '../ui';
+import { Input, Select, Button } from '../ui';
 import SearchSelect from '../inputs/SearchSelect';
 import { countriesApi } from '../../api/countries';
 import type { StudentFormData } from '../modals/student/types';
@@ -107,8 +107,8 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6">
-        <div className="relative mx-auto sm:mx-0">
+      <div className="flex items-center gap-4">
+        <div className="relative">
           {previewUrl ? (
             <img
               src={previewUrl}
@@ -125,35 +125,21 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           )}
           <label
             htmlFor={pictureInputId}
-            className="absolute bottom-0 right-0 inline-flex cursor-pointer items-center rounded-full bg-white/95 px-2 py-1 text-xs font-semibold text-primary shadow"
+            className="absolute bottom-0 right-0 inline-flex cursor-pointer items-center rounded-full bg-white/95 px-2 py-1 text-xs font-semibold text-primary shadow hover:bg-white transition-colors"
           >
             Change
           </label>
-        </div>
-        <div className="mt-3 sm:mt-0 flex-1">
-          <FileInput
-            label="Upload new picture"
-            name="picture"
+          <input
+            id={pictureInputId}
+            type="file"
             accept="image/*"
-            onChange={(file) => {
-              if (file) {
-                // Create a synthetic event object that matches ChangeEvent<HTMLInputElement>
-                const syntheticEvent = {
-                  target: {
-                    files: [file],
-                    value: '',
-                  },
-                  currentTarget: {} as HTMLInputElement,
-                } as unknown as React.ChangeEvent<HTMLInputElement>;
-                onPictureChange(syntheticEvent);
-              }
-            }}
-            currentFileUrl={previewUrl || undefined}
-            error={errors.picture}
-            helperText="JPG, PNG, GIF, WEBP up to 2MB."
-            className="rounded-md shadow-sm focus:border-primary focus:ring-primary"
+            onChange={onPictureChange}
+            className="hidden"
           />
         </div>
+        {errors.picture && (
+          <p className="text-sm text-danger">{errors.picture}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -213,12 +199,20 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
         />
       </div>
 
-      <Input
-        label="Address"
-        name="address"
-        value={form.address}
-        onChange={onChange}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Address"
+          name="address"
+          value={form.address}
+          onChange={onChange}
+        />
+        <Input
+          label="Nationality"
+          name="nationality"
+          value={form.nationality}
+          onChange={onChange}
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SearchSelect
@@ -246,23 +240,18 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
         />
       </div>
 
-      <Input
-        label="Nationality"
-        name="nationality"
-        value={form.nationality}
-        onChange={onChange}
-      />
-
-      <Select
-        label="Status"
-        name="status"
-        value={form.status}
-        onChange={onChange}
-        options={STATUS_OPTIONS_FORM.map((opt) => ({
-          value: opt.value,
-          label: opt.label,
-        }))}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Select
+          label="Status"
+          name="status"
+          value={form.status}
+          onChange={onChange}
+          options={STATUS_OPTIONS_FORM.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+        />
+      </div>
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button

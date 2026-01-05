@@ -112,26 +112,28 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
         </div>
       )}
 
-      <Input
-        label="Title"
-        name="title"
-        value={form.title}
-        onChange={handleChange}
-        error={errors.title}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Title"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
 
-      <Select
-        label="Status"
-        name="status"
-        value={form.status}
-        onChange={handleChange}
-        options={STATUS_OPTIONS_FORM.map((opt) => ({
-          value: opt.value,
-          label: opt.label,
-        }))}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
+        <Select
+          label="Status"
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          options={STATUS_OPTIONS_FORM.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+      </div>
 
       {/* PDF Upload */}
       <PdfFileInput

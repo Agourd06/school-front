@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 import { validateRequired } from '../modals/validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
-import { Input, Select, FileInput, Button } from '../ui';
+import { getFileUrl } from '../../utils/apiConfig';
+import { Input, Select, Button } from '../ui';
 
 export interface TeacherFormData {
   gender: string;
@@ -74,6 +75,8 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pictureFile, setPictureFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const pictureInputId = useId();
 
   useEffect(() => {
     // Get the current initialData ID (or null if no initialData)
@@ -149,9 +152,11 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const handlePictureChange = (file: File | null) => {
+  const handlePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
     if (!file) {
       setPictureFile(null);
+      setPreviewUrl(null);
       return;
     }
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -165,7 +170,23 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
     }
     setErrors((prev) => ({ ...prev, picture: '' }));
     setPictureFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
+
+  // Show preview of existing picture
+  useEffect(() => {
+    if (initialData?.picture && !pictureFile) {
+      setPreviewUrl(getFileUrl(initialData.picture));
+    } else if (!pictureFile) {
+      setPreviewUrl(null);
+    }
+  }, [initialData?.picture, pictureFile]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -193,15 +214,42 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
         </div>
       )}
 
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          {previewUrl ? (
+            <img
+              src={previewUrl}
+              alt="Teacher picture preview"
+              className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-primary-light"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-border bg-surface text-xs font-medium text-muted">
+              Add photo
+            </div>
+          )}
+          <label
+            htmlFor={pictureInputId}
+            className="absolute bottom-0 right-0 inline-flex cursor-pointer items-center rounded-full bg-white/95 px-2 py-1 text-xs font-semibold text-primary shadow hover:bg-white transition-colors"
+          >
+            Change
+          </label>
+          <input
+            id={pictureInputId}
+            type="file"
+            accept="image/*"
+            onChange={handlePictureChange}
+            className="hidden"
+          />
+        </div>
+        {errors.picture && (
+          <p className="text-sm text-danger">{errors.picture}</p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FileInput
-          label="Picture"
-          name="picture"
-          accept="image/*"
-          onChange={handlePictureChange}
-          error={errors.picture}
-          className="text-sm"
-        />
         <Input
           label="Email"
           name="email"
@@ -209,6 +257,13 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           value={form.email}
           onChange={handleChange}
           error={errors.email}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+        <Input
+          label="Phone"
+          name="phone"
+          value={form.phone}
+          onChange={handleChange}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
@@ -232,7 +287,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label="Gender"
           name="gender"
@@ -253,22 +308,17 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           onChange={handleChange}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Phone"
-          name="phone"
-          value={form.phone}
+          label="Address"
+          name="address"
+          value={form.address}
           onChange={handleChange}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
-
-      <Input
-        label="Address"
-        name="address"
-        value={form.address}
-        onChange={handleChange}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input

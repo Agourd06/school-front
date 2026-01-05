@@ -2,6 +2,7 @@ import React from 'react';
 import StudentContactStepForm from '../../forms/StudentContactStepForm';
 import type { ContactFormData } from './types';
 import type { StudentLinkType } from '../../../api/studentLinkType';
+import type { StudentContact } from '../../../api/studentContact';
 import type { PaginatedResponse } from '../../../types/api';
 
 interface ContactStepProps {
@@ -18,6 +19,9 @@ interface ContactStepProps {
   justSaved?: boolean;
   onAddAnother?: () => void;
   onContinue?: () => void;
+  allContacts?: StudentContact[];
+  onEditContact?: (contact: StudentContact) => void;
+  currentContactId?: number;
 }
 
 const ContactStep: React.FC<ContactStepProps> = (props) => {
