@@ -38,6 +38,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   const [assignedCourses, setAssignedCourses] = useState<AssignmentCourse[]>([]);
   const [unassignedCourses, setUnassignedCourses] = useState<AssignmentCourse[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<number | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false); // Global assignment state
   const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
 
   // Edit course assignment (coefficient and volume)
@@ -68,8 +69,8 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   const [moduleDescriptionModal, setModuleDescriptionModal] = useState(false);
   const updateModule = useUpdateModule();
 
-  // Check if any mutation is pending
-  const isAnyMutationPending = addCourseToModule.isPending || removeCourseFromModule.isPending || reorderCourseInModule.isPending || updateModule.isPending;
+  // Check if any mutation is pending or if we're currently assigning
+  const isAnyMutationPending = isAssigning || addCourseToModule.isPending || removeCourseFromModule.isPending || reorderCourseInModule.isPending || updateModule.isPending;
 
   // Initialize local state when data changes
   const normalizeAssigned = (items: AssignmentCourse[] = []) =>
@@ -127,6 +128,14 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       source.droppableId === "unassigned" &&
       destination.droppableId === "assigned"
     ) {
+      // Prevent multiple simultaneous assignments
+      if (isAssigning) {
+        return;
+      }
+
+      // Set global assignment state to prevent other assignments
+      setIsAssigning(true);
+      
       // Optimistically update the UI first
       setUnassignedCourses((prev) => prev.filter((c) => c.id !== courseId));
       updateAssignedState((prev) => [
@@ -150,8 +159,10 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
         });
         // Reset sync state - volume needs to be synced again
         setLastSyncedVolume(null);
-        // Wait a bit for cache invalidation to propagate, then refetch
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Wait for cache invalidation to propagate, then refetch
+        // Increased timeout for production environments
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        // Wait for refetch to complete before allowing new assignments
         await refetchAssignments();
       } catch (err: unknown) {
         const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
@@ -163,6 +174,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
           // Just refetch to ensure UI is in sync, don't show error
           await refetchAssignments();
           setLoadingItemId(null);
+          setIsAssigning(false);
           return;
         }
 
@@ -183,6 +195,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
         }
       } finally {
         setLoadingItemId(null);
+        setIsAssigning(false);
       }
     } else if (
       source.droppableId === "unassigned" &&
@@ -491,11 +504,20 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`min-h-[300px] p-4 border-2 border-dashed rounded-lg transition-colors ${
+                      className={`min-h-[300px] p-4 border-2 border-dashed rounded-lg transition-colors relative ${
                         snapshot.isDraggingOver
                           ? 'border-primary bg-primary-light'
                           : 'border-gray-300 bg-gray-50'
                       } ${isAnyMutationPending ? 'opacity-60 pointer-events-none' : ''}`}
+                    >
+                      {isAssigning && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-lg z-20">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                            <span className="text-sm text-gray-600">Assigning course...</span>
+                          </div>
+                        </div>
+                      )}
                     >
                       {unassignedCourses.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
@@ -593,11 +615,20 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`min-h-[300px] p-4 border-2 border-dashed rounded-lg transition-colors ${
+                      className={`min-h-[300px] p-4 border-2 border-dashed rounded-lg transition-colors relative ${
                         snapshot.isDraggingOver
                           ? 'border-green-400 bg-green-50'
                           : 'border-gray-300 bg-gray-50'
                       } ${isAnyMutationPending ? 'opacity-60 pointer-events-none' : ''}`}
+                    >
+                      {isAssigning && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-lg z-20">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                            <span className="text-sm text-gray-600">Assigning course...</span>
+                          </div>
+                        </div>
+                      )}
                     >
                       {assignedCourses.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
