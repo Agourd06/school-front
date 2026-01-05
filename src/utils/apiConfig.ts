@@ -37,7 +37,11 @@ export const getFileUrl = (filePath: string): string => {
   
   // Use the base URL without /api prefix for file paths
   // Files are typically served from the root, not from /api
-  const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+  // Strip /api from the end if it exists (handles production URLs that already include /api)
+  let baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+  if (baseUrl.endsWith('/api')) {
+    baseUrl = baseUrl.slice(0, -4); // Remove '/api' from the end
+  }
   const path = filePath.startsWith('/') ? filePath : `/${filePath}`;
   return `${baseUrl}${path}`;
 };
