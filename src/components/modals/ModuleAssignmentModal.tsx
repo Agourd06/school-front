@@ -235,8 +235,20 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
   const handleConfirmDelete = async () => {
     if (!moduleToDelete) return;
 
-    // Optimistically remove from UI
+    // Store the module data for rollback
+    const moduleData = moduleToDelete;
+
+    // Optimistically update UI: remove from assigned and add to unassigned
     updateAssignedState((prev) => prev.filter((m) => m.id !== moduleToDelete.id));
+    setUnassignedModules((prev) => {
+      // Check if module is already in unassigned list to avoid duplicates
+      if (prev.some((m) => m.id === moduleToDelete.id)) {
+        return prev;
+      }
+      // Remove assignment-specific fields when moving back to unassigned
+      const { assignment_created_at, assignment_volume, assignment_coefficient, tri, ...moduleWithoutAssignment } = moduleData;
+      return [...prev, moduleWithoutAssignment];
+    });
 
     try {
       setLoadingItemId(moduleToDelete.id);
@@ -245,15 +257,17 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
         courseId,
         moduleId: moduleToDelete.id,
       });
-      // Wait a bit for cache invalidation to propagate, then refetch
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait for cache invalidation to propagate, then refetch
+      // Increased timeout for production environments
+      await new Promise((resolve) => setTimeout(resolve, 300));
       await refetchAssignments();
       setDeleteModalOpen(false);
       setModuleToDelete(null);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      // Rollback on error
-      updateAssignedState((prev) => [...prev, moduleToDelete]);
+      // Rollback on error: remove from unassigned and add back to assigned
+      setUnassignedModules((prev) => prev.filter((m) => m.id !== moduleToDelete.id));
+      updateAssignedState((prev) => [...prev, moduleData]);
       console.error("Failed to remove module from course:", error);
       const errorMessage =
         error?.response?.data?.message ||
@@ -391,7 +405,27 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
       title={
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
-            <span>Course to module: Manage Modules for Course ( {courseTitle} )</span>
+            <div className="flex items-center gap-2">
+              <span>Course to module: Manage Modules for Course ( {courseTitle} )</span>
+              {/* Display course volume and coefficient if available */}
+              {(course?.volume !== null && course?.volume !== undefined) ||
+              (course?.coefficient !== null && course?.coefficient !== undefined) ? (
+                <span className="text-xs text-gray-600">
+                  (
+                  {course?.volume !== null && course?.volume !== undefined && (
+                    <span>Volume: <span className="font-medium text-gray-900">{course.volume}</span></span>
+                  )}
+                  {course?.volume !== null && course?.volume !== undefined && 
+                   course?.coefficient !== null && course?.coefficient !== undefined && (
+                    <span className="mx-1">•</span>
+                  )}
+                  {course?.coefficient !== null && course?.coefficient !== undefined && (
+                    <span>Coefficient: <span className="font-medium text-gray-900">{course.coefficient}</span></span>
+                  )}
+                  )
+                </span>
+              ) : null}
+            </div>
             {hasCourseDescription && (
               <button
                 type="button"
@@ -517,7 +551,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
                                       <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
                                     </div>
                                   )}
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 flex-1">
                                     <svg
                                       className="w-4 h-4 text-gray-400 cursor-pointer hover:text-primary flex-shrink-0"
                                       fill="none"
@@ -534,9 +568,24 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
                                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                       />
                                     </svg>
-                                    <span className="text-sm font-medium text-gray-900">
-                                      {module.title}
-                                    </span>
+                                    <div className="flex-1">
+                                      <span className="text-sm font-medium text-gray-900">
+                                        {module.title}
+                                      </span>
+                                      {/* Always display volume and coefficient section */}
+                                      <div className="mt-1 flex items-center gap-4 text-xs text-gray-600">
+                                        <span>
+                                          Volume: <span className="font-medium text-gray-900">
+                                            {typeof module.volume === 'number' ? module.volume : '—'}
+                                          </span>
+                                        </span>
+                                        <span>
+                                          Coefficient: <span className="font-medium text-gray-900">
+                                            {typeof module.coefficient === 'number' ? module.coefficient : '—'}
+                                          </span>
+                                        </span>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               )}

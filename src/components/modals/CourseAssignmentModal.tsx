@@ -224,8 +224,20 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   const handleConfirmDelete = async () => {
     if (!courseToDelete) return;
 
-    // Optimistically remove from UI
+    // Store the course data for rollback
+    const courseData = courseToDelete;
+
+    // Optimistically update UI: remove from assigned and add to unassigned
     updateAssignedState((prev) => prev.filter((c) => c.id !== courseToDelete.id));
+    setUnassignedCourses((prev) => {
+      // Check if course is already in unassigned list to avoid duplicates
+      if (prev.some((c) => c.id === courseToDelete.id)) {
+        return prev;
+      }
+      // Remove assignment-specific fields when moving back to unassigned
+      const { assignment_created_at, assignment_volume, assignment_coefficient, tri, ...courseWithoutAssignment } = courseData;
+      return [...prev, courseWithoutAssignment];
+    });
 
     try {
       setLoadingItemId(courseToDelete.id);
@@ -236,15 +248,17 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       });
       // Reset sync state - volume needs to be synced again
       setLastSyncedVolume(null);
-      // Wait a bit for cache invalidation to propagate, then refetch
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait for cache invalidation to propagate, then refetch
+      // Increased timeout for production environments
+      await new Promise((resolve) => setTimeout(resolve, 300));
       await refetchAssignments();
       setDeleteModalOpen(false);
       setCourseToDelete(null);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      // Rollback on error
-      updateAssignedState((prev) => [...prev, courseToDelete]);
+      // Rollback on error: remove from unassigned and add back to assigned
+      setUnassignedCourses((prev) => prev.filter((c) => c.id !== courseToDelete.id));
+      updateAssignedState((prev) => [...prev, courseData]);
       console.error("Failed to remove course from module:", error);
       const errorMessage =
         error?.response?.data?.message ||
@@ -588,7 +602,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900">
-                    {moduleTitle} assigned to <span className="font-medium text-red-600">{assignedCourses.length}</span> Courses
+                    {moduleTitle} has <span className="font-medium text-red-600">{assignedCourses.length}</span> {assignedCourses.length === 1 ? 'course' : 'courses'} assigned
                   </h3>
                   <button
                     type="button"
