@@ -8,6 +8,7 @@ import type { Profile } from '../types/profile';
 interface Company {
   id: number;
   name: string;
+  logo?: string | null;
   email?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
@@ -56,6 +57,7 @@ const normalizeCompany = (company?: Company | null | Record<string, unknown>): C
   return {
     id: raw.id,
     name: raw.name,
+    logo: raw.logo ?? null,
     email: raw.email ?? null,
     primaryColor: raw.primaryColor ?? raw.primary_color ?? null,
     secondaryColor: raw.secondaryColor ?? raw.secondary_color ?? null,

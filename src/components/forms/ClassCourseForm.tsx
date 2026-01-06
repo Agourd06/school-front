@@ -65,8 +65,44 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isVolumeManual, setIsVolumeManual] = useState(false);
   const selectedModuleId = form.module_id ? Number(form.module_id) : undefined;
   const { data: moduleCourses = [], isLoading: moduleCoursesLoading } = useModuleCourses(selectedModuleId);
+
+  // Calculate volume automatically based on duration and weekly frequency
+  useEffect(() => {
+    if (!isVolumeManual) {
+      const durationNum = Number(form.duration);
+      
+      if (!Number.isNaN(durationNum) && durationNum > 0) {
+        let calculatedVolume = 0;
+        
+        if (form.allday) {
+          // All week: 5 days × duration
+          calculatedVolume = 5 * durationNum;
+        } else {
+          const frequencyNum = Number(form.weeklyFrequency);
+          if (!Number.isNaN(frequencyNum) && frequencyNum > 0) {
+            // Weekly frequency × duration
+            calculatedVolume = frequencyNum * durationNum;
+          }
+        }
+        
+        if (calculatedVolume > 0) {
+          setForm((prev) => ({
+            ...prev,
+            volume: String(calculatedVolume),
+          }));
+        } else if (calculatedVolume === 0 && form.volume) {
+          // Clear volume if calculation results in 0
+          setForm((prev) => ({
+            ...prev,
+            volume: '',
+          }));
+        }
+      }
+    }
+  }, [form.duration, form.weeklyFrequency, form.allday, isVolumeManual]);
 
   useEffect(() => {
     if (initialData) {
@@ -88,6 +124,8 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
         duration:
           initialData.duration !== undefined && initialData.duration !== null ? String(initialData.duration) : '2',
       });
+      // If editing, volume is already set, so mark as manual
+      setIsVolumeManual(true);
     } else {
       setForm({
         title: '',
@@ -102,6 +140,7 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
         allday: false,
         duration: '2',
       });
+      setIsVolumeManual(false);
     }
     setErrors({});
   }, [initialData]);
@@ -174,6 +213,10 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
             weeklyFrequency: nextAllDay ? '' : prev.weeklyFrequency || '1',
           };
         }
+        if (field === 'volume') {
+          // When user manually edits volume, mark it as manual
+          setIsVolumeManual(true);
+        }
         return {
           ...prev,
           [field]: type === 'checkbox' ? checked : value,
@@ -215,24 +258,9 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
     return courseOptions;
   }, [moduleCourses, courseOptions]);
 
-  const getCourseDetails = (courseId: number) => {
-    const fromModule = moduleCourses.find((course) => course.id === courseId);
-    if (fromModule) return fromModule;
-    const fallbackOption = courseOptions.find((option) => Number(option.value) === courseId);
-    return (fallbackOption?.data as { volume?: number | null } | undefined) ?? null;
-  };
-
   const handleCourseChange = (value: number | '' | string) => {
     handleSelectChange('course_id')(value);
-    if (value === '' || value === null) return;
-    const courseId = Number(value);
-    const details = getCourseDetails(courseId);
-    if (details && details.volume !== undefined && details.volume !== null) {
-      setForm((prev) => ({
-        ...prev,
-        volume: String(details.volume),
-      }));
-    }
+    // Volume is automatically calculated based on duration and weekly frequency
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -261,17 +289,6 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
           placeholder="Enter course title"
           error={errors.title}
         />
-        <Select
-          label="Status"
-          name="status"
-          value={form.status}
-          onChange={handleStatusChange}
-          options={statusOptionsSelect}
-          error={errors.status}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SearchSelect
           label="Class"
           value={classValue}
@@ -280,6 +297,9 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
           placeholder="Select class"
           error={errors.class_id}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SearchSelect
           label="Module"
           value={moduleValue}
@@ -295,18 +315,6 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
           placeholder="Select module"
           error={errors.module_id}
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SearchSelect
-          label="Course"
-          value={courseValue}
-          onChange={handleCourseChange}
-          options={moduleCourseOptions}
-          isLoading={moduleCoursesLoading}
-          placeholder="Select course"
-          error={errors.course_id}
-        />
         <SearchSelect
           label="Teacher"
           value={teacherValue}
@@ -317,16 +325,16 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Input
-          label="Weekly Frequency"
-          type="number"
-          min={1}
-          value={form.weeklyFrequency}
-          onChange={handleInputChange('weeklyFrequency')}
-          helperText={form.allday ? 'Not required for all-day sessions' : 'Times per week the course repeats'}
-          error={errors.weeklyFrequency}
-          disabled={form.allday}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SearchSelect
+          label="Course"
+          value={courseValue}
+          onChange={handleCourseChange}
+          options={moduleCourseOptions}
+          isLoading={moduleCoursesLoading}
+          placeholder={form.module_id ? "Select course" : "Select a module first"}
+          error={errors.course_id}
+          disabled={!form.module_id}
         />
         <Input
           label="Duration (hours)"
@@ -337,28 +345,70 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
           helperText="Hours per session"
           error={errors.duration}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col justify-end">
+          <div className="flex items-center gap-3 h-10">
+            <input
+              id="allday"
+              type="checkbox"
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              checked={form.allday}
+              onChange={handleInputChange('allday')}
+            />
+            <label htmlFor="allday" className="text-sm font-medium text-body">
+              All-day session
+            </label>
+          </div>
+        </div>
         <Input
-          label="Volume"
+          label="Weekly Frequency"
           type="number"
-          min={0}
-          value={form.volume}
-          onChange={handleInputChange('volume')}
-          helperText="Total hours planned"
-          error={errors.volume}
+          min={1}
+          value={form.weeklyFrequency}
+          onChange={handleInputChange('weeklyFrequency')}
+          helperText={form.allday ? 'Not required for all-day sessions' : 'Times per week the course repeats'}
+          error={errors.weeklyFrequency}
+          disabled={form.allday}
         />
       </div>
 
-      <div className="flex items-center gap-3">
-        <input
-          id="allday"
-          type="checkbox"
-          className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-          checked={form.allday}
-          onChange={handleInputChange('allday')}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Input
+            label="Volume"
+            type="number"
+            min={0}
+            value={form.volume}
+            onChange={handleInputChange('volume')}
+            helperText={
+              isVolumeManual
+                ? 'Total hours planned (manually set)'
+                : form.allday
+                ? `Calculated: 5 days × ${form.duration || 0} hours = ${form.volume || 0} hours`
+                : `Calculated: ${form.weeklyFrequency || 0} sessions/week × ${form.duration || 0} hours = ${form.volume || 0} hours`
+            }
+            error={errors.volume}
+          />
+          {!isVolumeManual && (
+            <button
+              type="button"
+              onClick={() => setIsVolumeManual(true)}
+              className="mt-1 text-xs text-primary hover:text-primary-dark underline"
+            >
+              Edit manually
+            </button>
+          )}
+        </div>
+        <Select
+          label="Status"
+          name="status"
+          value={form.status}
+          onChange={handleStatusChange}
+          options={statusOptionsSelect}
+          error={errors.status}
         />
-        <label htmlFor="allday" className="text-sm font-medium text-body">
-          All-day session
-        </label>
       </div>
 
       <div>

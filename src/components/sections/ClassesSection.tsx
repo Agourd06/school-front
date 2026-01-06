@@ -1,25 +1,27 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
+import SearchBar from '../../components/SearchBar';
+import FilterDropdown from '../../components/FilterDropdown';
+import Pagination from '../../components/Pagination';
+import { Button } from '../ui';
 import { useClasses, useDeleteClass } from '../../hooks/useClasses';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { useLevels } from '../../hooks/useLevels';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
-import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { ClassModal, DeleteModal } from '../modals';
 import StatusBadge from '../../components/StatusBadge';
 import { EditButton, DeleteButton } from '../ui';
 import SearchSelect from '../inputs/SearchSelect';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
-import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import { STATUS_OPTIONS } from '../../constants/status';
 import DescriptionModal from '../modals/DescriptionModal';
 import type { ClassEntity } from '../../api/classes';
 import type { Program } from '../../api/program';
 import type { Specialization } from '../../api/specialization';
 import type { Level } from '../../api/level';
 import type { SchoolYear } from '../../api/schoolYear';
-import type { SchoolYearPeriod } from '../../api/schoolYearPeriod';
+import { Info } from 'lucide-react';
 
 const extractErrorMessage = (err: unknown): string => {
   if (!err) return 'Unexpected error';
@@ -41,21 +43,19 @@ const ClassesSection: React.FC = () => {
   });
   const [modal, setModal] = React.useState<{ type: 'class' | null; data?: ClassEntity }>({ type: null });
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
-  const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
+  const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string; classId?: number } | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const [programFilter, setProgramFilter] = React.useState<number | ''>('');
   const [specializationFilter, setSpecializationFilter] = React.useState<number | ''>('');
   const [levelFilter, setLevelFilter] = React.useState<number | ''>('');
   const [schoolYearFilter, setSchoolYearFilter] = React.useState<number | ''>('');
-  const [periodFilter, setPeriodFilter] = React.useState<number | ''>('');
 
   const params: FilterParams & {
     program_id?: number;
     specialization_id?: number;
     level_id?: number;
     school_year_id?: number;
-    school_year_period_id?: number;
     student_id?: number;
   } = {
     page: state.pagination.page,
@@ -66,7 +66,6 @@ const ClassesSection: React.FC = () => {
     specialization_id: specializationFilter ? Number(specializationFilter) : undefined,
     level_id: levelFilter ? Number(levelFilter) : undefined,
     school_year_id: schoolYearFilter ? Number(schoolYearFilter) : undefined,
-    school_year_period_id: periodFilter ? Number(periodFilter) : undefined,
     student_id: undefined, // Removed student_id from params
   };
 
@@ -107,20 +106,14 @@ const ClassesSection: React.FC = () => {
 
   const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 });
   const schoolYears = useMemo(() => (schoolYearsResp?.data || []) as SchoolYear[], [schoolYearsResp]);
-  const schoolYearOptions: SearchSelectOption[] = useMemo(
-    () => schoolYears.map((year: SchoolYear) => ({ value: year.id, label: year.title })),
+  // Filter out completed school years - allow planned and ongoing
+  const availableSchoolYears = useMemo(() => 
+    schoolYears.filter((year: SchoolYear) => year.lifecycle_status !== 'completed'),
     [schoolYears]
   );
-
-  const { data: periodsResp, isLoading: periodsLoading, error: periodsError } = useSchoolYearPeriods({
-    page: 1,
-    limit: 100,
-    school_year_id: schoolYearFilter ? Number(schoolYearFilter) : undefined,
-  });
-  const periods = useMemo(() => (periodsResp?.data || []) as SchoolYearPeriod[], [periodsResp]);
-  const periodOptions: SearchSelectOption[] = useMemo(
-    () => periods.map((period: SchoolYearPeriod) => ({ value: period.id, label: period.title })),
-    [periods]
+  const schoolYearOptions: SearchSelectOption[] = useMemo(
+    () => availableSchoolYears.map((year: SchoolYear) => ({ value: year.id, label: year.title })),
+    [availableSchoolYears]
   );
 
   const deleteClassMut = useDeleteClass();
@@ -165,6 +158,7 @@ const ClassesSection: React.FC = () => {
     setDescriptionModal({
       title: cls.title || `Class #${cls.id}`,
       description: cls.description || '<p class="text-muted italic">No description available</p>',
+      classId: cls.id, // Pass class ID to fetch students
     });
   };
 
@@ -178,7 +172,7 @@ const ClassesSection: React.FC = () => {
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end">
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 items-end">
         <SearchSelect
           label="Program"
           value={programFilter}
@@ -226,27 +220,11 @@ const ClassesSection: React.FC = () => {
           onChange={(val) => {
             const numeric = val === '' ? '' : Number(val);
             setSchoolYearFilter(numeric);
-            setPeriodFilter('');
             setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
           }}
           placeholder="All school years"
           options={schoolYearOptions}
           isClearable
-        />
-        <SearchSelect
-          label="Period"
-          value={periodFilter}
-          onChange={(val) => {
-            const numeric = val === '' ? '' : Number(val);
-            setPeriodFilter(numeric);
-            setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
-          }}
-          placeholder={schoolYearFilter ? 'All periods' : ' school year first'}
-          options={periodOptions}
-          isClearable
-          disabled={!schoolYearFilter}
-          isLoading={periodsLoading}
-          error={periodsError ? 'Failed to load periods' : null}
         />
       </div>
 
@@ -262,85 +240,138 @@ const ClassesSection: React.FC = () => {
         </div>
       )}
 
-      <DataTableGeneric
-        title="Classes"
-        state={state}
-        onAdd={() => openModal(undefined)}
-        onEdit={(item) => openModal(item)}
-        onDelete={requestDelete}
-        onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
-        onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
-        onSearch={handleSearch}
-        onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
-        addButtonText="Add Class"
-        searchPlaceholder="Search by class title..."
-        filterOptions={STATUS_OPTIONS}
-        renderRow={(cls: ClassEntity, onEdit, onDelete, index) => {
-          const programTitle = cls.program?.title || programs.find(p => p.id === cls.program_id)?.title || '—';
-          const specializationTitle =
-            cls.specialization?.title || specializations.find(s => s.id === cls.specialization_id)?.title || '—';
-          const levelTitle = cls.level?.title || levels.find(l => l.id === cls.level_id)?.title || '—';
-          const schoolYearTitle = cls.schoolYear?.title || schoolYears.find(y => y.id === cls.school_year_id)?.title || '—';
-          const periodTitle = cls.schoolYearPeriod?.title || periods.find(p => p.id === cls.school_year_period_id)?.title || '—';
-          const statusLabel = STATUS_VALUE_LABEL[Number(cls.status)] || String(cls.status ?? '—');
+      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+        <div className="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200">
+          <h3 className="text-lg leading-6 font-medium text-heading">Classes</h3>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => openModal(undefined)}
+            className="inline-flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Class
+          </Button>
+        </div>
 
-          return (
-            <li
-              key={cls?.id ?? `class-${index}`}
-              className="px-4 py-4 sm:px-6"
-            >
-              <div className="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-lg font-semibold text-heading">{cls.title || `Class #${cls.id}`}</h3>
-                      <StatusBadge value={cls.status} />
-                    </div>
-                    <p className="mt-1 text-sm text-muted">
-                    </p>
-                    <div className="mt-3 grid grid-cols-1 gap-3 text-xs text-muted sm:grid-cols-2">
-                      <span>Program: <span className="font-medium text-heading">{programTitle}</span></span>
-                      <span>Specialization: <span className="font-medium text-heading">{specializationTitle}</span></span>
-                      <span>Level: <span className="font-medium text-heading">{levelTitle}</span></span>
-                      <span>School Year: <span className="font-medium text-heading">{schoolYearTitle}</span></span>
-                      <span>Period: <span className="font-medium text-heading">{periodTitle}</span></span>
-                      <span>Status: <span className="font-medium text-heading">{statusLabel}</span></span>
-                    </div>
-                    <p className="mt-3 text-xs text-gray-400">
-                      Last updated{' '}
-                      {cls.updated_at
-                        ? new Date(cls.updated_at).toLocaleDateString(undefined, {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                          })
-                        : cls.created_at
-                        ? new Date(cls.created_at).toLocaleDateString(undefined, {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                          })
-                        : 'N/A'}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openDetailsModal(cls)}
-                      className="inline-flex items-center rounded-md border border-green-200 px-3 py-1.5 text-sm font-medium text-green-600 hover:bg-green-50"
-                    >
-                      Details
-                    </button>
-                    <EditButton onClick={() => onEdit(cls)} />
-                    <DeleteButton onClick={() => onDelete(cls.id)} />
-                  </div>
-                </div>
+        <div className="px-4 py-3 bg-surface border-b border-border">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <SearchBar onSearch={handleSearch} placeholder="Search by class title..." isLoading={state.loading} />
+            </div>
+            <div className="w-full sm:w-48">
+              <FilterDropdown
+                options={STATUS_OPTIONS}
+                value={(state.filters as { status?: number | null }).status ?? null}
+                onChange={(val) => setState(prev => ({ ...prev, filters: { ...prev.filters, status: val === null ? null : Number(val) }, pagination: { ...prev.pagination, page: 1 } }))}
+                placeholder="Filter by status"
+                isLoading={state.loading}
+              />
+            </div>
+          </div>
+        </div>
 
-              </div>
-            </li>
-          );
-        }}
-      />
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  Title
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  Program
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  Specialization
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  Level
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  School Year
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {state.loading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted">
+                    Loading classes…
+                  </td>
+                </tr>
+              ) : state.data.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted">
+                    {(state.filters as { search?: string }).search
+                      ? `No classes found matching "${(state.filters as { search?: string }).search}"`
+                      : 'No classes found.'}
+                  </td>
+                </tr>
+              ) : (
+                state.data.map((cls: ClassEntity) => {
+                  const programTitle = cls.program?.title || programs.find(p => p.id === cls.program_id)?.title || '—';
+                  const specializationTitle =
+                    cls.specialization?.title || specializations.find(s => s.id === cls.specialization_id)?.title || '—';
+                  const levelTitle = cls.level?.title || levels.find(l => l.id === cls.level_id)?.title || '—';
+                  const schoolYearTitle = cls.schoolYear?.title || availableSchoolYears.find(y => y.id === cls.school_year_id)?.title || '—';
+
+                  return (
+                    <tr key={cls.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm font-medium text-heading">
+                        {cls.title || `Class #${cls.id}`}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{programTitle}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{specializationTitle}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{levelTitle}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{schoolYearTitle}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <StatusBadge value={cls.status} />
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openDetailsModal(cls)}
+                            className="inline-flex items-center justify-center rounded-full p-1.5 text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                            title="View details"
+                          >
+                            <Info className="h-4 w-4" />
+                          </button>
+                          <EditButton onClick={() => openModal(cls)} />
+                          <DeleteButton onClick={() => requestDelete(cls.id)} />
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {state.pagination.totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-gray-200">
+            <Pagination
+              currentPage={state.pagination.page}
+              totalPages={state.pagination.totalPages}
+              totalItems={state.pagination.total}
+              itemsPerPage={state.pagination.limit}
+              onPageChange={(page) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, page } }))}
+              onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
+              hasNext={state.pagination.hasNext}
+              hasPrevious={state.pagination.hasPrevious}
+            />
+          </div>
+        )}
+      </div>
 
       {modal.type === 'class' && (
         <ClassModal 
@@ -352,7 +383,6 @@ const ClassesSection: React.FC = () => {
             specialization: modal.data.specialization ?? undefined,
             level: modal.data.level ?? undefined,
             schoolYear: modal.data.schoolYear ?? undefined,
-            schoolYearPeriod: modal.data.schoolYearPeriod ?? undefined,
           } : undefined} 
           descriptionPosition="bottom" 
         />
@@ -374,6 +404,7 @@ const ClassesSection: React.FC = () => {
           title={descriptionModal.title}
           description={descriptionModal.description}
           type="class"
+          classId={descriptionModal.classId}
         />
       )}
     </>

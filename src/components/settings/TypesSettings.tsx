@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import StudentLinkTypesSection from '../sections/StudentLinkTypesSection';
 import ClassRoomTypesSection from './ClassRoomTypesSection';
+import PlanningSessionTypesSection from '../sections/PlanningSessionTypesSection';
 
-type TypesSubTab = 'linkTypes' | 'classRoomTypes';
+type TypesSubTab = 'linkTypes' | 'classRoomTypes' | 'planningSessionTypes';
 
 const TypesSettings: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<TypesSubTab>('linkTypes');
@@ -10,6 +11,7 @@ const TypesSettings: React.FC = () => {
   const subTabs: Array<{ id: TypesSubTab; label: string }> = [
     { id: 'linkTypes', label: 'Link Types' },
     { id: 'classRoomTypes', label: 'Class Room Types' },
+    { id: 'planningSessionTypes', label: 'Planning Session Types' },
   ];
 
   return (
@@ -38,6 +40,7 @@ const TypesSettings: React.FC = () => {
       <div>
         {activeSubTab === 'linkTypes' && <StudentLinkTypesSection />}
         {activeSubTab === 'classRoomTypes' && <ClassRoomTypesSection />}
+        {activeSubTab === 'planningSessionTypes' && <PlanningSessionTypesSection />}
       </div>
     </div>
   );

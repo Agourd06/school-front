@@ -4,8 +4,10 @@ import { useAuth } from './hooks/useAuth';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/guards/ProtectedRoute';
 import StudentRoute from './components/guards/StudentRoute';
+import TeacherRoute from './components/guards/TeacherRoute';
 import DashboardLayout from './components/layouts/DashboardLayout';
 import StudentLayout from './components/layouts/StudentLayout';
+import TeacherLayout from './components/layouts/TeacherLayout';
 import AuthPage from './pages/AuthPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import RegistrationPage from './pages/RegistrationPage';
@@ -46,6 +48,12 @@ import StudentDashboardPage from './pages/student/StudentDashboardPage';
 import StudentSchedulePage from './pages/student/StudentSchedulePage';
 import StudentGradesPage from './pages/student/StudentGradesPage';
 import StudentAttendancePage from './pages/student/StudentAttendancePage';
+import TeacherDashboardPage from './pages/teacher/TeacherDashboardPage';
+import TeacherPlanningsPage from './pages/teacher/TeacherPlanningsPage';
+import TeacherAttendancePage from './pages/teacher/TeacherAttendancePage';
+import TeacherGradesPage from './pages/teacher/TeacherGradesPage';
+import TeacherLinksPage from './pages/teacher/TeacherLinksPage';
+import TeacherHomeworkPage from './pages/teacher/TeacherHomeworkPage';
 
 const App: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -68,6 +76,8 @@ const App: React.FC = () => {
             user ? (
               user.profile === 'student' ? (
                 <Navigate to="/student" replace />
+              ) : user.profile === 'teacher' ? (
+                <Navigate to="/teacher" replace />
               ) : (
                 <Navigate to="/programs" replace />
               )
@@ -86,6 +96,8 @@ const App: React.FC = () => {
             user ? (
               user.profile === 'student' ? (
                 <Navigate to="/student" replace />
+              ) : user.profile === 'teacher' ? (
+                <Navigate to="/teacher" replace />
               ) : (
                 <Navigate to="/programs" replace />
               )
@@ -108,6 +120,8 @@ const App: React.FC = () => {
             user ? (
               user.profile === 'student' ? (
                 <Navigate to="/student" replace />
+              ) : user.profile === 'teacher' ? (
+                <Navigate to="/teacher" replace />
               ) : (
                 <Navigate to="/programs" replace />
               )
@@ -472,6 +486,67 @@ const App: React.FC = () => {
             </StudentRoute>
           }
         />
+        {/* Teacher routes with TeacherLayout */}
+        <Route
+          path="/teacher"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <TeacherDashboardPage />
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/plannings"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <TeacherPlanningsPage />
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/attendance"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <TeacherAttendancePage />
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/grades"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <TeacherGradesPage />
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/links"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <TeacherLinksPage />
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/homework"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <TeacherHomeworkPage />
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
         {/* Profile route with Navbar */}
         <Route 
           path="/profile" 
@@ -487,6 +562,8 @@ const App: React.FC = () => {
             user ? (
               user.profile === 'student' ? (
                 <Navigate to="/student" replace />
+              ) : user.profile === 'teacher' ? (
+                <Navigate to="/teacher" replace />
               ) : (
                 <Navigate to="/programs" replace />
               )
@@ -502,6 +579,8 @@ const App: React.FC = () => {
             user ? (
               user.profile === 'student' ? (
                 <Navigate to="/student" replace />
+              ) : user.profile === 'teacher' ? (
+                <Navigate to="/teacher" replace />
               ) : (
                 <Navigate to="/programs" replace />
               )

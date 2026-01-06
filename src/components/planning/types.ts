@@ -12,7 +12,6 @@ export interface PlanningFilters {
   class_id: number | '';
   class_room_id: number | '';
   teacher_id: number | '';
-  specialization_id: number | '';
   planning_session_type_id: number | '';
   course_id: number | '';
 }
@@ -35,18 +34,17 @@ export interface PlanningState {
 }
 
 export interface FormState {
+  class_id: number | '';
   school_year_id: number | '';
+  class_room_id: number | '';
+  course_id: number | '';
+  teacher_id: number | '';
   period: string;
   date_day: string;
   hour_start: string;
   hour_end: string;
-  class_id: number | '';
   class_course_id: number | '';
-  specialization_id: number | '';
-  teacher_id: number | '';
-  class_room_id: number | '';
   planning_session_type_id: number | '';
-  course_id: number | '';
   status: PlanningStatus;
 }
 
@@ -69,7 +67,6 @@ export interface PlanningFormProps {
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
   setFormErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   teacherOptions: SearchSelectOption[];
-  specializationOptions: SearchSelectOption[];
   classOptions: SearchSelectOption[];
   roomOptions: SearchSelectOption[];
   periodOptions: SearchSelectOption[];
@@ -109,7 +106,6 @@ export interface PlanningFiltersBarProps {
     class: SearchSelectOption[];
     teacher: SearchSelectOption[];
     room: SearchSelectOption[];
-    specialization: SearchSelectOption[];
     sessionType: SearchSelectOption[];
     course: SearchSelectOption[];
   };
@@ -117,7 +113,6 @@ export interface PlanningFiltersBarProps {
     classes: boolean;
     teachers: boolean;
     rooms: boolean;
-    specs: boolean;
     sessionTypes: boolean;
     courses: boolean;
   };

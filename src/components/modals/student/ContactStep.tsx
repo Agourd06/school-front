@@ -21,7 +21,9 @@ interface ContactStepProps {
   onContinue?: () => void;
   allContacts?: StudentContact[];
   onEditContact?: (contact: StudentContact) => void;
+  onDeleteContact?: (contactId: number) => void;
   currentContactId?: number;
+  isDeletingContact?: boolean;
 }
 
 const ContactStep: React.FC<ContactStepProps> = (props) => {

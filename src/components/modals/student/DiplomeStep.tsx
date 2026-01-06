@@ -24,7 +24,9 @@ interface DiplomeStepProps {
   onContinue?: () => void;
   allDiplomes?: StudentDiplome[];
   onEditDiplome?: (diplome: StudentDiplome) => void;
+  onDeleteDiplome?: (diplomeId: number) => void;
   currentDiplomeId?: number;
+  isDeletingDiplome?: boolean;
 }
 
 const DiplomeStep: React.FC<DiplomeStepProps> = (props) => {

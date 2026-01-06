@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import BaseModal from './BaseModal';
 import { StudentModalProvider, useStudentModalContext } from './student/StudentModalContext';
 import { useStudentModalHandlers } from './student/useStudentModalHandlers';
+import { useDeleteStudentContact } from '../../hooks/useStudentContacts';
+import { useDeleteStudentDiplome } from '../../hooks/useStudentDiplomes';
 import StudentStep from './student/StudentStep';
 import DiplomeStep from './student/DiplomeStep';
 import ContactStep from './student/ContactStep';
@@ -56,6 +58,10 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     onFinish: onClose,
   });
 
+  // Delete mutations
+  const deleteContactMut = useDeleteStudentContact();
+  const deleteDiplomeMut = useDeleteStudentDiplome();
+
   // Reset form when modal closes
   useEffect(() => {
     setStepIndex(0);
@@ -108,6 +114,23 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     setJustSavedDiplome(false);
   };
 
+  const handleDeleteDiplome = async (diplomeId: number) => {
+    if (window.confirm('Are you sure you want to delete this diplome?')) {
+      try {
+        await deleteDiplomeMut.mutateAsync(diplomeId);
+        refetchDiplomes();
+        refetchStudentDetails();
+        // If the deleted diplome was being edited, clear the form
+        if (currentDiplome?.id === diplomeId) {
+          setCurrentDiplome(null);
+          handlers.resetDiplomeForm();
+        }
+      } catch (error) {
+        console.error('Failed to delete diplome:', error);
+      }
+    }
+  };
+
   // Handlers for contact "Add Another" functionality
   const handleContactSubmitWrapper = async (e: React.FormEvent) => {
     await handlers.handleContactSubmit(e, () => {
@@ -145,6 +168,23 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       status: contact.status || 1,
     });
     setJustSavedContact(false);
+  };
+
+  const handleDeleteContact = async (contactId: number) => {
+    if (window.confirm('Are you sure you want to delete this contact?')) {
+      try {
+        await deleteContactMut.mutateAsync(contactId);
+        refetchContacts();
+        refetchStudentDetails();
+        // If the deleted contact was being edited, clear the form
+        if (currentContact?.id === contactId) {
+          setCurrentContact(null);
+          handlers.resetContactForm();
+        }
+      } catch (error) {
+        console.error('Failed to delete contact:', error);
+      }
+    }
   };
 
   // Render step content based on current step
@@ -189,7 +229,9 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             onContinue={handleDiplomeContinue}
             allDiplomes={allDiplomes}
             onEditDiplome={handleEditDiplome}
+            onDeleteDiplome={handleDeleteDiplome}
             currentDiplomeId={currentDiplome?.id}
+            isDeletingDiplome={deleteDiplomeMut.isPending}
           />
         );
 
@@ -211,7 +253,9 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
             onContinue={handleContactContinue}
             allContacts={allContacts}
             onEditContact={handleEditContact}
+            onDeleteContact={handleDeleteContact}
             currentContactId={currentContact?.id}
+            isDeletingContact={deleteContactMut.isPending}
           />
         );
 

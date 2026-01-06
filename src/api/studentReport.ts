@@ -70,7 +70,7 @@ export interface StudentReportDashboardResponse {
 export interface StudentReportDashboardParams {
   class_id: number;
   school_year_id: number;
-  school_year_period_id: number;
+  school_year_period_id?: number;
   period_label?: string;
   student_id?: number;
   course_id?: number;

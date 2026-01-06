@@ -42,6 +42,17 @@ export const useDeleteTeacher = () => {
   });
 };
 
+export const useSendPasswordInvitation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => teachersApi.sendPasswordInvitation(id),
+    onSuccess: (_, teacherId) => {
+      qc.invalidateQueries({ queryKey: ['teachers'] });
+      qc.invalidateQueries({ queryKey: ['teachers', teacherId] });
+    },
+  });
+};
+
 export default useTeachers;
 
 

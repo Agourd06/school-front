@@ -5,12 +5,10 @@ import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
 import { useLevels } from '../../hooks/useLevels';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
-import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import type { Program } from '../../api/program';
 import type { Specialization } from '../../api/specialization';
 import type { Level } from '../../api/level';
 import type { SchoolYear } from '../../api/schoolYear';
-import type { SchoolYearPeriod } from '../../api/schoolYearPeriod';
 import DescriptionModal from './DescriptionModal';
 import { ClassForm, type Class } from '../forms';
 import type { CreateClassRequest } from '../../api/classes';
@@ -58,14 +56,11 @@ const ClassModal: React.FC<ClassModalProps> = ({
   const levels = useMemo(() => (levelsResp?.data || []) as Level[], [levelsResp]);
 
   const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 });
-  const schoolYears = useMemo(() => (schoolYearsResp?.data || []) as SchoolYear[], [schoolYearsResp]);
-
-  const { data: periodsResp } = useSchoolYearPeriods({
-    page: 1,
-    limit: 100,
-    schoolYearId: formState.school_year_id ? Number(formState.school_year_id) : undefined,
-  });
-  const periods = useMemo(() => (periodsResp?.data || []) as SchoolYearPeriod[], [periodsResp]);
+  const schoolYears = useMemo(() => {
+    const allYears = (schoolYearsResp?.data || []) as SchoolYear[];
+    // Filter out completed school years - allow planned and ongoing
+    return allYears.filter((year: SchoolYear) => year.lifecycle_status !== 'completed');
+  }, [schoolYearsResp]);
 
   useEffect(() => {
     if (classItem) {
@@ -95,7 +90,6 @@ const ClassModal: React.FC<ClassModalProps> = ({
     specialization_id: number | string | '';
     level_id: number | string | '';
     school_year_id: number | string | '';
-    school_year_period_id: number | string | '';
     status: number;
   }) => {
     setFormError('');
@@ -107,7 +101,6 @@ const ClassModal: React.FC<ClassModalProps> = ({
       specialization_id: Number(formData.specialization_id),
       level_id: Number(formData.level_id),
       school_year_id: Number(formData.school_year_id),
-      ...(formData.school_year_period_id && { school_year_period_id: Number(formData.school_year_period_id) }),
     };
 
     try {
@@ -135,7 +128,6 @@ const ClassModal: React.FC<ClassModalProps> = ({
         specializations={specializations}
         levels={levels}
         schoolYears={schoolYears}
-        periods={periods}
         descriptionPosition={descriptionPosition}
         onDescriptionPreview={() => setIsDescriptionPreviewOpen(true)}
         onFormChange={handleFormChange}

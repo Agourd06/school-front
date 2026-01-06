@@ -109,6 +109,11 @@ export const teachersApi = {
   async delete(id: number): Promise<void> {
     await api.delete(`/teachers/${id}`);
   },
+
+  async sendPasswordInvitation(id: number): Promise<{ message: string }> {
+    const response = await api.post(`/teachers/${id}/send-password-invitation`);
+    return response.data;
+  },
 };
 
 export default teachersApi;

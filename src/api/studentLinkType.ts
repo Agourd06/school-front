@@ -13,6 +13,10 @@ export interface CreateStudentLinkTypeRequest {
   title: string;
   company_id?: number; // Optional - backend sets it from authenticated user
   status?: number; // -2,-1,0,1,2
+  // Additional fields for teacher portal (may not be supported by all endpoints)
+  student_id?: number;
+  link?: string;
+  description?: string;
 }
 
 export type UpdateStudentLinkTypeRequest = Partial<CreateStudentLinkTypeRequest>;

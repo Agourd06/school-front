@@ -1,8 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { studentDiplomeApi, type CreateStudentDiplomeRequest, type UpdateStudentDiplomeRequest, type GetAllStudentDiplomeParams } from '../api/studentDiplome';
 
-export const useStudentDiplomes = (params: GetAllStudentDiplomeParams = {}) =>
-  useQuery({ queryKey: ['studentdiplomes', params], queryFn: () => studentDiplomeApi.getAll(params) });
+export const useStudentDiplomes = (params: GetAllStudentDiplomeParams = {}, options?: { enabled?: boolean }) =>
+  useQuery({ 
+    queryKey: ['studentdiplomes', params], 
+    queryFn: () => studentDiplomeApi.getAll(params),
+    enabled: options?.enabled !== false
+  });
 
 export const useStudentDiplome = (id: number) =>
   useQuery({ queryKey: ['studentdiplomes', id], queryFn: () => studentDiplomeApi.getById(id), enabled: !!id });

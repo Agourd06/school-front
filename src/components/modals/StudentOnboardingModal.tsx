@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import BaseModal from './BaseModal';
 import { StudentModalProvider, useStudentModalContext } from './student/StudentModalContext';
 import { useStudentModalHandlers } from './student/useStudentModalHandlers';
+import { useDeleteStudentContact } from '../../hooks/useStudentContacts';
+import { useDeleteStudentDiplome } from '../../hooks/useStudentDiplomes';
 import StudentStep from './student/StudentStep';
 import DiplomeStep from './student/DiplomeStep';
 import ContactStep from './student/ContactStep';
@@ -34,11 +36,17 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
     currentContact,
     studentDetailsData,
     linkTypesData,
+    allContacts,
+    allDiplomes,
+    refetchContacts,
+    refetchDiplomes,
     studentName,
     setDiplomeForm,
     setContactForm,
     setDiplomeFile1,
     setDiplomeFile2,
+    setCurrentDiplome,
+    setCurrentContact,
     refetchStudentDetails,
   } = useStudentModalContext();
 
@@ -50,46 +58,127 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
     onStudentCreated,
   });
 
+  // Delete mutations
+  const deleteContactMut = useDeleteStudentContact();
+  const deleteDiplomeMut = useDeleteStudentDiplome();
+
   const handleStudentPicture = handlers.handleStudentPicture;
 
   const currentStep = STEPS[stepIndex];
 
   // Handlers for diplome "Add Another" functionality
   const handleDiplomeSubmitWrapper = async (e: React.FormEvent) => {
-    await handlers.handleDiplomeSubmit(e, () => {
+    await handlers.handleDiplomeSubmit(e, async () => {
       setJustSavedDiplome(true);
+      // Wait a bit for the mutation to complete and query to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      refetchDiplomes(); // Refetch to update the list
     });
   };
 
   const handleDiplomeAddAnother = () => {
     handlers.resetDiplomeForm();
+    setCurrentDiplome(null);
+    setDiplomeFile1(null);
+    setDiplomeFile2(null);
     setJustSavedDiplome(false);
   };
 
   const handleDiplomeContinue = async () => {
     setJustSavedDiplome(false);
-    // Refetch student details before continuing to get latest data
+    // Refetch student details and diplomes before continuing to get latest data
     refetchStudentDetails();
+    refetchDiplomes();
     setStepIndex(2);
+  };
+
+  const handleEditDiplome = (diplome: typeof allDiplomes[0]) => {
+    setCurrentDiplome(diplome);
+    setDiplomeForm({
+      title: diplome.title || '',
+      school: diplome.school || '',
+      diplome: diplome.diplome || '',
+      annee: diplome.annee ? String(diplome.annee) : '',
+      country: diplome.country || '',
+      city: diplome.city || '',
+      status: diplome.status || 1,
+    });
+    setDiplomeFile1(null);
+    setDiplomeFile2(null);
+    setJustSavedDiplome(false);
+  };
+
+  const handleDeleteDiplome = async (diplomeId: number) => {
+    if (window.confirm('Are you sure you want to delete this diplome?')) {
+      try {
+        await deleteDiplomeMut.mutateAsync(diplomeId);
+        refetchDiplomes();
+        refetchStudentDetails();
+        // If the deleted diplome was being edited, clear the form
+        if (currentDiplome?.id === diplomeId) {
+          setCurrentDiplome(null);
+          handlers.resetDiplomeForm();
+        }
+      } catch (error) {
+        console.error('Failed to delete diplome:', error);
+      }
+    }
   };
 
   // Handlers for contact "Add Another" functionality
   const handleContactSubmitWrapper = async (e: React.FormEvent) => {
     await handlers.handleContactSubmit(e, () => {
       setJustSavedContact(true);
+      refetchContacts(); // Refetch to update the list
     });
   };
 
   const handleContactAddAnother = () => {
     handlers.resetContactForm();
+    setCurrentContact(null);
     setJustSavedContact(false);
   };
 
   const handleContactContinue = async () => {
     setJustSavedContact(false);
-    // Refetch student details before continuing to get latest data
+    // Refetch student details and contacts before continuing to get latest data
     refetchStudentDetails();
+    refetchContacts();
     onClose();
+  };
+
+  const handleEditContact = (contact: typeof allContacts[0]) => {
+    setCurrentContact(contact);
+    setContactForm({
+      firstname: contact.firstname || '',
+      lastname: contact.lastname || '',
+      birthday: contact.birthday || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      adress: contact.adress || '',
+      city: contact.city || '',
+      country: contact.country || '',
+      studentlinktypeId: contact.studentlinktypeId ?? '',
+      status: contact.status || 1,
+    });
+    setJustSavedContact(false);
+  };
+
+  const handleDeleteContact = async (contactId: number) => {
+    if (window.confirm('Are you sure you want to delete this contact?')) {
+      try {
+        await deleteContactMut.mutateAsync(contactId);
+        refetchContacts();
+        refetchStudentDetails();
+        // If the deleted contact was being edited, clear the form
+        if (currentContact?.id === contactId) {
+          setCurrentContact(null);
+          handlers.resetContactForm();
+        }
+      } catch (error) {
+        console.error('Failed to delete contact:', error);
+      }
+    }
   };
 
   const renderStepContent = () => {
@@ -116,8 +205,8 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
             errors={diplomeErrors}
             diplomeFile1={diplomeFile1}
             diplomeFile2={diplomeFile2}
-            currentDiplomePicture1={studentDetailsData?.diploma?.diplome_picture_1}
-            currentDiplomePicture2={studentDetailsData?.diploma?.diplome_picture_2}
+            currentDiplomePicture1={currentDiplome?.diplome_picture_1 || studentDetailsData?.diploma?.diplome_picture_1}
+            currentDiplomePicture2={currentDiplome?.diplome_picture_2 || studentDetailsData?.diploma?.diplome_picture_2}
             studentName={studentName}
             onFormChange={(field, value) => setDiplomeForm({ ...diplomeForm, [field]: value })}
             onFile1Change={setDiplomeFile1}
@@ -130,6 +219,11 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
             justSaved={justSavedDiplome}
             onAddAnother={handleDiplomeAddAnother}
             onContinue={handleDiplomeContinue}
+            allDiplomes={allDiplomes}
+            onEditDiplome={handleEditDiplome}
+            onDeleteDiplome={handleDeleteDiplome}
+            currentDiplomeId={currentDiplome?.id}
+            isDeletingDiplome={deleteDiplomeMut.isPending}
           />
         );
 
@@ -149,6 +243,11 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
             justSaved={justSavedContact}
             onAddAnother={handleContactAddAnother}
             onContinue={handleContactContinue}
+            allContacts={allContacts}
+            onEditContact={handleEditContact}
+            onDeleteContact={handleDeleteContact}
+            currentContactId={currentContact?.id}
+            isDeletingContact={deleteContactMut.isPending}
           />
         );
 

@@ -17,6 +17,7 @@ import { STATUS_OPTIONS } from '../../constants/status';
 import { studentsApi } from '../../api/students';
 import BaseModal from '../modals/BaseModal';
 import { getFileUrl } from '../../utils/apiConfig';
+import { Info } from 'lucide-react';
 
 type StudentLite = {
   id: number;
@@ -71,9 +72,10 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="text-sm text-blue-600 hover:text-blue-800"
+        className="inline-flex items-center justify-center rounded-full p-1.5 text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        title="View details"
       >
-        Details
+        <Info className="h-4 w-4" />
       </button>
       <BaseModal
         isOpen={isOpen}
@@ -290,6 +292,8 @@ const ClassStudentsSection: React.FC = () => {
   const [assignedSearch, setAssignedSearch] = useState('');
   const [unassignedSearch, setUnassignedSearch] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const createMut = useCreateClassStudent();
   const deleteMut = useDeleteClassStudent();
@@ -403,14 +407,15 @@ const ClassStudentsSection: React.FC = () => {
     });
   }, [unassignedStudents, unassignedFilter, unassignedSearchLower]);
 
-  const isMutationLoading = createMut.isPending || deleteMut.isPending;
+  const isMutationLoading = createMut.isPending || deleteMut.isPending || isAssigning || isRemoving;
   const isAssignedLoading = assignedQuery.isLoading || assignedQuery.isFetching;
   const isUnassignedLoading = studentsLoading || allAssignmentsQuery.isLoading;
 
-  // Fetch school years
+  // Fetch school years - filter out completed, only allow planned and ongoing
   const { data: schoolYearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
   const yearOptions: SearchSelectOption[] = useMemo(
     () => ((schoolYearsResp as PaginatedResponse<SchoolYear>)?.data || [])
+      .filter((year) => year.lifecycle_status !== 'completed')
       .map((year) => ({ value: year.id, label: year.title || `Year #${year.id}` })),
     [schoolYearsResp]
   );
@@ -432,6 +437,7 @@ const ClassStudentsSection: React.FC = () => {
   );
 
   const handleAssign = async (studentId: number) => {
+    if (isMutationLoading) return; // Prevent concurrent operations
     if (!classFilter || typeof classFilter !== 'number') {
       setFeedback('Select a class first to assign students.');
       return;
@@ -441,6 +447,7 @@ const ClassStudentsSection: React.FC = () => {
     if (!student) return;
     if (assignedStudents.some((item) => item.student.id === studentId)) return;
 
+    setIsAssigning(true);
     try {
       const response = await createMut.mutateAsync({
         class_id: Number(classFilter),
@@ -462,16 +469,23 @@ const ClassStudentsSection: React.FC = () => {
       setAssignedFilter('');
       setAssignedSearch('');
       setFeedback(null);
+      
+      // Small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || 'Failed to assign student';
       setFeedback(message);
+    } finally {
+      setIsAssigning(false);
     }
   };
 
   const handleUnassign = async (assignmentId: number) => {
+    if (isMutationLoading) return; // Prevent concurrent operations
     const target = assignedStudents.find((item) => item.assignmentId === assignmentId);
     if (!target) return;
 
+    setIsRemoving(true);
     try {
       await deleteMut.mutateAsync(assignmentId);
       setAssignedStudents((prev) => prev
@@ -485,13 +499,19 @@ const ClassStudentsSection: React.FC = () => {
       setUnassignedFilter('');
       setUnassignedSearch('');
       setFeedback(null);
+      
+      // Small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || 'Failed to unassign student';
       setFeedback(message);
+    } finally {
+      setIsRemoving(false);
     }
   };
 
   const handleDragEnd = async (result: DropResult) => {
+    if (isMutationLoading) return; // Prevent drag operations during mutations
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId) return;
@@ -581,16 +601,6 @@ const ClassStudentsSection: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SearchSelect
-              label="Assigned filter"
-              value={assignedFilter}
-              onChange={(value) => setAssignedFilter(value === '' ? '' : Number(value))}
-              options={assignedFilterOptions}
-              placeholder="Filter assigned"
-              isClearable
-              onSearchChange={setAssignedSearch}
-              noOptionsMessage={(query) => (query ? 'No assigned students match' : 'No assigned students')}
-            />
-            <SearchSelect
               label="Unassigned filter"
               value={unassignedFilter}
               onChange={(value) => setUnassignedFilter(value === '' ? '' : Number(value))}
@@ -600,33 +610,69 @@ const ClassStudentsSection: React.FC = () => {
               onSearchChange={setUnassignedSearch}
               noOptionsMessage={(query) => (query ? 'No students match' : 'No unassigned students')}
             />
+            <SearchSelect
+              label="Assigned filter"
+              value={assignedFilter}
+              onChange={(value) => setAssignedFilter(value === '' ? '' : Number(value))}
+              options={assignedFilterOptions}
+              placeholder="Filter assigned"
+              isClearable
+              onSearchChange={setAssignedSearch}
+              noOptionsMessage={(query) => (query ? 'No assigned students match' : 'No assigned students')}
+            />
           </div>
 
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">Unassigned Students</h3>
-                    <p className="text-sm text-gray-500">Students not assigned to any class.</p>
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">Unassigned Students</h3>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {filteredUnassigned.length}
+                    </span>
                   </div>
-                  <span className="text-sm text-gray-500">{filteredUnassigned.length}</span>
+                  <p className="text-sm text-gray-600">
+                    Students not assigned to any class.{' '}
+                    {filteredUnassigned.length === 0 
+                      ? '- No unassigned students' 
+                      : `- ${filteredUnassigned.length} ${filteredUnassigned.length === 1 ? 'student available' : 'students available'}`}
+                  </p>
                 </div>
                 <Droppable droppableId="unassigned" isDropDisabled={isMutationLoading}>
                   {(provided, snapshot) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`min-h-[320px] p-4 border-2 border-dashed rounded-lg transition-colors ${
+                      className={`relative min-h-[400px] p-4 border-2 border-dashed rounded-lg transition-all duration-200 ${
                         snapshot.isDraggingOver
-                          ? 'border-green-400 bg-green-50'
-                          : 'border-gray-300 bg-gray-50'
-                      } ${isUnassignedLoading ? 'opacity-70' : ''}`}
+                          ? 'border-green-500 bg-green-50/50 shadow-md'
+                          : 'border-gray-300 bg-gray-50/50'
+                      } ${isUnassignedLoading ? 'opacity-70' : ''} ${isMutationLoading ? 'pointer-events-none' : ''}`}
                     >
+                      {isMutationLoading && (
+                        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg z-10 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                            <p className="text-sm text-gray-600 font-medium">
+                              {isAssigning ? 'Assigning student...' : isRemoving ? 'Removing student...' : 'Processing...'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       {isUnassignedLoading ? (
-                        <div className="text-center text-gray-500 py-12">Loading students...</div>
+                        <div className="text-center text-gray-500 py-12">
+                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-2"></div>
+                          <p className="text-sm">Loading students...</p>
+                        </div>
                       ) : filteredUnassigned.length === 0 ? (
-                        <div className="text-center text-gray-500 py-12">No available students.</div>
+                        <div className="text-center text-gray-400 py-12">
+                          <svg className="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          <p className="text-sm font-medium">No available students</p>
+                          <p className="text-xs mt-1">All students are assigned to classes</p>
+                        </div>
                       ) : (
                         filteredUnassigned.map((item, index) => (
                           <Draggable
@@ -640,23 +686,34 @@ const ClassStudentsSection: React.FC = () => {
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
-                                className={`mb-3 p-3 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-between ${
-                                  dragSnapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                                className={`mb-3 p-4 bg-white border rounded-lg transition-all duration-200 flex items-center justify-between ${
+                                  dragSnapshot.isDragging 
+                                    ? 'shadow-xl border-blue-400 scale-105' 
+                                    : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                                 }`}
                               >
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">{getStudentLabel(item)}</p>
-                                  {item.email && <p className="text-xs text-gray-500">{item.email}</p>}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item)}</p>
+                                  {item.email && (
+                                    <p className="text-xs text-gray-500 truncate mt-0.5">{item.email}</p>
+                                  )}
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 ml-3 flex-shrink-0">
                                   <StudentDetailsButton studentId={item.id} />
                                   <button
                                     type="button"
                                     onClick={() => handleAssign(item.id)}
-                                    className="text-sm text-blue-600 hover:text-blue-800"
+                                    className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                                     disabled={isMutationLoading || !classFilter}
                                   >
-                                    Assign
+                                    {isAssigning ? (
+                                      <>
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                        <span>Assigning...</span>
+                                      </>
+                                    ) : (
+                                      'Assign'
+                                    )}
                                   </button>
                                 </div>
                               </div>
@@ -670,33 +727,63 @@ const ClassStudentsSection: React.FC = () => {
                 </Droppable>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">Assigned Students</h3>
-                    <p className="text-sm text-gray-500">
-                      {classOptions.find(opt => Number(opt.value) === classFilter)?.label || 'Class'}
-                    </p>
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">Assigned Students</h3>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {filteredAssigned.length}
+                    </span>
                   </div>
-                  <span className="text-sm text-gray-500">{filteredAssigned.length}</span>
+                  <p className="text-sm font-medium text-gray-700">
+                    {classOptions.find(opt => Number(opt.value) === classFilter)?.label || 'Class'}
+                    {' '}
+                    {filteredAssigned.length === 0 
+                      ? '- No students assigned' 
+                      : `- ${filteredAssigned.length} ${filteredAssigned.length === 1 ? 'student assigned' : 'students assigned'}`}
+                  </p>
                 </div>
                 <Droppable droppableId="assigned" isDropDisabled={!classFilter || isMutationLoading}>
                   {(provided, snapshot) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`min-h-[320px] p-4 border-2 border-dashed rounded-lg transition-colors ${
+                      className={`relative min-h-[400px] p-4 border-2 border-dashed rounded-lg transition-all duration-200 ${
                         snapshot.isDraggingOver
-                          ? 'border-blue-400 bg-blue-50'
-                          : 'border-gray-300 bg-gray-50'
-                      } ${(isAssignedLoading || !classFilter) ? 'opacity-70' : ''}`}
+                          ? 'border-blue-500 bg-blue-50/50 shadow-md'
+                          : 'border-gray-300 bg-gray-50/50'
+                      } ${(isAssignedLoading || !classFilter) ? 'opacity-70' : ''} ${isMutationLoading ? 'pointer-events-none' : ''}`}
                     >
+                      {isMutationLoading && (
+                        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg z-10 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                            <p className="text-sm text-gray-600 font-medium">
+                              {isAssigning ? 'Assigning student...' : isRemoving ? 'Removing student...' : 'Processing...'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       {!classFilter ? (
-                        <div className="text-center text-gray-500 py-12">Select a class to manage assignments.</div>
+                        <div className="text-center text-gray-400 py-12">
+                          <svg className="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <p className="text-sm font-medium">Select a class to manage assignments</p>
+                        </div>
                       ) : isAssignedLoading ? (
-                        <div className="text-center text-gray-500 py-12">Loading assigned students...</div>
+                        <div className="text-center text-gray-500 py-12">
+                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-2"></div>
+                          <p className="text-sm">Loading assigned students...</p>
+                        </div>
                       ) : filteredAssigned.length === 0 ? (
-                        <div className="text-center text-gray-500 py-12">No students assigned.</div>
+                        <div className="text-center text-gray-400 py-12">
+                          <svg className="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          <p className="text-sm font-medium">No students assigned</p>
+                          <p className="text-xs mt-1">Drag students here or use the Assign button</p>
+                        </div>
                       ) : (
                         filteredAssigned.map((item, index) => (
                           <Draggable
@@ -710,26 +797,34 @@ const ClassStudentsSection: React.FC = () => {
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
-                                className={`mb-3 p-3 bg-white border border-gray-200 rounded-md shadow-sm flex items-center justify-between ${
-                                  dragSnapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
+                                className={`mb-3 p-4 bg-white border rounded-lg transition-all duration-200 flex items-center justify-between ${
+                                  dragSnapshot.isDragging 
+                                    ? 'shadow-xl border-red-400 scale-105' 
+                                    : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                                 }`}
                               >
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">{getStudentLabel(item.student)}</p>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item.student)}</p>
                                   {item.student.email && (
-                                    <p className="text-xs text-gray-500">{item.student.email}</p>
+                                    <p className="text-xs text-gray-500 truncate mt-0.5">{item.student.email}</p>
                                   )}
-                                  <p className="text-xs text-gray-400 mt-1">Order: #{item.tri}</p>
                                 </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 ml-3 flex-shrink-0">
                                   <StudentDetailsButton studentId={item.student.id} />
                                   <button
                                     type="button"
                                     onClick={() => handleUnassign(item.assignmentId)}
-                                    className="text-sm text-red-600 hover:text-red-800"
+                                    className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                                     disabled={isMutationLoading}
                                   >
-                                    Remove
+                                    {isRemoving ? (
+                                      <>
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                        <span>Removing...</span>
+                                      </>
+                                    ) : (
+                                      'Remove'
+                                    )}
                                   </button>
                                 </div>
                               </div>

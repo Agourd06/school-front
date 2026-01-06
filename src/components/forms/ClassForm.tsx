@@ -10,7 +10,6 @@ export interface ClassFormData {
   specialization_id: number | string | '';
   level_id: number | string | '';
   school_year_id: number | string | '';
-  school_year_period_id: number | string | '';
   status: number;
 }
 
@@ -26,8 +25,6 @@ export interface Class {
   level?: { id: number; title: string };
   school_year_id?: number;
   schoolYear?: { id: number; title: string };
-  school_year_period_id?: number;
-  schoolYearPeriod?: { id: number; title: string };
   status: number;
 }
 
@@ -41,7 +38,6 @@ interface ClassFormProps {
   specializations: Array<{ id: number; title: string }>;
   levels: Array<{ id: number; title: string }>;
   schoolYears: Array<{ id: number; title: string }>;
-  periods: Array<{ id: number; title: string }>;
   descriptionPosition?: 'top' | 'bottom';
   onDescriptionPreview?: () => void;
   onFormChange?: (formData: { program_id: number | string | ''; specialization_id: number | string | ''; school_year_id: number | string | '' }) => void;
@@ -57,7 +53,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
   specializations,
   levels,
   schoolYears,
-  periods,
   descriptionPosition = 'top',
   onDescriptionPreview,
   onFormChange,
@@ -69,7 +64,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
     specialization_id: '',
     level_id: '',
     school_year_id: '',
-    school_year_period_id: '',
     status: 1,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -83,7 +77,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
         specialization_id: initialData.specialization_id ?? initialData.specialization?.id ?? '',
         level_id: initialData.level_id ?? initialData.level?.id ?? '',
         school_year_id: initialData.school_year_id ?? initialData.schoolYear?.id ?? '',
-        school_year_period_id: initialData.school_year_period_id ?? initialData.schoolYearPeriod?.id ?? '',
         status: typeof initialData.status === 'number' ? initialData.status : 1,
       });
     } else {
@@ -94,7 +87,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
         specialization_id: '',
         level_id: '',
         school_year_id: '',
-        school_year_period_id: '',
         status: 1,
       });
     }
@@ -106,7 +98,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
     setForm((prev) => {
       let nextValue: string | number | '' = value;
       if (name === 'status') nextValue = Number(value);
-      if (['program_id', 'specialization_id', 'level_id', 'school_year_id', 'school_year_period_id'].includes(name)) {
+      if (['program_id', 'specialization_id', 'level_id', 'school_year_id'].includes(name)) {
         nextValue = value ? Number(value) : '';
       }
       const updated = { ...prev, [name]: nextValue };
@@ -116,9 +108,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
       }
       if (name === 'specialization_id') {
         updated.level_id = '';
-      }
-      if (name === 'school_year_id') {
-        updated.school_year_period_id = '';
       }
       if (onFormChange && (name === 'program_id' || name === 'specialization_id' || name === 'school_year_id')) {
         onFormChange({
@@ -184,6 +173,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
         </div>
       )}
 
+      {descriptionPosition === 'top' && descriptionEditor}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="Title *"
@@ -193,22 +184,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
           error={errors.title}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
-        <Select
-          label="Status"
-          name="status"
-          value={form.status}
-          onChange={handleChange}
-          options={STATUS_OPTIONS_FORM.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }))}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        />
-      </div>
-
-      {descriptionPosition === 'top' && descriptionEditor}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label="School Year *"
           name="school_year_id"
@@ -223,24 +198,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
           ]}
           error={errors.school_year_id}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        />
-        <Select
-          label="School Year Period"
-          name="school_year_period_id"
-          value={form.school_year_period_id}
-          onChange={handleChange}
-          disabled={!form.school_year_id}
-          options={[
-            { value: '', label: 'Select period (optional)' },
-            ...periods.map((period) => ({
-              value: period.id,
-              label: period.title,
-            })),
-          ]}
-          error={errors.school_year_period_id}
-          className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
-            !form.school_year_id ? 'bg-muted-foreground cursor-not-allowed' : ''
-          }`}
         />
       </div>
 
@@ -280,24 +237,37 @@ const ClassForm: React.FC<ClassFormProps> = ({
         />
       </div>
 
-      <Select
-        label="Level *"
-        name="level_id"
-        value={form.level_id}
-        onChange={handleChange}
-        disabled={!form.specialization_id}
-        options={[
-          { value: '', label: 'Select level' },
-          ...levels.map((level) => ({
-            value: level.id,
-            label: level.title,
-          })),
-        ]}
-        error={errors.level_id}
-        className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
-          !form.specialization_id ? 'bg-muted-foreground cursor-not-allowed' : ''
-        }`}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Select
+          label="Level *"
+          name="level_id"
+          value={form.level_id}
+          onChange={handleChange}
+          disabled={!form.specialization_id}
+          options={[
+            { value: '', label: 'Select level' },
+            ...levels.map((level) => ({
+              value: level.id,
+              label: level.title,
+            })),
+          ]}
+          error={errors.level_id}
+          className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+            !form.specialization_id ? 'bg-muted-foreground cursor-not-allowed' : ''
+          }`}
+        />
+        <Select
+          label="Status"
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          options={STATUS_OPTIONS_FORM.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+      </div>
 
       {descriptionPosition === 'bottom' && descriptionEditor}
 

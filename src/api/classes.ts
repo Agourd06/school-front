@@ -11,14 +11,12 @@ export interface ClassEntity {
   specialization_id: number;
   level_id: number;
   school_year_id: number;
-  school_year_period_id: number;
   created_at?: string;
   updated_at?: string;
   program?: { id: number; title: string } | null;
   specialization?: { id: number; title: string } | null;
   level?: { id: number; title: string } | null;
   schoolYear?: { id: number; title: string } | null;
-  schoolYearPeriod?: { id: number; title: string } | null;
 }
 
 export interface CreateClassRequest {
@@ -30,7 +28,6 @@ export interface CreateClassRequest {
   specialization_id: number;
   level_id: number;
   school_year_id: number;
-  school_year_period_id?: number;
 }
 
 export type UpdateClassRequest = Partial<CreateClassRequest>;
@@ -41,7 +38,6 @@ export interface GetClassesParams extends FilterParams {
   specialization_id?: number;
   level_id?: number;
   school_year_id?: number;
-  school_year_period_id?: number;
   student_id?: number;
 }
 
@@ -89,7 +85,6 @@ export const classesApi = {
     if (params.specialization_id) qp.append('specialization_id', String(params.specialization_id));
     if (params.level_id) qp.append('level_id', String(params.level_id));
     if (params.school_year_id) qp.append('school_year_id', String(params.school_year_id));
-    if (params.school_year_period_id) qp.append('school_year_period_id', String(params.school_year_period_id));
     if (params.student_id) qp.append('student_id', String(params.student_id));
     const qs = qp.toString();
     const url = qs ? `/classes?${qs}` : '/classes';

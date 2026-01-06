@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import BaseModal from './BaseModal';
 import { useCreateTeacher, useUpdateTeacher } from '../../hooks/useTeachers';
-import { useClassRooms } from '../../hooks/useClassRooms';
 import { TeacherForm, type Teacher } from '../forms';
 
 interface TeacherModalProps {
@@ -13,7 +12,7 @@ interface TeacherModalProps {
 const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher }) => {
   const createMutation = useCreateTeacher();
   const updateMutation = useUpdateTeacher();
-  const { data: classRooms } = useClassRooms({ limit: 100, page: 1 });
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const isEditing = !!teacher;
 
@@ -31,10 +30,11 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
       nationality: string;
       picture: string;
       status: number;
-      class_room_id: number | '';
     },
     pictureFile: File | null
   ) => {
+    setServerError(null);
+    
     const formDataObj = new FormData();
     formDataObj.append('first_name', formData.first_name);
     formDataObj.append('last_name', formData.last_name);
@@ -46,23 +46,44 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
     if (formData.city) formDataObj.append('city', formData.city);
     if (formData.country) formDataObj.append('country', formData.country);
     if (formData.nationality) formDataObj.append('nationality', formData.nationality);
-    if (formData.status != null) formDataObj.append('status', String(formData.status));
-    if (formData.class_room_id !== '') formDataObj.append('class_room_id', String(formData.class_room_id));
+    // For new teachers, always set status to 2 (pending)
+    // For editing, use the form status
+    if (isEditing) {
+      if (formData.status != null) formDataObj.append('status', String(formData.status));
+    } else {
+      // New teacher: always set to pending (2)
+      formDataObj.append('status', '2');
+    }
     if (pictureFile instanceof File) formDataObj.append('picture', pictureFile, pictureFile.name);
 
-    if (isEditing && teacher?.id) {
-      await updateMutation.mutateAsync({ id: teacher.id, data: formDataObj });
-    } else {
-      await createMutation.mutateAsync(formDataObj);
+    try {
+      if (isEditing && teacher?.id) {
+        await updateMutation.mutateAsync({ id: teacher.id, data: formDataObj });
+      } else {
+        await createMutation.mutateAsync(formDataObj);
+      }
+      onClose();
+      setServerError(null);
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { message?: string; statusCode?: number } } };
+      const message = axiosError?.response?.data?.message || 'Failed to save teacher';
+      
+      // Check if the error is related to email validation (duplicate email, etc.)
+      const messageLower = message.toLowerCase();
+      if (
+        messageLower.includes('email') ||
+        messageLower.includes('teacher with email') ||
+        messageLower.includes('user with email') ||
+        messageLower.includes('already exists')
+      ) {
+        // Set error on email field for better UX - this will be handled by TeacherForm
+        setServerError(message);
+      } else {
+        // For other errors, show as form error
+        setServerError(message);
+      }
     }
-    onClose();
   };
-
-  // Memoize classRooms to prevent unnecessary re-renders
-  const memoizedClassRooms = useMemo(
-    () => (classRooms?.data || []) as Array<{ id: number; code: string; title: string }>,
-    [classRooms?.data]
-  );
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Teacher' : 'Add Teacher'}>
@@ -71,7 +92,7 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
         onSubmit={handleSubmit}
         onCancel={onClose}
         isSubmitting={createMutation.isPending || updateMutation.isPending}
-        classRooms={memoizedClassRooms}
+        serverError={serverError}
       />
     </BaseModal>
   );

@@ -40,6 +40,7 @@ export interface GetAllStudentContactParams {
   limit?: number;
   search?: string;
   studentlinktypeId?: number | string;
+  student_id?: number;
   status?: number;
   // company_id is automatically filtered by backend from JWT, no need to send it
 }

@@ -8,7 +8,7 @@ import type { ContactFormData } from '../modals/student/types';
 import type { StudentLinkType } from '../../api/studentLinkType';
 import type { StudentContact } from '../../api/studentContact';
 import type { PaginatedResponse } from '../../types/api';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface StudentContactStepFormProps {
   form: ContactFormData;
@@ -26,7 +26,9 @@ interface StudentContactStepFormProps {
   onContinue?: () => void;
   allContacts?: StudentContact[];
   onEditContact?: (contact: StudentContact) => void;
+  onDeleteContact?: (contactId: number) => void;
   currentContactId?: number;
+  isDeletingContact?: boolean;
 }
 
 const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
@@ -45,7 +47,9 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
   onContinue,
   allContacts = [],
   onEditContact,
+  onDeleteContact,
   currentContactId,
+  isDeletingContact,
 }) => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState<Array<{ name: string }>>([]);
@@ -262,16 +266,30 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
                       )}
                     </div>
                   </div>
-                  {onEditContact && (
-                    <button
-                      type="button"
-                      onClick={() => onEditContact(contact)}
-                      className="ml-3 p-1.5 text-gray-400 hover:text-primary transition-colors"
-                      title="Edit contact"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                  )}
+                  <div className="ml-3 flex items-center gap-1">
+                    {onEditContact && (
+                      <button
+                        type="button"
+                        onClick={() => onEditContact(contact)}
+                        className="p-1.5 text-gray-400 hover:text-primary transition-colors"
+                        title="Edit contact"
+                        disabled={isDeletingContact}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                    {onDeleteContact && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteContact(contact.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                        title="Delete contact"
+                        disabled={isDeletingContact}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

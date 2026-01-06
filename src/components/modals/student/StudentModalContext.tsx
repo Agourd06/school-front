@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useStudentDetails } from '../../../hooks/useStudents';
 import { useStudentLinkTypes } from '../../../hooks/useStudentLinkTypes';
 import { useStudentContacts } from '../../../hooks/useStudentContacts';
@@ -104,9 +105,12 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
   const [linkTypeError, setLinkTypeError] = useState('');
   const [currentLinkType, setCurrentLinkType] = useState<StudentLinkType | null>(null);
 
+  const queryClient = useQueryClient();
+
   const { data: studentDetailsData, refetch: refetchStudentDetailsRaw } = useStudentDetails(studentId || 0);
   const { data: linkTypesData } = useStudentLinkTypes({ page: 1, limit: 100 });
   const { data: contactsData, refetch: refetchContactsRaw } = useStudentContacts({ 
+    student_id: studentId || undefined,
     page: 1, 
     limit: 100 
   });
@@ -114,7 +118,7 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
     student_id: studentId || undefined, 
     page: 1, 
     limit: 100 
-  });
+  }, { enabled: !!studentId });
 
   const refetchStudentDetails = () => {
     void refetchStudentDetailsRaw();
@@ -124,14 +128,15 @@ export const StudentModalProvider: React.FC<StudentModalProviderProps> = ({
     void refetchContactsRaw();
   };
 
-  const refetchDiplomes = () => {
+  const refetchDiplomes = async () => {
+    // Invalidate all diplome queries to ensure we get the latest data with the current studentId
+    await queryClient.invalidateQueries({ queryKey: ['studentdiplomes'] });
+    // Small delay to ensure query key has updated with new studentId
+    await new Promise(resolve => setTimeout(resolve, 50));
     void refetchDiplomesRaw();
   };
 
-  // Filter contacts by student_id on the frontend since the API type doesn't include it
-  const allContacts = (contactsData?.data || []).filter(
-    (contact) => !studentId || contact.student_id === studentId
-  );
+  const allContacts = contactsData?.data || [];
   const allDiplomes = diplomesData?.data || [];
 
   // Update studentId when initialStudentId changes

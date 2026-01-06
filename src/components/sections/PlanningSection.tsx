@@ -10,11 +10,12 @@ import {
   useUpdatePlanningStudent,
   useDeletePlanningStudent,
 } from '../../hooks/usePlanningStudents';
+import PlanningDuplicationModal from '../modals/PlanningDuplicationModal';
+import FrequencyPlaceholderEditor from '../modals/FrequencyPlaceholderEditor';
 import { useClasses } from '../../hooks/useClasses';
 import { useTeachers } from '../../hooks/useTeachers';
 import { useClassRooms } from '../../hooks/useClassRooms';
 import { useClassStudents } from '../../hooks/useClassStudents';
-import { useSpecializations } from '../../hooks/useSpecializations';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useCourses } from '../../hooks/useCourses';
@@ -47,7 +48,6 @@ const PlanningSection: React.FC = () => {
       class_id: '',
       class_room_id: '',
       teacher_id: '',
-      specialization_id: '',
       planning_session_type_id: '',
       course_id: '',
     },
@@ -58,6 +58,10 @@ const PlanningSection: React.FC = () => {
   const [formAlert, setFormAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [conflictSlot, setConflictSlot] = useState<{ date_day: string; hour_start: string; hour_end: string } | null>(null);
   const [showForm, setShowForm] = useState(true);
+  const [showDuplicationModal, setShowDuplicationModal] = useState(false);
+  const [showPlaceholderEditor, setShowPlaceholderEditor] = useState(false);
+  const [createdPlaceholders, setCreatedPlaceholders] = useState<PlanningStudentEntry[]>([]);
+  const [pendingDuplication, setPendingDuplication] = useState<PlanningStudentEntry | null>(null);
 
   const params = useMemo(() => {
     const p: GetPlanningStudentParams = {
@@ -77,7 +81,6 @@ const PlanningSection: React.FC = () => {
     if (filters.class_id) p.class_id = +filters.class_id;
     if (filters.class_room_id) p.class_room_id = +filters.class_room_id;
     if (filters.teacher_id) p.teacher_id = +filters.teacher_id;
-    if (filters.specialization_id) p.specialization_id = +filters.specialization_id;
     if (filters.planning_session_type_id) p.planning_session_type_id = +filters.planning_session_type_id;
     if (filters.course_id) p.course_id = +filters.course_id;
     return p;
@@ -111,8 +114,8 @@ const PlanningSection: React.FC = () => {
   const { data: classes, isLoading: classesLoading } = useClasses({ page: 1, limit: 100 });
   const { data: teachers, isLoading: teachersLoading } = useTeachers({ page: 1, limit: 100 });
   const { data: rooms, isLoading: roomsLoading } = useClassRooms({ page: 1, limit: 100 });
-  const { data: specs, isLoading: specsLoading } = useSpecializations({ page: 1, limit: 100 });
-  const { data: schoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
+  // Fetch all school years, will be filtered based on selected class
+  const { data: allSchoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 1000 });
   const { data: coursesResp, isLoading: coursesLoading } = useCourses({ page: 1, limit: 100 });
   const { data: periods, isLoading: periodsLoading } = useSchoolYearPeriods({
     page: 1,
@@ -149,19 +152,47 @@ const PlanningSection: React.FC = () => {
     return map;
   }, [classes]);
 
-  const classOptions = useMemo(() => mapOptions((classes?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [classes]);
-  const formClassOptions = useMemo(() => {
-    const yearId = form.school_year_id ? Number(form.school_year_id) : null;
-    const periodId = form.period ? Number(form.period) : null;
-    if (!yearId || !periodId) return [];
+  // Filter years based on selected class and lifecycle status (ongoing/planned only)
+  const yearOptions = useMemo(() => {
+    if (!form.class_id) {
+      // If no class selected, show all ongoing/planned years
+      return mapOptions(
+        (allSchoolYears?.data || []).filter(
+          (year: { lifecycle_status?: string }) => 
+            year.lifecycle_status === 'ongoing' || year.lifecycle_status === 'planned'
+        ) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>,
+        'title'
+      );
+    }
+    
+    // Get the selected class to find its school year
+    const selectedClass = classesMap.get(Number(form.class_id));
+    if (!selectedClass?.school_year_id) {
+      return [];
+    }
+    
+    // Filter to show only the class's school year if it's ongoing/planned
+    const classYear = (allSchoolYears?.data || []).find(
+      (year: { id: number; lifecycle_status?: string }) => 
+        year.id === selectedClass.school_year_id &&
+        (year.lifecycle_status === 'ongoing' || year.lifecycle_status === 'planned')
+    );
+    
+    if (!classYear) {
+      return [];
+    }
+    
+    return mapOptions(
+      [classYear] as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>,
+      'title'
+    );
+  }, [form.class_id, allSchoolYears, classesMap]);
 
-    return (classes?.data || [])
-      .filter((cls: ClassEntity) => cls.school_year_id === yearId && cls.school_year_period_id === periodId)
-      .map((cls: ClassEntity) => ({
-        value: cls.id,
-        label: cls.title || `Class #${cls.id}`,
-      }));
-  }, [classes, form.school_year_id, form.period]);
+  const classOptions = useMemo(() => mapOptions((classes?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [classes]);
+  // Class options - no filtering by year since class is selected first
+  const formClassOptions = useMemo(() => {
+    return mapOptions((classes?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title');
+  }, [classes]);
 
   const teacherOptions = useMemo(
     () =>
@@ -174,8 +205,6 @@ const PlanningSection: React.FC = () => {
     [teachers]
   );
   const roomOptions = useMemo(() => mapOptions(rooms?.data || [], 'title'), [rooms]);
-  const specializationOptions = useMemo(() => mapOptions((specs?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [specs]);
-  const yearOptions = useMemo(() => mapOptions((schoolYears?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [schoolYears]);
   const periodOptions = useMemo(() => mapOptions((periods?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [periods]);
   const sessionTypeOptions = useMemo(
     () =>
@@ -271,7 +300,6 @@ const PlanningSection: React.FC = () => {
       class: classOptions,
       teacher: teacherOptions,
       room: roomOptions,
-      specialization: specializationOptions,
       sessionType: sessionTypeOptions,
       course: courseOptions,
     }),
@@ -280,7 +308,6 @@ const PlanningSection: React.FC = () => {
       classOptions,
       teacherOptions,
       roomOptions,
-      specializationOptions,
       sessionTypeOptions,
       courseOptions,
     ]
@@ -291,11 +318,10 @@ const PlanningSection: React.FC = () => {
       classes: classesLoading,
       teachers: teachersLoading,
       rooms: roomsLoading,
-      specs: specsLoading,
       sessionTypes: sessionTypesLoading,
       courses: coursesLoading,
     }),
-    [classesLoading, teachersLoading, roomsLoading, specsLoading, sessionTypesLoading, coursesLoading]
+    [classesLoading, teachersLoading, roomsLoading, sessionTypesLoading, coursesLoading]
   );
 
   const weekEntries = useMemo(() => {
@@ -356,7 +382,6 @@ const PlanningSection: React.FC = () => {
       hour_end: normalizeTimeFormat(entry.hour_end),
       class_id: entry.class_id ?? '',
       class_course_id: '',
-      specialization_id: entry.specialization_id ?? '',
       teacher_id: entry.teacher_id ?? '',
       class_room_id: entry.class_room_id ?? '',
       planning_session_type_id: entry.planning_session_type_id,
@@ -419,7 +444,6 @@ const PlanningSection: React.FC = () => {
     if (form.hour_start && form.hour_end && form.hour_start >= form.hour_end) errors.hour_end = 'End must be after start';
     if (form.class_id === '') errors.class_id = 'Class is required';
     if (form.class_course_id === '') errors.class_course_id = 'Class course is required';
-    if (form.specialization_id === '') errors.specialization_id = 'Specialization is required';
     if (form.teacher_id === '') errors.teacher_id = 'Teacher is required';
     if (form.class_room_id === '') errors.class_room_id = 'Classroom is required';
     if (form.planning_session_type_id === '') errors.planning_session_type_id = 'Session type is required';
@@ -442,7 +466,6 @@ const PlanningSection: React.FC = () => {
       hour_start: normalizeTimeFormat(form.hour_start),
       hour_end: normalizeTimeFormat(form.hour_end),
       teacher_id: +form.teacher_id,
-      specialization_id: +form.specialization_id,
       class_id: +form.class_id,
       class_room_id: +form.class_room_id,
       planning_session_type_id: +form.planning_session_type_id,
@@ -455,13 +478,27 @@ const PlanningSection: React.FC = () => {
       if (selectedEntry) {
         await updateMut.mutateAsync({ id: selectedEntry.id, data: payload });
         setFormAlert({ type: 'success', message: 'Planning updated successfully.' });
+        await planningQuery.refetch();
+        setConflictSlot(null);
       } else {
-        await createMut.mutateAsync(payload);
+        const created = await createMut.mutateAsync(payload);
+        await planningQuery.refetch();
+        
+        // If there's a pending duplication, open the modal with the newly created planning
+        if (pendingDuplication) {
+          setSelectedEntry(created);
+          setPendingDuplication(null);
+          setConflictSlot(null);
+          setShowDuplicationModal(true);
+          setFormAlert({ type: 'success', message: 'Planning created. Now you can duplicate it.' });
+          return; // Don't reset form yet, let user duplicate first
+        }
+        
         setFormAlert({ type: 'success', message: 'Planning created successfully.' });
+        setConflictSlot(null);
+        setForm(INITIAL_FORM(currentWeekStart));
+        resetForm();
       }
-      await planningQuery.refetch();
-      setConflictSlot(null);
-      if (!selectedEntry) setForm(INITIAL_FORM(currentWeekStart));
     } catch (err: unknown) {
       const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
       const msg = Array.isArray(responseMessage)
@@ -502,19 +539,22 @@ const PlanningSection: React.FC = () => {
         if (name === 'class_id') {
           if (value !== '') {
             const selectedClass = classesMap.get(Number(value));
-            if (selectedClass?.specialization_id) {
-              updated.specialization_id = selectedClass.specialization_id;
+            // Auto-set school year from class
+            if (selectedClass?.school_year_id) {
+              updated.school_year_id = selectedClass.school_year_id;
             }
+          } else {
+            updated.school_year_id = '';
           }
           updated.class_course_id = '';
           updated.course_id = '';
           updated.teacher_id = '';
+          updated.class_room_id = '';
         }
 
         if (name === 'school_year_id') {
           updated.period = '';
           updated.class_id = '';
-          updated.specialization_id = '';
           updated.class_course_id = '';
           updated.course_id = '';
           updated.teacher_id = '';
@@ -522,7 +562,6 @@ const PlanningSection: React.FC = () => {
 
         if (name === 'period') {
           updated.class_id = '';
-          updated.specialization_id = '';
           updated.class_course_id = '';
           updated.course_id = '';
           updated.teacher_id = '';
@@ -571,7 +610,6 @@ const PlanningSection: React.FC = () => {
             setForm={setForm}
             setFormErrors={setFormErrors}
             teacherOptions={teacherOptions}
-            specializationOptions={specializationOptions}
             classOptions={formClassOptions}
             roomOptions={roomOptions}
             periodOptions={periodOptions}
@@ -594,6 +632,55 @@ const PlanningSection: React.FC = () => {
             classStudents={classStudents}
             classStudentsLoading={classStudentsLoading}
             classStudentsError={classStudentsErrorMsg}
+            onDuplicate={async () => {
+              if (selectedEntry) {
+                // If editing existing planning, open duplication modal directly
+                setShowDuplicationModal(true);
+              } else {
+                // If creating new planning, first validate and create it, then open duplication modal
+                const errors = validateForm();
+                if (Object.keys(errors).length > 0) {
+                  // Form has errors, show them
+                  setFormErrors(errors);
+                  setFormAlert({ type: 'error', message: 'Please fill in all required fields before duplicating.' });
+                  return;
+                }
+                
+                // Form is valid, create the planning first
+                const payload = {
+                  period: form.period.trim(),
+                  date_day: form.date_day,
+                  hour_start: normalizeTimeFormat(form.hour_start),
+                  hour_end: normalizeTimeFormat(form.hour_end),
+                  teacher_id: +form.teacher_id,
+                  class_id: +form.class_id,
+                  class_room_id: +form.class_room_id,
+                  planning_session_type_id: +form.planning_session_type_id,
+                  course_id: +form.course_id,
+                  school_year_id: form.school_year_id === '' ? undefined : +form.school_year_id,
+                  status: form.status,
+                };
+                
+                try {
+                  const created = await createMut.mutateAsync(payload);
+                  await planningQuery.refetch();
+                  
+                  // Set the created planning as selected and open duplication modal
+                  setSelectedEntry(created);
+                  setShowDuplicationModal(true);
+                  setFormAlert({ type: 'success', message: 'Planning created. Now you can duplicate it.' });
+                } catch (err: unknown) {
+                  const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+                  const msg = Array.isArray(responseMessage)
+                    ? responseMessage.join(', ')
+                    : responseMessage || (err as Error).message || 'Failed to create planning';
+                  setFormAlert({ type: 'error', message: msg });
+                  if (msg.toLowerCase().includes('overlap')) {
+                    setConflictSlot({ date_day: form.date_day, hour_start: form.hour_start, hour_end: form.hour_end });
+                  }
+                }
+              }
+            }}
           />
         )}
 
@@ -642,6 +729,50 @@ const PlanningSection: React.FC = () => {
         </div>
       </div>
 
+      {/* Duplication Modal */}
+      {selectedEntry && (
+        <PlanningDuplicationModal
+          isOpen={showDuplicationModal}
+          onClose={() => setShowDuplicationModal(false)}
+          planning={selectedEntry}
+          onOpenPlaceholderEditor={(placeholders) => {
+            setCreatedPlaceholders(placeholders);
+            setShowPlaceholderEditor(true);
+          }}
+          onSuccess={(createdCount, _plannings, _type, skippedCount) => {
+            planningQuery.refetch();
+            
+            // Show success message with skip count if any
+            if (skippedCount && skippedCount > 0) {
+              setFormAlert({ 
+                type: 'success', 
+                message: `${createdCount} planning(s) created successfully. ${skippedCount} planning(s) were skipped due to conflicts (same classroom, time, and teacher).` 
+              });
+            } else {
+              setFormAlert({ 
+                type: 'success', 
+                message: `${createdCount} planning(s) created successfully.` 
+              });
+            }
+            
+            // Note: Frequency type now opens placeholder editor directly via onOpenPlaceholderEditor
+            // This onSuccess is only called for week and recurring types
+          }}
+        />
+      )}
+
+      {/* Frequency Placeholder Editor */}
+      <FrequencyPlaceholderEditor
+        isOpen={showPlaceholderEditor}
+        onClose={() => {
+          setShowPlaceholderEditor(false);
+          setCreatedPlaceholders([]);
+        }}
+        placeholders={createdPlaceholders}
+        onSuccess={() => {
+          planningQuery.refetch();
+        }}
+      />
     </div>
   );
 };

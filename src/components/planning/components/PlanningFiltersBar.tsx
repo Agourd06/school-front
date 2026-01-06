@@ -41,15 +41,6 @@ const PlanningFiltersBar: React.FC<PlanningFiltersBarProps> = ({ filters, onFilt
         isLoading={loading.rooms}
       />
       <SearchSelect
-        label="Specialization"
-        value={filters.specialization_id}
-        onChange={onFilterChange('specialization_id')}
-        options={options.specialization}
-        placeholder="All specializations"
-        isClearable
-        isLoading={loading.specs}
-      />
-      <SearchSelect
         label="Session Type"
         value={filters.planning_session_type_id}
         onChange={onFilterChange('planning_session_type_id')}

@@ -65,7 +65,6 @@ export interface PlanningStudentEntry {
 export interface PlanningStudentPayload {
   period: string;
   teacher_id: number;
-  specialization_id: number;
   class_id: number;
   class_room_id: number;
   planning_session_type_id: number;
@@ -87,6 +86,7 @@ export interface GetPlanningStudentParams extends PaginationParams {
   specialization_id?: number;
   planning_session_type_id?: number;
   course_id?: number;
+  date_day?: string; // YYYY-MM-DD format
   order?: 'ASC' | 'DESC';
   // company_id is automatically filtered by backend from JWT, no need to send it
 }
@@ -179,6 +179,21 @@ export const planningStudentApi = {
 
   async delete(id: number): Promise<void> {
     await api.delete(`/students-plannings/${id}`);
+  },
+
+  async duplicate(payload: {
+    source_planning_id: number;
+    type: 'week' | 'frequency' | 'recurring';
+    number_of_weeks?: number;
+    duration_months?: number;
+  }): Promise<{ 
+    message: string; 
+    created_count: number; 
+    skipped_count?: number;
+    plannings: PlanningStudentEntry[] 
+  }> {
+    const { data } = await api.post('/students-plannings/duplicate', payload);
+    return data;
   },
 };
 

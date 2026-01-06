@@ -163,16 +163,14 @@ const StudentReportsSection: React.FC = () => {
     page: 1,
     limit: API_LIMIT,
     school_year_id: selectedYear ? Number(selectedYear) : undefined,
-    school_year_period_id: selectedPeriod ? Number(selectedPeriod) : undefined,
   });
   const dashboardParams = useMemo(() => {
-    if (!selectedYear || !selectedPeriod || !selectedClass) return null;
+    if (!selectedYear || !selectedClass) return null;
     return {
       class_id: Number(selectedClass),
       school_year_id: Number(selectedYear),
-      school_year_period_id: Number(selectedPeriod),
     };
-  }, [selectedClass, selectedPeriod, selectedYear]);
+  }, [selectedClass, selectedYear]);
 
   const {
     data: dashboardData,

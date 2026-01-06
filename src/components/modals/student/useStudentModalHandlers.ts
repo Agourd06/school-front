@@ -154,8 +154,21 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       await refetchStudentDetails();
       onStepComplete(1);
     } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string; statusCode?: number } } };
-      const message = axiosError?.response?.data?.message || 'Failed to save student';
+      const axiosError = err as { response?: { data?: { message?: string | string[]; statusCode?: number } }; message?: string };
+      const dataMessage = axiosError?.response?.data?.message;
+      
+      // Extract message - handle both string and array cases
+      let message: string;
+      if (Array.isArray(dataMessage)) {
+        message = dataMessage.join(', ');
+      } else if (typeof dataMessage === 'string') {
+        message = dataMessage;
+      } else if (typeof axiosError.message === 'string') {
+        message = axiosError.message;
+      } else {
+        message = 'Failed to save student';
+      }
+      
       const errors: Record<string, string> = {};
       
       // Check if the error is related to email validation (duplicate email, etc.)
@@ -164,7 +177,8 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
         messageLower.includes('email') ||
         messageLower.includes('student with email') ||
         messageLower.includes('user with email') ||
-        messageLower.includes('already exists')
+        messageLower.includes('already exists') ||
+        messageLower.includes('duplicate entry')
       ) {
         // Set error on email field for better UX
         errors.email = message;

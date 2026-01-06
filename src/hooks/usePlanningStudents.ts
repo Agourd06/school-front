@@ -55,4 +55,19 @@ export const useDeletePlanningStudent = () => {
   });
 };
 
+export const useDuplicatePlanningStudent = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      source_planning_id: number;
+      type: 'week' | 'frequency' | 'recurring';
+      number_of_weeks?: number;
+      duration_months?: number;
+    }) => planningStudentApi.duplicate(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QUERY_KEY] });
+    },
+  });
+};
+
 

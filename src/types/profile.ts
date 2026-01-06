@@ -3,7 +3,7 @@
  * Migrated from 'role' to 'profile' with new enum values
  * Default profile is 'admin' (administrateur) - has access to everything
  */
-export type Profile = 'support' | 'admin' | 'finance' | 'student' | 'direction' | 'prof' | 'scholarity';
+export type Profile = 'support' | 'admin' | 'finance' | 'student' | 'direction' | 'prof' | 'teacher' | 'scholarity';
 
 export const PROFILE_DEFAULT: Profile = 'admin';
 
@@ -14,6 +14,7 @@ export const PROFILE_OPTIONS: { value: Profile; label: string }[] = [
   { value: 'student', label: 'Student' },
   { value: 'direction', label: 'Direction' },
   { value: 'prof', label: 'Professor' },
+  { value: 'teacher', label: 'Teacher' },
   { value: 'scholarity', label: 'Scholarity' },
 ];
 

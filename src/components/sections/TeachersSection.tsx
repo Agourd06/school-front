@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   useTeachers,
   useDeleteTeacher,
+  useSendPasswordInvitation,
 } from '../../hooks/useTeachers';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
@@ -12,6 +13,7 @@ import { EditButton, DeleteButton, Input, Button } from '../ui';
 import type { Teacher } from '../../api/teachers';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
+import { Mail } from 'lucide-react';
 
 const EMPTY_META = {
   page: 1,
@@ -75,6 +77,63 @@ const TeachersSection: React.FC = () => {
   const meta = teachersResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
   const deleteTeacherMut = useDeleteTeacher();
+  const sendInvitationMut = useSendPasswordInvitation();
+  const [invitationSentTimes, setInvitationSentTimes] = useState<Record<number, number>>({});
+
+  // Load invitation sent times from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('teacherInvitationSentTimes');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        // Filter out entries older than 24 hours
+        const now = Date.now();
+        const filtered: Record<number, number> = {};
+        Object.entries(parsed).forEach(([id, time]) => {
+          const timeNum = Number(time);
+          if (now - timeNum < 24 * 60 * 60 * 1000) {
+            filtered[Number(id)] = timeNum;
+          }
+        });
+        setInvitationSentTimes(filtered);
+        if (Object.keys(filtered).length !== Object.keys(parsed).length) {
+          localStorage.setItem('teacherInvitationSentTimes', JSON.stringify(filtered));
+        }
+      } catch (error) {
+        console.error('Failed to parse teacher invitation sent times:', error);
+      }
+    }
+  }, []);
+
+  const canSendInvitation = (teacherId: number): boolean => {
+    const sentTime = invitationSentTimes[teacherId];
+    if (!sentTime) return true;
+    const now = Date.now();
+    const hoursSinceSent = (now - sentTime) / (1000 * 60 * 60);
+    return hoursSinceSent >= 24;
+  };
+
+  const getTimeUntilCanSend = (teacherId: number): string => {
+    const sentTime = invitationSentTimes[teacherId];
+    if (!sentTime) return '0';
+    const now = Date.now();
+    const hoursSinceSent = (now - sentTime) / (1000 * 60 * 60);
+    const hoursRemaining = Math.ceil(24 - hoursSinceSent);
+    return hoursRemaining > 0 ? String(hoursRemaining) : '0';
+  };
+
+  const handleSendPasswordInvitation = async (teacher: Teacher) => {
+    try {
+      await sendInvitationMut.mutateAsync(teacher.id);
+      const newTimes = { ...invitationSentTimes, [teacher.id]: Date.now() };
+      setInvitationSentTimes(newTimes);
+      localStorage.setItem('teacherInvitationSentTimes', JSON.stringify(newTimes));
+      setAlert({ type: 'success', message: `Password invitation email sent to ${teacher.email}` });
+    } catch (err: unknown) {
+      const errorMessage = extractErrorMessage(err);
+      setAlert({ type: 'error', message: errorMessage });
+    }
+  };
 
   const openCreateModal = () => {
     setEditingTeacher(null);
@@ -139,20 +198,6 @@ const TeachersSection: React.FC = () => {
     return `${teacher.first_name ?? ''} ${teacher.last_name ?? ''}`.trim() || teacher.email || `Teacher #${teacher.id}`;
   };
 
-  const getClassRoomLabel = (teacher: Teacher) => {
-    const classRoom =  teacher.class_room;
-    if (classRoom) {
-      const title = classRoom.title || '';
-      const code = classRoom.code || '';
-      if (title && code) return `${title} (${code})`;
-      return title || code || 'N/A';
-    }
-    return teacher.class_room_id ? `ID: ${teacher.class_room_id}` : 'N/A';
-  };
-
-  const getCompanyLabel = (teacher: Teacher) => {
-    return teacher.company?.name || (teacher.company_id ? `ID: ${teacher.company_id}` : 'N/A');
-  };
 
   const getPictureUrl = (picture?: string) => {
     if (!picture) return null;
@@ -229,9 +274,6 @@ const TeachersSection: React.FC = () => {
                   Contact
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Class & Company
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   Status
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -242,13 +284,13 @@ const TeachersSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
                     Loading teachers…
                   </td>
                 </tr>
               ) : teachers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
                     No teachers found.
                   </td>
                 </tr>
@@ -278,16 +320,29 @@ const TeachersSection: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        <div className="space-y-1">
-                          <div>Class: {getClassRoomLabel(teacher)}</div>
-                          <div className="text-xs text-gray-500">Company: {getCompanyLabel(teacher)}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
                         <StatusBadge value={teacher.status} />
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
+                          {teacher.status === 2 && (
+                            <Button
+                              type="button"
+                              variant={canSendInvitation(teacher.id) ? 'primary' : 'secondary'}
+                              onClick={() => handleSendPasswordInvitation(teacher)}
+                              disabled={!canSendInvitation(teacher.id) || sendInvitationMut.isPending}
+                              className={`text-xs px-2 py-1 ${
+                                !canSendInvitation(teacher.id) ? 'opacity-60 cursor-not-allowed' : ''
+                              }`}
+                              title={
+                                canSendInvitation(teacher.id)
+                                  ? 'Send password invitation email'
+                                  : `Can send again in ${getTimeUntilCanSend(teacher.id)} hour(s)`
+                              }
+                            >
+                              <Mail className="h-3 w-3 mr-1 inline" />
+                              {canSendInvitation(teacher.id) ? 'Send Invitation' : `${getTimeUntilCanSend(teacher.id)}h`}
+                            </Button>
+                          )}
                           <EditButton onClick={() => openEditModal(teacher)} />
                           <DeleteButton onClick={() => requestDelete(teacher)} />
                         </div>

@@ -6,7 +6,7 @@ import SearchSelect from '../inputs/SearchSelect';
 import { countriesApi } from '../../api/countries';
 import type { DiplomeFormData } from '../modals/student/types';
 import type { StudentDiplome } from '../../api/studentDiplome';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface StudentDiplomeStepFormProps {
   form: DiplomeFormData;
@@ -29,7 +29,9 @@ interface StudentDiplomeStepFormProps {
   onContinue?: () => void;
   allDiplomes?: StudentDiplome[];
   onEditDiplome?: (diplome: StudentDiplome) => void;
+  onDeleteDiplome?: (diplomeId: number) => void;
   currentDiplomeId?: number;
+  isDeletingDiplome?: boolean;
 }
 
 const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
@@ -53,7 +55,9 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
   onContinue,
   allDiplomes = [],
   onEditDiplome,
+  onDeleteDiplome,
   currentDiplomeId,
+  isDeletingDiplome,
 }) => {
   const [previewUrl1, setPreviewUrl1] = useState<string | null>(null);
   const [previewUrl2, setPreviewUrl2] = useState<string | null>(null);
@@ -294,16 +298,30 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
                     )}
                   </div>
                 </div>
-                {onEditDiplome && (
-                  <button
-                    type="button"
-                    onClick={() => onEditDiplome(diplome)}
-                    className="ml-3 p-1.5 text-gray-400 hover:text-primary transition-colors"
-                    title="Edit diplome"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                )}
+                <div className="ml-3 flex items-center gap-1">
+                  {onEditDiplome && (
+                    <button
+                      type="button"
+                      onClick={() => onEditDiplome(diplome)}
+                      className="p-1.5 text-gray-400 hover:text-primary transition-colors"
+                      title="Edit diplome"
+                      disabled={isDeletingDiplome}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  )}
+                  {onDeleteDiplome && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteDiplome(diplome.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Delete diplome"
+                      disabled={isDeletingDiplome}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

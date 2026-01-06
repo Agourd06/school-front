@@ -4,6 +4,8 @@ import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Input, Select, Button } from '../ui';
 import PhoneInput from '../inputs/PhoneInput';
+import SearchSelect from '../inputs/SearchSelect';
+import { countriesApi } from '../../api/countries';
 
 export interface TeacherFormData {
   gender: string;
@@ -18,7 +20,6 @@ export interface TeacherFormData {
   nationality: string;
   picture: string;
   status: number;
-  class_room_id: number | '';
 }
 
 export interface Teacher {
@@ -35,7 +36,6 @@ export interface Teacher {
   nationality?: string;
   picture?: string;
   status: number;
-  class_room_id?: number | null;
 }
 
 interface TeacherFormProps {
@@ -44,7 +44,6 @@ interface TeacherFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   serverError?: string | null;
-  classRooms: Array<{ id: number; code: string; title: string }>;
 }
 
 const TeacherForm: React.FC<TeacherFormProps> = ({
@@ -53,7 +52,6 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
   onCancel,
   isSubmitting = false,
   serverError,
-  classRooms,
 }) => {
   // Track the initial data ID to prevent unnecessary resets
   const initialDataIdRef = useRef<number | null>(null);
@@ -71,13 +69,41 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
     country: '',
     nationality: '',
     picture: '',
-    status: 1,
-    class_room_id: '',
+    status: 2, // Default to pending (2) for new teachers
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pictureFile, setPictureFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const pictureInputId = useId();
+  const [countries, setCountries] = useState<Array<{ name: string }>>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  // Update errors when serverError changes (for email duplicate errors)
+  useEffect(() => {
+    if (serverError) {
+      const messageLower = serverError.toLowerCase();
+      if (
+        messageLower.includes('email') ||
+        messageLower.includes('teacher with email') ||
+        messageLower.includes('user with email') ||
+        messageLower.includes('already exists')
+      ) {
+        // Set error on email field for better UX
+        setErrors((prev) => ({ ...prev, email: serverError }));
+      } else {
+        // For other errors, keep them in serverError (displayed above form)
+        setErrors((prev) => ({ ...prev, form: serverError }));
+      }
+    } else {
+      // Clear form error when serverError is cleared
+      setErrors((prev) => {
+        const { form: _, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [serverError]);
 
   useEffect(() => {
     // Get the current initialData ID (or null if no initialData)
@@ -102,8 +128,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           country: initialData.country || '',
           nationality: initialData.nationality || '',
           picture: initialData.picture || '',
-          status: typeof initialData.status === 'number' ? initialData.status : 1,
-          class_room_id: initialData.class_room_id ?? '',
+          status: typeof initialData.status === 'number' ? initialData.status : 2,
         });
       } else {
         setForm({
@@ -118,8 +143,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           country: '',
           nationality: '',
           picture: '',
-          status: 1,
-          class_room_id: '',
+          status: 2, // Default to pending (2) for new teachers
         });
       }
       setErrors({});
@@ -141,16 +165,12 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]:
-        name === 'class_room_id'
-          ? value
-            ? Number(value)
-            : ''
-          : name === 'status'
-          ? Number(value)
-          : value,
+      [name]: name === 'status' ? Number(value) : value,
     }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handlePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,6 +209,61 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
     }
   }, [initialData?.picture, pictureFile]);
 
+  // Load countries on mount
+  useEffect(() => {
+    const loadCountries = async () => {
+      setLoadingCountries(true);
+      try {
+        const countriesList = await countriesApi.getCountries();
+        setCountries(countriesList.sort((a, b) => a.name.localeCompare(b.name)));
+      } catch (error) {
+        console.error('Failed to load countries:', error);
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+    loadCountries();
+  }, []);
+
+  // Load cities when country changes
+  useEffect(() => {
+    if (form.country) {
+      const loadCities = async () => {
+        setLoadingCities(true);
+        setCities([]);
+        try {
+          const citiesList = await countriesApi.getCities(form.country);
+          setCities(citiesList);
+        } catch (error) {
+          console.error('Failed to load cities:', error);
+        } finally {
+          setLoadingCities(false);
+        }
+      };
+      loadCities();
+    } else {
+      setCities([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.country]);
+
+  // Handlers for SearchSelect (they use value callbacks instead of events)
+  const handleCountryChange = (value: number | string | '') => {
+    const fakeEvent = {
+      target: { name: 'country', value: String(value) },
+    } as React.ChangeEvent<HTMLSelectElement>;
+    handleChange(fakeEvent);
+    // Clear city when country changes
+    setForm((prev) => ({ ...prev, city: '' }));
+  };
+
+  const handleCityChange = (value: number | string | '') => {
+    const fakeEvent = {
+      target: { name: 'city', value: String(value) },
+    } as React.ChangeEvent<HTMLSelectElement>;
+    handleChange(fakeEvent);
+  };
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
     const fnErr = validateRequired(form.first_name, 'First name');
@@ -209,9 +284,9 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {serverError && (
+      {errors.form && (
         <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
-          {serverError}
+          {errors.form}
         </div>
       )}
 
@@ -308,6 +383,7 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           name="birthday"
           value={form.birthday}
           onChange={handleChange}
+          max={new Date().toISOString().split('T')[0]}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
@@ -317,23 +393,6 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           label="Address"
           name="address"
           value={form.address}
-          onChange={handleChange}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Input
-          label="City"
-          name="city"
-          value={form.city}
-          onChange={handleChange}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        />
-        <Input
-          label="Country"
-          name="country"
-          value={form.country}
           onChange={handleChange}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
@@ -347,32 +406,54 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Select
-          label="Status"
-          name="status"
-          value={form.status}
-          onChange={handleChange}
-          options={STATUS_OPTIONS_FORM.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
+        <SearchSelect
+          label="Country"
+          value={form.country || ''}
+          onChange={handleCountryChange}
+          options={countries.map((country) => ({
+            value: country.name,
+            label: country.name,
           }))}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+          placeholder={loadingCountries ? 'Loading countries...' : 'Search country...'}
+          isLoading={loadingCountries}
         />
-        <Select
-          label="Class Room"
-          name="class_room_id"
-          value={form.class_room_id}
-          onChange={handleChange}
-          options={[
-            { value: '', label: 'No class room' },
-            ...classRooms.map((cr) => ({
-              value: cr.id,
-              label: `${cr.code} — ${cr.title}`,
-            })),
-          ]}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        <SearchSelect
+          label="City"
+          value={form.city || ''}
+          onChange={handleCityChange}
+          options={cities.map((city) => ({
+            value: city,
+            label: city,
+          }))}
+          placeholder={!form.country ? 'Select a country first' : loadingCities ? 'Loading cities...' : 'Search city...'}
+          disabled={!form.country || loadingCities}
+          isLoading={loadingCities}
         />
       </div>
+
+      {/* Only show status field when editing */}
+      {initialData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select
+            label="Status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            options={STATUS_OPTIONS_FORM.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+            className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+          />
+        </div>
+      )}
+      
+      {/* Show helper text for new teachers */}
+      {!initialData && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+          <strong>Note:</strong> New teachers are created with <strong>Pending</strong> status. A password invitation email can be sent to set their password.
+        </div>
+      )}
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
