@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PaginationProps {
   currentPage: number;
@@ -23,6 +24,7 @@ const Pagination: React.FC<PaginationProps> = ({
   hasPrevious,
   isLoading = false
 }) => {
+  const { t } = useTranslation();
   const pageSizeOptions = [10, 25, 50, 100];
   
   // Calculate the range of items being displayed
@@ -74,16 +76,16 @@ const Pagination: React.FC<PaginationProps> = ({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-card border-t border-border">
       {/* Items info */}
       <div className="text-sm text-body">
-        Showing <span className="font-medium">{startItem}</span> to{' '}
-        <span className="font-medium">{endItem}</span> of{' '}
-        <span className="font-medium">{totalItems}</span> results
+        {t('sections.showing')} <span className="font-medium">{startItem}</span> {t('sections.to')}{' '}
+        <span className="font-medium">{endItem}</span> {t('sections.of')}{' '}
+        <span className="font-medium">{totalItems}</span> {t('sections.results')}
       </div>
 
       <div className="flex items-center gap-4">
         {/* Page size selector */}
         <div className="flex items-center gap-2">
           <label htmlFor="pageSize" className="text-sm text-body">
-            Show:
+            {t('sections.show')}
           </label>
           <select
             id="pageSize"
@@ -108,7 +110,7 @@ const Pagination: React.FC<PaginationProps> = ({
             disabled={!hasPrevious || isLoading}
             className="px-3 py-1 text-sm font-medium text-muted bg-card border border-border rounded-l-md hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Previous
+            {t('sections.previous')}
           </button>
 
           {/* Page numbers */}
@@ -138,7 +140,7 @@ const Pagination: React.FC<PaginationProps> = ({
             disabled={!hasNext || isLoading}
             className="px-3 py-1 text-sm font-medium text-muted bg-card border border-border rounded-r-md hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Next
+            {t('sections.next')}
           </button>
         </div>
       </div>

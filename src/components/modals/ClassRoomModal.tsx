@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import BaseModal from "./BaseModal";
 import {
   useCreateClassRoom,
@@ -18,6 +19,7 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({
   onClose,
   classRoom,
 }) => {
+  const { t } = useTranslation();
   const createMutation = useCreateClassRoom();
   const updateMutation = useUpdateClassRoom();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -63,7 +65,7 @@ const ClassRoomModal: React.FC<ClassRoomModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? "Edit Classroom" : "Add Classroom"}
+      title={isEditing ? t('sections.editClassRoom') : t('sections.addClassRoom')}
     >
       <ClassRoomForm
         initialData={classRoom}

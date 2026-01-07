@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import type { StudentPayment, StudentPaymentStatus } from '../../api/studentPayment';
 import { StudentPaymentForm, type StudentPaymentFormData } from '../forms';
@@ -44,6 +45,7 @@ const StudentPaymentModal: React.FC<StudentPaymentModalProps> = ({
   modeOptions = ['Cash', 'Card', 'Transfer', 'Check'],
   serverError,
 }) => {
+  const { t } = useTranslation();
   const handleSubmit = async (formData: StudentPaymentFormData) => {
     await onSubmit(formData as StudentPaymentFormValues);
   };
@@ -52,7 +54,7 @@ const StudentPaymentModal: React.FC<StudentPaymentModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Edit Student Payment' : 'Add Student Payment'}
+      title={initialData ? t('forms.editStudentPayment') : t('forms.addStudentPayment')}
       className="sm:max-w-4xl"
     >
       <StudentPaymentForm

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input, Select, Button } from '../ui';
 import type { Profile } from '../../types/profile';
 import { PROFILE_DEFAULT, PROFILE_OPTIONS } from '../../types/profile';
@@ -35,6 +36,7 @@ const UserForm: React.FC<UserFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<UserFormData>({
     username: '',
     email: '',
@@ -68,17 +70,17 @@ const UserForm: React.FC<UserFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = t('forms.usernameRequired');
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('forms.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = t('forms.emailInvalid');
     }
 
     if (!isEditing && !formData.password.trim()) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('forms.passwordRequired');
     }
 
     setErrors(newErrors);
@@ -116,7 +118,7 @@ const UserForm: React.FC<UserFormProps> = ({
       )}
 
       <Input
-        label="Username"
+        label={t('forms.username')}
         type="text"
         name="username"
         value={formData.username}
@@ -126,7 +128,7 @@ const UserForm: React.FC<UserFormProps> = ({
       />
 
       <Input
-        label="Email"
+        label={t('forms.email')}
         type="email"
         name="email"
         value={formData.email}
@@ -136,7 +138,7 @@ const UserForm: React.FC<UserFormProps> = ({
       />
 
       <Select
-        label="Profile"
+        label={t('forms.profile')}
         name="profile"
         value={formData.profile}
         onChange={handleChange}
@@ -145,7 +147,7 @@ const UserForm: React.FC<UserFormProps> = ({
       />
 
       <Input
-        label={isEditing ? 'New Password (leave blank to keep current)' : 'Password'}
+        label={isEditing ? t('forms.newPassword') + ' (' + t('forms.leaveBlankToKeepCurrent') + ')' : t('forms.password')}
         type="password"
         name="password"
         value={formData.password}
@@ -156,7 +158,7 @@ const UserForm: React.FC<UserFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -164,7 +166,7 @@ const UserForm: React.FC<UserFormProps> = ({
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          {isEditing ? 'Update' : 'Create'}
+          {isEditing ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

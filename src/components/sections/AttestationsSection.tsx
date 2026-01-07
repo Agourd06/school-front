@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useAttestations,
   useDeleteAttestation,
@@ -21,8 +22,8 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.filter((opt) => opt.value !== -2).map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
@@ -34,22 +35,25 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-danger-badge',
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const AttestationsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
     search: '',
   });
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAttestation, setEditingAttestation] = useState<Attestation | null>(null);
@@ -140,7 +144,7 @@ const AttestationsSection: React.FC = () => {
       setAlert({ type: 'success', message: 'Attestation deleted successfully.' });
       refetchAttestations();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -155,8 +159,8 @@ const AttestationsSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Attestations</h1>
-            <p className="text-sm text-gray-500">Manage attestations and their associated companies.</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.attestations')}</h1>
+            <p className="text-sm text-gray-500">{t('sections.manageAttestations')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -168,7 +172,7 @@ const AttestationsSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Attestation
+              {t('sections.addAttestation')}
             </Button>
           </div>
         </div>
@@ -192,19 +196,19 @@ const AttestationsSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-body">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
             isClearable={false}
           />
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-heading">Search</label>
+            <label className="block text-sm font-medium text-heading">{t('common.search')}</label>
             <input
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by attestation title or description..."
+              placeholder={t('sections.searchByAttestationTitle')}
               className="mt-1 block w-full rounded-md border border-border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary bg-card"
             />
           </div>
@@ -217,14 +221,14 @@ const AttestationsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  {t('common.name')}
                 </th>
                 
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -314,17 +318,17 @@ const AttestationsSection: React.FC = () => {
         >
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Title</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('common.name')}</h3>
               <p className="text-gray-700">{detailsAttestation.title}</p>
             </div>
             {detailsAttestation.company && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Company</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('sidebar.companies')}</h3>
                 <p className="text-gray-700">{detailsAttestation.company.name}</p>
               </div>
             )}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Status</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">{t('common.status')}</h3>
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   statusStyles[typeof detailsAttestation.statut === 'number' ? detailsAttestation.statut : 0] ?? 'bg-gray-100 text-gray-600'

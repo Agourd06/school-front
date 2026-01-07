@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { tabToRoutePath, routePathToTab, type RouteTab } from "../utils/routeMapping";
 
 interface SidebarProps {
@@ -15,6 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   isCollapsed,
 }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const [isParametersOpen, setIsParametersOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -41,66 +43,74 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const parameterGroups: Array<{
     title: string;
-    items: Array<{ tab: SidebarProps['activeTab']; label: string }>;
+    titleKey: string;
+    items: Array<{ tab: SidebarProps['activeTab']; labelKey: string }>;
   }> = [
   
     {
       title: 'Academic Setup',
+      titleKey: 'sidebar.academicSetup',
       items: [
   
       ],
     },
     {
       title: 'Class Management',
+      titleKey: 'sidebar.classManagement',
       items: [
-        { tab: 'classes', label: 'Classes' },
-        { tab: 'planningSessionTypes', label: 'Planning Session Types' },
+        { tab: 'classes', labelKey: 'sidebar.classes' },
+        { tab: 'planningSessionTypes', labelKey: 'sidebar.planningSessionTypes' },
       ],
     },
     {
       title: 'Student',
+      titleKey: 'sidebar.student',
       items: [
        
-        { tab: 'administrators', label: 'Administrators' },
-        { tab: 'studentReports', label: 'Student Reports' },
-        { tab: 'studentLinkTypes', label: 'Student Link Types' },
-        { tab: 'studentContacts', label: 'Student Contacts' },
-        { tab: 'studentDiplomes', label: 'Student Diplomes' },
-        { tab: 'attestations', label: 'Attestations' },
-        { tab: 'studentAttestations', label: 'Student Attestations' },
+        { tab: 'administrators', labelKey: 'sidebar.administrators' },
+        { tab: 'studentReports', labelKey: 'sidebar.studentReports' },
+        { tab: 'studentLinkTypes', labelKey: 'sidebar.studentLinkTypes' },
+        { tab: 'studentContacts', labelKey: 'sidebar.studentContacts' },
+        { tab: 'studentDiplomes', labelKey: 'sidebar.studentDiplomes' },
+        { tab: 'attestations', labelKey: 'sidebar.attestations' },
+        { tab: 'studentAttestations', labelKey: 'sidebar.studentAttestations' },
       ],
     },
     {
       title: 'Finance',
+      titleKey: 'sidebar.finance',
       items: [
-        { tab: 'levelPricings', label: 'Level Pricings' },
-        { tab: 'studentPayments', label: 'Student Payments' },
+        { tab: 'levelPricings', labelKey: 'sidebar.levelPricings' },
+        { tab: 'studentPayments', labelKey: 'sidebar.studentPayments' },
       ],
     },
     // New parameter groups (empty for now - will replace old ones later)
     {
       title: 'Scholarity',
+      titleKey: 'sidebar.scholarity',
       items: [
-        { tab: 'planning', label: 'Planning' },
-        { tab: 'studentPresence', label: 'Student Presence' },
-        { tab: 'studentNotes', label: 'Student Notes' },
-        { tab: 'studentReportDetails', label: 'Student Report Details' },
-        { tab: 'classCourses', label: 'Class Courses' },
+        { tab: 'planning', labelKey: 'sidebar.planning' },
+        { tab: 'studentPresence', labelKey: 'sidebar.studentPresence' },
+        { tab: 'studentNotes', labelKey: 'sidebar.studentNotes' },
+        { tab: 'studentReportDetails', labelKey: 'sidebar.studentReportDetails' },
+        { tab: 'classCourses', labelKey: 'sidebar.classCourses' },
 
       ],
     },
     {
       title: 'Administration',
+      titleKey: 'sidebar.administration',
       items: [
-        { tab: 'students', label: 'Students' },
-        { tab: 'teachers', label: 'Teachers' },
-        { tab: 'classStudents', label: 'Class Students' },
-        { tab: 'users', label: 'Users' },
-        { tab: 'companies', label: 'Companies' },
+        { tab: 'students', labelKey: 'sidebar.students' },
+        { tab: 'teachers', labelKey: 'sidebar.teachers' },
+        { tab: 'classStudents', labelKey: 'sidebar.classStudents' },
+        { tab: 'users', labelKey: 'sidebar.users' },
+        { tab: 'companies', labelKey: 'sidebar.companies' },
       ],
     },
     {
       title: 'Settings',
+      titleKey: 'sidebar.settings',
       items: [],
     },
     // {
@@ -109,28 +119,33 @@ const Sidebar: React.FC<SidebarProps> = ({
     // },
     {
       title: 'Direction',
+      titleKey: 'sidebar.direction',
       items: [],
     },
     {
       title: 'Professeur',
+      titleKey: 'sidebar.professor',
       items: [],
     },
     {
       title: 'Eleve',
+      titleKey: 'sidebar.eleve',
       items: [],
     },
     {
       title: 'Parent',
+      titleKey: 'sidebar.parent',
       items: [],
     },
     {
       title: 'Support',
+      titleKey: 'sidebar.support',
       items: [
-        { tab: 'schoolYears', label: 'School Years' },
-        { tab: 'classRooms', label: 'Class Rooms' },
-        { tab: 'programs', label: 'Programs' },
-        { tab: 'modules', label: 'Modules' },
-        { tab: 'courses', label: 'Courses' },
+        { tab: 'schoolYears', labelKey: 'sidebar.schoolYears' },
+        { tab: 'classRooms', labelKey: 'sidebar.classRooms' },
+        { tab: 'programs', labelKey: 'sidebar.programs' },
+        { tab: 'modules', labelKey: 'sidebar.modules' },
+        { tab: 'courses', labelKey: 'sidebar.courses' },
 
       ],
     },
@@ -168,7 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               {onToggleCollapse && (
                 <button
                   type="button"
-                  aria-label={isCollapsed ? 'Show sidebar' : 'Hide sidebar'}
+                  aria-label={isCollapsed ? t('sidebar.showSidebar') : t('sidebar.hideSidebar')}
                   className="hidden sm:inline-flex items-center justify-center rounded-full border border-border p-2 text-muted hover:bg-primary-transparent hover:text-primary transition"
                   onClick={onToggleCollapse}
                 >
@@ -190,7 +205,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               {/* Close button on mobile */}
               <button
                 type="button"
-                aria-label="Close sidebar"
+                aria-label={t('sidebar.closeSidebar')}
                 className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-primary-transparent-50 hover:text-primary transition-colors"
                 onClick={closeMobile}
               >
@@ -240,7 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  Parameters
+                  {t('sidebar.parameters')}
                 </div>
                 <svg
                   className={`w-4 h-4 transition-transform ${
@@ -271,7 +286,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         onClick={() => toggleGroup(group.title)}
                         className="flex w-full items-center justify-between rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted hover:bg-primary-transparent hover:text-primary transition-colors"
                       >
-                        <span>{group.title}</span>
+                        <span>{t(group.titleKey)}</span>
                         <svg
                           className={`h-4 w-4 transition-transform ${isGroupOpen ? 'rotate-180' : ''}`}
                           fill="none"
@@ -300,7 +315,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     : 'text-muted hover:bg-primary-transparent hover:text-primary'
                                 }`}
                               >
-                                {item.label}
+                                {t(item.labelKey)}
                               </Link>
                             );
                           })}
@@ -343,7 +358,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              Settings
+              {t('sidebar.settings')}
             </Link>
           </div>
         </div>

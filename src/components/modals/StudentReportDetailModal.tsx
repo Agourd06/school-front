@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
 import type { StudentReportDetail as StudentReportDetailFromAPI, StudentReportDetailStatus } from '../../api/studentReportDetail';
@@ -36,6 +37,7 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
   courseOptions,
   serverError,
 }) => {
+  const { t } = useTranslation();
   // Check if teacher/course are already set (from direct field or relation)
   const hasTeacherId = Boolean(initialData?.teacher_id ?? initialData?.teacher?.id);
   const hasCourseId = Boolean(initialData?.course_id ?? initialData?.course?.id);
@@ -62,7 +64,7 @@ const StudentReportDetailModal: React.FC<StudentReportDetailModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Edit Report Detail' : 'Add Report Detail'}
+      title={initialData ? t('sections.editReportDetail') : t('forms.addDetail')}
       className="sm:max-w-4xl"
     >
       <StudentReportDetailForm

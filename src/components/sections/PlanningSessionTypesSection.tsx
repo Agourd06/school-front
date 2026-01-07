@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type {
   PlanningSessionType,
   PlanningSessionTypeStatus,
@@ -26,10 +27,10 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
+  { value: 'active', label: t('forms.active') },
+  { value: 'inactive', label: t('forms.inactive') },
 ];
 
 const statusStyles: Record<PlanningSessionTypeStatus, string> = {
@@ -37,17 +38,18 @@ const statusStyles: Record<PlanningSessionTypeStatus, string> = {
   inactive: 'bg-gray-100 text-gray-700 border border-gray-200',
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const PlanningSessionTypesSection: React.FC = () => {
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [statusFilter, setStatusFilter] = useState<'all' | PlanningSessionTypeStatus>('all');
   const [modalOpen, setModalOpen] = useState(false);
@@ -55,6 +57,8 @@ const PlanningSessionTypesSection: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<PlanningSessionType | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
+  
+  const statusFilterOptions = getStatusFilterOptions(t);
 
   const { data, isLoading, error, refetch } = usePlanningSessionTypes({
     page: pagination.page,
@@ -100,18 +104,18 @@ const PlanningSessionTypesSection: React.FC = () => {
             // company_id is automatically set by the API from authenticated user
           },
         });
-        setAlert({ type: 'success', message: 'Planning session type updated successfully.' });
+        setAlert({ type: 'success', message: t('messages.planningSessionTypeUpdatedSuccessfully') });
       } else {
         await createMut.mutateAsync({
           ...values,
           coefficient: values.coefficient ?? undefined,
           // company_id is automatically set by the API from authenticated user
         });
-        setAlert({ type: 'success', message: 'Planning session type created successfully.' });
+        setAlert({ type: 'success', message: t('messages.planningSessionTypeCreatedSuccessfully') });
       }
       refetch();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setModalError(message);
       setAlert({ type: 'error', message });
       throw err;
@@ -123,11 +127,11 @@ const PlanningSessionTypesSection: React.FC = () => {
     setAlert(null);
     try {
       await deleteMut.mutateAsync(deleteTarget.id);
-      setAlert({ type: 'success', message: 'Planning session type deleted successfully.' });
+      setAlert({ type: 'success', message: t('messages.planningSessionTypeDeletedSuccessfully') });
       setDeleteTarget(null);
       refetch();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -150,14 +154,14 @@ const PlanningSessionTypesSection: React.FC = () => {
       
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Planning Session Types</h1>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.planningSessionTypes')}</h1>
             <p className="text-sm text-gray-500">
-              Manage reusable session templates for planning, including type codes, coefficients, and availability.
+              {t('sections.managePlanningSessionTypes')}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <SearchSelect
-              label="Status"
+              label={t('common.status')}
               value={statusFilter}
               onChange={handleStatusFilterChange}
               options={statusFilterOptions}
@@ -173,7 +177,7 @@ const PlanningSessionTypesSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Type
+              {t('sections.addPlanningSessionType')}
             </Button>
           </div>
         </div>

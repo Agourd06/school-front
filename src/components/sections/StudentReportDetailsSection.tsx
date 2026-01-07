@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import BaseModal from '../modals/BaseModal';
@@ -43,24 +44,25 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-danger-badge',
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
-const formatStudentName = (report: StudentReport) => {
+const formatStudentName = (report: StudentReport, t: (key: string) => string) => {
   const first = report.student?.first_name ?? '';
   const last = report.student?.last_name ?? '';
   const full = `${first} ${last}`.trim();
-  return full || report.student?.email || `Student #${report.student_id}`;
+  return full || report.student?.email || `${t('forms.studentNumber')}${report.student_id}`;
 };
 
 const StudentReportDetailsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState({
     year: '',
     period: '',
@@ -138,18 +140,18 @@ const StudentReportDetailsSection: React.FC = () => {
     () =>
       (yearsResp?.data || []).map((year) => ({
         value: year.id,
-        label: year.title || `Year #${year.id}`,
+        label: year.title || `${t('forms.yearNumber')}${year.id}`,
       })),
-    [yearsResp]
+    [yearsResp, t]
   );
 
   const periodOptions = useMemo<SearchSelectOption[]>(
     () =>
       (periodsResp?.data || []).map((period) => ({
         value: period.id,
-        label: period.title || `Period #${period.id}`,
+        label: period.title || `${t('forms.periodNumber')}${period.id}`,
       })),
-    [periodsResp]
+    [periodsResp, t]
   );
 
   const studentOptions = useMemo<SearchSelectOption[]>(
@@ -159,9 +161,9 @@ const StudentReportDetailsSection: React.FC = () => {
         label:
           `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() ||
           student.email ||
-          `Student #${student.id}`,
+          `${t('forms.studentNumber')}${student.id}`,
       })),
-    [studentsResp]
+    [studentsResp, t]
   );
 
   const teacherOptions = useMemo<SearchSelectOption[]>(
@@ -171,18 +173,18 @@ const StudentReportDetailsSection: React.FC = () => {
         label:
           `${teacher.first_name ?? ''} ${teacher.last_name ?? ''}`.trim() ||
           teacher.email ||
-          `Teacher #${teacher.id}`,
+          `${t('planning.teacherNumber')}${teacher.id}`,
       })),
-    [teachersResp]
+    [teachersResp, t]
   );
 
   const courseOptions = useMemo<SearchSelectOption[]>(
     () =>
       (coursesResp?.data || []).map((course: Course) => ({
         value: course.id,
-        label: course.title || `Course #${course.id}`,
+        label: course.title || `${t('forms.courseNumber')}${course.id}`,
       })),
-    [coursesResp]
+    [coursesResp, t]
   );
 
   useEffect(() => {
@@ -243,15 +245,15 @@ const StudentReportDetailsSection: React.FC = () => {
     try {
       if (editingDetail) {
         await updateDetailMut.mutateAsync({ id: editingDetail.id, data: payload });
-        setAlert({ type: 'success', message: 'Report detail updated successfully.' });
+        setAlert({ type: 'success', message: t('forms.reportDetailUpdatedSuccessfully') });
       } else {
         await createDetailMut.mutateAsync(payload);
-        setAlert({ type: 'success', message: 'Report detail created successfully.' });
+        setAlert({ type: 'success', message: t('forms.reportDetailCreatedSuccessfully') });
       }
       handleDetailModalClose();
       refetchDetails();
     } catch (err: unknown) {
-      setDetailModalError(extractErrorMessage(err));
+      setDetailModalError(extractErrorMessage(err, t));
       throw err;
     }
   };
@@ -260,11 +262,11 @@ const StudentReportDetailsSection: React.FC = () => {
     if (!deleteDetailTarget) return;
     try {
       await deleteDetailMut.mutateAsync(deleteDetailTarget.id);
-      setAlert({ type: 'success', message: 'Report detail deleted successfully.' });
+      setAlert({ type: 'success', message: t('forms.reportDetailDeletedSuccessfully') });
       setDeleteDetailTarget(null);
       refetchDetails();
     } catch (err: unknown) {
-      setAlert({ type: 'error', message: extractErrorMessage(err) });
+      setAlert({ type: 'error', message: extractErrorMessage(err, t) });
     }
   };
 
@@ -275,43 +277,43 @@ const StudentReportDetailsSection: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Student Report Details</h1>
+          <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentReportDetails')}</h1>
           <p className="text-sm text-gray-500">
-            Filter student reports and manage their detailed evaluations.
+            {t('forms.filterStudentReportsAndManage')}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SearchSelect
-          label="School Year"
+          label={t('sidebar.schoolYears')}
           value={filters.year}
           onChange={(value) => {
             handleFilterChange('year')(value);
             setFilters((prev) => ({ ...prev, period: '', student: '' }));
           }}
           options={yearOptions}
-          placeholder={yearsLoading ? 'Loading years…' : 'Select school year'}
+          placeholder={yearsLoading ? t('forms.loadingYears') : t('forms.selectSchoolYear')}
           isClearable
         />
         <SearchSelect
-          label="Period"
+          label={t('sections.period')}
           value={filters.period}
           onChange={(value) => {
             handleFilterChange('period')(value);
             setFilters((prev) => ({ ...prev, student: '' }));
           }}
           options={periodOptions}
-          placeholder="Select period"
+          placeholder={t('forms.selectPeriod')}
           disabled={!filters.year || periodsLoading}
           isClearable
         />
         <SearchSelect
-          label="Student"
+          label={t('common.student')}
           value={filters.student}
           onChange={handleFilterChange('student')}
           options={studentOptions}
-          placeholder={studentsLoading ? 'Loading students…' : 'Select student'}
+          placeholder={studentsLoading ? t('sections.loadingStudents') : t('forms.selectStudent')}
           disabled={!filters.period}
           isClearable
         />
@@ -341,19 +343,19 @@ const StudentReportDetailsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Student
+                  {t('common.student')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Period
+                  {t('sections.period')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Mention
+                  {t('forms.mention')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -361,13 +363,13 @@ const StudentReportDetailsSection: React.FC = () => {
               {reportsLoading ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
-                    Loading reports…
+                    {t('forms.loadingReports')}
                   </td>
                 </tr>
               ) : reports.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
-                    No reports found for the selected filters.
+                    {t('forms.noReportsFoundForFilters')}
                   </td>
                 </tr>
               ) : (
@@ -376,11 +378,11 @@ const StudentReportDetailsSection: React.FC = () => {
                   return (
                     <tr key={report.id} className={isSelected ? 'bg-primary-light' : 'hover:bg-gray-50'}>
                       <td className="px-4 py-3 text-sm text-gray-900">
-                        <div className="font-medium">{formatStudentName(report)}</div>
+                        <div className="font-medium">{formatStudentName(report, t)}</div>
                         <div className="text-xs text-gray-500">#{report.id}</div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {report.period?.title || `Period #${report.school_year_period_id}`}
+                        {report.period?.title || `${t('forms.periodNumber')}${report.school_year_period_id}`}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">{report.mention || '—'}</td>
                       <td className="px-4 py-3 text-sm">
@@ -389,7 +391,7 @@ const StudentReportDetailsSection: React.FC = () => {
                             statusStyles[report.status] ?? 'bg-gray-100 text-gray-700'
                           }`}
                         >
-                          {STATUS_VALUE_LABEL[report.status] ?? `Status ${report.status}`}
+                          {STATUS_VALUE_LABEL[report.status] ?? `${t('common.status')} ${report.status}`}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
@@ -398,7 +400,7 @@ const StudentReportDetailsSection: React.FC = () => {
                           onClick={() => setSelectedReportId(isSelected ? null : report.id)}
                           className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
                         >
-                          {isSelected ? 'Hide details' : 'View details'}
+                          {isSelected ? t('forms.hideDetails') : t('forms.viewDetails')}
                         </button>
                       </td>
                     </tr>
@@ -425,13 +427,13 @@ const StudentReportDetailsSection: React.FC = () => {
         <div className="bg-white shadow rounded-lg border border-gray-200">
           <div className="px-4 py-4 border-b border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Report Details</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t('forms.reportDetails')}</h2>
               <p className="text-sm text-gray-500">
                 {selectedReport
-                  ? `${formatStudentName(selectedReport)} — ${
-                      selectedReport.period?.title || `Period #${selectedReport.school_year_period_id}`
+                  ? `${formatStudentName(selectedReport, t)} — ${
+                      selectedReport.period?.title || `${t('forms.periodNumber')}${selectedReport.school_year_period_id}`
                     }`
-                  : 'Loading report information…'}
+                  : t('forms.loadingReportInformation')}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -445,7 +447,7 @@ const StudentReportDetailsSection: React.FC = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Add detail
+                {t('forms.addDetail')}
               </Button>
               <Button
                 type="button"
@@ -453,7 +455,7 @@ const StudentReportDetailsSection: React.FC = () => {
                 onClick={() => setSelectedReportId(null)}
                 className="inline-flex items-center gap-2"
               >
-                Close
+                {t('forms.close')}
               </Button>
             </div>
           </div>
@@ -469,22 +471,22 @@ const StudentReportDetailsSection: React.FC = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Teacher
+                    {t('sections.teacher')}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Course
+                    {t('sections.course')}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Note
+                    {t('forms.note')}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Summary
+                    {t('forms.summary')}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Status
+                    {t('common.status')}
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Actions
+                    {t('common.actions')}
                   </th>
                 </tr>
               </thead>
@@ -492,13 +494,13 @@ const StudentReportDetailsSection: React.FC = () => {
                 {detailsLoading ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
-                      Loading report details…
+                      {t('forms.loadingReportDetails')}
                     </td>
                   </tr>
                 ) : details.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
-                      No details added yet.
+                      {t('forms.noDetailsAddedYet')}
                     </td>
                   </tr>
                 ) : (
@@ -508,11 +510,11 @@ const StudentReportDetailsSection: React.FC = () => {
                         {detail.teacher
                           ? `${detail.teacher.first_name ?? ''} ${detail.teacher.last_name ?? ''}`.trim() ||
                             detail.teacher.email ||
-                            `Teacher #${detail.teacher_id}`
-                          : `Teacher #${detail.teacher_id}`}
+                            `${t('planning.teacherNumber')}${detail.teacher_id}`
+                          : `${t('planning.teacherNumber')}${detail.teacher_id}`}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {detail.course?.title || `Course #${detail.course_id}`}
+                        {detail.course?.title || `${t('forms.courseNumber')}${detail.course_id}`}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">{detail.note ?? '—'}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
@@ -521,16 +523,16 @@ const StudentReportDetailsSection: React.FC = () => {
                             type="button"
                             onClick={() =>
                               openRemarkModal(
-                                `Detail Remarks • ${detail.course?.title || `Course #${detail.course_id}`}`,
+                                `${t('forms.detailRemarks')} • ${detail.course?.title || `${t('forms.courseNumber')}${detail.course_id}`}`,
                                 detail.remarks || ''
                               )
                             }
                             className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
                           >
-                            View remarks
+                            {t('forms.viewRemarks')}
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-400">No remarks</span>
+                          <span className="text-xs text-gray-400">{t('forms.noRemarks')}</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
@@ -539,7 +541,7 @@ const StudentReportDetailsSection: React.FC = () => {
                             statusStyles[detail.status] ?? 'bg-gray-100 text-gray-600'
                           }`}
                         >
-                          {STATUS_VALUE_LABEL[detail.status] ?? `Status ${detail.status}`}
+                          {STATUS_VALUE_LABEL[detail.status] ?? `${t('common.status')} ${detail.status}`}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
@@ -587,7 +589,7 @@ const StudentReportDetailsSection: React.FC = () => {
         onCancel={() => setDeleteDetailTarget(null)}
         onConfirm={handleConfirmDeleteDetail}
         isLoading={deleteDetailMut.isPending}
-        title="Delete Report Detail"
+        title={t('forms.deleteReportDetail')}
         entityName={deleteDetailTarget?.course?.title || undefined}
       />
 
@@ -600,7 +602,7 @@ const StudentReportDetailsSection: React.FC = () => {
           contentClassName="space-y-4"
         >
           <div className="rt-content max-h-[60vh] overflow-y-auto">
-            <div dangerouslySetInnerHTML={{ __html: remarkModal.content || '<p>No remarks provided.</p>' }} />
+            <div dangerouslySetInnerHTML={{ __html: remarkModal.content || `<p>${t('forms.noRemarksProvided')}</p>` }} />
           </div>
         </BaseModal>
       )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { Input, Select, Button } from '../ui';
@@ -26,6 +27,7 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<AttestationFormData>({
     title: '',
     description: '',
@@ -69,7 +71,7 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!form.title.trim()) next.title = 'Title is required';
+    if (!form.title.trim()) next.title = t('forms.titleRequired');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -89,7 +91,7 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
       } else if (axiosError?.message) {
         setFormError(axiosError.message);
       } else {
-        setFormError('Failed to save attestation');
+        setFormError(t('forms.failedToSaveAttestation'));
       }
     }
   };
@@ -103,7 +105,7 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
       )}
 
       <Input
-        label="Title *"
+        label={`${t('common.name')} *`}
         name="title"
         value={form.title}
         onChange={handleChange}
@@ -112,7 +114,7 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
       />
 
       <Select
-        label="Status"
+        label={t('common.status')}
         name="statut"
         value={form.statut}
         onChange={handleChange}
@@ -124,12 +126,12 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
       />
 
       <div>
-        <label className="block text-sm font-medium text-heading">Description</label>
+        <label className="block text-sm font-medium text-heading">{t('common.description')}</label>
         <div className="mt-1">
           <RichTextEditor
             value={form.description}
             onChange={handleDescriptionChange}
-            placeholder="Enter description..."
+            placeholder={t('forms.enterDescription')}
             rows={6}
           />
         </div>
@@ -137,10 +139,10 @@ const AttestationForm: React.FC<AttestationFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

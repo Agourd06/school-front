@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { LevelPricingForm } from '../forms';
 import type { LevelPricing, LevelPricingStatus } from '../../api/levelPricing';
@@ -32,11 +33,12 @@ const LevelPricingModal: React.FC<LevelPricingModalProps> = ({
   levelOptions,
   serverError,
 }) => {
+  const { t } = useTranslation();
   return (
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Edit Level Pricing' : 'Add Level Pricing'}
+      title={initialData ? t('forms.editLevelPricing') : t('forms.addLevelPricing')}
       className="sm:max-w-3xl"
     >
       <LevelPricingForm

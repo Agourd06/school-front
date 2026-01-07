@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useSpecializations,
   useDeleteSpecialization,
@@ -26,8 +27,8 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
@@ -44,17 +45,18 @@ const stripHtml = (input?: string | null): string => {
   return input.replace(/<[^>]+>/g, '');
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const SpecializationsSection: React.FC = () => {
+  const { t } = useTranslation();
   const { selectedProgramId, navigateBackToPrograms, clearSelectedProgram } = useProgram();
   const { navigateToLevels } = useSpecializationContext();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
@@ -63,6 +65,8 @@ const SpecializationsSection: React.FC = () => {
     program: '',
     search: '',
   });
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSpecialization, setEditingSpecialization] = useState<Specialization | null>(null);
@@ -182,10 +186,10 @@ const SpecializationsSection: React.FC = () => {
     try {
       await deleteSpecializationMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'Specialization deleted successfully.' });
+      setAlert({ type: 'success', message: t('messages.specializationDeletedSuccessfully') });
       refetchSpecializations();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -210,14 +214,14 @@ const SpecializationsSection: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">
-              Specializations
+              {t('dashboard.specializations')}
               {selectedProgram && (
                 <span className="text-base font-normal text-gray-600 ml-2">
                   ({selectedProgram.title})
                 </span>
               )}
             </h1>
-            <p className="text-sm text-gray-500">Manage specializations and their associated programs.</p>
+            <p className="text-sm text-gray-500">{t('sections.manageSpecializations')}</p>
           </div>
           <div className="flex items-center gap-3">
             {selectedProgramId && navigateBackToPrograms && (
@@ -234,7 +238,7 @@ const SpecializationsSection: React.FC = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                Previous
+                {t('common.previous')}
               </Button>
             )}
             <Button
@@ -246,7 +250,7 @@ const SpecializationsSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Specialization
+              {t('sections.addSpecialization')}
             </Button>
           </div>
         </div>
@@ -270,27 +274,27 @@ const SpecializationsSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
             isClearable={false}
           />
           <SearchSelect
-            label="Program"
+            label={t('sections.program')}
             value={filters.program}
             onChange={handleFilterChange('program')}
             options={programOptions}
-            placeholder="All programs"
+            placeholder={t('sections.allPrograms')}
             isClearable
           />
           <div className="md:col-span-2">
             <Input
-              label="Search"
+              label={t('common.search')}
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by specialization title..."
+              placeholder={t('sections.searchBySpecializationTitle')}
               className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -302,19 +306,19 @@ const SpecializationsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Program
+                  {t('sections.program')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  {t('sections.title')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  PDF Document
+                  {t('sections.pdfDocument')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -322,13 +326,13 @@ const SpecializationsSection: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading specializations…
+                    {t('sections.loadingSpecializations')}
                   </td>
                 </tr>
               ) : specializations.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No specializations found.
+                    {t('sections.noSpecializationsFound')}
                   </td>
                 </tr>
               ) : (
@@ -368,10 +372,10 @@ const SpecializationsSection: React.FC = () => {
                               navigateToLevels(spec.id);
                             }}
                             className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
-                            title="View levels"
+                            title={t('sections.viewLevels')}
                           >
                           
-                            Levels
+                            {t('sections.levels')}
                           </button>
                           {hasDescription && (
                             <button
@@ -381,7 +385,7 @@ const SpecializationsSection: React.FC = () => {
                                 openDescriptionModal(spec);
                               }}
                               className="inline-flex items-center justify-center rounded-md border border-green-200 p-1.5 text-green-600 hover:bg-green-50 transition-colors"
-                              title="View Details"
+                              title={t('sections.viewDetails')}
                             >
                               <Info className="h-4 w-4" />
                             </button>
@@ -448,7 +452,7 @@ const SpecializationsSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete Specialization"
+        title={t('sections.deleteSpecialization')}
         entityName={deleteTarget?.title}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

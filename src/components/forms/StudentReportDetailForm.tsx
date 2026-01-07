@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
@@ -56,6 +57,7 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
   disableTeacherSelect = false,
   disableCourseSelect = false,
 }) => {
+  const { t } = useTranslation();
   // Track the initial data ID to prevent unnecessary resets
   const initialDataIdRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
@@ -141,7 +143,7 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (form.note !== '' && Number.isNaN(Number(form.note))) e.note = 'Note must be a number';
+    if (form.note !== '' && Number.isNaN(Number(form.note))) e.note = t('forms.noteMustBeNumber');
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -167,23 +169,23 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SearchSelect
-          label="Teacher"
+          label={t('sections.teacher')}
           value={form.teacher_id}
           onChange={handleSelectChange('teacher_id')}
           options={teacherOptions}
-          placeholder="Select teacher"
+          placeholder={t('forms.selectTeacher')}
           disabled={disableTeacherSelect}
         />
         <SearchSelect
-          label="Course"
+          label={t('sections.course')}
           value={form.course_id}
           onChange={handleSelectChange('course_id')}
           options={courseOptions}
-          placeholder="Select course"
+          placeholder={t('forms.selectCourse')}
           disabled={disableCourseSelect}
         />
         <Select
-          label="Status"
+          label={t('common.status')}
           value={form.status}
           onChange={(e) =>
             setForm((prev) => ({ ...prev, status: Number(e.target.value) as StudentReportDetailStatus }))
@@ -197,7 +199,7 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
       </div>
 
       <Input
-        label="Note"
+        label={t('sections.note')}
         type="number"
         value={form.note}
         onChange={(e) =>
@@ -206,16 +208,16 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
             note: e.target.value === '' ? '' : Number(e.target.value),
           }))
         }
-        placeholder="Optional note"
+        placeholder={t('forms.optionalNote')}
         error={errors.note}
         className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
       />
       <div>
-        <label className="block text-sm font-medium text-heading mb-2">Remarks</label>
+        <label className="block text-sm font-medium text-heading mb-2">{t('sections.remarks')}</label>
         <RichTextEditor
           value={form.remarks}
           onChange={(content) => setForm((prev) => ({ ...prev, remarks: content }))}
-          placeholder="Optional remarks"
+          placeholder={t('forms.optionalRemarks')}
           rows={8}
         />
       </div>
@@ -228,10 +230,10 @@ const StudentReportDetailForm: React.FC<StudentReportDetailFormProps> = ({
 
       <div className="flex justify-end space-x-3">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update Detail' : 'Create Detail'}
+          {initialData ? t('forms.updateDetail') : t('forms.createDetail')}
         </Button>
       </div>
     </form>

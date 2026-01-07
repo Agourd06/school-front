@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import { ProgramModal, DeleteModal, DescriptionModal } from '../modals';
@@ -18,8 +19,8 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
@@ -37,6 +38,7 @@ const stripHtml = (input?: string) => {
 };
 
 const ProgramsSection: React.FC = () => {
+  const { t } = useTranslation();
   const { setSelectedProgramId, navigateToSpecializations } = useProgram();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({ status: 'all', search: '' });
@@ -45,6 +47,8 @@ const ProgramsSection: React.FC = () => {
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name?: string } | null>(null);
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
   const params = useMemo(
     () => ({
@@ -110,7 +114,7 @@ const ProgramsSection: React.FC = () => {
     setAlert(null);
     try {
       await deleteProgramMut.mutateAsync(deleteTarget.id);
-      setAlert({ type: 'success', message: 'Program deleted successfully.' });
+      setAlert({ type: 'success', message: t('sections.programDeletedSuccessfully') });
       setDeleteTarget(null);
       refetch();
     } catch (err: unknown) {
@@ -118,7 +122,7 @@ const ProgramsSection: React.FC = () => {
       const message =
         error?.response?.data?.message ||
         (Array.isArray(error?.response?.data) ? error.response.data.join(', ') : error?.message) ||
-        'Failed to delete program.';
+        t('sections.failedToDeleteProgram');
       setAlert({ type: 'error', message: Array.isArray(message) ? message.join(', ') : message });
     }
   };
@@ -142,8 +146,8 @@ const ProgramsSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Programs</h1>
-            <p className="text-sm text-gray-500">Manage academic programs, descriptions, and statuses.</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.programs')}</h1>
+            <p className="text-sm text-gray-500">{t('sections.managePrograms')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -155,7 +159,7 @@ const ProgramsSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Program
+              {t('sections.addProgram')}
             </Button>
           </div>
         </div>
@@ -179,19 +183,19 @@ const ProgramsSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange}
             options={statusFilterOptions}
             isClearable={false}
           />
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Search</label>
+            <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
             <input
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by program title..."
+              placeholder={t('sections.searchByProgramTitle')}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -202,13 +206,13 @@ const ProgramsSection: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Title</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('sections.title')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.status')}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  PDF Document
+                  {t('sections.pdfDocument')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -216,13 +220,13 @@ const ProgramsSection: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading programs…
+                    {t('common.loading')}
                   </td>
                 </tr>
               ) : programs.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No programs found.
+                    {t('messages.noData')}
                   </td>
                 </tr>
               ) : (
@@ -260,10 +264,10 @@ const ProgramsSection: React.FC = () => {
                               }
                             }}
                             className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
-                            title="View specializations"
+                            title={t('sections.viewSpecializations')}
                           >
                             
-                            Specializations
+                            {t('sections.specializations')}
                           </button>
                           {hasDescription && (
                             <button
@@ -273,7 +277,7 @@ const ProgramsSection: React.FC = () => {
                                 openDescriptionModal(program);
                               }}
                               className="inline-flex items-center justify-center rounded-md border border-green-200 p-1.5 text-green-600 hover:bg-green-50 transition-colors"
-                              title="View Details"
+                              title={t('sections.viewDetails')}
                             >
                               <Info className="h-4 w-4" />
                             </button>
@@ -338,7 +342,7 @@ const ProgramsSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete Program"
+        title={t('sections.deleteProgram')}
         entityName={deleteTarget?.name}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

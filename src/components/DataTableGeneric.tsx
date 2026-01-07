@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Pagination from './Pagination';
 import SearchBar from './SearchBar';
 import FilterDropdown from './FilterDropdown';
@@ -55,6 +56,7 @@ function DataTableGeneric<T extends { id: number }>({
   filterOptions,
   renderRow,
 }: DataTableGenericProps<T>) {
+  const { t } = useTranslation();
   const { data, loading, error, pagination, filters } = state as ListState<T>;
 
   const statusFilterOptions = filterOptions ?? [
@@ -93,7 +95,7 @@ function DataTableGeneric<T extends { id: number }>({
                 options={statusFilterOptions}
                 value={(filters as { status?: number | null }).status ?? null}
                 onChange={(val) => onFilterChange?.(val === null ? null : Number(val))}
-                placeholder="Filter by status"
+                placeholder={t('sections.filterByStatus')}
                 isLoading={loading}
               />
             </div>
@@ -111,7 +113,7 @@ function DataTableGeneric<T extends { id: number }>({
         <div className="p-8 text-center">
           <div className="inline-flex items-center">
             <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mr-2" />
-            <span className="text-body">Loading...</span>
+            <span className="text-body">{t('common.loading')}</span>
           </div>
         </div>
       ) : (
@@ -123,9 +125,9 @@ function DataTableGeneric<T extends { id: number }>({
               <li className="px-4 py-8 sm:px-6">
                 <div className="text-center text-muted">
                   {(filters as { search?: string }).search ? (
-                    <>No {title.toLowerCase()} found matching "{(filters as { search?: string }).search}"</>
+                    <>{t('forms.noItemsFoundMatching', { item: title.toLowerCase(), search: (filters as { search?: string }).search })}</>
                   ) : (
-                    `No ${title.toLowerCase()} found`
+                    t('forms.noItemsFound', { item: title.toLowerCase() })
                   )}
                 </div>
               </li>

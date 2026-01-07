@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import SearchSelect from '../../inputs/SearchSelect';
 import { PLANNING_STATUS_OPTIONS_FORM } from '../../../constants/planning';
@@ -45,6 +46,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
   classCourseOptions,
   classCourseLoading,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const statusOptions = PLANNING_STATUS_OPTIONS_FORM;
   const timeSelectOptions = useMemo(() => TIME_OPTIONS.map((time) => ({ value: time, label: time })), []);
@@ -92,13 +94,13 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
     <div className="bg-surface shadow rounded-lg border border-border p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-heading">{selectedEntry ? 'Edit session' : 'Add session'}</h2>
+          <h2 className="text-lg font-semibold text-heading">{selectedEntry ? t('planning.editSession') : t('planning.addSession')}</h2>
           <p className="text-sm text-muted">
-            {selectedEntry ? 'Edit the planning details or duplicate this session.' : 'Fill out the details to schedule a session.'}
+            {selectedEntry ? t('forms.editPlanningDetailsOrDuplicate') : t('forms.fillDetailsToScheduleSession')}
           </p>
         </div>
         <button type="button" onClick={resetForm} className="text-sm text-primary hover:text-primary/80">
-          New session
+          {t('forms.newSession')}
         </button>
       </div>
 
@@ -119,7 +121,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-heading">Class *</label>
+              <label className="block text-sm font-medium text-heading">{t('sidebar.classes')} *</label>
               <button
                 type="button"
                 onClick={() => setIsClassStudentsModalOpen(true)}
@@ -130,25 +132,25 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
                     : 'border-border text-muted cursor-not-allowed'
                 }`}
               >
-                View students
+                {t('forms.viewStudents')}
               </button>
             </div>
             <SearchSelect
               value={form.class_id}
               onChange={handleSelectChange('class_id')}
               options={classOptions}
-              placeholder="Select class"
+              placeholder={t('forms.selectClass')}
               isLoading={classesLoading}
               error={formErrors.class_id}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">Class Course</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sections.classCourse')}</label>
             <SearchSelect
               value={form.class_course_id}
               onChange={handleClassCourseChange}
               options={classCourseOptions}
-              placeholder={form.class_id ? 'Select class course' : 'Select a class first'}
+              placeholder={form.class_id ? t('forms.selectClassCourse') : t('forms.selectAClassFirst')}
               isLoading={classCourseLoading}
               disabled={!form.class_id}
               error={formErrors.class_course_id}
@@ -159,22 +161,22 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
         {/* Row 2: School Year / Period */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">School Year *</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.schoolYears')} *</label>
             <SearchSelect
               value={form.school_year_id}
               onChange={handleSelectChange('school_year_id')}
               options={yearOptions}
-              placeholder={form.class_id ? 'Select school year' : 'Select a class first'}
+              placeholder={form.class_id ? t('forms.selectSchoolYear') : t('forms.selectAClassFirst')}
               isLoading={yearsLoading}
               error={formErrors.school_year_id}
-              disabled={!form.class_id}
+              disabled={!!form.class_id}
             />
             {form.class_id && form.school_year_id && (
-              <p className="text-xs text-gray-500 mt-1">Auto-filled from selected class (ongoing/planned only)</p>
+              <p className="text-xs text-gray-500 mt-1">{t('forms.autoFilledFromSelectedClass')}</p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">Period *</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.periods')} *</label>
             <SearchSelect
               value={form.period}
               onChange={(value) => {
@@ -185,7 +187,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
                 if (formErrors.period) setFormErrors((prev) => ({ ...prev, period: '' }));
               }}
               options={periodOptions}
-              placeholder="Select period"
+              placeholder={t('forms.selectPeriod')}
               isLoading={periodsLoading}
               error={formErrors.period}
               disabled={!form.school_year_id}
@@ -197,7 +199,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-heading">Course *</label>
+              <label className="block text-sm font-medium text-heading">{t('sidebar.courses')} *</label>
               <InfoPopoverTrigger
                 disabled={!form.course_id || !courseDetails}
                 isOpen={showCourseDetails}
@@ -207,13 +209,13 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
                 {courseDetails && (
                   <DetailCard
                     title={courseDetails.title}
-                    badge={courseDetails.status === 1 ? 'Active' : 'Draft'}
+                    badge={courseDetails.status === 1 ? t('forms.active') : t('common.draft')}
                     items={[
-                      { label: 'Volume', value: courseDetails.volume ?? '—' },
-                      { label: 'Coefficient', value: courseDetails.coefficient ?? '—' },
-                      { label: 'Modules', value: courseDetails.modules?.length ?? 0 },
+                      { label: t('sections.volume'), value: courseDetails.volume ?? '—' },
+                      { label: t('sections.coefficient'), value: courseDetails.coefficient ?? '—' },
+                      { label: t('sidebar.modules'), value: courseDetails.modules?.length ?? 0 },
                       {
-                        label: 'Updated',
+                        label: t('common.updated'),
                         value: courseDetails.updated_at ? new Date(courseDetails.updated_at).toLocaleDateString() : '—',
                       },
                     ]}
@@ -226,31 +228,31 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               value={form.course_id}
               onChange={handleSelectChange('course_id')}
               options={courseOptions}
-              placeholder="Select a class course first"
+              placeholder={t('forms.selectAClassCourseFirst')}
               isLoading={coursesLoading}
               error={formErrors.course_id}
               disabled
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">Teacher *</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.teachers')} *</label>
             <SearchSelect
               value={form.teacher_id}
               onChange={handleSelectChange('teacher_id')}
               options={teacherOptions}
-              placeholder="Select a class course first"
+              placeholder={t('forms.selectAClassCourseFirst')}
               isLoading={teachersLoading}
               error={formErrors.teacher_id}
               disabled
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">Classroom *</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.classRooms')} *</label>
             <SearchSelect
               value={form.class_room_id}
               onChange={handleSelectChange('class_room_id')}
               options={roomOptions}
-              placeholder="Select classroom"
+              placeholder={t('forms.selectClassroom')}
               isLoading={roomsLoading}
               error={formErrors.class_room_id}
             />
@@ -260,7 +262,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
         {/* Row 4: Date / Start Hour / End Hour */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">Date *</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sections.date')} *</label>
             <input
               type="date"
               className={`block w-full px-3 py-2 text-sm border rounded-md ${
@@ -275,7 +277,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
             {formErrors.date_day && <p className="mt-1 text-xs text-red-600">{formErrors.date_day}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">Start Hour *</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sections.startHour')} *</label>
             <SearchSelect
               value={form.hour_start}
               onChange={(value) => {
@@ -292,12 +294,12 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
                 if (formErrors.hour_end) setFormErrors((prev) => ({ ...prev, hour_end: '' }));
               }}
               options={timeSelectOptions}
-              placeholder="Start time"
+              placeholder={t('forms.startTime')}
               error={formErrors.hour_start}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">End Hour *</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sections.endHour')} *</label>
             <SearchSelect
               value={form.hour_end}
               onChange={(value) => {
@@ -305,7 +307,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
                 if (formErrors.hour_end) setFormErrors((prev) => ({ ...prev, hour_end: '' }));
               }}
               options={endTimeOptions}
-              placeholder="End time"
+              placeholder={t('forms.endTime')}
               error={formErrors.hour_end}
               disabled={!form.hour_start}
             />
@@ -315,29 +317,29 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
         {/* Row 5: Session Type / Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">Session Type *</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sections.sessionType')} *</label>
             <SearchSelect
               value={form.planning_session_type_id}
               onChange={handleSelectChange('planning_session_type_id')}
               options={sessionTypeOptions}
-              placeholder="Select session type"
+              placeholder={t('forms.selectSessionType')}
               isLoading={sessionTypesLoading}
               error={formErrors.planning_session_type_id}
             />
             <p className="mt-1 text-xs text-gray-500">
-              To create a type:{' '}
+              {t('forms.toCreateAType')}{' '}
               <button
                 type="button"
                 onClick={() => navigate('/settings')}
                 className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
               >
-                settings
+                {t('forms.settings')}
               </button>
-              {' > types > planning session types'}
+              {' > '}{t('forms.types')}{' > '}{t('forms.planningSessionTypes')}
             </p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-heading mb-1">Status</label>
+            <label className="block text-sm font-medium text-heading mb-1">{t('common.status')}</label>
             <select
               className="custom-select block w-full px-3 py-2 text-sm border border-border bg-card text-body rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
               value={form.status}
@@ -359,10 +361,10 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               onClick={onDuplicate}
               disabled={isSubmitting || isDeleting}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 transition-colors shadow-sm"
-              title={selectedEntry ? 'Duplicate this planning to create multiple copies' : 'Create this planning and duplicate it'}
+              title={selectedEntry ? t('forms.duplicateThisPlanning') : t('forms.createThisPlanningAndDuplicate')}
             >
               <Copy className="h-4 w-4" />
-              {selectedEntry ? 'Duplicate' : 'Create & Duplicate'}
+              {selectedEntry ? t('forms.duplicate') : t('forms.createAndDuplicate')}
             </button>
           )}
           {selectedEntry && (
@@ -372,7 +374,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               disabled={isDeleting || isSubmitting}
               className="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 disabled:opacity-60 transition-colors"
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? t('forms.deleting') : t('modals.delete')}
             </button>
           )}
           <button
@@ -380,7 +382,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
             disabled={isSubmitting}
             className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-60 transition-colors"
           >
-            {isSubmitting ? 'Saving...' : selectedEntry ? 'Update Session' : 'Create Session'}
+            {isSubmitting ? t('forms.saving') : selectedEntry ? t('forms.updateSession') : t('forms.createSession')}
           </button>
         </div>
       </form>

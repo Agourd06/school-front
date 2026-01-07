@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useStudentContacts,
   useDeleteStudentContact,
@@ -21,27 +22,30 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.filter((opt) => opt.value !== -2).map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const StudentContactsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
     search: '',
   });
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<StudentContact | null>(null);
@@ -123,7 +127,7 @@ const StudentContactsSection: React.FC = () => {
       setAlert({ type: 'success', message: 'Contact deleted successfully.' });
       refetchContacts();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -142,8 +146,8 @@ const StudentContactsSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Student Contacts</h1>
-            <p className="text-sm text-gray-500">Manage student contacts and their information.</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentContacts')}</h1>
+            <p className="text-sm text-gray-500">{t('sections.manageStudentContacts')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -155,7 +159,7 @@ const StudentContactsSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Contact
+              {t('sections.addStudentContact')}
             </Button>
           </div>
         </div>
@@ -178,7 +182,7 @@ const StudentContactsSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
@@ -186,11 +190,11 @@ const StudentContactsSection: React.FC = () => {
           />
           <div className="md:col-span-2">
             <Input
-              label="Search"
+              label={t('common.search')}
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by name, email, or phone..."
+              placeholder={t('sections.searchByNameEmailOrPhone')}
               className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -202,19 +206,19 @@ const StudentContactsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Name
+                  {t('common.name')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Contact Info
+                  {t('sections.contactInfo')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Location
+                  {t('sections.location')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>

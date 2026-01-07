@@ -156,7 +156,9 @@ const buildDashboardQueryString = (params: StudentReportDashboardParams): string
   const qp = new URLSearchParams();
   qp.append('class_id', String(params.class_id));
   qp.append('school_year_id', String(params.school_year_id));
-  qp.append('school_year_period_id', String(params.school_year_period_id));
+  if (params.school_year_period_id !== undefined && params.school_year_period_id !== null) {
+    qp.append('school_year_period_id', String(params.school_year_period_id));
+  }
   if (params.period_label) qp.append('period_label', params.period_label);
   if (params.student_id) qp.append('student_id', String(params.student_id));
   if (params.course_id) qp.append('course_id', String(params.course_id));

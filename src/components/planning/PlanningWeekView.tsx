@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PlanningStudentEntry } from '../../api/planningStudent';
 import PlanningStatusBadge from '../PlanningStatusBadge';
 
@@ -30,21 +31,36 @@ const formatTime = (time: string) => {
 
 const formatTimeRange = (start: string, end: string) => `${formatTime(start)} - ${formatTime(end)}`;
 
-const formatTeacherName = (entry: PlanningStudentEntry) => {
+const formatTeacherName = (entry: PlanningStudentEntry, t: (key: string) => string) => {
   const first = entry.teacher?.first_name ?? '';
   const last = entry.teacher?.last_name ?? '';
   const full = `${first} ${last}`.trim();
-  return full || `Teacher #${entry.teacher_id}`;
+  return full || `${t('planning.teacherNumber')}${entry.teacher_id}`;
 };
 
-const formatSessionType = (entry: PlanningStudentEntry) =>
-  entry.planningSessionType?.title || `Type #${entry.planning_session_type_id}`;
+const formatSessionType = (entry: PlanningStudentEntry, t: (key: string) => string) =>
+  entry.planningSessionType?.title || `${t('planning.typeNumber')}${entry.planning_session_type_id}`;
 
-const formatSessionTypeMeta = (entry: PlanningStudentEntry) => {
+const translateSessionTypeValue = (type: string | undefined, t: (key: string) => string): string => {
+  if (!type) return '';
+  const typeLower = type.toLowerCase();
+  const translationKey = `planning.sessionType${typeLower.charAt(0).toUpperCase() + typeLower.slice(1)}`;
+  const translated = t(translationKey);
+  // If translation key doesn't exist (i18next returns the key or key with namespace), return original
+  // Check if translation actually changed the value
+  if (translated && translated !== translationKey && !translated.startsWith('planning.')) {
+    return translated;
+  }
+  return type;
+};
+
+const formatSessionTypeMeta = (entry: PlanningStudentEntry, t: (key: string) => string) => {
   const parts: string[] = [];
-  if (entry.planningSessionType?.type) parts.push(entry.planningSessionType.type);
+  if (entry.planningSessionType?.type) {
+    parts.push(translateSessionTypeValue(entry.planningSessionType.type, t));
+  }
   if (entry.planningSessionType?.coefficient !== undefined && entry.planningSessionType?.coefficient !== null) {
-    parts.push(`Coef ${entry.planningSessionType.coefficient}`);
+    parts.push(`${t('planning.coefficient')} ${entry.planningSessionType.coefficient}`);
   }
   return parts.join(' • ');
 };
@@ -84,6 +100,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
   onSelectDate,
   getPeriodLabel,
 }) => {
+  const { t } = useTranslation();
   const [hoveredEntryId, setHoveredEntryId] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -184,7 +201,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
     <div className="bg-white shadow rounded-lg border border-gray-200 h-full flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Weekly Schedule</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('planning.weeklySchedule')}</h2>
           <p className="text-sm text-gray-500">
             {weekStart.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })} – {weekEnd.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
           </p>
@@ -202,21 +219,21 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
             onClick={onPrevWeek}
             className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Prev
+            {t('planning.prev')}
           </button>
           <button
             type="button"
             onClick={onToday}
             className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Today
+            {t('planning.today')}
           </button>
           <button
             type="button"
             onClick={onNextWeek}
             className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Next
+            {t('planning.next')}
           </button>
         </div>
       </div>
@@ -224,7 +241,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-gray-500 text-sm p-6">
-            Loading schedule...
+            {t('planning.loadingSchedule')}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-gray-200">
@@ -234,7 +251,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                   <span className="text-sm font-medium text-gray-700">{day.label}</span>
                 </div>
                 {day.entries.length === 0 ? (
-                  <div className="text-sm text-gray-400 text-center py-4">No sessions</div>
+                  <div className="text-sm text-gray-400 text-center py-4">{t('planning.noSessions')}</div>
                 ) : (
                   <div className="space-y-2">
                     {day.entries.map((entry) => {
@@ -266,10 +283,10 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                             </div>
                             <p className={`text-xs line-clamp-1 leading-tight mb-0.5 ${tone.text}`}>{periodLabel}</p>
                             <p className={`text-xs line-clamp-1 leading-tight mb-0.5 ${tone.muted}`}>
-                              {formatSessionType(entry)}
+                              {formatSessionType(entry, t)}
                             </p>
                             <p className={`text-xs line-clamp-1 leading-tight ${tone.muted}`}>
-                              {formatTeacherName(entry)}
+                              {formatTeacherName(entry, t)}
                             </p>
                           </button>
 
@@ -324,7 +341,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                       </svg>
-                                      Edit
+                                      {t('modals.edit')}
                                     </button>
                                     <button
                                       type="button"
@@ -351,10 +368,10 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                     </svg>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Session Type</p>
-                                    <p className="text-base text-gray-900 font-semibold">{formatSessionType(entry)}</p>
-                                    {formatSessionTypeMeta(entry) && (
-                                      <p className="text-xs text-gray-500 mt-0.5">{formatSessionTypeMeta(entry)}</p>
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.sessionType')}</p>
+                                    <p className="text-base text-gray-900 font-semibold">{formatSessionType(entry, t)}</p>
+                                    {formatSessionTypeMeta(entry, t) && (
+                                      <p className="text-xs text-gray-500 mt-0.5">{formatSessionTypeMeta(entry, t)}</p>
                                     )}
                                   </div>
                                 </div>
@@ -366,9 +383,9 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                     </svg>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Course</p>
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.course')}</p>
                                     <p className="text-base text-gray-900 font-semibold">
-                                      {entry.course?.title || `Course #${entry.course_id}`}
+                                      {entry.course?.title || `${t('planning.courseNumber')}${entry.course_id}`}
                                     </p>
                                   </div>
                                 </div>
@@ -380,8 +397,8 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                     </svg>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Teacher</p>
-                                    <p className="text-base text-gray-900 font-semibold">{formatTeacherName(entry)}</p>
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.teacher')}</p>
+                                    <p className="text-base text-gray-900 font-semibold">{formatTeacherName(entry, t)}</p>
                                   </div>
                                 </div>
 
@@ -392,8 +409,8 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                     </svg>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Class</p>
-                                    <p className="text-base text-gray-900 font-semibold">{entry.class?.title || `Class #${entry.class_id}`}</p>
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.class')}</p>
+                                    <p className="text-base text-gray-900 font-semibold">{entry.class?.title || `${t('planning.classNumber')}${entry.class_id}`}</p>
                                   </div>
                                 </div>
 
@@ -404,8 +421,8 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                     </svg>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Room</p>
-                                    <p className="text-base text-gray-900 font-semibold">{entry.classRoom?.title || `Room #${entry.class_room_id}`}</p>
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.room')}</p>
+                                    <p className="text-base text-gray-900 font-semibold">{entry.classRoom?.title || `${t('planning.roomNumber')}${entry.class_room_id}`}</p>
                                   </div>
                                 </div>
 
@@ -416,8 +433,8 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                     </svg>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Specialization</p>
-                                    <p className="text-base text-gray-900 font-semibold">{entry.specialization?.title || `Spec #${entry.specialization_id}`}</p>
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.specialization')}</p>
+                                    <p className="text-base text-gray-900 font-semibold">{entry.specialization?.title || `${t('planning.specNumber')}${entry.specialization_id}`}</p>
                                   </div>
                                 </div>
 
@@ -427,7 +444,7 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                     <p className="text-sm text-gray-600">
-                                      Created on {new Date(entry.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+                                      {t('planning.createdOn')} {new Date(entry.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
                                     </p>
                                   </div>
                                 )}

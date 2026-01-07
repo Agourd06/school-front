@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ interface LoginFormProps {
 let persistentError: string = '';
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(persistentError); // Initialize from persistent storage
@@ -60,14 +62,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
     
     // Validate inputs before submitting
     if (!email.trim() || !password.trim()) {
-      const validationError = 'Please enter both email and password';
+      const validationError = t('auth.enterBothEmailAndPassword');
       setError(validationError);
       persistentError = validationError;
       return;
     }
     
     isSubmittingRef.current = true;
-    const errorMessage = 'Password or email are incorrect. Please try with valid credentials.';
+    const errorMessage = t('auth.passwordOrEmailIncorrect');
     
     try {
       await login(email, password);
@@ -85,7 +87,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
           (backendMessage.toLowerCase().includes('set your password') || 
            backendMessage.toLowerCase().includes('set password') ||
            backendMessage.toLowerCase().includes('password invitation'))) {
-        const passwordSetMessage = 'Please check your email for the password invitation link to set your password first.';
+        const passwordSetMessage = t('auth.checkEmailForPasswordInvitation');
         persistentError = passwordSetMessage;
         setError(passwordSetMessage);
       } else {
@@ -110,7 +112,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-6">
         <h2 className="text-3xl font-extrabold text-gray-900">
-          Sign in to your account
+          {t('auth.signInToAccount')}
         </h2>
       </div>
       
@@ -129,7 +131,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
         <div className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
+              {t('auth.emailAddress')}
             </label>
             <input
               id="email"
@@ -137,7 +139,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
               type="email"
               required
               className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-              placeholder="Email address"
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -148,7 +150,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
           
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
+              {t('auth.password')}
             </label>
             <input
               id="password"
@@ -156,7 +158,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
               type="password"
               required
               className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-              placeholder="Password"
+              placeholder={t('auth.passwordPlaceholder')}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -189,7 +191,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
                 to="/auth?mode=forgot-password"
                 className="font-medium text-primary hover:text-primary/80"
               >
-                Forgot your password?
+                {t('auth.forgotYourPassword')}
               </Link>
             </div>
           </div>
@@ -201,7 +203,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
             disabled={isLoading}
             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
           >
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading ? t('auth.signingIn') : t('auth.signIn')}
           </button>
         </div>
 

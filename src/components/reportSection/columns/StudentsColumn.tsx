@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Pencil, FileDown } from 'lucide-react';
 import type { StudentCardItem } from '../Report';
 import { Button } from '../../ui';
@@ -27,6 +28,7 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
   creatingDetailStudentId = null,
   selectedStudentId = null,
 }) => {
+  const { t } = useTranslation();
   const [showAllHaveReportsMessage, setShowAllHaveReportsMessage] = useState(false);
   const allStudentsHaveReports = students.length > 0 && students.every((student) => student.hasReport);
 
@@ -51,7 +53,7 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-gray-900">Students Report</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('sections.studentsReport')}</h2>
         <Button
           type="button"
           size="sm"
@@ -83,10 +85,9 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-base font-semibold text-gray-900 mb-1">All Students Have Reports</h3>
+              <h3 className="text-base font-semibold text-gray-900 mb-1">{t('sections.allStudentsHaveReports')}</h3>
               <p className="text-sm text-gray-600">
-                Every student in this class already has a report. You can modify existing reports by clicking the edit
-                icon next to each student.
+                {t('sections.allStudentsHaveReportsMessage')}
               </p>
             </div>
           </div>
@@ -95,7 +96,7 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
       <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto overflow-x-hidden">
         {students.length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-            Students will appear here once available.
+            {t('sections.studentsWillAppearHere')}
           </div>
         ) : (
           students.map((student) => {
@@ -126,7 +127,7 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
                 role={student.hasReport ? 'button' : undefined}
                 tabIndex={student.hasReport ? 0 : -1}
                 aria-disabled={!student.hasReport}
-                title={student.hasReport ? 'Click to add report detail' : 'Create a report first'}
+                title={student.hasReport ? t('sections.clickToAddReportDetail') : t('sections.createReportFirst')}
               >
                 {isSelected && (
                   <span className="absolute inset-y-2 left-2 w-1 rounded-full bg-blue-500" aria-hidden="true" />
@@ -167,8 +168,8 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
                       variant="secondary"
                       size="sm"
                       className="p-2"
-                      aria-label="Export report PDF"
-                      title="Download student report"
+                      aria-label={t('sections.exportReportPdf')}
+                      title={t('sections.downloadStudentReport')}
                       onClick={(event) => {
                         event.stopPropagation();
                         onExportReport(student.studentId);
@@ -183,8 +184,8 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
                       variant="secondary"
                       size="sm"
                       className="p-2"
-                      aria-label="Edit report"
-                      title="Edit report"
+                      aria-label={t('sections.editReport')}
+                      title={t('sections.editReport')}
                       onClick={(event) => {
                         event.stopPropagation();
                         onAddReport(student.studentId);

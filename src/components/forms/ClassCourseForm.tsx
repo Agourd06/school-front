@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { STATUS_OPTIONS, STATUS_OPTIONS_FORM } from '../../constants/status';
@@ -50,6 +51,7 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
   courseOptions,
   teacherOptions,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<ClassCourseFormData>({
     title: '',
     description: '',
@@ -149,42 +151,42 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
     const validationErrors: Record<string, string> = {};
 
     if (!form.title.trim()) {
-      validationErrors.title = 'Title is required';
+      validationErrors.title = t('forms.titleRequired');
     }
     if (form.class_id === '' || form.class_id === null) {
-      validationErrors.class_id = 'Class is required';
+      validationErrors.class_id = t('forms.classRequired');
     }
     if (form.module_id === '' || form.module_id === null) {
-      validationErrors.module_id = 'Module is required';
+      validationErrors.module_id = t('forms.moduleRequired');
     }
     if (form.course_id === '' || form.course_id === null) {
-      validationErrors.course_id = 'Course is required';
+      validationErrors.course_id = t('forms.courseRequired');
     }
     if (form.teacher_id === '' || form.teacher_id === null) {
-      validationErrors.teacher_id = 'Teacher is required';
+      validationErrors.teacher_id = t('forms.teacherRequired');
     }
 
     if (form.volume.trim()) {
       const volumeValue = Number(form.volume);
       if (Number.isNaN(volumeValue) || volumeValue < 0) {
-        validationErrors.volume = 'Volume must be zero or greater';
+        validationErrors.volume = t('forms.volumeMustBeZeroOrGreater');
       }
     }
 
     if (!form.allday) {
       const frequencyValue = Number(form.weeklyFrequency);
       if (Number.isNaN(frequencyValue) || frequencyValue < 1) {
-        validationErrors.weeklyFrequency = 'Weekly frequency must be at least 1';
+        validationErrors.weeklyFrequency = t('forms.weeklyFrequencyMin');
       }
     }
 
     const durationValue = Number(form.duration);
     if (Number.isNaN(durationValue) || durationValue < 1) {
-      validationErrors.duration = 'Duration must be at least 1 hour';
+      validationErrors.duration = t('forms.durationMin');
     }
 
     if (!allowedStatusValues.has(form.status)) {
-      validationErrors.status = 'Invalid status selected';
+      validationErrors.status = t('forms.invalidStatus');
     }
 
     setErrors(validationErrors);
@@ -251,7 +253,7 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
     if (moduleCourses.length > 0) {
       return moduleCourses.map((course) => ({
         value: course.id,
-        label: course.title || `Course #${course.id}`,
+        label: course.title || `${t('forms.courseNumber')}${course.id}`,
         data: course,
       }));
     }
@@ -282,26 +284,26 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
-          label="Title"
+          label={t('common.name')}
           name="title"
           value={form.title}
           onChange={handleInputChange('title')}
-          placeholder="Enter course title"
+          placeholder={t('forms.enterCourseTitle')}
           error={errors.title}
         />
         <SearchSelect
-          label="Class"
+          label={t('sidebar.classes')}
           value={classValue}
           onChange={handleSelectChange('class_id')}
           options={classOptions}
-          placeholder="Select class"
+          placeholder={t('forms.selectClass')}
           error={errors.class_id}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SearchSelect
-          label="Module"
+          label={t('sidebar.modules')}
           value={moduleValue}
           onChange={(value) => {
             handleSelectChange('module_id')(value);
@@ -312,37 +314,37 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
             }));
           }}
           options={moduleOptions}
-          placeholder="Select module"
+          placeholder={t('forms.selectModule')}
           error={errors.module_id}
         />
         <SearchSelect
-          label="Teacher"
+          label={t('sidebar.teachers')}
           value={teacherValue}
           onChange={handleSelectChange('teacher_id')}
           options={teacherOptions}
-          placeholder="Select teacher"
+          placeholder={t('forms.selectTeacher')}
           error={errors.teacher_id}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SearchSelect
-          label="Course"
+          label={t('sidebar.courses')}
           value={courseValue}
           onChange={handleCourseChange}
           options={moduleCourseOptions}
           isLoading={moduleCoursesLoading}
-          placeholder={form.module_id ? "Select course" : "Select a module first"}
+          placeholder={form.module_id ? t('forms.selectCourse') : t('forms.selectModuleFirst')}
           error={errors.course_id}
           disabled={!form.module_id}
         />
         <Input
-          label="Duration (hours)"
+          label={t('forms.durationHours')}
           type="number"
           min={1}
           value={form.duration}
           onChange={handleInputChange('duration')}
-          helperText="Hours per session"
+          helperText={t('forms.hoursPerSession')}
           error={errors.duration}
         />
       </div>
@@ -358,17 +360,17 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
               onChange={handleInputChange('allday')}
             />
             <label htmlFor="allday" className="text-sm font-medium text-body">
-              All-day session
+              {t('forms.allDaySession')}
             </label>
           </div>
         </div>
         <Input
-          label="Weekly Frequency"
+          label={t('forms.weeklyFrequency')}
           type="number"
           min={1}
           value={form.weeklyFrequency}
           onChange={handleInputChange('weeklyFrequency')}
-          helperText={form.allday ? 'Not required for all-day sessions' : 'Times per week the course repeats'}
+          helperText={form.allday ? t('forms.notRequiredForAllDay') : t('forms.timesPerWeekCourseRepeats')}
           error={errors.weeklyFrequency}
           disabled={form.allday}
         />
@@ -384,10 +386,10 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
             onChange={handleInputChange('volume')}
             helperText={
               isVolumeManual
-                ? 'Total hours planned (manually set)'
+                ? t('forms.totalHoursPlanned')
                 : form.allday
-                ? `Calculated: 5 days × ${form.duration || 0} hours = ${form.volume || 0} hours`
-                : `Calculated: ${form.weeklyFrequency || 0} sessions/week × ${form.duration || 0} hours = ${form.volume || 0} hours`
+                ? `${t('forms.calculated')}: 5 ${t('forms.days')} × ${form.duration || 0} ${t('forms.hours')} = ${form.volume || 0} ${t('forms.hours')}`
+                : `${t('forms.calculated')}: ${form.weeklyFrequency || 0} ${t('forms.sessionsPerWeek')} × ${form.duration || 0} ${t('forms.hours')} = ${form.volume || 0} ${t('forms.hours')}`
             }
             error={errors.volume}
           />
@@ -397,12 +399,12 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
               onClick={() => setIsVolumeManual(true)}
               className="mt-1 text-xs text-primary hover:text-primary-dark underline"
             >
-              Edit manually
+              {t('forms.editManually')}
             </button>
           )}
         </div>
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={form.status}
           onChange={handleStatusChange}
@@ -412,16 +414,16 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-body mb-2">Description (optional)</label>
-        <RichTextEditor value={form.description} onChange={handleDescriptionChange} placeholder="Provide additional details..." rows={6} />
+        <label className="block text-sm font-medium text-body mb-2">{t('forms.descriptionOptional')}</label>
+        <RichTextEditor value={form.description} onChange={handleDescriptionChange} placeholder={t('forms.provideAdditionalDetails')} rows={6} />
       </div>
 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update Class Course' : 'Create Class Course'}
+          {initialData ? t('forms.updateClassCourse') : t('forms.createClassCourse')}
         </Button>
       </div>
     </form>

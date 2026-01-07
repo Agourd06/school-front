@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { STATUS_OPTIONS, STATUS_OPTIONS_FORM } from '../../constants/status';
@@ -24,11 +25,11 @@ export interface StudentPresence {
   status: StudentPresenceStatus;
 }
 
-const presenceOptions: Array<{ value: PresenceValue; label: string }> = [
-  { value: 'present', label: 'Present' },
-  { value: 'absent', label: 'Absent' },
-  { value: 'late', label: 'Late' },
-  { value: 'excused', label: 'Excused' },
+const getPresenceOptions = (t: (key: string) => string): Array<{ value: PresenceValue; label: string }> => [
+  { value: 'present', label: t('sections.present') },
+  { value: 'absent', label: t('sections.absent') },
+  { value: 'late', label: t('sections.late') },
+  { value: 'excused', label: t('sections.excused') },
 ];
 
 const statusOptionsSelect = STATUS_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }));
@@ -53,6 +54,7 @@ const StudentPresenceForm: React.FC<StudentPresenceFormProps> = ({
   planningOptions,
   studentOptions,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<StudentPresenceFormData>({
     student_planning_id: '',
     student_id: '',
@@ -92,17 +94,17 @@ const StudentPresenceForm: React.FC<StudentPresenceFormProps> = ({
   const validate = () => {
     const e: Record<string, string> = {};
     if (form.student_planning_id === '' || form.student_planning_id === null) {
-      e.student_planning_id = 'Planning is required';
+      e.student_planning_id = t('forms.planningRequired');
     }
     if (form.student_id === '' || form.student_id === null) {
-      e.student_id = 'Student is required';
+      e.student_id = t('forms.studentRequired');
     }
     const noteValue = form.note.trim() === '' ? NaN : Number(form.note);
     if (Number.isNaN(noteValue)) {
-      e.note = 'Note must be a number';
+      e.note = t('forms.noteMustBeNumber');
     }
     if (!statusOptionsSelect.some((opt) => opt.value === form.status)) {
-      e.status = 'Invalid status selected';
+      e.status = t('forms.invalidStatus');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -153,31 +155,32 @@ const StudentPresenceForm: React.FC<StudentPresenceFormProps> = ({
 
   const planningValue = useMemo(() => form.student_planning_id ?? '', [form.student_planning_id]);
   const studentValue = useMemo(() => form.student_id ?? '', [form.student_id]);
+  const presenceOptions = getPresenceOptions(t);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SearchSelect
-          label="Planning"
+          label={t('sidebar.planning')}
           value={planningValue}
           onChange={handleSelectChange('student_planning_id')}
           options={planningOptions}
-          placeholder="Select planning"
+          placeholder={t('forms.selectPlanning')}
           error={errors.student_planning_id}
         />
         <SearchSelect
-          label="Student"
+          label={t('sidebar.students')}
           value={studentValue}
           onChange={handleSelectChange('student_id')}
           options={studentOptions}
-          placeholder="Select student"
+          placeholder={t('forms.selectStudent')}
           error={errors.student_id}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Select
-          label="Presence"
+          label={t('sections.present')}
           value={form.presence}
           onChange={handlePresenceChange}
           options={presenceOptions.map((option) => ({
@@ -187,28 +190,28 @@ const StudentPresenceForm: React.FC<StudentPresenceFormProps> = ({
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
-          label="Note"
+          label={t('sections.note')}
           type="text"
           value={form.note}
           onChange={handleNoteChange}
-          placeholder="Enter note (e.g., 15.5)"
+          placeholder={t('forms.enterNoteExample')}
           error={errors.note}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-heading mb-2">Remarks</label>
+        <label className="block text-sm font-medium text-heading mb-2">{t('sections.remarks')}</label>
         <RichTextEditor
           value={form.remarks}
           onChange={(content) => setForm((prev) => ({ ...prev, remarks: content }))}
-          placeholder="Optional remarks"
+          placeholder={t('forms.optionalRemarks')}
           rows={6}
         />
       </div>
 
       <Select
-        label="Status"
+        label={t('common.status')}
         value={form.status}
         onChange={handleStatusChange}
         options={statusOptionsFormSelect.map((option) => ({
@@ -227,10 +230,10 @@ const StudentPresenceForm: React.FC<StudentPresenceFormProps> = ({
 
       <div className="flex justify-end space-x-3">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update Presence' : 'Create Presence'}
+          {initialData ? t('forms.updatePresence') : t('forms.createPresence')}
         </Button>
       </div>
     </form>

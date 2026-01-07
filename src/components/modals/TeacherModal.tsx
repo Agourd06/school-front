@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateTeacher, useUpdateTeacher } from '../../hooks/useTeachers';
 import { TeacherForm, type Teacher } from '../forms';
@@ -10,6 +11,7 @@ interface TeacherModalProps {
 }
 
 const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher }) => {
+  const { t } = useTranslation();
   const createMutation = useCreateTeacher();
   const updateMutation = useUpdateTeacher();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -86,7 +88,7 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Teacher' : 'Add Teacher'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? t('sections.editTeacher') : t('sections.addTeacher')}>
       <TeacherForm
         initialData={teacher}
         onSubmit={handleSubmit}

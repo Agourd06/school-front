@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
 
@@ -28,6 +29,7 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState<number>(1);
   const [error, setError] = useState('');
@@ -42,7 +44,7 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
     e.preventDefault();
     setError('');
     if (!title.trim()) {
-      setError('Title is required');
+      setError(t('forms.titleRequired'));
       return;
     }
     try {
@@ -52,7 +54,7 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
       const serverMsg = axiosError?.response?.data?.message;
       const errorMessage = Array.isArray(serverMsg) 
         ? serverMsg.join(', ') 
-        : (typeof serverMsg === 'string' ? serverMsg : 'Failed to save');
+        : (typeof serverMsg === 'string' ? serverMsg : t('forms.failedToSave'));
       setError(errorMessage);
     }
   };
@@ -72,17 +74,17 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
       )}
 
       <Input
-        label="Title"
+        label={t('common.name')}
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Parent, Guardian, etc."
+        placeholder={t('forms.linkTypePlaceholder')}
         error={error}
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
       <Select
-        label="Status"
+        label={t('common.status')}
         value={status}
         onChange={(e) => setStatus(Number(e.target.value))}
         options={STATUS_OPTIONS_FORM.map((opt) => ({
@@ -93,10 +95,10 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

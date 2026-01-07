@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { Input, Select, Button, PdfFileInput } from '../ui';
@@ -38,6 +39,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<ModuleFormData>({
     title: '',
     description: '',
@@ -75,15 +77,15 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Module title is required';
+      newErrors.title = t('forms.moduleTitleRequired');
     }
 
     if (formData.volume && (isNaN(Number(formData.volume)) || Number(formData.volume) < 0)) {
-      newErrors.volume = 'Volume must be a positive number';
+      newErrors.volume = t('forms.volumeMustBePositive');
     }
 
     if (formData.coefficient && (isNaN(Number(formData.coefficient)) || Number(formData.coefficient) < 0)) {
-      newErrors.coefficient = 'Coefficient must be a positive number';
+      newErrors.coefficient = t('forms.coefficientMustBePositive');
     }
 
     // Validate PDF file if provided
@@ -146,7 +148,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
       )}
 
       <Input
-        label="Module Title"
+        label={t('forms.moduleTitle')}
         type="text"
         name="title"
         value={formData.title}
@@ -158,7 +160,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
       {/* Volume (disabled), Coefficient, and Status on the same line */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input
-          label="Volume"
+          label={t('sections.volume')}
           type="number"
           name="volume"
           value={formData.volume}
@@ -168,7 +170,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm opacity-60 cursor-not-allowed"
         />
         <Input
-          label="Coefficient"
+          label={t('sections.coefficient')}
           type="number"
           name="coefficient"
           value={formData.coefficient}
@@ -177,7 +179,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={formData.status}
           onChange={handleChange}
@@ -191,7 +193,7 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
 
       {/* PDF Upload */}
       <PdfFileInput
-        label="PDF Document"
+        label={t('sections.pdfDocument')}
         value={formData.pdf_file}
         onChange={handlePdfChange}
         existingPdfPath={initialData?.pdf_file}
@@ -200,12 +202,12 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
 
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-heading mb-2">
-          Description
+          {t('common.description')}
         </label>
         <RichTextEditor
           value={formData.description}
           onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
-          placeholder="Enter module description..."
+          placeholder={t('forms.enterModuleDescription')}
           rows={8}
         />
         {errors.description && <p className="mt-1 text-sm text-danger">{errors.description}</p>}
@@ -213,10 +215,10 @@ const ModuleForm: React.FC<ModuleFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

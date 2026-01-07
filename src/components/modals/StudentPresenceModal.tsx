@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import type { PresenceValue, StudentPresence, StudentPresenceStatus } from '../../api/studentPresence';
 import { StudentPresenceForm, type StudentPresenceFormData } from '../forms';
@@ -34,6 +35,7 @@ const StudentPresenceModal: React.FC<StudentPresenceModalProps> = ({
   studentOptions,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const handleSubmit = async (formData: StudentPresenceFormData) => {
     await onSubmit(formData as StudentPresenceFormValues);
   };
@@ -42,7 +44,7 @@ const StudentPresenceModal: React.FC<StudentPresenceModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Edit Student Presence' : 'Add Student Presence'}
+      title={initialData ? t('forms.editStudentPresence') : t('forms.addStudentPresence')}
       className="sm:max-w-4xl"
     >
       <StudentPresenceForm

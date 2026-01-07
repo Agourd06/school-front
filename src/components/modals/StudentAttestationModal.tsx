@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateStudentAttestation, useUpdateStudentAttestation } from '../../hooks/useStudentAttestations';
 import { useStudents } from '../../hooks/useStudents';
@@ -18,6 +19,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
   onClose,
   studentAttestation,
 }) => {
+  const { t } = useTranslation();
   const createMutation = useCreateStudentAttestation();
   const updateMutation = useUpdateStudentAttestation();
   const { data: studentsResp } = useStudents({ page: 1, limit: 100 });
@@ -57,7 +59,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
       } else if (typeof errorMessage === 'string') {
         throw new Error(errorMessage);
       } else {
-        throw new Error(error?.message || 'Failed to save student attestation');
+        throw new Error(error?.message || t('forms.failedToSaveStudentAttestation'));
       }
     }
   };
@@ -66,7 +68,7 @@ const StudentAttestationModal: React.FC<StudentAttestationModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={studentAttestation ? 'Edit Student Attestation' : 'Add Student Attestation'}
+      title={studentAttestation ? t('sections.editStudentAttestation') : t('sections.addStudentAttestation')}
     >
       <StudentAttestationForm
         initialData={studentAttestation}

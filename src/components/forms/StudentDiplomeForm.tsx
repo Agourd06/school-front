@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
@@ -55,6 +56,7 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
   studentsError = null,
   onStudentSearchChange,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<StudentDiplomeFormData>({
     title: '',
     school: '',
@@ -104,18 +106,18 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.title.trim()) e.title = 'Title is required';
-    if (!form.school.trim()) e.school = 'School is required';
-    if (!form.student_id) e.student_id = 'Student is required';
-    if (form.annee && !/^\d{4}$/.test(String(form.annee))) e.annee = 'Year must be YYYY';
+    if (!form.title.trim()) e.title = t('forms.titleRequired');
+    if (!form.school.trim()) e.school = t('forms.schoolRequired');
+    if (!form.student_id) e.student_id = t('forms.studentRequired');
+    if (form.annee && !/^\d{4}$/.test(String(form.annee))) e.annee = t('forms.yearMustBeYYYY');
     const files: Array<[string, File | null]> = [
       ['diplome_picture_1', file1],
       ['diplome_picture_2', file2],
     ];
     for (const [name, f] of files) {
       if (!f) continue;
-      if (f.size > MAX_FILE_BYTES) e[name] = 'Max size 2MB';
-      if (!ALLOWED_TYPES.includes(f.type)) e[name] = 'Invalid type (jpeg, png, gif, webp)';
+      if (f.size > MAX_FILE_BYTES) e[name] = t('forms.maxSize2MB');
+      if (!ALLOWED_TYPES.includes(f.type)) e[name] = t('forms.invalidFileType');
     }
     return e;
   };
@@ -171,14 +173,14 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Title"
+          label={t('common.name')}
           name="title"
           value={form.title}
           onChange={handleChange}
           error={errors.title}
         />
         <Input
-          label="School"
+          label={t('forms.school')}
           name="school"
           value={form.school}
           onChange={handleChange}
@@ -188,13 +190,13 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input
-          label="Diplome"
+          label={t('forms.diplome')}
           name="diplome"
           value={form.diplome}
           onChange={handleChange}
         />
         <Input
-          label="Year (YYYY)"
+          label={t('forms.yearYYYY')}
           name="annee"
           value={form.annee}
           onChange={handleChange}
@@ -202,15 +204,15 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
         />
         <div>
           <SearchSelect
-            label="Student"
+            label={t('sidebar.students')}
             value={form.student_id}
             onChange={(val) => setForm((prev) => ({ ...prev, student_id: val }))}
-            placeholder="Search students..."
+            placeholder={t('forms.searchStudents')}
             options={studentOptions}
             isLoading={studentsLoading}
-            error={studentsError ? 'Failed to load students' : null}
+            error={studentsError ? t('forms.failedToLoadStudents') : null}
             onSearchChange={onStudentSearchChange}
-            noOptionsMessage={(query) => (query ? 'No students found' : 'Type to search students')}
+            noOptionsMessage={(query) => (query ? t('forms.noStudentsFound') : t('forms.typeToSearchStudents'))}
           />
           {errors.student_id && <p className="text-sm text-danger">{errors.student_id}</p>}
         </div>
@@ -218,13 +220,13 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Country"
+          label={t('forms.country')}
           name="country"
           value={form.country}
           onChange={handleChange}
         />
         <Input
-          label="City"
+          label={t('forms.city')}
           name="city"
           value={form.city}
           onChange={handleChange}
@@ -232,7 +234,7 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
       </div>
 
       <Select
-        label="Status"
+        label={t('common.status')}
         name="status"
         value={form.status}
         onChange={handleChange}
@@ -244,7 +246,7 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FileInput
-          label="Diplome picture 1"
+          label={t('forms.diplomePicture1')}
           accept="image/*"
           onChange={handleFile1Change}
           currentFileUrl={
@@ -256,7 +258,7 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
           helperText={file1 ? file1.name : undefined}
         />
         <FileInput
-          label="Diplome picture 2"
+          label={t('forms.diplomePicture2')}
           accept="image/*"
           onChange={handleFile2Change}
           currentFileUrl={
@@ -271,10 +273,10 @@ const StudentDiplomeForm: React.FC<StudentDiplomeFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {isEditing ? 'Update' : 'Create'}
+          {isEditing ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

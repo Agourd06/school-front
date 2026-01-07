@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { Input, Select, Button, PdfFileInput } from '../ui';
@@ -56,6 +57,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
   initialSpecializationId,
   onFormChange,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<LevelFormData>({
     title: '',
     description: '',
@@ -124,9 +126,9 @@ const LevelForm: React.FC<LevelFormProps> = ({
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!form.title.trim()) next.title = 'Title is required';
-    if (!form.specialization_id) next.specialization_id = 'Specialization is required';
-    if (form.level && isNaN(Number(form.level))) next.level = 'Level must be a number';
+    if (!form.title.trim()) next.title = t('forms.titleRequired');
+    if (!form.specialization_id) next.specialization_id = t('forms.specializationRequired');
+    if (form.level && isNaN(Number(form.level))) next.level = t('forms.levelMustBeNumber');
     
     // Validate PDF file if provided
     if (form.pdf_file) {
@@ -172,15 +174,15 @@ const LevelForm: React.FC<LevelFormProps> = ({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-heading">Program & Specialization *</label>
+        <label className="block text-sm font-medium text-heading">{t('sections.programAndSpecialization')} *</label>
         {isProgramLocked && fetchedProgram && (selectedSpecialization || initialData?.specialization) ? (
           <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-3 bg-surface border border-border rounded-md">
-              <div className="text-xs font-medium text-muted mb-1">Program</div>
+              <div className="text-xs font-medium text-muted mb-1">{t('sections.program')}</div>
               <div className="text-sm font-medium text-heading">{fetchedProgram?.title || 'N/A'}</div>
             </div>
             <div className="p-3 bg-surface border border-border rounded-md">
-              <div className="text-xs font-medium text-muted mb-1">Specialization</div>
+              <div className="text-xs font-medium text-muted mb-1">{t('sections.specialization')}</div>
               <div className="text-sm font-medium text-heading">
                 {selectedSpecialization?.title || initialData?.specialization?.title || 'N/A'}
               </div>
@@ -189,14 +191,14 @@ const LevelForm: React.FC<LevelFormProps> = ({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-body mb-1">Program</label>
+              <label className="block text-xs font-medium text-body mb-1">{t('sections.program')}</label>
               <Select
                 name="program_id"
                 value={form.program_id}
                 onChange={handleChange}
                 disabled={isProgramLocked}
                 options={[
-                  { value: '', label: 'All programs' },
+                  { value: '', label: t('sections.allPrograms') },
                   ...programs.map((program) => ({ value: program.id, label: program.title })),
                 ]}
                 className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
@@ -205,14 +207,14 @@ const LevelForm: React.FC<LevelFormProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-body mb-1">Specialization</label>
+              <label className="block text-xs font-medium text-body mb-1">{t('sections.specialization')}</label>
               <Select
                 name="specialization_id"
                 value={form.specialization_id}
                 onChange={handleChange}
                 disabled={isSpecializationLocked}
                 options={[
-                  { value: '', label: 'Select specialization' },
+                  { value: '', label: t('sections.selectSpecialization') },
                   ...specializations.map((spec) => ({ value: spec.id, label: spec.title })),
                 ]}
                 error={errors.specialization_id}
@@ -227,7 +229,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input
-          label="Title"
+          label={t('sections.title')}
           name="title"
           value={form.title}
           onChange={handleChange}
@@ -235,7 +237,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Input
-          label="Level number"
+          label={t('forms.levelNumber')}
           name="level"
           value={form.level}
           onChange={handleChange}
@@ -243,7 +245,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={form.status}
           onChange={handleChange}
@@ -257,7 +259,7 @@ const LevelForm: React.FC<LevelFormProps> = ({
 
       {/* PDF Upload */}
       <PdfFileInput
-        label="PDF Document"
+        label={t('sections.pdfDocument')}
         value={form.pdf_file}
         onChange={handlePdfChange}
         existingPdfPath={initialData?.pdf_file}
@@ -265,23 +267,23 @@ const LevelForm: React.FC<LevelFormProps> = ({
       />
 
       <div>
-        <label className="block text-sm font-medium text-heading mb-1">Description</label>
+        <label className="block text-sm font-medium text-heading mb-1">{t('common.description')}</label>
         <RichTextEditor
           value={form.description}
           onChange={(html) => {
             setForm((prev) => ({ ...prev, description: html }));
           }}
-          placeholder="Describe the level..."
+          placeholder={t('sections.describeLevel')}
           rows={5}
         />
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

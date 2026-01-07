@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import { useUsers, useUpdateUser } from '../../hooks/useUsers';
 import type { FilterParams, ListState } from '../../types/api';
@@ -7,9 +8,9 @@ import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
 import { EditButton, DeleteButton } from '../ui';
 import type { User } from '../../api/users';
-import { getProfileLabel } from '../../types/profile';
 
 const UsersSection: React.FC = () => {
+  const { t } = useTranslation();
   const [state, setState] = React.useState<ListState<User>>({
     data: [],
     loading: false,
@@ -79,7 +80,7 @@ const UsersSection: React.FC = () => {
   return (
     <>
       <DataTableGeneric
-        title="Users"
+        title={t('sidebar.users')}
         state={state}
         onAdd={() => openModal(null)}
         onEdit={(item) => openModal(item)}
@@ -92,11 +93,11 @@ const UsersSection: React.FC = () => {
           filters: { ...prev.filters, status },
           pagination: { ...prev.pagination, page: 1 },
         }))}
-        addButtonText="Add User"
-        searchPlaceholder="Search by name or email..."
+        addButtonText={t('sections.addUser')}
+        searchPlaceholder={t('sections.searchByNameOrEmail')}
         filterOptions={STATUS_OPTIONS}
         renderRow={(user: User, onEdit, onDelete, index) => {
-          const profileLabel = getProfileLabel(user.profile);
+          const profileLabelKey = `profile.${user.profile}`;
           return (
             <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
               <div className="flex items-center justify-between">
@@ -105,11 +106,11 @@ const UsersSection: React.FC = () => {
                   <p className="text-sm text-gray-500">{user.email}</p>
                   <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-2">
-                      <span>Profile:</span>
-                      <span className="font-medium text-gray-700 capitalize">{profileLabel}</span>
+                      <span>{t('forms.profileLabel')}</span>
+                      <span className="font-medium text-gray-700 capitalize">{t(profileLabelKey)}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span>Status:</span>
+                      <span>{t('forms.statusLabel')}</span>
                       <StatusBadge value={user.status} />
                     </div>
                   </div>
@@ -130,7 +131,7 @@ const UsersSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete User"
+        title={t('forms.deleteUser')}
         entityName={deleteTarget?.name}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

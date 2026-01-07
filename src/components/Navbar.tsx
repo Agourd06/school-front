@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { getFileUrl } from '../utils/apiConfig';
 
 const Navbar: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const company = user?.company;
   const companyLogo = company?.logo;
@@ -18,6 +20,11 @@ const Navbar: React.FC = () => {
     .join('')
     .toUpperCase();
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'fr' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-40 text-white shadow-md border-b border-blue-900/30"
@@ -31,7 +38,7 @@ const Navbar: React.FC = () => {
             {/* Mobile: sidebar toggle */}
             <button
               type="button"
-              aria-label="Open sidebar"
+              aria-label={t('navbar.openSidebar')}
               className="inline-flex items-center justify-center p-2 rounded-md hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50 sm:hidden"
               onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
             >
@@ -57,16 +64,24 @@ const Navbar: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-3">
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              className="px-3 py-2 rounded-md text-sm font-medium bg-white/15 border border-white/25 hover:bg-white/25 hover:border-white/35 transition-all text-white shadow-sm"
+              title={t('language.switchLanguage')}
+            >
+              {i18n.language === 'en' ? 'FR' : 'EN'}
+            </button>
             {user ? (
               <>
                 <div className="hidden sm:flex flex-col items-end leading-tight">
                   <span className="text-sm font-semibold text-white">{displayName}</span>
-                  <span className="text-xs text-blue-100">Welcome back</span>
+                  <span className="text-xs text-blue-100">{t('navbar.welcomeBack')}</span>
                 </div>
                 <Link
                   to="/profile"
                   className="h-10 w-10 flex items-center justify-center rounded-full bg-white/15 text-sm font-semibold uppercase hover:bg-white/25 transition-all cursor-pointer text-white shadow-sm"
-                  title="View Profile"
+                  title={t('navbar.viewProfile')}
                 >
                   {initials || 'U'}
                 </Link>
@@ -74,7 +89,7 @@ const Navbar: React.FC = () => {
                   onClick={logout}
                   className="px-4 py-2 rounded-md text-sm font-medium bg-white/15 border border-white/25 hover:bg-white/25 hover:border-white/35 transition-all text-white shadow-sm"
                 >
-                  Logout
+                  {t('navbar.logout')}
                 </button>
               </>
             ) : (
@@ -83,7 +98,7 @@ const Navbar: React.FC = () => {
                   to="/auth?mode=login"
                   className="px-4 py-2 rounded-md text-sm font-medium bg-white text-blue-700 shadow-md hover:bg-blue-50 hover:shadow-lg transition-all font-semibold"
                 >
-                  Login
+                  {t('navbar.login')}
                 </Link>
               </div>
             )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
@@ -56,6 +57,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
   studentOptions,
   linkTypes,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   // Track the initial data ID to prevent unnecessary resets
   const initialDataIdRef = useRef<number | null>(null);
@@ -177,10 +179,10 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.firstname.trim()) e.firstname = 'First name is required';
-    if (!form.lastname.trim()) e.lastname = 'Last name is required';
-    if (!isEditing && !form.student_id) e.student_id = 'Student is required';
-    if (form.email && !emailRegex.test(form.email)) e.email = 'Invalid email';
+    if (!form.firstname.trim()) e.firstname = t('forms.firstNameRequired');
+    if (!form.lastname.trim()) e.lastname = t('forms.lastNameRequired');
+    if (!isEditing && !form.student_id) e.student_id = t('forms.studentRequired');
+    if (form.email && !emailRegex.test(form.email)) e.email = t('forms.emailInvalid');
     return e;
   };
 
@@ -236,11 +238,11 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
 
       <div>
         <SearchSelect
-          label={isEditing ? 'Student' : 'Student *'}
+          label={isEditing ? t('sidebar.students') : `${t('sidebar.students')} *`}
           value={form.student_id}
           onChange={handleStudentChange}
           options={studentOptions}
-          placeholder="Select a student"
+          placeholder={t('forms.selectStudent')}
           isClearable={isEditing}
           disabled={isEditing}
         />
@@ -249,14 +251,14 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="First name"
+          label={t('forms.firstName')}
           name="firstname"
           value={form.firstname}
           onChange={handleChange}
           error={errors.firstname}
         />
         <Input
-          label="Last name"
+          label={t('forms.lastName')}
           name="lastname"
           value={form.lastname}
           onChange={handleChange}
@@ -266,7 +268,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Birthday"
+          label={t('forms.birthday')}
           type="date"
           name="birthday"
           value={form.birthday}
@@ -274,7 +276,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
           max={new Date().toISOString().split('T')[0]}
         />
         <Input
-          label="Email"
+          label={t('forms.email')}
           name="email"
           value={form.email}
           onChange={handleChange}
@@ -284,20 +286,20 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
 
       {linkTypes.length === 0 && (
         <div className="rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800">
-          <strong>Warning:</strong> No link types available. Please create a link type first in{' '}
+          <strong>{t('common.warning')}:</strong> {t('forms.noLinkTypesAvailable')}{' '}
           <button
             type="button"
             onClick={() => navigate('/settings')}
             className="font-medium text-orange-900 hover:text-orange-950 underline cursor-pointer transition-colors"
           >
-            settings &gt; types &gt; link types
+            {t('sidebar.settings')} &gt; {t('forms.types')} &gt; {t('forms.linkTypes')}
           </button>
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <PhoneInput
-          label="Phone"
+          label={t('forms.phone')}
           name="phone"
           value={form.phone}
           onChange={handleChange}
@@ -305,12 +307,12 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
         />
         <div>
           <Select
-            label="Link type"
+            label={t('forms.linkType')}
             name="studentlinktypeId"
             value={form.studentlinktypeId}
             onChange={handleChange}
             options={[
-              { value: '', label: 'None' },
+              { value: '', label: t('common.none') },
               ...linkTypes.map((lt) => ({
                 value: lt.id,
                 label: lt.title,
@@ -319,20 +321,20 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
           />
           {linkTypes.length > 0 && (
             <p className="mt-1 text-xs text-gray-500">
-              To create a type:{' '}
+              {t('forms.toCreateType')}{' '}
               <button
                 type="button"
                 onClick={() => navigate('/settings')}
                 className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
               >
-                settings
+                {t('sidebar.settings')}
               </button>
-              {' > types > link types'}
+              {' > '}{t('forms.types')}{' > '}{t('forms.linkTypes')}
             </p>
           )}
         </div>
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={form.status}
           onChange={handleChange}
@@ -344,7 +346,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
       </div>
 
       <Input
-        label="Address"
+        label={t('forms.address')}
         name="adress"
         value={form.adress}
         onChange={handleChange}
@@ -352,7 +354,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SearchSelect
-          label="Country"
+          label={t('forms.country')}
           value={form.country || ''}
           onChange={(value) => {
             setForm((prev) => ({ ...prev, country: value as string }));
@@ -362,11 +364,11 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
             value: country.name,
             label: country.name,
           }))}
-          placeholder={loadingCountries ? 'Loading countries...' : 'Search country...'}
+          placeholder={loadingCountries ? t('forms.loadingCountries') : t('forms.searchCountry')}
           isLoading={loadingCountries}
         />
         <SearchSelect
-          label="City"
+          label={t('forms.city')}
           value={form.city || ''}
           onChange={(value) => {
             setForm((prev) => ({ ...prev, city: value as string }));
@@ -376,7 +378,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
             value: city,
             label: city,
           }))}
-          placeholder={!form.country ? 'Select a country first' : loadingCities ? 'Loading cities...' : 'Search city...'}
+          placeholder={!form.country ? t('forms.selectCountryFirst') : loadingCities ? t('forms.loadingCities') : t('forms.searchCity')}
           disabled={!form.country || loadingCities}
           isLoading={loadingCities}
         />
@@ -384,10 +386,10 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {isEditing ? 'Update' : 'Create'}
+          {isEditing ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

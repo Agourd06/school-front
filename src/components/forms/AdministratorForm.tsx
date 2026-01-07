@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { validateRequired } from '../modals/validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, FileInput, Button } from '../ui';
@@ -56,6 +57,7 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
   serverError,
   classRooms,
 }) => {
+  const { t } = useTranslation();
   // Track the initial data ID to prevent unnecessary resets
   const initialDataIdRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
@@ -162,11 +164,11 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
     }
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      setErrors((prev) => ({ ...prev, picture: 'Invalid file type. Allowed: jpeg, png, gif, webp' }));
+      setErrors((prev) => ({ ...prev, picture: t('forms.invalidFileType') }));
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setErrors((prev) => ({ ...prev, picture: 'File too large. Max 2MB' }));
+      setErrors((prev) => ({ ...prev, picture: t('forms.fileTooLarge') }));
       return;
     }
     setErrors((prev) => ({ ...prev, picture: '' }));
@@ -175,11 +177,11 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    const fnErr = validateRequired(form.first_name, 'First name');
+    const fnErr = validateRequired(form.first_name, t('forms.firstName'));
     if (fnErr) newErrors.first_name = fnErr;
-    const lnErr = validateRequired(form.last_name, 'Last name');
+    const lnErr = validateRequired(form.last_name, t('forms.lastName'));
     if (lnErr) newErrors.last_name = lnErr;
-    const emailErr = validateRequired(form.email, 'Email');
+    const emailErr = validateRequired(form.email, t('forms.email'));
     if (emailErr) newErrors.email = emailErr;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -201,7 +203,7 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FileInput
-          label="Picture"
+          label={t('forms.picture')}
           name="picture"
           accept="image/*"
           onChange={handlePictureChange}
@@ -209,7 +211,7 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
           className="text-sm"
         />
         <Input
-          label="Email"
+          label={t('forms.email')}
           name="email"
           type="email"
           value={form.email}
@@ -221,7 +223,7 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="First name"
+          label={t('forms.firstName')}
           name="first_name"
           value={form.first_name}
           onChange={handleChange}
@@ -229,7 +231,7 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Input
-          label="Last name"
+          label={t('forms.lastName')}
           name="last_name"
           value={form.last_name}
           onChange={handleChange}
@@ -240,19 +242,19 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select
-          label="Gender"
+          label={t('forms.gender')}
           name="gender"
           value={form.gender}
           onChange={handleChange}
           options={[
-            { value: '', label: 'Select' },
-            { value: 'male', label: 'Male' },
-            { value: 'female', label: 'Female' },
+            { value: '', label: t('forms.select') },
+            { value: 'male', label: t('forms.male') },
+            { value: 'female', label: t('forms.female') },
           ]}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Input
-          label="Birthday"
+          label={t('forms.birthday')}
           type="date"
           name="birthday"
           value={form.birthday}
@@ -260,7 +262,7 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <PhoneInput
-          label="Phone"
+          label={t('forms.phone')}
           name="phone"
           value={form.phone}
           onChange={handleChange}
@@ -270,7 +272,7 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
       </div>
 
       <Input
-        label="Address"
+        label={t('forms.address')}
         name="address"
         value={form.address}
         onChange={handleChange}
@@ -279,21 +281,21 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input
-          label="City"
+          label={t('forms.city')}
           name="city"
           value={form.city}
           onChange={handleChange}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Input
-          label="Country"
+          label={t('forms.country')}
           name="country"
           value={form.country}
           onChange={handleChange}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Input
-          label="Nationality"
+          label={t('forms.nationality')}
           name="nationality"
           value={form.nationality}
           onChange={handleChange}
@@ -303,7 +305,7 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
-          label="Status"
+          label={t('forms.status')}
           name="status"
           value={form.status}
           onChange={handleChange}
@@ -314,12 +316,12 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
-          label="Class Room"
+          label={t('forms.classRoom')}
           name="class_room_id"
           value={form.class_room_id}
           onChange={handleChange}
           options={[
-            { value: '', label: 'No class room' },
+            { value: '', label: t('forms.noClassRoom') },
             ...classRooms.map((cr) => ({
               value: cr.id,
               label: `${cr.code} — ${cr.title}`,
@@ -331,10 +333,10 @@ const AdministratorForm: React.FC<AdministratorFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

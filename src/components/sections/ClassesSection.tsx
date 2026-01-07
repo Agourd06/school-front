@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FilterParams, ListState } from '../../types/api';
 import SearchBar from '../../components/SearchBar';
 import FilterDropdown from '../../components/FilterDropdown';
@@ -23,17 +24,18 @@ import type { Level } from '../../api/level';
 import type { SchoolYear } from '../../api/schoolYear';
 import { Info } from 'lucide-react';
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const ClassesSection: React.FC = () => {
+  const { t } = useTranslation();
   const [state, setState] = React.useState<ListState<ClassEntity>>({
     data: [],
     loading: false,
@@ -131,10 +133,10 @@ const ClassesSection: React.FC = () => {
     try {
       await deleteClassMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'Class deleted successfully.' });
+      setAlert({ type: 'success', message: t('messages.classDeletedSuccessfully') });
       refetchClasses();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -174,7 +176,7 @@ const ClassesSection: React.FC = () => {
     <>
       <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 items-end">
         <SearchSelect
-          label="Program"
+          label={t('sidebar.programs')}
           value={programFilter}
           onChange={(val) => {
             const numeric = val === '' ? '' : Number(val);
@@ -188,7 +190,7 @@ const ClassesSection: React.FC = () => {
           isClearable
         />
         <SearchSelect
-          label="Specialization"
+          label={t('dashboard.specializations')}
           value={specializationFilter}
           onChange={(val) => {
             const numeric = val === '' ? '' : Number(val);
@@ -196,33 +198,33 @@ const ClassesSection: React.FC = () => {
             setLevelFilter('');
             setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
           }}
-          placeholder="All specializations"
+          placeholder={t('sections.allSpecializations')}
           options={specializationOptions}
           isClearable
           disabled={!programFilter}
         />
         <SearchSelect
-          label="Level"
+          label={t('sidebar.levels')}
           value={levelFilter}
           onChange={(val) => {
             const numeric = val === '' ? '' : Number(val);
             setLevelFilter(numeric);
             setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
           }}
-          placeholder="All levels"
+          placeholder={t('sections.allLevels')}
           options={levelOptions}
           isClearable
           disabled={!specializationFilter}
         />
         <SearchSelect
-          label="School Year"
+          label={t('sidebar.schoolYears')}
           value={schoolYearFilter}
           onChange={(val) => {
             const numeric = val === '' ? '' : Number(val);
             setSchoolYearFilter(numeric);
             setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
           }}
-          placeholder="All school years"
+          placeholder={t('sections.allSchoolYears')}
           options={schoolYearOptions}
           isClearable
         />
@@ -242,7 +244,7 @@ const ClassesSection: React.FC = () => {
 
       <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200">
-          <h3 className="text-lg leading-6 font-medium text-heading">Classes</h3>
+          <h3 className="text-lg leading-6 font-medium text-heading">{t('sidebar.classes')}</h3>
           <Button
             type="button"
             variant="primary"
@@ -252,7 +254,7 @@ const ClassesSection: React.FC = () => {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add Class
+            {t('sections.addClass')}
           </Button>
         </div>
 
@@ -266,7 +268,7 @@ const ClassesSection: React.FC = () => {
                 options={STATUS_OPTIONS}
                 value={(state.filters as { status?: number | null }).status ?? null}
                 onChange={(val) => setState(prev => ({ ...prev, filters: { ...prev.filters, status: val === null ? null : Number(val) }, pagination: { ...prev.pagination, page: 1 } }))}
-                placeholder="Filter by status"
+                placeholder={t('sections.filterByStatus')}
                 isLoading={state.loading}
               />
             </div>
@@ -278,25 +280,25 @@ const ClassesSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
-                  Title
+                  {t('common.name')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
-                  Program
+                  {t('sidebar.programs')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
-                  Specialization
+                  {t('dashboard.specializations')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
-                  Level
+                  {t('sidebar.levels')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
-                  School Year
+                  {t('sidebar.schoolYears')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -304,15 +306,15 @@ const ClassesSection: React.FC = () => {
               {state.loading ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted">
-                    Loading classes…
+                    {t('sections.loadingClasses')}
                   </td>
                 </tr>
               ) : state.data.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted">
                     {(state.filters as { search?: string }).search
-                      ? `No classes found matching "${(state.filters as { search?: string }).search}"`
-                      : 'No classes found.'}
+                      ? t('sections.noClassesFoundMatching', { search: (state.filters as { search?: string }).search })
+                      : t('sections.noClassesFound')}
                   </td>
                 </tr>
               ) : (
@@ -341,7 +343,7 @@ const ClassesSection: React.FC = () => {
                             type="button"
                             onClick={() => openDetailsModal(cls)}
                             className="inline-flex items-center justify-center rounded-full p-1.5 text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                            title="View details"
+                            title={t('common.viewDetails')}
                           >
                             <Info className="h-4 w-4" />
                           </button>
@@ -390,7 +392,7 @@ const ClassesSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete Class"
+        title={t('modals.delete') + ' ' + t('sidebar.classes')}
         entityName={deleteTarget?.name}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

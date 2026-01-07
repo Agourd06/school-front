@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { Input, Select, Button, PdfFileInput } from '../ui';
@@ -34,6 +35,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<ProgramFormData>({
     title: '',
     description: '',
@@ -66,7 +68,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
-    if (!form.title.trim()) nextErrors.title = 'Title is required';
+    if (!form.title.trim()) nextErrors.title = t('forms.titleRequired');
     
     // Validate PDF file if provided
     if (form.pdf_file) {
@@ -100,7 +102,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
       await onSubmit(form);
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      setFormError(axiosError?.response?.data?.message || 'Failed to save program');
+      setFormError(axiosError?.response?.data?.message || t('forms.failedToSaveProgram'));
     }
   };
 
@@ -114,7 +116,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Title"
+          label={t('common.name')}
           name="title"
           value={form.title}
           onChange={handleChange}
@@ -123,7 +125,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
         />
 
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={form.status}
           onChange={handleChange}
@@ -137,7 +139,7 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
 
       {/* PDF Upload */}
       <PdfFileInput
-        label="PDF Document"
+        label={t('sections.pdfDocument')}
         value={form.pdf_file}
         onChange={handlePdfChange}
         existingPdfPath={initialData?.pdf_file}
@@ -145,21 +147,21 @@ const ProgramForm: React.FC<ProgramFormProps> = ({
       />
 
       <div>
-        <label className="block text-sm font-medium text-heading mb-1">Description</label>
+        <label className="block text-sm font-medium text-heading mb-1">{t('common.description')}</label>
         <RichTextEditor
           value={form.description}
           onChange={(html) => setForm((prev) => ({ ...prev, description: html }))}
-          placeholder="Describe the program..."
+          placeholder={t('forms.describeProgram')}
           rows={6}
         />
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

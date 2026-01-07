@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useQuery } from '@tanstack/react-query';
 import { useDeleteClassStudent, useCreateClassStudent } from '../../hooks/useClassStudents';
@@ -45,14 +46,15 @@ const makeStudentLite = (fallbackId: number, student?: Partial<ApiStudent> | Min
   status: student?.status ?? null,
 });
 
-const getStudentLabel = (student: StudentLite) => {
+const getStudentLabel = (student: StudentLite, t: (key: string) => string) => {
   const fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim();
-  return fullName || student.email || `Student #${student.id}`;
+  return fullName || student.email || `${t('forms.studentNumber')}${student.id}`;
 };
 
-const sortStudentsByLabel = (a: StudentLite, b: StudentLite) => getStudentLabel(a).localeCompare(getStudentLabel(b));
+const sortStudentsByLabel = (a: StudentLite, b: StudentLite, t: (key: string) => string) => getStudentLabel(a, t).localeCompare(getStudentLabel(b, t));
 
 const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [preview, setPreview] = useState<{ src: string; label: string } | null>(null);
   const { data, isLoading, error } = useQuery({
@@ -73,20 +75,20 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
         type="button"
         onClick={() => setIsOpen(true)}
         className="inline-flex items-center justify-center rounded-full p-1.5 text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-        title="View details"
+        title={t('common.view') + ' ' + t('common.details')}
       >
         <Info className="h-4 w-4" />
       </button>
       <BaseModal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title={student ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || student.email || 'Student details' : 'Student details'}
+        title={student ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || student.email || t('forms.studentDetails') : t('forms.studentDetails')}
       >
         {isLoading ? (
-          <div className="py-8 text-center text-sm text-gray-500">Loading student details…</div>
+          <div className="py-8 text-center text-sm text-gray-500">{t('forms.loadingStudentDetails')}</div>
         ) : error ? (
           <div className="py-2 text-sm text-red-600">
-            Failed to load student details. Please try again.
+            {t('forms.failedToLoadStudentDetails')}
           </div>
         ) : (
           <div className="space-y-5">
@@ -110,19 +112,19 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-gray-500 uppercase text-xs">Nationality</p>
+                    <p className="text-gray-500 uppercase text-xs">{t('forms.nationality')}</p>
                     <p className="text-gray-900">{student.nationality || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 uppercase text-xs">Birthday</p>
+                    <p className="text-gray-500 uppercase text-xs">{t('forms.birthday')}</p>
                     <p className="text-gray-900">{student.birthday || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 uppercase text-xs">City</p>
+                    <p className="text-gray-500 uppercase text-xs">{t('forms.city')}</p>
                     <p className="text-gray-900">{student.city || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500 uppercase text-xs">Country</p>
+                    <p className="text-gray-500 uppercase text-xs">{t('forms.country')}</p>
                     <p className="text-gray-900">{student.country || '—'}</p>
                   </div>
                 </div>
@@ -133,21 +135,21 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
               <section className="rounded-2xl border border-gray-200 p-4 space-y-4 bg-gradient-to-br from-white to-blue-50/40">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-blue-500">Academic Record</p>
-                    <h4 className="text-lg font-semibold text-gray-900 mt-1">{diploma.title || 'Diploma'}</h4>
+                    <p className="text-xs uppercase tracking-wide text-blue-500">{t('forms.academicRecord')}</p>
+                    <h4 className="text-lg font-semibold text-gray-900 mt-1">{diploma.title || t('forms.diploma')}</h4>
                   </div>
                   <span className="text-xs rounded-full bg-blue-100 px-3 py-0.5 text-blue-700 font-semibold">
-                    {diploma.status === 1 ? 'Active' : diploma.status === -1 ? 'Archived' : 'Draft'}
+                    {diploma.status === 1 ? t('forms.active') : diploma.status === -1 ? t('forms.archived') : t('forms.draft')}
                   </span>
                 </div>
                   <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-800">
-                    <p><span className="text-gray-500">Diploma:</span> {diploma.diplome || '—'}</p>
-                    <p><span className="text-gray-500">School:</span> {diploma.school || '—'}</p>
-                    <p><span className="text-gray-500">Year:</span> {diploma.annee || '—'}</p>
-                    <p><span className="text-gray-500">Status:</span> {diploma.status ?? '—'}</p>
+                    <p><span className="text-gray-500">{t('forms.diploma')}:</span> {diploma.diplome || '—'}</p>
+                    <p><span className="text-gray-500">{t('forms.school')}:</span> {diploma.school || '—'}</p>
+                    <p><span className="text-gray-500">{t('forms.year')}:</span> {diploma.annee || '—'}</p>
+                    <p><span className="text-gray-500">{t('common.status')}:</span> {diploma.status ?? '—'}</p>
                     <p className="sm:col-span-2">
-                      <span className="text-gray-500">Location:</span>{' '}
+                      <span className="text-gray-500">{t('forms.location')}:</span>{' '}
                       {[diploma.city, diploma.country].filter(Boolean).join(', ') || '—'}
                     </p>
                   </div>
@@ -166,7 +168,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
                                   onClick={() =>
                                     setPreview({
                                       src: picture1Url,
-                                      label: `${diploma.title || 'Diploma'} – picture 1`,
+                                      label: `${diploma.title || t('forms.diploma')} – ${t('forms.picture')} 1`,
                                     })
                                   }
                                   className="w-full"
@@ -174,7 +176,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
                                   <img
                                     className="h-48 w-full object-contain transition-transform duration-300 hover:scale-105"
                                     src={picture1Url}
-                                    alt="Diploma picture 1"
+                                    alt={`${t('forms.diplomaPicture')} 1`}
                                   />
                                 </button>
                               </div>
@@ -186,7 +188,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
                                   onClick={() =>
                                     setPreview({
                                       src: picture2Url,
-                                      label: `${diploma.title || 'Diploma'} – picture 2`,
+                                      label: `${diploma.title || t('forms.diploma')} – ${t('forms.picture')} 2`,
                                     })
                                   }
                                   className="w-full"
@@ -194,7 +196,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
                                   <img
                                     className="h-48 w-full object-contain transition-transform duration-300 hover:scale-105"
                                     src={picture2Url}
-                                    alt="Diploma picture 2"
+                                    alt={`${t('forms.diplomaPicture')} 2`}
                                   />
                                 </button>
                               </div>
@@ -204,7 +206,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
                       })()
                     ) : (
                       <div className="flex h-36 items-center justify-center rounded-2xl border border-dashed border-gray-300 text-xs text-gray-500">
-                        No diploma images uploaded.
+                        {t('sections.noDiplomaImagesUploaded')}
                       </div>
                     )}
                   </div>
@@ -215,19 +217,19 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
             {contact && (
               <section className="rounded-lg border border-gray-200 p-3 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-gray-900">Contact</h4>
+                  <h4 className="text-sm font-semibold text-gray-900">{t('sections.contact')}</h4>
                   <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
-                    {contact.status === 1 ? 'Active' : contact.status === -1 ? 'Archived' : 'Draft'}
+                    {contact.status === 1 ? t('forms.active') : contact.status === -1 ? t('sections.archived') : t('sections.draft')}
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
-                  <p><span className="text-gray-500">Name:</span> {`${contact.firstname ?? ''} ${contact.lastname ?? ''}`.trim() || '—'}</p>
-                  <p><span className="text-gray-500">Birthday:</span> {contact.birthday || '—'}</p>
-                  <p><span className="text-gray-500">Email:</span> {contact.email || '—'}</p>
-                  <p><span className="text-gray-500">Phone:</span> {contact.phone || '—'}</p>
-                  <p><span className="text-gray-500">Address:</span> {contact.adress || '—'}</p>
-                  <p><span className="text-gray-500">City:</span> {contact.city || '—'}</p>
-                  <p><span className="text-gray-500">Country:</span> {contact.country || '—'}</p>
+                  <p><span className="text-gray-500">{t('common.name')}:</span> {`${contact.firstname ?? ''} ${contact.lastname ?? ''}`.trim() || '—'}</p>
+                  <p><span className="text-gray-500">{t('forms.birthday')}:</span> {contact.birthday || '—'}</p>
+                  <p><span className="text-gray-500">{t('common.email')}:</span> {contact.email || '—'}</p>
+                  <p><span className="text-gray-500">{t('common.phone')}:</span> {contact.phone || '—'}</p>
+                  <p><span className="text-gray-500">{t('common.address')}:</span> {contact.adress || '—'}</p>
+                  <p><span className="text-gray-500">{t('forms.city')}:</span> {contact.city || '—'}</p>
+                  <p><span className="text-gray-500">{t('forms.country')}:</span> {contact.country || '—'}</p>
                 </div>
               </section>
             )}
@@ -235,22 +237,22 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
             {linkType && (
               <section className="rounded-lg border border-gray-200 p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-gray-900">Link Type</h4>
+                  <h4 className="text-sm font-semibold text-gray-900">{t('sections.linkType')}</h4>
                   <span className="text-xs rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">
-                    {linkType.status === 1 ? 'Active' : linkType.status === 0 ? 'Disabled' : 'Draft'}
+                    {linkType.status === 1 ? t('forms.active') : linkType.status === 0 ? t('sections.disabled') : t('sections.draft')}
                   </span>
                 </div>
                 <p className="text-sm text-gray-700">
-                  <span className="text-gray-500">Title:</span> {linkType.title || '—'}
+                  <span className="text-gray-500">{t('common.name')}:</span> {linkType.title || '—'}
                 </p>
                 {linkType.student_id && (
-                  <p className="text-xs text-gray-500">Linked student ID: {linkType.student_id}</p>
+                  <p className="text-xs text-gray-500">{t('sections.linkedStudentId')}: {linkType.student_id}</p>
                 )}
               </section>
             )}
 
             {!student && !diploma && !contact && (
-              <p className="text-sm text-gray-500">No details available for this student.</p>
+              <p className="text-sm text-gray-500">{t('sections.noDetailsAvailable')}</p>
             )}
           </div>
         )}
@@ -258,7 +260,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
       <BaseModal
         isOpen={!!preview}
         onClose={() => setPreview(null)}
-        title={preview?.label || 'Diploma preview'}
+        title={preview?.label || t('sections.diplomaPreview')}
       >
         {preview && (
           <div className="flex flex-col items-center gap-4">
@@ -272,7 +274,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
               onClick={() => setPreview(null)}
               className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800"
             >
-              Close Preview
+              {t('sections.closePreview')}
             </button>
           </div>
         )}
@@ -282,6 +284,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
 };
 
 const ClassStudentsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [yearFilter, setYearFilter] = useState<number | ''>('');
   const [classFilter, setClassFilter] = useState<number | ''>('');
   const [statusFilter, setStatusFilter] = useState<number | ''>('');
@@ -365,27 +368,27 @@ const ClassStudentsSection: React.FC = () => {
       .filter((stu) => stu?.status !== -2)
       .filter((stu) => !assignedIds.has(stu.id))
       .map((stu) => makeStudentLite(stu.id, stu))
-      .sort(sortStudentsByLabel);
+      .sort((a, b) => sortStudentsByLabel(a, b, t));
 
     setUnassignedStudents(students);
-  }, [allAssignmentsQuery.data, studentsResp, classFilter]);
+  }, [allAssignmentsQuery.data, studentsResp, classFilter, t]);
 
   const assignedFilterOptions: SearchSelectOption[] = useMemo(
     () =>
       assignedStudents.map((item) => ({
         value: item.student.id,
-        label: getStudentLabel(item.student),
+        label: getStudentLabel(item.student, t),
       })),
-    [assignedStudents]
+    [assignedStudents, t]
   );
 
   const unassignedFilterOptions: SearchSelectOption[] = useMemo(
     () =>
       unassignedStudents.map((item) => ({
         value: item.id,
-        label: getStudentLabel(item),
+        label: getStudentLabel(item, t),
       })),
-    [unassignedStudents]
+    [unassignedStudents, t]
   );
 
   const assignedSearchLower = assignedSearch.trim().toLowerCase();
@@ -395,17 +398,17 @@ const ClassStudentsSection: React.FC = () => {
     return assignedStudents.filter((item) => {
       if (assignedFilter !== '' && item.student.id !== Number(assignedFilter)) return false;
       if (!assignedSearchLower) return true;
-      return getStudentLabel(item.student).toLowerCase().includes(assignedSearchLower);
+      return getStudentLabel(item.student, t).toLowerCase().includes(assignedSearchLower);
     });
-  }, [assignedStudents, assignedFilter, assignedSearchLower]);
+  }, [assignedStudents, assignedFilter, assignedSearchLower, t]);
 
   const filteredUnassigned = useMemo(() => {
     return unassignedStudents.filter((item) => {
       if (unassignedFilter !== '' && item.id !== Number(unassignedFilter)) return false;
       if (!unassignedSearchLower) return true;
-      return getStudentLabel(item).toLowerCase().includes(unassignedSearchLower);
+      return getStudentLabel(item, t).toLowerCase().includes(unassignedSearchLower);
     });
-  }, [unassignedStudents, unassignedFilter, unassignedSearchLower]);
+  }, [unassignedStudents, unassignedFilter, unassignedSearchLower, t]);
 
   const isMutationLoading = createMut.isPending || deleteMut.isPending || isAssigning || isRemoving;
   const isAssignedLoading = assignedQuery.isLoading || assignedQuery.isFetching;
@@ -416,8 +419,8 @@ const ClassStudentsSection: React.FC = () => {
   const yearOptions: SearchSelectOption[] = useMemo(
     () => ((schoolYearsResp as PaginatedResponse<SchoolYear>)?.data || [])
       .filter((year) => year.lifecycle_status !== 'completed')
-      .map((year) => ({ value: year.id, label: year.title || `Year #${year.id}` })),
-    [schoolYearsResp]
+      .map((year) => ({ value: year.id, label: year.title || `${t('forms.yearNumber')}${year.id}` })),
+    [schoolYearsResp, t]
   );
 
   // Fetch classes filtered by year
@@ -432,14 +435,14 @@ const ClassStudentsSection: React.FC = () => {
   const classOptions: SearchSelectOption[] = useMemo(
     () => ((classesResp as PaginatedResponse<ClassEntity>)?.data || [])
       .filter((cls) => cls?.status !== -2)
-      .map((cls) => ({ value: cls.id, label: cls.title || `Class #${cls.id}` })),
-    [classesResp]
+      .map((cls) => ({ value: cls.id, label: cls.title || `${t('planning.classNumber')}${cls.id}` })),
+    [classesResp, t]
   );
 
   const handleAssign = async (studentId: number) => {
     if (isMutationLoading) return; // Prevent concurrent operations
     if (!classFilter || typeof classFilter !== 'number') {
-      setFeedback('Select a class first to assign students.');
+      setFeedback(t('sections.selectClassFirstToAssign'));
       return;
     }
 
@@ -473,7 +476,7 @@ const ClassStudentsSection: React.FC = () => {
       // Small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || 'Failed to assign student';
+      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || t('sections.failedToAssignStudent');
       setFeedback(message);
     } finally {
       setIsAssigning(false);
@@ -494,7 +497,7 @@ const ClassStudentsSection: React.FC = () => {
       );
       setUnassignedStudents((prev) => {
         if (prev.some((item) => item.id === target.student.id)) return prev;
-        return [...prev, target.student].sort(sortStudentsByLabel);
+        return [...prev, target.student].sort((a, b) => sortStudentsByLabel(a, b, t));
       });
       setUnassignedFilter('');
       setUnassignedSearch('');
@@ -503,7 +506,7 @@ const ClassStudentsSection: React.FC = () => {
       // Small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || 'Failed to unassign student';
+      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || t('sections.failedToUnassignStudent');
       setFeedback(message);
     } finally {
       setIsRemoving(false);
@@ -539,32 +542,32 @@ const ClassStudentsSection: React.FC = () => {
 
   const statusFilterOptions: SearchSelectOption[] = useMemo(
     () => [
-      { value: '', label: 'All statuses' },
+      { value: '', label: t('sections.allStatuses') },
       ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
     ],
-    []
+    [t]
   );
 
   return (
     <>
       <div className="mb-6">
         <div className="mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Class Assignments</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage student assignments to classes by year and class.</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('sections.classAssignments')}</h2>
+          <p className="text-sm text-gray-500 mt-1">{t('sections.manageStudentAssignments')}</p>
         </div>
 
         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <SearchSelect
-            label="Filter by Year *"
+            label={`${t('sections.filterByYear')} *`}
             value={yearFilter}
             onChange={handleYearChange}
             options={yearOptions}
-            placeholder="Select year"
+            placeholder={t('sections.selectYear')}
             isClearable
             isLoading={yearsLoading}
           />
           <SearchSelect
-            label="Filter by Class *"
+            label={`${t('sections.filterByClass')} *`}
             value={classFilter}
             onChange={(value) => {
               setClassFilter(value === '' ? '' : Number(value));
@@ -572,17 +575,17 @@ const ClassStudentsSection: React.FC = () => {
               setUnassignedStudents([]);
             }}
             options={classOptions}
-            placeholder="Select class"
+            placeholder={t('forms.selectClass')}
             isClearable
             isLoading={classesLoading}
             disabled={!yearFilter}
           />
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={statusFilter === '' ? '' : String(statusFilter)}
             onChange={(value) => setStatusFilter(value === '' || value === undefined ? '' : Number(value))}
             options={statusFilterOptions}
-            placeholder="All statuses"
+            placeholder={t('sections.allStatuses')}
             isClearable
             disabled={!classFilter}
           />
@@ -591,7 +594,7 @@ const ClassStudentsSection: React.FC = () => {
 
       {!yearFilter || !classFilter ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">Please select a year and class to manage students.</p>
+          <p className="text-gray-500">{t('sections.pleaseSelectYearAndClass')}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -601,24 +604,24 @@ const ClassStudentsSection: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SearchSelect
-              label="Unassigned filter"
+              label={t('sections.unassignedFilter')}
               value={unassignedFilter}
               onChange={(value) => setUnassignedFilter(value === '' ? '' : Number(value))}
               options={unassignedFilterOptions}
-              placeholder="Filter unassigned"
+              placeholder={t('sections.filterUnassigned')}
               isClearable
               onSearchChange={setUnassignedSearch}
-              noOptionsMessage={(query) => (query ? 'No students match' : 'No unassigned students')}
+              noOptionsMessage={(query) => (query ? t('sections.noStudentsMatch') : t('sections.noUnassignedStudents'))}
             />
             <SearchSelect
-              label="Assigned filter"
+              label={t('sections.assignedFilter')}
               value={assignedFilter}
               onChange={(value) => setAssignedFilter(value === '' ? '' : Number(value))}
               options={assignedFilterOptions}
-              placeholder="Filter assigned"
+              placeholder={t('sections.filterAssigned')}
               isClearable
               onSearchChange={setAssignedSearch}
-              noOptionsMessage={(query) => (query ? 'No assigned students match' : 'No assigned students')}
+              noOptionsMessage={(query) => (query ? t('sections.noAssignedStudentsMatch') : t('sections.noAssignedStudents'))}
             />
           </div>
 
@@ -627,16 +630,16 @@ const ClassStudentsSection: React.FC = () => {
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
                 <div className="mb-4 pb-4 border-b border-gray-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">Unassigned Students</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{t('sections.unassignedStudents')}</h3>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                       {filteredUnassigned.length}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Students not assigned to any class.{' '}
+                    {t('sections.studentsNotAssigned')}{' '}
                     {filteredUnassigned.length === 0 
-                      ? '- No unassigned students' 
-                      : `- ${filteredUnassigned.length} ${filteredUnassigned.length === 1 ? 'student available' : 'students available'}`}
+                      ? `- ${t('sections.noUnassignedStudentsText')}` 
+                      : `- ${filteredUnassigned.length} ${filteredUnassigned.length === 1 ? t('sections.studentAvailable') : t('sections.studentsAvailable')}`}
                   </p>
                 </div>
                 <Droppable droppableId="unassigned" isDropDisabled={isMutationLoading}>
@@ -655,7 +658,7 @@ const ClassStudentsSection: React.FC = () => {
                           <div className="text-center">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
                             <p className="text-sm text-gray-600 font-medium">
-                              {isAssigning ? 'Assigning student...' : isRemoving ? 'Removing student...' : 'Processing...'}
+                              {isAssigning ? t('sections.assigningStudent') : isRemoving ? t('sections.removingStudent') : t('sections.processing')}
                             </p>
                           </div>
                         </div>
@@ -663,15 +666,15 @@ const ClassStudentsSection: React.FC = () => {
                       {isUnassignedLoading ? (
                         <div className="text-center text-gray-500 py-12">
                           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-2"></div>
-                          <p className="text-sm">Loading students...</p>
+                          <p className="text-sm">{t('forms.loadingStudents')}</p>
                         </div>
                       ) : filteredUnassigned.length === 0 ? (
                         <div className="text-center text-gray-400 py-12">
                           <svg className="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
-                          <p className="text-sm font-medium">No available students</p>
-                          <p className="text-xs mt-1">All students are assigned to classes</p>
+                          <p className="text-sm font-medium">{t('sections.noAvailableStudents')}</p>
+                          <p className="text-xs mt-1">{t('sections.allStudentsAssigned')}</p>
                         </div>
                       ) : (
                         filteredUnassigned.map((item, index) => (
@@ -693,7 +696,7 @@ const ClassStudentsSection: React.FC = () => {
                                 }`}
                               >
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item)}</p>
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item, t)}</p>
                                   {item.email && (
                                     <p className="text-xs text-gray-500 truncate mt-0.5">{item.email}</p>
                                   )}
@@ -709,10 +712,10 @@ const ClassStudentsSection: React.FC = () => {
                                     {isAssigning ? (
                                       <>
                                         <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                        <span>Assigning...</span>
+                                        <span>{t('sections.assigning')}</span>
                                       </>
                                     ) : (
-                                      'Assign'
+                                      t('sections.assign')
                                     )}
                                   </button>
                                 </div>
@@ -730,17 +733,17 @@ const ClassStudentsSection: React.FC = () => {
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
                 <div className="mb-4 pb-4 border-b border-gray-200">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">Assigned Students</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{t('sections.assignedStudents')}</h3>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {filteredAssigned.length}
                     </span>
                   </div>
                   <p className="text-sm font-medium text-gray-700">
-                    {classOptions.find(opt => Number(opt.value) === classFilter)?.label || 'Class'}
+                    {classOptions.find(opt => Number(opt.value) === classFilter)?.label || t('sidebar.classes')}
                     {' '}
                     {filteredAssigned.length === 0 
-                      ? '- No students assigned' 
-                      : `- ${filteredAssigned.length} ${filteredAssigned.length === 1 ? 'student assigned' : 'students assigned'}`}
+                      ? `- ${t('sections.noStudentsAssigned')}` 
+                      : `- ${filteredAssigned.length} ${filteredAssigned.length === 1 ? t('sections.studentAssigned') : t('sections.studentsAssigned')}`}
                   </p>
                 </div>
                 <Droppable droppableId="assigned" isDropDisabled={!classFilter || isMutationLoading}>
@@ -759,7 +762,7 @@ const ClassStudentsSection: React.FC = () => {
                           <div className="text-center">
                             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
                             <p className="text-sm text-gray-600 font-medium">
-                              {isAssigning ? 'Assigning student...' : isRemoving ? 'Removing student...' : 'Processing...'}
+                              {isAssigning ? t('sections.assigningStudent') : isRemoving ? t('sections.removingStudent') : t('sections.processing')}
                             </p>
                           </div>
                         </div>
@@ -769,20 +772,20 @@ const ClassStudentsSection: React.FC = () => {
                           <svg className="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
-                          <p className="text-sm font-medium">Select a class to manage assignments</p>
+                          <p className="text-sm font-medium">{t('sections.selectClassToManage')}</p>
                         </div>
                       ) : isAssignedLoading ? (
                         <div className="text-center text-gray-500 py-12">
                           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-2"></div>
-                          <p className="text-sm">Loading assigned students...</p>
+                          <p className="text-sm">{t('sections.loadingAssignedStudents')}</p>
                         </div>
                       ) : filteredAssigned.length === 0 ? (
                         <div className="text-center text-gray-400 py-12">
                           <svg className="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
-                          <p className="text-sm font-medium">No students assigned</p>
-                          <p className="text-xs mt-1">Drag students here or use the Assign button</p>
+                          <p className="text-sm font-medium">{t('sections.noStudentsAssigned')}</p>
+                          <p className="text-xs mt-1">{t('sections.dragStudentsHere')}</p>
                         </div>
                       ) : (
                         filteredAssigned.map((item, index) => (
@@ -804,7 +807,7 @@ const ClassStudentsSection: React.FC = () => {
                                 }`}
                               >
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item.student)}</p>
+                                  <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item.student, t)}</p>
                                   {item.student.email && (
                                     <p className="text-xs text-gray-500 truncate mt-0.5">{item.student.email}</p>
                                   )}
@@ -820,10 +823,10 @@ const ClassStudentsSection: React.FC = () => {
                                     {isRemoving ? (
                                       <>
                                         <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                        <span>Removing...</span>
+                                        <span>{t('sections.removing')}</span>
                                       </>
                                     ) : (
-                                      'Remove'
+                                      t('common.remove')
                                     )}
                                   </button>
                                 </div>

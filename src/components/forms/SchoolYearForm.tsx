@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { validateRequired, validateDateOrder } from '../modals/validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
@@ -33,6 +34,7 @@ const SchoolYearForm: React.FC<SchoolYearFormProps> = ({
   ongoingWarning,
   onDismissWarning,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<SchoolYearFormData>({
     title: '',
     start_date: '',
@@ -80,15 +82,15 @@ const SchoolYearForm: React.FC<SchoolYearFormProps> = ({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    const titleErr = validateRequired(formData.title, 'Title');
+    const titleErr = validateRequired(formData.title, t('common.name'));
     if (titleErr) newErrors.title = titleErr;
-    const startErr = validateRequired(formData.start_date, 'Start date');
+    const startErr = validateRequired(formData.start_date, t('forms.startDate'));
     if (startErr) newErrors.start_date = startErr;
-    const endErr = validateRequired(formData.end_date, 'End date');
+    const endErr = validateRequired(formData.end_date, t('forms.endDate'));
     if (endErr) newErrors.end_date = endErr;
     const orderErr = validateDateOrder(formData.start_date, formData.end_date, {
-      start: 'start date',
-      end: 'end date',
+      start: t('forms.startDate'),
+      end: t('forms.endDate'),
     });
     if (!newErrors.start_date && !newErrors.end_date && orderErr) newErrors.end_date = orderErr;
 
@@ -156,7 +158,7 @@ const SchoolYearForm: React.FC<SchoolYearFormProps> = ({
       )}
 
       <Input
-        label="Title"
+        label={t('common.name')}
         type="text"
         name="title"
         value={formData.title}
@@ -167,7 +169,7 @@ const SchoolYearForm: React.FC<SchoolYearFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Start Date"
+          label={t('forms.startDate')}
           type="date"
           name="start_date"
           value={formData.start_date}
@@ -177,7 +179,7 @@ const SchoolYearForm: React.FC<SchoolYearFormProps> = ({
         />
 
         <Input
-          label="End Date"
+          label={t('forms.endDate')}
           type="date"
           name="end_date"
           value={formData.end_date}
@@ -189,20 +191,20 @@ const SchoolYearForm: React.FC<SchoolYearFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
-          label="Lifecycle Status"
+          label={t('sections.lifecycleStatus')}
           name="lifecycle_status"
           value={formData.lifecycle_status}
           onChange={handleChange}
           options={[
-            { value: 'planned', label: 'Planned' },
-            { value: 'ongoing', label: 'Ongoing' },
-            { value: 'completed', label: 'Completed' },
+            { value: 'planned', label: t('sections.planned') },
+            { value: 'ongoing', label: t('sections.ongoing') },
+            { value: 'completed', label: t('sections.completed') },
           ]}
           className="shadow-sm  focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
 
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={formData.status}
           onChange={handleChange}
@@ -216,10 +218,10 @@ const SchoolYearForm: React.FC<SchoolYearFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

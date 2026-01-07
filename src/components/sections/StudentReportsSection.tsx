@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import DeleteModal from '../modals/DeleteModal';
 import StudentReportModal, { type StudentReportFormValues } from '../modals/StudentReportModal';
@@ -37,15 +38,15 @@ type ErrorWithMessage = {
   message?: unknown;
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const responseMessage = (err as ErrorWithMessage).response?.data?.message;
   if (Array.isArray(responseMessage)) return responseMessage.join(', ');
   if (typeof responseMessage === 'string') return responseMessage;
   const directMessage = (err as ErrorWithMessage).message;
   if (typeof directMessage === 'string') return directMessage;
   if (err instanceof Error && typeof err.message === 'string') return err.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 type StudentLike = {
@@ -123,6 +124,7 @@ const getReportDetailsFromReport = (report?: StudentReport | null): StudentRepor
 const API_LIMIT = 100;
 
 const StudentReportsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
   const [selectedClass, setSelectedClass] = useState<string>('');
@@ -165,12 +167,13 @@ const StudentReportsSection: React.FC = () => {
     school_year_id: selectedYear ? Number(selectedYear) : undefined,
   });
   const dashboardParams = useMemo(() => {
-    if (!selectedYear || !selectedClass) return null;
+    if (!selectedYear || !selectedClass || !selectedPeriod) return null;
     return {
       class_id: Number(selectedClass),
       school_year_id: Number(selectedYear),
+      school_year_period_id: Number(selectedPeriod),
     };
-  }, [selectedClass, selectedYear]);
+  }, [selectedClass, selectedYear, selectedPeriod]);
 
   const {
     data: dashboardData,
@@ -737,7 +740,7 @@ const StudentReportsSection: React.FC = () => {
       handleReportModalClose();
       refetchDashboard();
     } catch (err: unknown) {
-      setReportModalError(extractErrorMessage(err));
+      setReportModalError(extractErrorMessage(err, t));
       throw err;
     }
   };
@@ -789,7 +792,7 @@ const StudentReportsSection: React.FC = () => {
       handleDetailModalClose();
       refetchDashboard();
     } catch (err: unknown) {
-      setDetailModalError(extractErrorMessage(err));
+      setDetailModalError(extractErrorMessage(err, t));
       throw err;
     }
   };
@@ -802,7 +805,7 @@ const StudentReportsSection: React.FC = () => {
       setDeleteTarget(null);
       refetchDashboard();
     } catch (err: unknown) {
-      setAlert({ type: 'error', message: extractErrorMessage(err) });
+      setAlert({ type: 'error', message: extractErrorMessage(err, t) });
     }
   };
 
@@ -960,7 +963,7 @@ const StudentReportsSection: React.FC = () => {
       setAlert({ type: 'success', message: `Report exported for ${studentName}.` });
     } catch (error: unknown) {
       console.error('Failed to export student report', error);
-      setAlert({ type: 'error', message: extractErrorMessage(error) });
+      setAlert({ type: 'error', message: extractErrorMessage(error, t) });
     }
   };
 
@@ -1038,7 +1041,7 @@ const StudentReportsSection: React.FC = () => {
       });
       await refetchDashboard();
     } catch (err: unknown) {
-      setAlert({ type: 'error', message: extractErrorMessage(err) });
+      setAlert({ type: 'error', message: extractErrorMessage(err, t) });
     } finally {
       setBulkReportCreating(false);
     }
@@ -1098,7 +1101,7 @@ const StudentReportsSection: React.FC = () => {
       });
       await refetchDashboard();
     } catch (err: unknown) {
-      setAlert({ type: 'error', message: extractErrorMessage(err) });
+      setAlert({ type: 'error', message: extractErrorMessage(err, t) });
     } finally {
       setAutoDetailCreatingId(null);
     }
@@ -1107,15 +1110,15 @@ const StudentReportsSection: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Student Reports</h1>
+        <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentReports')}</h1>
         <p className="text-sm text-gray-500">
-          Filter by school year, period, and class to manage reports for each student.
+          {t('sections.manageStudentReports')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SearchSelect
-          label="School Year"
+          label={t('sidebar.schoolYears')}
           value={selectedYear}
           onChange={(value) => {
             setSelectedYear(value === '' ? '' : String(value));
@@ -1123,27 +1126,27 @@ const StudentReportsSection: React.FC = () => {
             setSelectedClass('');
           }}
           options={yearOptions}
-          placeholder={yearsLoading ? 'Loading years…' : 'Select school year'}
+          placeholder={yearsLoading ? t('sections.loadingYears') : t('sections.selectSchoolYear')}
           isClearable
         />
         <SearchSelect
-          label="Period"
+          label={t('sections.period')}
           value={selectedPeriod}
           onChange={(value) => {
             setSelectedPeriod(value === '' ? '' : String(value));
             setSelectedClass('');
           }}
           options={periodOptions}
-          placeholder="Select period"
+          placeholder={t('sections.selectPeriod')}
           disabled={!selectedYear || periodsLoading}
           isClearable
         />
         <SearchSelect
-          label="Class"
+          label={t('sidebar.classes')}
           value={selectedClass}
           onChange={(value) => setSelectedClass(value === '' ? '' : String(value))}
           options={classOptions}
-          placeholder="Select class"
+          placeholder={t('sections.selectClass')}
           disabled={!selectedPeriod || classesLoading}
           isClearable
         />
@@ -1169,43 +1172,43 @@ const StudentReportsSection: React.FC = () => {
 
       {!canShowGrid ? (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
-          Select a school year, period, and class to view student reports.
+          {t('sections.selectSchoolYearToViewReports')}
         </div>
       ) : isDashboardLoading ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-          Loading dashboard data…
+          {t('sections.loadingDashboardData')}
         </div>
       ) : totalStudents === 0 ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-          No students are registered in this class.
+          {t('sections.noStudentsInClass')}
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <SearchSelect
-              label="Filter by student"
+              label={t('sections.filterByStudent')}
               value={selectedStudentFilter}
               onChange={(value) => setSelectedStudentFilter(value === '' ? '' : String(value))}
               options={studentFilterOptions}
-              placeholder={studentFilterOptions.length === 0 ? 'No students available' : 'All students'}
+              placeholder={studentFilterOptions.length === 0 ? t('sections.noStudentsAvailable') : t('sections.allStudents')}
               disabled={studentFilterOptions.length === 0}
               isClearable
             />
             <SearchSelect
-              label="Filter by course"
+              label={t('sections.filterByCourse')}
               value={selectedCourseFilter}
               onChange={(value) => setSelectedCourseFilter(value === '' ? '' : String(value))}
               options={courseFilterOptions}
-              placeholder={courseFilterOptions.length === 0 ? 'No courses available' : 'All courses'}
+              placeholder={courseFilterOptions.length === 0 ? t('sections.noCoursesAvailable') : t('sections.allCourses')}
               disabled={courseFilterOptions.length === 0}
               isClearable
             />
             <SearchSelect
-              label="Filter by teacher"
+              label={t('sections.filterByTeacher')}
               value={selectedTeacherFilter}
               onChange={(value) => setSelectedTeacherFilter(value === '' ? '' : String(value))}
               options={teacherFilterOptions}
-              placeholder={teacherFilterOptions.length === 0 ? 'No teachers available' : 'All teachers'}
+              placeholder={teacherFilterOptions.length === 0 ? t('sections.noTeachersAvailable') : t('sections.allTeachers')}
               disabled={teacherFilterOptions.length === 0}
               isClearable
             />
@@ -1273,7 +1276,7 @@ const StudentReportsSection: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDeleteReport}
         isLoading={deleteReportMut.isPending}
-        title="Delete Student Report"
+        title={t('sections.deleteStudentReport')}
         entityName={deleteEntityName}
       />
     </div>

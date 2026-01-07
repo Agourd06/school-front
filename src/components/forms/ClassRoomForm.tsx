@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { validateRequired, validatePositiveNumber } from '../modals/validations';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
@@ -38,6 +39,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [form, setForm] = useState<ClassRoomFormData>({
     code: '',
@@ -79,11 +81,11 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    const codeErr = validateRequired(form.code, 'Code');
+    const codeErr = validateRequired(form.code, t('forms.code'));
     if (codeErr) newErrors.code = codeErr;
-    const titleErr = validateRequired(form.title, 'Title');
+    const titleErr = validateRequired(form.title, t('common.name'));
     if (titleErr) newErrors.title = titleErr;
-    const capErr = validatePositiveNumber(form.capacity, 'Capacity');
+    const capErr = validatePositiveNumber(form.capacity, t('forms.capacity'));
     if (capErr) newErrors.capacity = capErr;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -105,7 +107,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input
-          label="Code"
+          label={t('forms.code')}
           name="code"
           value={form.code}
           onChange={handleChange}
@@ -114,7 +116,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
         />
 
         <Input
-          label="Title"
+          label={t('common.name')}
           name="title"
           value={form.title}
           onChange={handleChange}
@@ -123,7 +125,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
         />
 
         <Input
-          label="Capacity"
+          label={t('forms.capacity')}
           type="number"
           name="capacity"
           value={form.capacity}
@@ -136,12 +138,12 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Select
-            label="Type"
+            label={t('forms.type')}
             name="classroom_type_id"
             value={form.classroom_type_id === '' || form.classroom_type_id === null || form.classroom_type_id === 0 ? '' : String(form.classroom_type_id)}
             onChange={handleChange}
             options={[
-              { value: '', label: 'No type' },
+              { value: '', label: t('forms.noType') },
               ...sortedClassroomTypes.map((t) => ({
                 value: String(t.id),
                 label: t.title,
@@ -150,19 +152,19 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
             className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
           />
           <p className="mt-1 text-xs text-gray-500">
-            To create a type:{' '}
+            {t('forms.toCreateType')}{' '}
             <button
               type="button"
               onClick={() => navigate('/settings')}
               className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
             >
-              settings
+              {t('sidebar.settings')}
             </button>
-            {' > types > class room type'}
+            {' > '}{t('forms.types')}{' > '}{t('forms.classRoomType')}
           </p>
         </div>
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={form.status}
           onChange={handleChange}
@@ -176,10 +178,10 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

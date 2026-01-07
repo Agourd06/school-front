@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
 
@@ -25,18 +26,19 @@ const StudentLinkTypeStepForm: React.FC<StudentLinkTypeStepFormProps> = ({
   isSubmitting,
   hasLinkType,
 }) => {
+  const { t } = useTranslation();
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && <p className="text-sm text-danger">{error}</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Title"
+          label={t('common.name')}
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           error={error}
         />
         <Select
-          label="Status"
+          label={t('common.status')}
           value={status}
           onChange={(e) => onStatusChange(Number(e.target.value))}
           options={STATUS_OPTIONS_FORM.map((opt) => ({
@@ -52,7 +54,7 @@ const StudentLinkTypeStepForm: React.FC<StudentLinkTypeStepFormProps> = ({
           variant="secondary"
           onClick={onBack}
         >
-          Back
+          {t('common.back')}
         </Button>
         <Button
           type="submit"
@@ -60,7 +62,7 @@ const StudentLinkTypeStepForm: React.FC<StudentLinkTypeStepFormProps> = ({
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          {hasLinkType ? 'Update & Finish' : 'Save & Finish'}
+          {hasLinkType ? t('forms.updateAndFinish') : t('forms.saveAndFinish')}
         </Button>
       </div>
     </form>

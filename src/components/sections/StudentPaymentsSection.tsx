@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useStudentPayments,
   useCreateStudentPayment,
@@ -27,8 +28,8 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
@@ -40,14 +41,14 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-red-100 text-red-700',
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const formatCurrency = (value: string | number | null | undefined) => {
@@ -67,14 +68,15 @@ const formatDate = (value: string | null | undefined) => {
   return date.toLocaleDateString();
 };
 
-const getStudentName = (payment: StudentPayment) => {
+const getStudentName = (payment: StudentPayment, t: (key: string) => string) => {
   const first = payment.student?.first_name ?? '';
   const last = payment.student?.last_name ?? '';
   const full = `${first} ${last}`.trim();
-  return full || payment.student?.email || `Student #${payment.student_id}`;
+  return full || payment.student?.email || `${t('forms.studentNumber')}${payment.student_id}`;
 };
 
 const StudentPaymentsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
@@ -113,6 +115,8 @@ const StudentPaymentsSection: React.FC = () => {
     }),
     [filters, pagination]
   );
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
   const {
     data: paymentsResp,
@@ -140,27 +144,27 @@ const StudentPaymentsSection: React.FC = () => {
         label:
           `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() ||
           student.email ||
-          `Student #${student.id}`,
+          `${t('forms.studentNumber')}${student.id}`,
       })),
-    [studentsResp]
+    [studentsResp, t]
   );
 
   const schoolYearOptions = useMemo<SearchSelectOption[]>(
     () =>
       (schoolYearsResp?.data || []).map((year) => ({
         value: year.id,
-        label: year.title || `School Year #${year.id}`,
+        label: year.title || `${t('forms.schoolYearNumber')}${year.id}`,
       })),
-    [schoolYearsResp]
+    [schoolYearsResp, t]
   );
 
   const levelOptions = useMemo<SearchSelectOption[]>(
     () =>
       (levelsResp?.data || []).map((level) => ({
         value: level.id,
-        label: level.title || `Level #${level.id}`,
+        label: level.title || `${t('forms.levelNumber')}${level.id}`,
       })),
-    [levelsResp]
+    [levelsResp, t]
   );
 
   // const companyOptions removed - company is auto-set from authenticated user
@@ -169,10 +173,10 @@ const StudentPaymentsSection: React.FC = () => {
     () =>
       (levelPricingResp?.data || []).map((pricing) => ({
         value: pricing.id,
-        label: pricing.title || `Pricing #${pricing.id}`,
+        label: pricing.title || `${t('forms.pricingNumber')}${pricing.id}`,
         data: { level_id: pricing.level_id },
       })),
-    [levelPricingResp]
+    [levelPricingResp, t]
   );
 
   const filteredLevelPricingFilterOptions = useMemo(() => {
@@ -242,15 +246,15 @@ const StudentPaymentsSection: React.FC = () => {
     try {
       if (editingPayment) {
         await updatePaymentMut.mutateAsync({ id: editingPayment.id, data: payload });
-        setAlert({ type: 'success', message: 'Student payment updated successfully.' });
+        setAlert({ type: 'success', message: t('messages.studentPaymentUpdatedSuccessfully') });
       } else {
         await createPaymentMut.mutateAsync(payload);
-        setAlert({ type: 'success', message: 'Student payment created successfully.' });
+        setAlert({ type: 'success', message: t('messages.studentPaymentCreatedSuccessfully') });
       }
       closeModal();
       refetchPayments();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setModalError(message);
       setAlert({ type: 'error', message });
       throw err;
@@ -263,10 +267,10 @@ const StudentPaymentsSection: React.FC = () => {
     try {
       await deletePaymentMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'Student payment deleted successfully.' });
+        setAlert({ type: 'success', message: t('messages.studentPaymentDeletedSuccessfully') });
       refetchPayments();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -281,8 +285,8 @@ const StudentPaymentsSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Student Payments</h1>
-            <p className="text-sm text-gray-500">Track payments, balances, and payment statuses for students.</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentPayments')}</h1>
+            <p className="text-sm text-gray-500">{t('sections.manageStudentPayments')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -294,7 +298,7 @@ const StudentPaymentsSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Payment
+              {t('sections.addStudentPayment')}
             </Button>
           </div>
         </div>
@@ -317,49 +321,49 @@ const StudentPaymentsSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
             isClearable={false}
           />
           <SearchSelect
-            label="Student"
+            label={t('common.student')}
             value={filters.student}
             onChange={handleFilterChange('student')}
             options={studentOptions}
-            placeholder="All students"
+            placeholder={t('sections.allStudents')}
             isClearable
           />
           <SearchSelect
-            label="School Year"
+            label={t('sidebar.schoolYears')}
             value={filters.schoolYear}
             onChange={handleFilterChange('schoolYear')}
             options={schoolYearOptions}
-            placeholder="All school years"
+            placeholder={t('sections.allSchoolYears')}
             isClearable
           />
           <SearchSelect
-            label="Level"
+            label={t('sidebar.levels')}
             value={filters.level}
             onChange={(value) => {
               handleFilterChange('level')(value);
               setFilters((prev) => ({ ...prev, levelPricing: '' }));
             }}
             options={levelOptions}
-            placeholder="All levels"
+            placeholder={t('sections.allLevels')}
             isClearable
           />
           <SearchSelect
-            label="Level Pricing"
+            label={t('forms.levelPricing')}
             value={filters.levelPricing}
             onChange={handleFilterChange('levelPricing')}
             options={filteredLevelPricingFilterOptions}
-            placeholder="All pricing plans"
+            placeholder={t('forms.allPricingPlans')}
             isClearable
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700">Date</label>
+            <label className="block text-sm font-medium text-gray-700">{t('common.date')}</label>
             <input
               type="date"
               value={filters.date}
@@ -368,22 +372,22 @@ const StudentPaymentsSection: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Mode</label>
+            <label className="block text-sm font-medium text-gray-700">{t('forms.mode')}</label>
             <input
               type="text"
               value={filters.mode}
               onChange={handleTextFilterChange('mode')}
-              placeholder="e.g. Cash"
+              placeholder={t('forms.exampleCash')}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
           <div className="xl:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Search</label>
+            <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
             <input
               type="text"
               value={filters.search}
               onChange={handleTextFilterChange('search')}
-              placeholder="Reference, mode, or student name"
+              placeholder={t('forms.searchByReferenceModeOrStudentName')}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -396,33 +400,33 @@ const StudentPaymentsSection: React.FC = () => {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">ID</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Student
+                  {t('common.student')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  School Year
+                  {t('sidebar.schoolYears')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Level
+                  {t('sidebar.levels')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Amount
+                  {t('forms.amount')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Payment
+                  {t('forms.payment')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Balance
+                  {t('forms.balance')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Mode</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.date')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('forms.mode')}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Reference
+                  {t('forms.reference')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -430,13 +434,13 @@ const StudentPaymentsSection: React.FC = () => {
               {paymentsLoading ? (
                 <tr>
                   <td colSpan={12} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading student payments…
+                    {t('forms.loadingStudentPayments')}
                   </td>
                 </tr>
               ) : payments.length === 0 ? (
                 <tr>
                   <td colSpan={12} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No student payment records found.
+                    {t('forms.noStudentPaymentRecordsFound')}
                   </td>
                 </tr>
               ) : (
@@ -449,11 +453,11 @@ const StudentPaymentsSection: React.FC = () => {
                   return (
                     <tr key={payment.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-700">#{payment.id}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">{getStudentName(payment)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">{getStudentName(payment, t)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {payment.schoolYear?.title || `Year #${payment.school_year_id}`}
+                        {payment.schoolYear?.title || `${t('forms.yearNumber')}${payment.school_year_id}`}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">{payment.level?.title || `Level #${payment.level_id}`}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{payment.level?.title || `${t('forms.levelNumber')}${payment.level_id}`}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 font-semibold">{formatCurrency(payment.amount)}</td>
                       <td className="px-4 py-3 text-sm text-gray-900 font-semibold">{formatCurrency(payment.payment)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
@@ -468,7 +472,7 @@ const StudentPaymentsSection: React.FC = () => {
                             statusStyles[payment.status] ?? 'bg-gray-100 text-gray-600'
                           }`}
                         >
-                          {STATUS_VALUE_LABEL[payment.status] ?? `Status ${payment.status}`}
+                          {STATUS_VALUE_LABEL[payment.status] ?? `${t('common.status')} ${payment.status}`}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
@@ -516,8 +520,8 @@ const StudentPaymentsSection: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         isLoading={deletePaymentMut.isPending}
-        title="Delete Student Payment"
-        entityName={deleteTarget ? getStudentName(deleteTarget) : undefined}
+        title={t('forms.deleteStudentPayment')}
+        entityName={deleteTarget ? getStudentName(deleteTarget, t) : undefined}
       />
     </div>
   );

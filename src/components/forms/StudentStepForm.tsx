@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useId } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Input, Select, Button } from '../ui';
@@ -32,6 +33,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
   isSubmitting,
   isEditMode = false,
 }) => {
+  const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const pictureInputId = useId();
   const [countries, setCountries] = useState<Array<{ name: string }>>([]);
@@ -127,14 +129,14 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
             />
           ) : (
             <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-border bg-surface text-xs font-medium text-muted">
-              Add photo
+              {t('forms.addPhoto')}
             </div>
           )}
           <label
             htmlFor={pictureInputId}
             className="absolute bottom-0 right-0 inline-flex cursor-pointer items-center rounded-full bg-white/95 px-2 py-1 text-xs font-semibold text-primary shadow hover:bg-white transition-colors"
           >
-            Change
+            {t('forms.change')}
           </label>
           <input
             id={pictureInputId}
@@ -151,16 +153,16 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Email"
+          label={t('forms.email')}
           name="email"
           type="email"
           value={form.email}
           onChange={onChange}
           error={errors.email}
-          helperText="A user account with profile 'student' will be automatically created and a password invitation email will be sent to this address."
+          helperText={t('forms.studentAccountCreationNote')}
         />
         <PhoneInput
-          label="Phone"
+          label={t('forms.phone')}
           name="phone"
           value={form.phone}
           onChange={onChange}
@@ -170,14 +172,14 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="First name"
+          label={t('forms.firstName')}
           name="first_name"
           value={form.first_name}
           onChange={onChange}
           error={errors.first_name}
         />
         <Input
-          label="Last name"
+          label={t('forms.lastName')}
           name="last_name"
           value={form.last_name}
           onChange={onChange}
@@ -187,18 +189,18 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
-          label="Gender"
+          label={t('forms.gender')}
           name="gender"
           value={form.gender}
           onChange={onChange}
           options={[
-            { value: '', label: 'Select' },
-            { value: 'male', label: 'Male' },
-            { value: 'female', label: 'Female' },
+            { value: '', label: t('forms.select') },
+            { value: 'male', label: t('forms.male') },
+            { value: 'female', label: t('forms.female') },
           ]}
         />
         <Input
-          label="Birthday"
+          label={t('forms.birthday')}
           type="date"
           name="birthday"
           value={form.birthday}
@@ -209,13 +211,13 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Address"
+          label={t('forms.address')}
           name="address"
           value={form.address}
           onChange={onChange}
         />
         <Input
-          label="Nationality"
+          label={t('forms.nationality')}
           name="nationality"
           value={form.nationality}
           onChange={onChange}
@@ -224,25 +226,25 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SearchSelect
-          label="Country"
+          label={t('forms.country')}
           value={form.country || ''}
           onChange={handleCountryChange}
           options={countries.map((country) => ({
             value: country.name,
             label: country.name,
           }))}
-          placeholder={loadingCountries ? 'Loading countries...' : 'Search country...'}
+          placeholder={loadingCountries ? t('forms.loadingCountries') : t('forms.searchCountry')}
           isLoading={loadingCountries}
         />
         <SearchSelect
-          label="City"
+          label={t('forms.city')}
           value={form.city || ''}
           onChange={handleCityChange}
           options={cities.map((city) => ({
             value: city,
             label: city,
           }))}
-          placeholder={!form.country ? 'Select a country first' : loadingCities ? 'Loading cities...' : 'Search city...'}
+          placeholder={!form.country ? t('forms.selectCountryFirst') : loadingCities ? t('forms.loadingCities') : t('forms.searchCity')}
           disabled={!form.country || loadingCities}
           isLoading={loadingCities}
         />
@@ -251,7 +253,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
       {isEditMode && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
-            label="Status"
+            label={t('common.status')}
             name="status"
             value={form.status}
             onChange={onChange}
@@ -264,7 +266,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
       )}
       {!isEditMode && (
         <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-          <strong>Note:</strong> New students are created with <strong>Pending</strong> status. They must set their password to become active.
+          <strong>{t('forms.note')}:</strong> {t('forms.newStudentsPendingNote')}
         </div>
       )}
 
@@ -274,7 +276,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           variant="secondary"
           onClick={onCancel}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -282,7 +284,7 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          Update & Continue
+          {t('forms.updateAndContinue')}
         </Button>
       </div>
     </form>

@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
 import { useCompanies, useUpdateCompany } from '../../hooks/useCompanies';
@@ -9,6 +10,7 @@ import { EditButton, DeleteButton } from '../ui';
 import type { Company } from '../../api/company';
 
 const CompaniesSection: React.FC = () => {
+  const { t } = useTranslation();
   const [state, setState] = React.useState<ListState<Company>>({
     data: [],
     loading: false,
@@ -79,7 +81,7 @@ const CompaniesSection: React.FC = () => {
   return (
     <>
       <DataTableGeneric
-        title="Companies"
+        title={t('sidebar.companies')}
         state={state}
         onAdd={() => open(null)}
         onEdit={(item) => open(item)}
@@ -88,18 +90,18 @@ const CompaniesSection: React.FC = () => {
         onPageSizeChange={(size) => setState(prev => ({ ...prev, pagination: { ...prev.pagination, limit: size, page: 1 } }))}
         onSearch={handleSearch}
         onFilterChange={(status) => setState(prev => ({ ...prev, filters: { ...prev.filters, status }, pagination: { ...prev.pagination, page: 1 } }))}
-        addButtonText="Add Company"
-        searchPlaceholder="Search by company name..."
+        addButtonText={t('sections.addCompany')}
+        searchPlaceholder={t('sections.searchByCompanyName')}
         filterOptions={STATUS_OPTIONS}
         renderRow={(company: Company, onEdit, onDelete, index) => (
           <li key={company?.id ?? `company-${index}`} className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">{company.name}</p>
-                <p className="text-sm text-gray-500">Email: {company.email}</p>
-                <p className="text-sm text-gray-500">Phone: {company.phone || '—'}</p>
-                <p className="text-sm text-gray-500">Website: {company.website || '—'}</p>
-                <p className="text-sm text-gray-500">Status: <StatusBadge value={company.status} /></p>
+                <p className="text-sm text-gray-500">{t('common.email')}: {company.email}</p>
+                <p className="text-sm text-gray-500">{t('common.phone')}: {company.phone || '—'}</p>
+                <p className="text-sm text-gray-500">{t('sections.website')}: {company.website || '—'}</p>
+                <p className="text-sm text-gray-500">{t('common.status')}: <StatusBadge value={company.status} /></p>
               </div>
               <div className="flex space-x-2">
                 <EditButton onClick={() => onEdit(company)} />

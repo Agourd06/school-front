@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   LoginForm, 
@@ -15,21 +16,22 @@ interface AuthFormProps {
 
 const AUTH_CONFIG: Record<
   AuthMode, 
-  { title: string; buttonLabel: string; Component: React.FC<AuthFormProps> }
+  { titleKey: string; buttonLabelKey: string; Component: React.FC<AuthFormProps> }
 > = {
   login: {
-    title: 'Sign in to your account',
-    buttonLabel: 'Login',
+    titleKey: 'auth.signInToAccount',
+    buttonLabelKey: 'auth.login',
     Component: LoginForm,
   },
   'forgot-password': {
-    title: 'Reset your password',
-    buttonLabel: 'Reset',
+    titleKey: 'auth.resetYourPassword',
+    buttonLabelKey: 'auth.resetPassword',
     Component: ForgotPasswordForm,
   },
 };
 
 const AuthPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
@@ -57,19 +59,19 @@ const AuthPage: React.FC = () => {
               onClick={() => handleModeChange('forgot-password')}
               className="block w-full text-sm font-medium text-blue-600 hover:text-blue-500"
             >
-              Forgot your password?
+              {t('auth.forgotYourPassword')}
             </button>
           </div>
         );
       case 'forgot-password':
         return (
           <p className="text-center text-sm text-gray-600">
-            Remember your password?{' '}
+            {t('auth.rememberYourPassword')}{' '}
             <button
               onClick={() => handleModeChange('login')}
               className="font-medium text-blue-600 hover:text-blue-500"
             >
-              Sign in
+              {t('auth.signIn')}
             </button>
           </p>
         );

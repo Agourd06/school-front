@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useSchoolYears,
   useDeleteSchoolYear,
@@ -21,16 +22,16 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
-const lifecycleStatusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All lifecycle statuses' },
-  { value: 'planned', label: 'Planned' },
-  { value: 'ongoing', label: 'Ongoing' },
-  { value: 'completed', label: 'Completed' },
+const getLifecycleStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allLifecycleStatuses') },
+  { value: 'planned', label: t('sections.planned') },
+  { value: 'ongoing', label: t('sections.ongoing') },
+  { value: 'completed', label: t('sections.completed') },
 ];
 
 const lifecycleRowBgStyles: Record<string, string> = {
@@ -40,17 +41,18 @@ const lifecycleRowBgStyles: Record<string, string> = {
 };
 
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const SchoolYearsSection: React.FC = () => {
+  const { t } = useTranslation();
   const { setSelectedSchoolYearId, navigateToPeriods } = useSchoolYear();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
@@ -58,6 +60,9 @@ const SchoolYearsSection: React.FC = () => {
     lifecycle_status: 'all',
     search: '',
   });
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
+  const lifecycleStatusFilterOptions = useMemo(() => getLifecycleStatusFilterOptions(t), [t]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSchoolYear, setEditingSchoolYear] = useState<SchoolYear | null>(null);
@@ -145,10 +150,10 @@ const SchoolYearsSection: React.FC = () => {
     try {
       await deleteSchoolYearMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'School year deleted successfully.' });
+      setAlert({ type: 'success', message: t('messages.schoolYearDeletedSuccessfully') });
       refetchSchoolYears();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -160,7 +165,7 @@ const SchoolYearsSection: React.FC = () => {
   }, [alert]);
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return '—';
     try {
       return new Date(dateString).toLocaleDateString();
     } catch {
@@ -182,8 +187,8 @@ const SchoolYearsSection: React.FC = () => {
       
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">School Years</h1>
-            <p className="text-sm text-gray-500">Manage school years and their date ranges.</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.schoolYears')}</h1>
+            <p className="text-sm text-gray-500">{t('sections.manageSchoolYears')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -195,7 +200,7 @@ const SchoolYearsSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add School Year
+              {t('sections.addSchoolYear')}
             </Button>
           </div>
         </div>
@@ -222,8 +227,8 @@ const SchoolYearsSection: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <div>
-                <p className="font-semibold mb-1">Warning: No ongoing school year found</p>
-                <p>It is recommended to have one ongoing school year. Please set one school year to 'ongoing' status.</p>
+                <p className="font-semibold mb-1">{t('sections.warningNoOngoingSchoolYear')}</p>
+                <p>{t('sections.recommendOngoingSchoolYear')}</p>
               </div>
             </div>
           </div>
@@ -231,14 +236,14 @@ const SchoolYearsSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
             isClearable={false}
           />
           <SearchSelect
-            label="Lifecycle Status"
+            label={t('sections.lifecycleStatus')}
             value={filters.lifecycle_status}
             onChange={handleFilterChange('lifecycle_status')}
             options={lifecycleStatusFilterOptions}
@@ -246,11 +251,11 @@ const SchoolYearsSection: React.FC = () => {
           />
           <div className="md:col-span-2">
             <Input
-              label="Search"
+              label={t('common.search')}
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by school year title..."
+              placeholder={t('sections.searchBySchoolYearTitle')}
               className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -263,19 +268,19 @@ const SchoolYearsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  {t('sections.title')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Start Date
+                  {t('sections.startDate')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  End Date
+                  {t('sections.endDate')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Lifecycle Status
+                  {t('sections.lifecycleStatus')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -283,13 +288,13 @@ const SchoolYearsSection: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading school years…
+                    {t('sections.loadingSchoolYears')}
                   </td>
                 </tr>
               ) : schoolYears.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No school years found.
+                    {t('sections.noSchoolYearsFound')}
                   </td>
                 </tr>
               ) : (
@@ -307,7 +312,7 @@ const SchoolYearsSection: React.FC = () => {
                       <td className="px-4 py-3 text-sm text-gray-700">{formatDate(schoolYear.end_date)}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize text-gray-700">
-                          {schoolYear.lifecycle_status || 'planned'}
+                          {t(`sections.${schoolYear.lifecycle_status || 'planned'}`)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
@@ -322,10 +327,10 @@ const SchoolYearsSection: React.FC = () => {
                               }
                             }}
                             className="inline-flex items-center rounded-md border border-primary-light px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary-light"
-                            title="View periods"
+                            title={t('sections.viewPeriods')}
                           >
                           
-                            Periods
+                            {t('sections.periods')}
                           </button>
                           <EditButton
                             onClick={(e) => {
@@ -365,7 +370,7 @@ const SchoolYearsSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete School Year"
+        title={t('sections.deleteSchoolYear')}
         entityName={deleteTarget?.title}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

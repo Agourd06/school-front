@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import Navbar from './components/Navbar';
@@ -56,12 +57,13 @@ import TeacherLinksPage from './pages/teacher/TeacherLinksPage';
 import TeacherHomeworkPage from './pages/teacher/TeacherHomeworkPage';
 
 const App: React.FC = () => {
+  const { t } = useTranslation();
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
-        <div className="text-xl font-bold text-primary">Loading...</div>
+        <div className="text-xl font-bold text-primary">{t('common.loading')}</div>
       </div>
     );
   }

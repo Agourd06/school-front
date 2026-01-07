@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
 
@@ -7,6 +8,7 @@ interface ForgotPasswordFormProps {
 }
 
 const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = true }) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -22,7 +24,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = tru
       setSuccess(true);
       setEmail('');
     } catch {
-      setError('Failed to send reset email. Please try again.');
+      setError(t('auth.failedToSendResetEmail'));
     }
   };
 
@@ -30,17 +32,17 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = tru
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-6">
         <h2 className="text-3xl font-extrabold text-gray-900">
-          Forgot your password?
+          {t('auth.forgotYourPassword')}
         </h2>
         <p className="mt-2 text-sm text-gray-600">
-          Enter your email address and we'll send you a link to reset your password.
+          {t('auth.enterEmailForReset')}
         </p>
       </div>
       
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email address
+            {t('auth.emailAddress')}
           </label>
           <input
             id="email"
@@ -48,7 +50,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = tru
             type="email"
             required
             className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-            placeholder="Email address"
+            placeholder={t('auth.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -60,7 +62,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = tru
 
         {success && (
           <div className="text-green-600 text-sm text-center">
-            Password reset email sent! Check your inbox.
+            {t('auth.passwordResetEmailSent')}
           </div>
         )}
 
@@ -70,19 +72,19 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = tru
             disabled={isLoading}
             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
           >
-            {isLoading ? 'Sending...' : 'Send reset email'}
+            {isLoading ? t('auth.sending') : t('auth.sendResetEmail')}
           </button>
         </div>
 
         {showLinks && (
           <div className="text-center">
             <span className="text-sm text-gray-600">
-              Remember your password?{' '}
+              {t('auth.rememberYourPassword')}{' '}
               <Link
                 to="/auth?mode=login"
                 className="font-medium text-primary hover:text-primary/80"
               >
-                Sign in
+                {t('auth.signIn')}
               </Link>
             </span>
           </div>

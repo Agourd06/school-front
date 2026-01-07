@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PlanningStudentEntry, GetPlanningStudentParams } from '../../api/planningStudent';
 import type { ClassEntity } from '../../api/classes';
 import type { Course } from '../../api/course';
@@ -32,6 +33,7 @@ import { DEFAULT_PLANNING_STATUS, PLANNING_STATUS_OPTIONS_FORM } from '../../con
 import type { SearchSelectOption } from '../inputs/SearchSelect';
 
 const PlanningSection: React.FC = () => {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<PlanningViewMode>('week');
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getMonday(new Date()));
   const [currentMonthStart, setCurrentMonthStart] = useState(() => {
@@ -154,39 +156,68 @@ const PlanningSection: React.FC = () => {
 
   // Filter years based on selected class and lifecycle status (ongoing/planned only)
   const yearOptions = useMemo(() => {
+    const yearsToInclude: Array<{ id: number; status?: number; title: string; [key: string]: unknown }> = [];
+    
     if (!form.class_id) {
       // If no class selected, show all ongoing/planned years
-      return mapOptions(
-        (allSchoolYears?.data || []).filter(
-          (year: { lifecycle_status?: string }) => 
-            year.lifecycle_status === 'ongoing' || year.lifecycle_status === 'planned'
-        ) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>,
-        'title'
-      );
+      const filteredYears = (allSchoolYears?.data || []).filter(
+        (year: { lifecycle_status?: string }) => 
+          year.lifecycle_status === 'ongoing' || year.lifecycle_status === 'planned'
+      ) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>;
+      return mapOptions(filteredYears, 'title');
     }
     
     // Get the selected class to find its school year
     const selectedClass = classesMap.get(Number(form.class_id));
-    if (!selectedClass?.school_year_id) {
-      return [];
+    if (selectedClass?.school_year_id) {
+      // First try to find the year in allSchoolYears
+      let classYear: { id: number; title: string; status?: number; [key: string]: unknown } | undefined = 
+        (allSchoolYears?.data || []).find(
+          (year: { id: number }) => year.id === selectedClass.school_year_id
+        ) as { id: number; title: string; status?: number; [key: string]: unknown } | undefined;
+      
+      // If not found in allSchoolYears, try to use the class's schoolYear relation
+      if (!classYear && selectedClass.schoolYear) {
+        classYear = {
+          id: selectedClass.schoolYear.id,
+          title: selectedClass.schoolYear.title,
+          status: 1,
+        };
+      }
+      
+      if (classYear) {
+        yearsToInclude.push(classYear);
+      }
     }
     
-    // Filter to show only the class's school year if it's ongoing/planned
-    const classYear = (allSchoolYears?.data || []).find(
-      (year: { id: number; lifecycle_status?: string }) => 
-        year.id === selectedClass.school_year_id &&
-        (year.lifecycle_status === 'ongoing' || year.lifecycle_status === 'planned')
-    );
-    
-    if (!classYear) {
-      return [];
+    // Also ensure the currently selected year is included (if set in form but not already included)
+    if (form.school_year_id && typeof form.school_year_id !== 'string') {
+      const yearId = typeof form.school_year_id === 'number' ? form.school_year_id : Number(form.school_year_id);
+      const isAlreadyIncluded = yearsToInclude.some((y) => y.id === yearId);
+      if (!isAlreadyIncluded) {
+        // First try to find in allSchoolYears
+        let selectedYear: { id: number; title: string; status?: number; [key: string]: unknown } | undefined = 
+          (allSchoolYears?.data || []).find(
+            (year: { id: number }) => year.id === yearId
+          ) as { id: number; title: string; status?: number; [key: string]: unknown } | undefined;
+        
+        // If not found, try to find it from the selected class's schoolYear relation
+        if (!selectedYear && selectedClass?.school_year_id === yearId && selectedClass.schoolYear) {
+          selectedYear = {
+            id: selectedClass.schoolYear.id,
+            title: selectedClass.schoolYear.title,
+            status: 1,
+          };
+        }
+        
+        if (selectedYear) {
+          yearsToInclude.push(selectedYear);
+        }
+      }
     }
     
-    return mapOptions(
-      [classYear] as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>,
-      'title'
-    );
-  }, [form.class_id, allSchoolYears, classesMap]);
+    return mapOptions(yearsToInclude, 'title');
+  }, [form.class_id, form.school_year_id, allSchoolYears, classesMap]);
 
   const classOptions = useMemo(() => mapOptions((classes?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [classes]);
   // Class options - no filtering by year since class is selected first
@@ -288,10 +319,10 @@ const PlanningSection: React.FC = () => {
 
   const statusFilterOptions = useMemo(
     () => [
-      { value: 'all', label: 'All statuses' },
+      { value: 'all', label: t('sections.allStatuses') },
       ...PLANNING_STATUS_OPTIONS_FORM.map((option) => ({ value: String(option.value), label: option.label })),
     ],
-    []
+    [t]
   );
 
   const filtersOptions = useMemo(

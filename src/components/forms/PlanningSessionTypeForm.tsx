@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input, Select, Button } from '../ui';
 import type { PlanningSessionType, PlanningSessionTypeStatus } from '../../api/planningSessionType';
 
@@ -16,9 +17,9 @@ const DEFAULT_FORM: PlanningSessionTypeFormData = {
   status: 'active',
 };
 
-const statusOptions: Array<{ value: PlanningSessionTypeStatus; label: string }> = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
+const getStatusOptions = (t: (key: string) => string): Array<{ value: PlanningSessionTypeStatus; label: string }> => [
+  { value: 'active', label: t('forms.active') },
+  { value: 'inactive', label: t('forms.inactive') },
 ];
 
 interface PlanningSessionTypeFormProps {
@@ -36,6 +37,7 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<PlanningSessionTypeFormData>(DEFAULT_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -58,12 +60,12 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.title.trim()) e.title = 'Title is required';
-    if (!form.type.trim()) e.type = 'Type code is required';
-    if (form.type.trim().length > 50) e.type = 'Type code must be at most 50 characters';
-    if (form.title.trim().length > 150) e.title = 'Title must be at most 150 characters';
+    if (!form.title.trim()) e.title = t('forms.titleRequired');
+    if (!form.type.trim()) e.type = t('forms.typeCodeRequired');
+    if (form.type.trim().length > 50) e.type = t('forms.typeCodeMaxLength');
+    if (form.title.trim().length > 150) e.title = t('forms.titleMaxLength');
     if (form.coefficient !== null && form.coefficient !== undefined && Number.isNaN(Number(form.coefficient))) {
-      e.coefficient = 'Coefficient must be a number';
+      e.coefficient = t('forms.coefficientMustBeNumber');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -102,43 +104,45 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
     });
   };
 
+  const statusOptions = getStatusOptions(t);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
-        label="Title"
+        label={t('common.name')}
         type="text"
         value={form.title}
         onChange={handleInputChange('title')}
         maxLength={150}
-        placeholder="e.g. Laboratory Session"
+        placeholder={t('forms.laboratorySessionExample')}
         error={errors.title}
         className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
       />
 
       <Input
-        label="Type"
+        label={t('forms.type')}
         type="text"
         value={form.type}
         onChange={handleInputChange('type')}
         maxLength={50}
-        placeholder="e.g. LAB"
+        placeholder={t('forms.labExample')}
         error={errors.type}
         className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
-          label="Coefficient"
+          label={t('sections.coefficient')}
           type="number"
           step="0.01"
           value={form.coefficient ?? ''}
           onChange={handleInputChange('coefficient')}
-          placeholder="Optional"
+          placeholder={t('common.optional')}
           error={errors.coefficient}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Select
-          label="Status"
+          label={t('common.status')}
           value={form.status}
           onChange={(e) => handleChange('status')(e.target.value as PlanningSessionTypeStatus)}
           options={statusOptions.map((option) => ({
@@ -162,7 +166,7 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
           onClick={onCancel}
           disabled={isSubmitting}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -170,7 +174,7 @@ const PlanningSessionTypeForm: React.FC<PlanningSessionTypeFormProps> = ({
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          {initialData ? 'Update Type' : 'Create Type'}
+          {initialData ? t('forms.updateType') : t('forms.createType')}
         </Button>
       </div>
     </form>

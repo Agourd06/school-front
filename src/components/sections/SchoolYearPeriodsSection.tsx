@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useSchoolYearPeriods,
  
@@ -23,16 +24,16 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
-const lifecycleStatusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All lifecycle statuses' },
-  { value: 'planned', label: 'Planned' },
-  { value: 'ongoing', label: 'Ongoing' },
-  { value: 'completed', label: 'Completed' },
+const getLifecycleStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allLifecycleStatuses') },
+  { value: 'planned', label: t('sections.planned') },
+  { value: 'ongoing', label: t('sections.ongoing') },
+  { value: 'completed', label: t('sections.completed') },
 ];
 
 const lifecycleRowBgStyles: Record<string, string> = {
@@ -41,17 +42,18 @@ const lifecycleRowBgStyles: Record<string, string> = {
   completed: 'bg-gray-200 hover:bg-gray-300',
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const SchoolYearPeriodsSection: React.FC = () => {
+  const { t } = useTranslation();
   const { selectedSchoolYearId } = useSchoolYear();
   const { data: selectedSchoolYear } = useSchoolYearById(selectedSchoolYearId || 0);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
@@ -60,6 +62,9 @@ const SchoolYearPeriodsSection: React.FC = () => {
     lifecycle_status: 'all',
     search: '',
   });
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
+  const lifecycleStatusFilterOptions = useMemo(() => getLifecycleStatusFilterOptions(t), [t]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPeriod, setEditingPeriod] = useState<SchoolYearPeriod | null>(null);
@@ -152,10 +157,10 @@ const SchoolYearPeriodsSection: React.FC = () => {
     try {
       await deletePeriodMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'School year period deleted successfully.' });
+      setAlert({ type: 'success', message: t('messages.schoolYearPeriodDeletedSuccessfully') });
       refetchPeriods();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };

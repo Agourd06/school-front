@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useStudentAttestations,
   useDeleteStudentAttestation,
@@ -25,8 +26,8 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.filter((opt) => opt.value !== -2).map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
@@ -38,17 +39,18 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-danger-badge',
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const StudentAttestationsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
@@ -56,6 +58,8 @@ const StudentAttestationsSection: React.FC = () => {
     attestation: '',
     search: '',
   });
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingStudentAttestation, setEditingStudentAttestation] = useState<StudentAttestation | null>(null);
@@ -102,18 +106,18 @@ const StudentAttestationsSection: React.FC = () => {
         label:
           `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() ||
           student.email ||
-          `Student #${student.id}`,
+          `${t('forms.studentNumber')}${student.id}`,
       })),
-    [studentsResp]
+    [studentsResp, t]
   );
 
   const attestationOptions = useMemo<SearchSelectOption[]>(
     () =>
       (attestationsResp?.data || []).map((attestation: Attestation) => ({
         value: attestation.id,
-        label: attestation.title || `Attestation #${attestation.id}`,
+        label: attestation.title || `${t('forms.attestationNumber')}${attestation.id}`,
       })),
-    [attestationsResp]
+    [attestationsResp, t]
   );
 
   const openCreateModal = () => {
@@ -169,10 +173,10 @@ const StudentAttestationsSection: React.FC = () => {
     try {
       await deleteStudentAttestationMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'Student attestation deleted successfully.' });
+      setAlert({ type: 'success', message: t('messages.studentAttestationDeletedSuccessfully') });
       refetchStudentAttestations();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -195,21 +199,21 @@ const StudentAttestationsSection: React.FC = () => {
   const getStudentLabel = (sa: StudentAttestation) => {
     if (sa.student) {
       const name = `${sa.student.first_name ?? ''} ${sa.student.last_name ?? ''}`.trim();
-      return name || sa.student.email || `Student #${sa.Idstudent}`;
+      return name || sa.student.email || `${t('forms.studentNumber')}${sa.Idstudent}`;
     }
-    return `Student #${sa.Idstudent}`;
+    return `${t('forms.studentNumber')}${sa.Idstudent}`;
   };
 
   const getAttestationLabel = (sa: StudentAttestation) => {
-    return sa.attestation?.title || `Attestation #${sa.Idattestation}`;
+    return sa.attestation?.title || `${t('forms.attestationNumber')}${sa.Idattestation}`;
   };
 
   return (
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Student Attestations</h1>
-            <p className="text-sm text-gray-500">Manage student attestations and their associated details.</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentAttestations')}</h1>
+            <p className="text-sm text-gray-500">{t('sections.manageStudentAttestations')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -221,7 +225,7 @@ const StudentAttestationsSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Student Attestation
+              {t('sections.addStudentAttestation')}
             </Button>
           </div>
         </div>
@@ -245,35 +249,35 @@ const StudentAttestationsSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-body">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
             isClearable={false}
           />
           <SearchSelect
-            label="Student"
+            label={t('sidebar.students')}
             value={filters.student}
             onChange={handleFilterChange('student')}
             options={studentOptions}
-            placeholder="All students"
+            placeholder={t('sections.allStudents')}
             isClearable
           />
           <SearchSelect
-            label="Attestation"
+            label={t('sidebar.attestations')}
             value={filters.attestation}
             onChange={handleFilterChange('attestation')}
             options={attestationOptions}
-            placeholder="All attestations"
+            placeholder={t('sections.allAttestations')}
             isClearable
           />
           <div>
-            <label className="block text-sm font-medium text-heading">Search</label>
+            <label className="block text-sm font-medium text-heading">{t('common.search')}</label>
             <input
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by student or attestation..."
+              placeholder={t('sections.searchByStudentOrAttestation')}
               className="mt-1 block w-full rounded-md border border-border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary bg-card"
             />
           </div>
@@ -285,22 +289,22 @@ const StudentAttestationsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Student
+                  {t('common.student')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Attestation
+                  {t('sidebar.attestations')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Date Asked
+                  {t('sections.dateAsked')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Date Delivery
+                  {t('sections.dateDelivery')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -308,13 +312,13 @@ const StudentAttestationsSection: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading student attestations…
+                    {t('forms.loadingStudentAttestations')}
                   </td>
                 </tr>
               ) : studentAttestations.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No student attestations found.
+                    {t('forms.noStudentAttestationsFound')}
                   </td>
                 </tr>
               ) : (
@@ -342,7 +346,7 @@ const StudentAttestationsSection: React.FC = () => {
                             onClick={() => openDetailsModal(sa)}
                             className="inline-flex items-center rounded-md border border-primary/30 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
                           >
-                            Attestation
+                            {t('common.attestation')}
                           </button>
                           <EditButton onClick={() => openEditModal(sa)} />
                           <DeleteButton onClick={() => requestDelete(sa)} />
@@ -381,7 +385,7 @@ const StudentAttestationsSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete Student Attestation"
+        title={t('forms.deleteStudentAttestation')}
         entityName={deleteTarget ? `${getStudentLabel(deleteTarget)} - ${getAttestationLabel(deleteTarget)}` : undefined}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
@@ -392,40 +396,40 @@ const StudentAttestationsSection: React.FC = () => {
         <BaseModal
           isOpen
           onClose={closeDetailsModal}
-          title={`Attestation Details: ${getAttestationLabel(detailsAttestation)}`}
+          title={`${t('forms.attestationDetails')}: ${getAttestationLabel(detailsAttestation)}`}
           className="sm:max-w-3xl"
         >
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">Student</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('common.student')}</h3>
               <p className="text-gray-700">{getStudentLabel(detailsAttestation)}</p>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">Attestation</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('common.attestation')}</h3>
               <p className="text-gray-700">{getAttestationLabel(detailsAttestation)}</p>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">Request Notes</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('forms.requestNotes')}</h3>
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
                 <div
                   dangerouslySetInnerHTML={{
                     __html:
                       detailsAttestation.description?.trim()
                         ? detailsAttestation.description
-                        : '<p class="text-gray-500 italic">No notes provided for this student attestation.</p>',
+                        : `<p class="text-gray-500 italic">${t('forms.noNotesProvided')}</p>`,
                   }}
                 />
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">Attestation Template</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('forms.attestationTemplate')}</h3>
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
                 <div
                   dangerouslySetInnerHTML={{
                     __html:
                       detailsAttestation.attestation?.description?.trim()
                         ? detailsAttestation.attestation.description
-                        : '<p class="text-gray-500 italic">No template description available.</p>',
+                        : `<p class="text-gray-500 italic">${t('forms.noTemplateDescriptionAvailable')}</p>`,
                   }}
                 />
               </div>

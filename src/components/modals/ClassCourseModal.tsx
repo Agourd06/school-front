@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import type { ClassCourse } from '../../api/classCourse';
 import { ClassCourseForm, type ClassCourseFormData } from '../forms';
@@ -31,12 +32,13 @@ const ClassCourseModal: React.FC<ClassCourseModalProps> = ({
   courseOptions,
   teacherOptions,
 }) => {
+  const { t } = useTranslation();
   const handleSubmit = async (values: ClassCourseFormData) => {
     await onSubmit(values);
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={initialData ? 'Edit Class Course' : 'Add Class Course'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={initialData ? t('forms.editClassCourse') : t('forms.addClassCourse')}>
       <ClassCourseForm
         initialData={initialData}
         onSubmit={handleSubmit}

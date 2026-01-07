@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS, STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
@@ -63,6 +64,7 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
   levelPricingOptions,
   modeOptions = ['Cash', 'Card', 'Transfer', 'Check'],
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<StudentPaymentFormData>({
     student_id: '',
     school_year_id: '',
@@ -112,41 +114,41 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
   const validate = () => {
     const e: Record<string, string> = {};
     if (form.student_id === '' || form.student_id === null) {
-      e.student_id = 'Student is required';
+      e.student_id = t('forms.studentRequired');
     }
     if (form.school_year_id === '' || form.school_year_id === null) {
-      e.school_year_id = 'School year is required';
+      e.school_year_id = t('forms.schoolYearRequired');
     }
     if (form.level_id === '' || form.level_id === null) {
-      e.level_id = 'Level is required';
+      e.level_id = t('forms.levelRequired');
     }
     const amountValue = form.amount.trim() === '' ? NaN : Number(form.amount);
     if (Number.isNaN(amountValue)) {
-      e.amount = 'Amount must be a number';
+      e.amount = t('forms.amountMustBeNumber');
     } else if (amountValue <= 0) {
-      e.amount = 'Amount must be greater than 0';
+      e.amount = t('forms.amountMustBeGreaterThanZero');
     }
     const paymentValue = form.payment.trim() === '' ? NaN : Number(form.payment);
     if (Number.isNaN(paymentValue)) {
-      e.payment = 'Payment must be a number';
+      e.payment = t('forms.paymentMustBeNumber');
     } else if (paymentValue < 0) {
-      e.payment = 'Payment must be 0 or greater';
+      e.payment = t('forms.paymentMustBeZeroOrGreater');
     } else if (!Number.isNaN(amountValue) && paymentValue > amountValue) {
-      e.payment = 'Payment cannot exceed the total amount';
+      e.payment = t('forms.paymentCannotExceedAmount');
     }
     if (!form.date) {
-      e.date = 'Date is required';
+      e.date = t('forms.dateRequired');
     }
     if (!form.mode.trim()) {
-      e.mode = 'Mode is required';
+      e.mode = t('forms.modeRequired');
     } else if (form.mode.length > 50) {
-      e.mode = 'Mode must be at most 50 characters';
+      e.mode = t('forms.modeMaxLength');
     }
     if (form.reference.trim().length > 100) {
-      e.reference = 'Reference must be at most 100 characters';
+      e.reference = t('forms.referenceMaxLength');
     }
     if (!allowedStatusValues.has(form.status)) {
-      e.status = 'Invalid status selected';
+      e.status = t('forms.invalidStatus');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -231,7 +233,7 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-heading mb-1">Student *</label>
+          <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.students')} *</label>
           {initialData ? (
             // Show read-only student info when editing
             <div className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-body">
@@ -243,7 +245,7 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
                   ) : null}
                 </div>
               ) : (
-                <p className="text-muted italic">Student information not available</p>
+                <p className="text-muted italic">{t('forms.studentInfoNotAvailable')}</p>
               )}
             </div>
           ) : (
@@ -252,24 +254,24 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
               value={studentValue}
               onChange={handleSelectChange('student_id')}
               options={studentOptions}
-              placeholder="Select student"
+              placeholder={t('forms.selectStudent')}
               error={errors.student_id}
             />
           )}
         </div>
         <SearchSelect
-          label="School Year"
+          label={t('sidebar.schoolYears')}
           value={schoolYearValue}
           onChange={handleSelectChange('school_year_id')}
           options={schoolYearOptions}
-          placeholder="Select school year"
+          placeholder={t('forms.selectSchoolYear')}
           error={errors.school_year_id}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <SearchSelect
-          label="Level"
+          label={t('sidebar.levels')}
           value={levelValue}
           onChange={(value) => {
             handleSelectChange('level_id')(value);
@@ -279,44 +281,44 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
             }));
           }}
           options={levelOptions}
-          placeholder="Select level"
+          placeholder={t('forms.selectLevel')}
           error={errors.level_id}
         />
         <SearchSelect
-          label="Level Pricing (optional)"
+          label={t('forms.levelPricingOptional')}
           value={levelPricingValue}
           onChange={handleSelectChange('level_pricing_id')}
           options={filteredLevelPricingOptions}
-          placeholder="All pricing plans"
+          placeholder={t('forms.allPricingPlans')}
           isClearable
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <Input
-          label="Amount"
+          label={t('forms.amount')}
           type="number"
           min={0}
           step={0.01}
           value={form.amount}
           onChange={handleAmountChange}
-          placeholder="Total amount"
+          placeholder={t('forms.totalAmount')}
           error={errors.amount}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
-          label="Payment"
+          label={t('forms.payment')}
           type="number"
           min={0}
           step={0.01}
           value={form.payment}
           onChange={handlePaymentChange}
-          placeholder="Amount paid"
+          placeholder={t('forms.amountPaid')}
           error={errors.payment}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
-          label="Date"
+          label={t('common.date')}
           type="date"
           value={form.date}
           onChange={handleInputChange('date')}
@@ -327,31 +329,31 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <Select
-          label="Mode"
+          label={t('forms.mode')}
           value={form.mode}
           onChange={(e) => {
             setForm((prev) => ({ ...prev, mode: e.target.value }));
             if (errors.mode) setErrors((prev) => ({ ...prev, mode: '' }));
           }}
           options={[
-            { value: '', label: 'Select payment mode' },
+            { value: '', label: t('forms.selectPaymentMode') },
             ...modeOptions.map((option) => ({ value: option, label: option })),
           ]}
           error={errors.mode}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
-          label="Reference (optional)"
+          label={t('forms.referenceOptional')}
           type="text"
           value={form.reference}
           onChange={handleInputChange('reference')}
           maxLength={100}
-          placeholder="Transaction reference"
+          placeholder={t('forms.transactionReference')}
           error={errors.reference}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Select
-          label="Status"
+          label={t('common.status')}
           value={form.status}
           onChange={handleStatusChange}
           options={statusOptionsFormSelect.map((option) => ({
@@ -371,10 +373,10 @@ const StudentPaymentForm: React.FC<StudentPaymentFormProps> = ({
 
       <div className="flex justify-end space-x-3">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update Payment' : 'Create Payment'}
+          {initialData ? t('forms.updatePayment') : t('forms.createPayment')}
         </Button>
       </div>
     </form>

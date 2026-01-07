@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { StudentPresence } from '../../api/studentPresence';
 import type { ClassStudentAssignment } from '../../api/classStudent';
 import type { StudentPresenceStatus } from '../../api/studentPresence';
@@ -15,16 +16,17 @@ import type { PlanningStudentEntry } from '../../api/planningStudent';
 
 const formatStudentName = (
   presence: StudentPresence | undefined,
-  classStudent?: ClassStudentAssignment
+  classStudent: ClassStudentAssignment | undefined,
+  t: (key: string) => string
 ) => {
   const student = presence?.student ?? classStudent?.student;
   const first = student?.first_name ?? '';
   const last = student?.last_name ?? '';
   const full = `${first} ${last}`.trim();
-  return full || student?.email || `Student #${student?.id ?? presence?.student_id ?? classStudent?.student_id ?? '—'}`;
+  return full || student?.email || `${t('forms.studentNumber')}${student?.id ?? presence?.student_id ?? classStudent?.student_id ?? '—'}`;
 };
 
-const formatPlanningDetail = (planning: PlanningStudentEntry | undefined) => {
+const formatPlanningDetail = (planning: PlanningStudentEntry | undefined, t: (key: string) => string) => {
   if (!planning) return null;
   const date =
     planning.date_day && !Number.isNaN(new Date(planning.date_day).getTime())
@@ -35,10 +37,10 @@ const formatPlanningDetail = (planning: PlanningStudentEntry | undefined) => {
   const teacher = planning.teacher
     ? `${planning.teacher.first_name ?? ''} ${planning.teacher.last_name ?? ''}`.trim() ||
       planning.teacher.email ||
-      `Teacher #${planning.teacher.id}`
+      `${t('planning.teacherNumber')}${planning.teacher.id}`
     : '—';
-  const classroom = planning.classRoom?.title || `Room #${planning.class_room_id ?? '—'}`;
-  const classTitle = planning.class?.title || `Class #${planning.class_id ?? '—'}`;
+  const classroom = planning.classRoom?.title || `${t('planning.roomNumber')}${planning.class_room_id ?? '—'}`;
+  const classTitle = planning.class?.title || `${t('planning.classNumber')}${planning.class_id ?? '—'}`;
   return {
     date,
     time,
@@ -49,12 +51,12 @@ const formatPlanningDetail = (planning: PlanningStudentEntry | undefined) => {
   };
 };
 
-const presenceLabel: Record<string, string> = {
-  present: 'Present',
-  absent: 'Absent',
-  late: 'Late',
-  excused: 'Excused',
-};
+const getPresenceLabel = (t: (key: string) => string): Record<string, string> => ({
+  present: t('sections.present'),
+  absent: t('sections.absent'),
+  late: t('sections.late'),
+  excused: t('sections.excused'),
+});
 
 const presenceStyles: Record<string, string> = {
   present: 'border-green-200 bg-green-50 text-green-800',
@@ -63,21 +65,24 @@ const presenceStyles: Record<string, string> = {
   excused: 'border-purple-200 bg-purple-50 text-purple-800',
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const StudentPresenceSection: React.FC = () => {
+  const { t } = useTranslation();
   const [selectedPlanningId, setSelectedPlanningId] = useState<string>('');
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [planningDate, setPlanningDate] = useState('');
   const [activeTab, setActiveTab] = useState<'presence' | 'notes'>('presence');
+  
+  const presenceLabel = useMemo(() => getPresenceLabel(t), [t]);
   const [noteEditor, setNoteEditor] = useState<{
     presence: StudentPresence | null;
     note: string;
@@ -115,11 +120,11 @@ const StudentPresenceSection: React.FC = () => {
       const date = planning.date_day ? new Date(planning.date_day).toLocaleDateString() : '';
       const timeRange =
         planning.hour_start && planning.hour_end ? `${planning.hour_start} – ${planning.hour_end}` : '';
-      const classLabel = planning.class?.title || (planning.class_id ? `Class #${planning.class_id}` : null);
+      const classLabel = planning.class?.title || (planning.class_id ? `${t('planning.classNumber')}${planning.class_id}` : null);
       const labelParts = [classLabel, planning.period, date, timeRange].filter(Boolean);
       return {
         value: planning.id,
-        label: labelParts.length ? labelParts.join(' • ') : `Planning #${planning.id}`,
+        label: labelParts.length ? labelParts.join(' • ') : `${t('planning.planningNumber')}${planning.id}`,
       };
     });
   }, [filteredPlannings]);
@@ -186,11 +191,11 @@ const StudentPresenceSection: React.FC = () => {
 
   const compareByName = useCallback(
     (a: StudentPresence, b: StudentPresence) => {
-      const nameA = formatStudentName(a, classStudentMap.get(a.student_id ?? 0)).toLowerCase();
-      const nameB = formatStudentName(b, classStudentMap.get(b.student_id ?? 0)).toLowerCase();
+      const nameA = formatStudentName(a, classStudentMap.get(a.student_id ?? 0), t).toLowerCase();
+      const nameB = formatStudentName(b, classStudentMap.get(b.student_id ?? 0), t).toLowerCase();
       return nameA.localeCompare(nameB);
     },
-    [classStudentMap]
+    [classStudentMap, t]
   );
 
   const absentPresences = useMemo(() => {
@@ -348,10 +353,10 @@ const StudentPresenceSection: React.FC = () => {
         id: presence.id,
         data: { presence: nextPresence },
       });
-      setAlert({ type: 'success', message: `Marked ${formatStudentName(presence)} as ${presenceLabel[nextPresence]}` });
+      setAlert({ type: 'success', message: t('forms.markedAs', { name: formatStudentName(presence, undefined, t), status: presenceLabel[nextPresence] }) });
       refetchPresences();
     } catch (err: unknown) {
-      setAlert({ type: 'error', message: extractErrorMessage(err) });
+      setAlert({ type: 'error', message: extractErrorMessage(err, t) });
     }
   };
 
@@ -377,15 +382,15 @@ const StudentPresenceSection: React.FC = () => {
           remarks: noteEditor.remarks || undefined,
         },
       });
-      setAlert({ type: 'success', message: 'Presence updated successfully.' });
+      setAlert({ type: 'success', message: t('forms.presenceUpdatedSuccessfully') });
       closeNoteEditor();
       refetchPresences();
     } catch (err: unknown) {
-      setAlert({ type: 'error', message: extractErrorMessage(err) });
+      setAlert({ type: 'error', message: extractErrorMessage(err, t) });
     }
   };
 
-  const planningDetail = formatPlanningDetail(selectedPlanning ?? undefined);
+  const planningDetail = formatPlanningDetail(selectedPlanning ?? undefined, t);
   const courseCoefficient = useMemo(() => {
     if (!selectedPlanning?.course) return '—';
     const course = selectedPlanning.course as { coefficient?: number | string };
@@ -411,7 +416,7 @@ const StudentPresenceSection: React.FC = () => {
         className={`rounded-2xl border p-4 shadow-sm flex items-start justify-between gap-3 ${containerStyle}`}
       >
         <div className="space-y-1">
-          <p className={`font-semibold leading-tight ${titleColor}`}>{formatStudentName(presence, studentInfo)}</p>
+          <p className={`font-semibold leading-tight ${titleColor}`}>{formatStudentName(presence, studentInfo, t)}</p>
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${chipStyle}`}>
             {presenceLabel[presence.presence] ?? presence.presence}
           </span>
@@ -432,10 +437,10 @@ const StudentPresenceSection: React.FC = () => {
                   })
                 }
               >
-                View remarks
+                {t('forms.viewRemarks')}
               </button>
             ) : (
-              'No remarks'
+              t('forms.noRemarks')
             )}
           </div>
         </div>
@@ -449,7 +454,7 @@ const StudentPresenceSection: React.FC = () => {
                   ? 'border-orange-300 text-orange-600 hover:text-orange-700 hover:border-orange-400'
                   : 'border-green-300 text-green-600 hover:text-green-700 hover:border-green-400'
               }`}
-              aria-label="Edit note and remarks"
+              aria-label={t('forms.editNoteAndRemarks')}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z" />
@@ -462,7 +467,7 @@ const StudentPresenceSection: React.FC = () => {
               onClick={() => handleMarkPresence(presence, 'present')}
               className="rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white hover:bg-orange-600"
             >
-              Mark present
+              {t('forms.markPresent')}
             </button>
           ) : (
             <button
@@ -470,7 +475,7 @@ const StudentPresenceSection: React.FC = () => {
               onClick={() => handleMarkPresence(presence, 'absent')}
               className="rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-50"
             >
-              Mark absent
+              {t('forms.markAbsent')}
             </button>
           )}
         </div>
@@ -482,9 +487,9 @@ const StudentPresenceSection: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Student Presence</h1>
+          <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentPresence')}</h1>
           <p className="text-sm text-muted">
-            Select a planning session to mark students as present or absent and manage remarks.
+            {t('forms.selectPlanningSessionToLoad')}
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 p-1">
@@ -499,7 +504,7 @@ const StudentPresenceSection: React.FC = () => {
                   : 'text-muted hover:text-body'
               }`}
             >
-              {tab === 'presence' ? 'Presence' : 'Notes'}
+              {tab === 'presence' ? t('sections.present') : t('common.notes')}
             </button>
           ))}
         </div>
@@ -507,7 +512,7 @@ const StudentPresenceSection: React.FC = () => {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-medium text-body">Planning date</label>
+          <label className="mb-1 block text-sm font-medium text-body">{t('forms.planningDate')}</label>
           <input
             type="date"
             value={planningDate}
@@ -521,16 +526,16 @@ const StudentPresenceSection: React.FC = () => {
           />
         </div>
         <SearchSelect
-          label="Planning session"
+          label={t('forms.planningSession')}
           value={selectedPlanningId}
           onChange={handlePlanningSelect}
           options={planningOptions}
           placeholder={
             planningDate
               ? planningOptions.length
-                ? 'Select planning'
-                : 'No planning on this date'
-              : 'Select a date first'
+                ? t('forms.selectPlanning')
+                : t('forms.noPlanningOnThisDate')
+              : t('forms.selectDateFirst')
           }
           isLoading={planningLoading}
           disabled={!planningDate || planningOptions.length === 0}
@@ -538,30 +543,30 @@ const StudentPresenceSection: React.FC = () => {
 
         {planningDetail && (
           <div className="rounded-2xl border border-primary-light bg-primary-light p-4 text-sm text-heading shadow-inner">
-            <p className="text-xs uppercase tracking-wide text-primary mb-2">Planning details</p>
+            <p className="text-xs uppercase tracking-wide text-primary mb-2">{t('forms.planningDetails')}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <div>
-                <p className="text-xs text-primary">Class</p>
+                <p className="text-xs text-primary">{t('sidebar.classes')}</p>
                 <p className="font-semibold">{planningDetail.classTitle}</p>
               </div>
               <div>
-                <p className="text-xs text-primary">Period</p>
+                <p className="text-xs text-primary">{t('sections.period')}</p>
                 <p className="font-semibold">{planningDetail.period}</p>
               </div>
               <div>
-                <p className="text-xs text-primary">Date</p>
+                <p className="text-xs text-primary">{t('common.date')}</p>
                 <p className="font-semibold">{planningDetail.date}</p>
               </div>
               <div>
-                <p className="text-xs text-primary">Time</p>
+                <p className="text-xs text-primary">{t('common.time')}</p>
                 <p className="font-semibold">{planningDetail.time}</p>
               </div>
               <div>
-                <p className="text-xs text-primary">Teacher</p>
+                <p className="text-xs text-primary">{t('sections.teacher')}</p>
                 <p className="font-semibold">{planningDetail.teacher}</p>
               </div>
               <div>
-                <p className="text-xs text-primary">Classroom</p>
+                <p className="text-xs text-primary">{t('forms.classroom')}</p>
                 <p className="font-semibold">{planningDetail.classroom}</p>
               </div>
             </div>
@@ -597,25 +602,25 @@ const StudentPresenceSection: React.FC = () => {
           <div className="rounded-2xl border border-dashed border-border bg-card text-body bg-gray-50 p-6 text-center text-sm text-muted">
             {planningDate
               ? planningOptions.length
-                ? 'Select a planning session to load class roster and manage student presence.'
-                : 'No planning sessions found for the selected date.'
-              : 'Select a date to view available planning sessions.'}
+                ? t('forms.selectPlanningSessionToLoad')
+                : t('forms.noPlanningSessionsFound')
+              : t('forms.selectDateToView')}
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Class roster · Absent / Not yet marked</p>
+                  <p className="text-sm font-semibold text-gray-900">{t('forms.classRoster')} · {t('forms.absentNotYetMarked')}</p>
                   <p className="text-xs text-muted">
                     {absentPresences.length} student{absentPresences.length === 1 ? '' : 's'}
                   </p>
                 </div>
               </div>
               {presenceLoading || classStudentsLoading ? (
-                <div className="py-12 text-center text-sm text-muted">Loading students…</div>
+                <div className="py-12 text-center text-sm text-muted">{t('sections.loadingStudents')}</div>
               ) : absentPresences.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted">Everyone is marked present.</div>
+                <div className="py-12 text-center text-sm text-muted">{t('forms.everyoneIsMarkedPresent')}</div>
               ) : (
                 <>
                   <ul className="space-y-3">
@@ -624,7 +629,7 @@ const StudentPresenceSection: React.FC = () => {
                   {absentPresences.length > PAGE_SIZE && (
                     <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
                       <span>
-                        Showing {absentPagination.startIndex}–{absentPagination.endIndex} of {absentPresences.length}
+                        {t('sections.showing')} {absentPagination.startIndex}–{absentPagination.endIndex} {t('sections.of')} {absentPresences.length}
                       </span>
                       <div className="flex items-center gap-2">
                         <button
@@ -633,7 +638,7 @@ const StudentPresenceSection: React.FC = () => {
                           disabled={absentPagination.page === 1}
                           className="rounded-full border px-2 py-1 disabled:opacity-40"
                         >
-                          Prev
+                          {t('common.previous')}
                         </button>
                         <span>
                           {absentPagination.page}/{absentPagination.totalPages}
@@ -644,7 +649,7 @@ const StudentPresenceSection: React.FC = () => {
                           disabled={absentPagination.page === absentPagination.totalPages}
                           className="rounded-full border px-2 py-1 disabled:opacity-40"
                         >
-                          Next
+                          {t('common.next')}
                         </button>
                       </div>
                     </div>
@@ -656,7 +661,7 @@ const StudentPresenceSection: React.FC = () => {
             <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Present students</p>
+                  <p className="text-sm font-semibold text-gray-900">{t('forms.presentStudents')}</p>
                   <p className="text-xs text-muted">
                     {presentPresences.length} student{presentPresences.length === 1 ? '' : 's'}
                   </p>
@@ -665,7 +670,7 @@ const StudentPresenceSection: React.FC = () => {
               {presenceLoading || classStudentsLoading ? (
                 <div className="py-12 text-center text-sm text-muted">Loading students…</div>
               ) : presentPresences.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted">Mark students as present to see them here.</div>
+                <div className="py-12 text-center text-sm text-muted">{t('forms.markStudentsAsPresent')}</div>
               ) : (
                 <>
                   <ul className="space-y-3">
@@ -674,7 +679,7 @@ const StudentPresenceSection: React.FC = () => {
                   {presentPresences.length > PAGE_SIZE && (
                     <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
                       <span>
-                        Showing {presentPagination.startIndex}–{presentPagination.endIndex} of {presentPresences.length}
+                        {t('sections.showing')} {presentPagination.startIndex}–{presentPagination.endIndex} {t('sections.of')} {presentPresences.length}
                       </span>
                       <div className="flex items-center gap-2">
                         <button
@@ -683,7 +688,7 @@ const StudentPresenceSection: React.FC = () => {
                           disabled={presentPagination.page === 1}
                           className="rounded-full border px-2 py-1 disabled:opacity-40"
                         >
-                          Prev
+                          {t('common.previous')}
                         </button>
                         <span>
                           {presentPagination.page}/{presentPagination.totalPages}
@@ -694,7 +699,7 @@ const StudentPresenceSection: React.FC = () => {
                           disabled={presentPagination.page === presentPagination.totalPages}
                           className="rounded-full border px-2 py-1 disabled:opacity-40"
                         >
-                          Next
+                          {t('common.next')}
                         </button>
                       </div>
                     </div>
@@ -706,11 +711,11 @@ const StudentPresenceSection: React.FC = () => {
         )
       ) : !selectedPlanningId ? (
         <div className="rounded-2xl border border-dashed border-border bg-card text-body bg-gray-50 p-6 text-center text-sm text-muted">
-          {planningDate
+            {planningDate
             ? planningOptions.length
-              ? 'Select a planning session to review and edit notes.'
-              : 'No planning sessions found for the selected date.'
-            : 'Select a date to view available planning sessions.'}
+              ? t('forms.selectPlanningSessionToReview')
+              : t('forms.noPlanningSessionsFound')
+            : t('forms.selectDateToView')}
         </div>
       ) : (
         <div className="space-y-4">
@@ -723,7 +728,7 @@ const StudentPresenceSection: React.FC = () => {
           <div className="space-y-3 rounded-2xl border border-green-100 bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-gray-900">Present students · Notes</p>
+                <p className="text-sm font-semibold text-gray-900">{t('forms.presentStudents')} · {t('common.notes')}</p>
                 <p className="text-xs text-muted">
                   {presentPresences.length} student{presentPresences.length === 1 ? '' : 's'}
                 </p>
@@ -732,7 +737,7 @@ const StudentPresenceSection: React.FC = () => {
             {presenceLoading || classStudentsLoading ? (
               <div className="py-12 text-center text-sm text-muted">Loading students…</div>
             ) : presentPresences.length === 0 ? (
-              <div className="py-12 text-center text-sm text-muted">Mark students as present to manage notes.</div>
+              <div className="py-12 text-center text-sm text-muted">{t('forms.markStudentsAsPresentToManage')}</div>
             ) : (
               <>
                 <ul className="space-y-3">
@@ -740,8 +745,8 @@ const StudentPresenceSection: React.FC = () => {
                 </ul>
                 {presentPresences.length > PAGE_SIZE && (
                   <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
-                    <span>
-                      Showing {presentPagination.startIndex}–{presentPagination.endIndex} of {presentPresences.length}
+                      <span>
+                      {t('sections.showing')} {presentPagination.startIndex}–{presentPagination.endIndex} {t('sections.of')} {presentPresences.length}
                     </span>
                     <div className="flex items-center gap-2">
                       <button
@@ -750,7 +755,7 @@ const StudentPresenceSection: React.FC = () => {
                         disabled={presentPagination.page === 1}
                         className="rounded-full border px-2 py-1 disabled:opacity-40"
                       >
-                        Prev
+                        {t('common.previous')}
                       </button>
                       <span>
                         {presentPagination.page}/{presentPagination.totalPages}
@@ -761,7 +766,7 @@ const StudentPresenceSection: React.FC = () => {
                         disabled={presentPagination.page === presentPagination.totalPages}
                         className="rounded-full border px-2 py-1 disabled:opacity-40"
                       >
-                        Next
+                        {t('common.next')}
                       </button>
                     </div>
                   </div>
@@ -776,7 +781,7 @@ const StudentPresenceSection: React.FC = () => {
         <BaseModal
           isOpen
           onClose={closeNoteEditor}
-          title={`Update note · ${formatStudentName(noteEditor.presence, classStudentMap.get(noteEditor.presence.student_id ?? 0))}`}
+          title={`${t('forms.updateNote')} · ${formatStudentName(noteEditor.presence, classStudentMap.get(noteEditor.presence.student_id ?? 0), t)}`}
           className="sm:max-w-lg"
         >
           <form
@@ -795,7 +800,7 @@ const StudentPresenceSection: React.FC = () => {
                 onChange={(event) => setNoteEditor((prev) => ({ ...prev, note: event.target.value }))}
                 placeholder="-1"
               />
-              <p className="mt-1 text-xs text-muted">Use -1 to indicate no note was provided.</p>
+              <p className="mt-1 text-xs text-muted">{t('forms.useMinusOneToIndicate')}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-body mb-1">Remarks</label>
@@ -804,7 +809,7 @@ const StudentPresenceSection: React.FC = () => {
                 rows={4}
                 value={noteEditor.remarks}
                 onChange={(event) => setNoteEditor((prev) => ({ ...prev, remarks: event.target.value }))}
-                placeholder="Add optional remarks…"
+                placeholder={t('forms.addOptionalRemarks')}
               />
             </div>
             <div className="flex items-center justify-end gap-3">
@@ -813,13 +818,13 @@ const StudentPresenceSection: React.FC = () => {
                 onClick={closeNoteEditor}
                 className="text-sm font-medium text-gray-600 hover:text-gray-800"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:brightness-95"
               >
-                Save
+                {t('common.save')}
               </button>
             </div>
           </form>

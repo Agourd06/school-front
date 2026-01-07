@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { Button } from '../ui';
 
@@ -14,20 +15,23 @@ interface DeleteModalProps {
 
 const DeleteModal: React.FC<DeleteModalProps> = ({
   isOpen,
-  title = 'Delete Item',
+  title,
   message,
   entityName,
   onConfirm,
   onCancel,
   isLoading = false,
 }) => {
-  const finalMessage = message ?? `Are you sure you want to delete${entityName ? ` "${entityName}"` : ''}? This action cannot be undone.`;
+  const { t } = useTranslation();
+  const defaultTitle = title ?? t('modals.delete');
+  const entityNameText = entityName ? ` "${entityName}"` : '';
+  const finalMessage = message ?? t('modals.confirmDeleteMessage').replace('{{entityName}}', entityNameText);
 
   return (
     <BaseModal
       isOpen={isOpen}
       onClose={onCancel}
-      title={title}
+      title={defaultTitle}
       className="sm:max-w-md"
       contentClassName="p-5"
     >
@@ -40,7 +44,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             onClick={onCancel}
             disabled={isLoading}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="button"
@@ -49,7 +53,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             isLoading={isLoading}
             disabled={isLoading}
           >
-            Delete
+            {t('common.delete')}
           </Button>
         </div>
       </div>

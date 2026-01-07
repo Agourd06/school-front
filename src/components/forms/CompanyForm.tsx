@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input, Button } from '../ui';
 import PhoneInput from '../inputs/PhoneInput';
 
@@ -34,6 +35,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
   isSubmitting = false,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<CompanyFormData>({
     name: '',
     email: '',
@@ -65,17 +67,17 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Company name is required';
+      newErrors.name = t('forms.companyNameRequired');
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('forms.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = t('forms.emailInvalid');
     }
 
     if (formData.website && !formData.website.match(/^https?:\/\/.+/)) {
-      newErrors.website = 'Website must start with http:// or https://';
+      newErrors.website = t('forms.websiteMustStartWithHttp');
     }
 
     setErrors(newErrors);
@@ -113,7 +115,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       )}
 
       <Input
-        label="Company Name"
+        label={t('forms.companyName')}
         type="text"
         name="name"
         value={formData.name}
@@ -123,7 +125,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       />
 
       <Input
-        label="Email"
+        label={t('forms.email')}
         type="email"
         name="email"
         value={formData.email}
@@ -133,7 +135,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       />
 
       <PhoneInput
-        label="Phone"
+        label={t('forms.phone')}
         name="phone"
         value={formData.phone}
         onChange={handleChange}
@@ -142,7 +144,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
       />
 
       <Input
-        label="Website"
+        label={t('forms.website')}
         type="url"
         name="website"
         value={formData.website}
@@ -154,7 +156,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -162,7 +164,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

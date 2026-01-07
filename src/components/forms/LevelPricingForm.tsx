@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { STATUS_OPTIONS, STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
@@ -46,6 +47,7 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
   serverError,
   levelOptions,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<LevelPricingFormData>(DEFAULT_FORM);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -72,28 +74,28 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
   const validate = () => {
     const e: Record<string, string> = {};
     if (form.level_id === '' || form.level_id === null) {
-      e.level_id = 'Level is required';
+      e.level_id = t('forms.levelRequired');
     }
     if (!form.title.trim()) {
-      e.title = 'Title is required';
+      e.title = t('forms.titleRequired');
     } else if (form.title.trim().length > 150) {
-      e.title = 'Title must be at most 150 characters';
+      e.title = t('forms.titleMaxLength');
     }
 
     const amountValue = form.amount.trim() === '' ? NaN : Number(form.amount);
     if (Number.isNaN(amountValue)) {
-      e.amount = 'Amount must be a number';
+      e.amount = t('forms.amountMustBeNumber');
     } else if (amountValue <= 0) {
-      e.amount = 'Amount must be greater than 0';
+      e.amount = t('forms.amountMustBeGreaterThanZero');
     }
 
     const occurrencesValue = form.occurrences.trim() === '' ? 1 : Number(form.occurrences);
     if (Number.isNaN(occurrencesValue) || occurrencesValue < 1) {
-      e.occurrences = 'Occurrences must be at least 1';
+      e.occurrences = t('forms.occurrencesMin');
     }
 
     if (!allowedStatusValues.has(form.status)) {
-      e.status = 'Invalid status selected';
+      e.status = t('forms.invalidStatus');
     }
 
     setErrors(e);
@@ -159,20 +161,20 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SearchSelect
-          label="Level"
+          label={t('sidebar.levels')}
           value={levelValue}
           onChange={handleSelectChange('level_id')}
           options={levelOptions}
-          placeholder="Select level"
+          placeholder={t('forms.selectLevel')}
           error={errors.level_id}
         />
         <Input
-          label="Title"
+          label={t('common.name')}
           type="text"
           value={form.title}
           onChange={handleTitleChange}
           maxLength={150}
-          placeholder="Enter pricing title"
+          placeholder={t('forms.enterPricingTitle')}
           error={errors.title}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
@@ -180,29 +182,29 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <Input
-          label="Amount"
+          label={t('forms.amount')}
           type="number"
           min={0}
           step={0.01}
           value={form.amount}
           onChange={handleAmountChange}
-          placeholder="Enter amount"
+          placeholder={t('forms.enterAmount')}
           error={errors.amount}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Input
-          label="Occurrences"
+          label={t('forms.occurrences')}
           type="number"
           min={1}
           step={1}
           value={form.occurrences}
           onChange={handleOccurrencesChange}
-          placeholder="Number of occurrences"
+          placeholder={t('forms.numberOfOccurrences')}
           error={errors.occurrences}
           className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Select
-          label="Status"
+          label={t('common.status')}
           value={form.status}
           onChange={handleStatusChange}
           options={statusOptionsFormSelect.map((option) => ({
@@ -223,9 +225,9 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
               onChange={(event) => setForm((prev) => ({ ...prev, every_month: event.target.checked }))}
               className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
             />
-            Monthly billing
+            {t('forms.monthlyBilling')}
           </label>
-          <span className="text-xs text-muted">Toggle to repeat every month</span>
+          <span className="text-xs text-muted">{t('forms.toggleToRepeatEveryMonth')}</span>
         </div>
       </div>
 
@@ -238,7 +240,7 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
           onClick={onCancel}
           disabled={isSubmitting}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -246,7 +248,7 @@ const LevelPricingForm: React.FC<LevelPricingFormProps> = ({
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          {initialData ? 'Update Pricing' : 'Create Pricing'}
+          {initialData ? t('forms.updatePricing') : t('forms.createPricing')}
         </Button>
       </div>
     </form>

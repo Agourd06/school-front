@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { applyThemeToDocument, defaultTheme } from './theme/colors'
+import './i18n/config'
 import './index.css'
 import App from './App.tsx'
 

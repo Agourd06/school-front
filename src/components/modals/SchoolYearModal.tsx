@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCreateSchoolYear, useUpdateSchoolYear, useSchoolYears } from '../../hooks/useSchoolYears';
 import BaseModal from './BaseModal';
 import { SchoolYearForm } from '../forms';
@@ -11,6 +12,7 @@ interface SchoolYearModalProps {
 }
 
 const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, schoolYear }) => {
+  const { t } = useTranslation();
   const createSchoolYear = useCreateSchoolYear();
   const updateSchoolYear = useUpdateSchoolYear();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ const SchoolYearModal: React.FC<SchoolYearModalProps> = ({ isOpen, onClose, scho
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Edit School Year' : 'Add School Year'}
+      title={isEditing ? t('sections.editSchoolYear') : t('sections.addSchoolYear')}
     >
       <SchoolYearForm
         initialData={schoolYear}

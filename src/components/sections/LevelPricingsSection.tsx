@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useLevelPricings,
   useCreateLevelPricing,
@@ -23,8 +24,8 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
@@ -36,14 +37,14 @@ const statusStyles: Record<number, string> = {
   [-2]: 'bg-red-100 text-red-700',
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const formatCurrency = (value: string | number | null | undefined) => {
@@ -57,12 +58,15 @@ const formatCurrency = (value: string | number | null | undefined) => {
 };
 
 const LevelPricingsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
     level: '',
     search: '',
   });
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPricing, setEditingPricing] = useState<LevelPricing | null>(null);
@@ -107,9 +111,9 @@ const LevelPricingsSection: React.FC = () => {
     () =>
       (levelsResp?.data || []).map((level) => ({
         value: level.id,
-        label: level.title || `Level #${level.id}`,
+        label: level.title || `${t('forms.levelNumber')}${level.id}`,
       })),
-    [levelsResp]
+    [levelsResp, t]
   );
 
 
@@ -164,15 +168,15 @@ const LevelPricingsSection: React.FC = () => {
     try {
       if (editingPricing) {
         await updatePricingMut.mutateAsync({ id: editingPricing.id, data: payload });
-        setAlert({ type: 'success', message: 'Level pricing updated successfully.' });
+        setAlert({ type: 'success', message: t('messages.levelPricingUpdatedSuccessfully') });
       } else {
         await createPricingMut.mutateAsync(payload);
-        setAlert({ type: 'success', message: 'Level pricing created successfully.' });
+        setAlert({ type: 'success', message: t('messages.levelPricingCreatedSuccessfully') });
       }
       closeModal();
       refetchPricings();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setModalError(message);
       setAlert({ type: 'error', message });
       throw err;
@@ -185,10 +189,10 @@ const LevelPricingsSection: React.FC = () => {
     try {
       await deletePricingMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'Level pricing deleted successfully.' });
+      setAlert({ type: 'success', message: t('messages.levelPricingDeletedSuccessfully') });
       refetchPricings();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -203,8 +207,8 @@ const LevelPricingsSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Level Pricings</h1>
-            <p className="text-sm text-gray-500">Manage pricing plans for each academic level.</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.levelPricings')}</h1>
+            <p className="text-sm text-gray-500">{t('sections.manageLevelPricings')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -216,7 +220,7 @@ const LevelPricingsSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Pricing
+              {t('sections.addLevelPricing')}
             </Button>
           </div>
         </div>
@@ -240,27 +244,27 @@ const LevelPricingsSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
             isClearable={false}
           />
           <SearchSelect
-            label="Level"
+            label={t('sidebar.levels')}
             value={filters.level}
             onChange={handleFilterChange('level')}
             options={levelOptions}
-            placeholder="All levels"
+            placeholder={t('sections.allLevels')}
             isClearable
           />
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Search</label>
+            <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
             <input
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by title"
+              placeholder={t('forms.searchByTitle')}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -272,22 +276,22 @@ const LevelPricingsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Title</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Level</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.name')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('sidebar.levels')}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Amount
+                  {t('forms.amount')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Occurrences
+                  {t('forms.occurrences')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Monthly
+                  {t('forms.monthly')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -295,13 +299,13 @@ const LevelPricingsSection: React.FC = () => {
               {pricingLoading ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading level pricings…
+                    {t('forms.loadingLevelPricings')}
                   </td>
                 </tr>
               ) : pricings.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No level pricing records found.
+                    {t('forms.noLevelPricingRecordsFound')}
                   </td>
                 </tr>
               ) : (
@@ -310,7 +314,7 @@ const LevelPricingsSection: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-700">#{pricing.id}</td>
                     <td className="px-4 py-3 text-sm text-gray-900 font-medium">{pricing.title}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      {pricing.level?.title || `Level #${pricing.level_id}`}
+                      {pricing.level?.title || `${t('forms.levelNumber')}${pricing.level_id}`}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 font-semibold">{formatCurrency(pricing.amount)}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">{pricing.occurrences ?? '—'}</td>
@@ -322,7 +326,7 @@ const LevelPricingsSection: React.FC = () => {
                             : 'bg-gray-100 text-gray-600 border border-gray-200'
                         }`}
                       >
-                        {pricing.every_month ? 'Yes' : 'No'}
+                        {pricing.every_month ? t('common.yes') : t('common.no')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
@@ -331,7 +335,7 @@ const LevelPricingsSection: React.FC = () => {
                           statusStyles[pricing.status] ?? 'bg-gray-100 text-gray-600'
                         }`}
                       >
-                        {STATUS_VALUE_LABEL[pricing.status] ?? `Status ${pricing.status}`}
+                        {STATUS_VALUE_LABEL[pricing.status] ?? `${t('common.status')} ${pricing.status}`}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
@@ -374,7 +378,7 @@ const LevelPricingsSection: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         isLoading={deletePricingMut.isPending}
-        title="Delete Level Pricing"
+        title={t('forms.deleteLevelPricing')}
         entityName={deleteTarget?.title}
       />
     </div>

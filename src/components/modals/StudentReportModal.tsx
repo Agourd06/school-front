@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import type { StudentReport, StudentReportStatus } from '../../api/studentReport';
 import { StudentReportForm, type StudentReportFormData } from '../forms';
@@ -47,6 +48,7 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
   disableStudentSelect = false,
   disablePeriodSelect = false,
 }) => {
+  const { t } = useTranslation();
   const handleSubmit = async (formData: StudentReportFormData) => {
     await onSubmit(formData as StudentReportFormValues);
   };
@@ -64,7 +66,7 @@ const StudentReportModal: React.FC<StudentReportModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Edit Student Report' : 'Add Student Report'}
+      title={initialData ? t('sections.editStudentReport') : t('forms.addStudentReport')}
       className="sm:max-w-4xl"
     >
       <StudentReportForm

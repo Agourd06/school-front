@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import RichTextEditor from '../inputs/RichTextEditor';
@@ -65,6 +66,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
   disableStudentSelect = false,
   disablePeriodSelect = false,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<StudentReportFormData>({
     school_year_id: '',
     school_year_period_id: '',
@@ -123,13 +125,13 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
   const validate = () => {
     const e: Record<string, string> = {};
     if (form.school_year_period_id === '' || form.school_year_period_id === null) {
-      e.school_year_period_id = 'Period is required';
+      e.school_year_period_id = t('forms.periodRequired');
     }
     if (form.student_id === '' || form.student_id === null) {
-      e.student_id = 'Student is required';
+      e.student_id = t('forms.studentRequired');
     }
     if (form.school_year_id === '' || form.school_year_id === null) {
-      e.school_year_id = 'School year is required';
+      e.school_year_id = t('forms.schoolYearRequired');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -159,17 +161,17 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
       {contextInfo && (
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary space-x-2 flex flex-wrap gap-2">
-          {contextInfo.year && <span className="font-semibold">Year:</span>}
+          {contextInfo.year && <span className="font-semibold">{t('forms.yearLabel')}:</span>}
           {contextInfo.year && <span>{contextInfo.year}</span>}
           {contextInfo.period && (
             <>
-              <span className="font-semibold">Period:</span>
+              <span className="font-semibold">{t('forms.periodLabel')}:</span>
               <span>{contextInfo.period}</span>
             </>
           )}
           {contextInfo.className && (
             <>
-              <span className="font-semibold">Class:</span>
+              <span className="font-semibold">{t('forms.classLabel')}:</span>
               <span>{contextInfo.className}</span>
             </>
           )}
@@ -179,13 +181,13 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
       {initialData && (
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <label className="block text-sm font-medium text-heading">Student</label>
+            <label className="block text-sm font-medium text-heading">{t('sections.student')}</label>
             {selectedStudentId && (
               <button
                 type="button"
                 onClick={() => setStudentDetailsModalOpen(true)}
                 className="p-1 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition"
-                title="View student details"
+                title={t('forms.viewStudentDetails')}
               >
                 <Eye className="h-4 w-4" />
               </button>
@@ -195,7 +197,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
             value={studentValue}
             onChange={handleSelectChange('student_id')}
             options={studentOptions}
-            placeholder="Select student"
+            placeholder={t('sections.selectStudent')}
             error={errors.student_id}
             disabled={disableStudentSelect}
           />
@@ -204,24 +206,24 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SearchSelect
-          label="Period"
+          label={t('sections.period')}
           value={periodValue}
           onChange={handleSelectChange('school_year_period_id')}
           options={periodOptions}
-          placeholder="Select period"
+          placeholder={t('sections.selectPeriod')}
           error={errors.school_year_period_id}
           disabled={disablePeriodSelect}
         />
         {!initialData && (
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <label className="block text-sm font-medium text-heading">Student</label>
+              <label className="block text-sm font-medium text-heading">{t('sections.student')}</label>
               {selectedStudentId && (
                 <button
                   type="button"
                   onClick={() => setStudentDetailsModalOpen(true)}
                   className="p-1 text-primary hover:text-primary/80 hover:bg-primary/10 rounded-md transition"
-                  title="View student details"
+                  title={t('forms.viewStudentDetails')}
                 >
                   <Eye className="h-4 w-4" />
                 </button>
@@ -231,7 +233,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
               value={studentValue}
               onChange={handleSelectChange('student_id')}
               options={studentOptions}
-              placeholder="Select student"
+              placeholder={t('sections.selectStudent')}
               error={errors.student_id}
               disabled={disableStudentSelect}
             />
@@ -242,14 +244,14 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div className="xl:col-span-2">
           <Input
-            label="Mention"
+            label={t('forms.mention')}
             value={form.mention}
             onChange={(e) => setForm((prev) => ({ ...prev, mention: e.target.value }))}
-            placeholder="Optional mention (e.g. Très Bien)"
+            placeholder={t('forms.optionalMention')}
           />
         </div>
         <Select
-          label="Status"
+          label={t('common.status')}
           value={form.status}
           onChange={(e) => setForm((prev) => ({ ...prev, status: Number(e.target.value) as StudentReportStatus }))}
           options={statusOptionsSelect.map((option) => ({
@@ -261,10 +263,8 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
 
       <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-primary font-semibold">Promotion status</p>
-          <p className="text-sm text-heading">
-            Mark this student as <strong>passed</strong> to promote them.
-          </p>
+          <p className="text-xs uppercase tracking-wide text-primary font-semibold">{t('forms.promotionStatus')}</p>
+          <p className="text-sm text-heading" dangerouslySetInnerHTML={{ __html: t('forms.markStudentAsPassed') }} />
         </div>
         <label className="inline-flex items-center gap-3 text-heading font-semibold text-base">
           <input
@@ -273,16 +273,16 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
             onChange={(e) => setForm((prev) => ({ ...prev, passed: e.target.checked }))}
             className="h-6 w-6 rounded-md border-primary/40 text-primary focus:ring-primary/60"
           />
-          <span>Passed</span>
+          <span>{t('forms.passed')}</span>
         </label>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-heading mb-2">Remarks</label>
+        <label className="block text-sm font-medium text-heading mb-2">{t('forms.remarks')}</label>
         <RichTextEditor
           value={form.remarks}
           onChange={(content) => setForm((prev) => ({ ...prev, remarks: content }))}
-          placeholder="Optional notes about the student's progress"
+          placeholder={t('forms.optionalNotesAboutProgress')}
           rows={10}
         />
       </div>
@@ -295,10 +295,10 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
 
       <div className="flex justify-end space-x-3">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update Report' : 'Create Report'}
+          {initialData ? t('forms.updateReport') : t('forms.createReport')}
         </Button>
       </div>
     </form>
@@ -307,12 +307,12 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
       onClose={() => setStudentDetailsModalOpen(false)}
       title={
         student
-          ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || student.email || 'Student details'
-          : 'Student details'
+          ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || student.email || t('forms.studentDetails')
+          : t('forms.studentDetails')
       }
     >
       {studentDetailsLoading ? (
-        <div className="py-8 text-center text-sm text-muted">Loading student details…</div>
+        <div className="py-8 text-center text-sm text-muted">{t('forms.loadingStudentDetails')}</div>
       ) : (
         <div className="space-y-5">
           {student && (
@@ -321,7 +321,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                 {student.picture && (
                   <img
                     src={getFileUrl(student.picture)}
-                    alt={student.first_name ?? student.email ?? 'student'}
+                    alt={student.first_name ?? student.email ?? t('sidebar.student')}
                     className="h-14 w-14 rounded-full object-cover border"
                   />
                 )}
@@ -335,19 +335,19 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-muted uppercase text-xs">Nationality</p>
+                  <p className="text-muted uppercase text-xs">{t('forms.nationality')}</p>
                   <p className="text-heading">{student.nationality || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-muted uppercase text-xs">Birthday</p>
+                  <p className="text-muted uppercase text-xs">{t('forms.birthday')}</p>
                   <p className="text-heading">{student.birthday || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-muted uppercase text-xs">City</p>
+                  <p className="text-muted uppercase text-xs">{t('forms.city')}</p>
                   <p className="text-heading">{student.city || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-muted uppercase text-xs">Country</p>
+                  <p className="text-muted uppercase text-xs">{t('forms.country')}</p>
                   <p className="text-heading">{student.country || '—'}</p>
                 </div>
               </div>
@@ -358,29 +358,29 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
             <section className="rounded-2xl border border-border p-4 space-y-4 bg-gradient-to-br from-card to-primary/5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-primary">Academic Record</p>
-                  <h4 className="text-lg font-semibold text-heading mt-1">{diploma.title || 'Diploma'}</h4>
+                  <p className="text-xs uppercase tracking-wide text-primary">{t('forms.academicRecord')}</p>
+                  <h4 className="text-lg font-semibold text-heading mt-1">{diploma.title || t('forms.diploma')}</h4>
                 </div>
                 <span className="text-xs rounded-full bg-primary/10 px-3 py-0.5 text-primary font-semibold">
-                  {diploma.status === 1 ? 'Active' : diploma.status === -1 ? 'Archived' : 'Draft'}
+                  {diploma.status === 1 ? t('forms.active') : diploma.status === -1 ? t('forms.archived') : t('forms.draft')}
                 </span>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-body">
                   <p>
-                    <span className="text-muted">Diploma:</span> {diploma.diplome || '—'}
+                    <span className="text-muted">{t('forms.diploma')}:</span> {diploma.diplome || '—'}
                   </p>
                   <p>
-                    <span className="text-muted">School:</span> {diploma.school || '—'}
+                    <span className="text-muted">{t('forms.school')}:</span> {diploma.school || '—'}
                   </p>
                   <p>
-                    <span className="text-muted">Year:</span> {diploma.annee || '—'}
+                    <span className="text-muted">{t('forms.year')}:</span> {diploma.annee || '—'}
                   </p>
                   <p>
-                    <span className="text-muted">Status:</span> {diploma.status ?? '—'}
+                    <span className="text-muted">{t('common.status')}:</span> {diploma.status ?? '—'}
                   </p>
                   <p className="sm:col-span-2">
-                    <span className="text-muted">Location:</span>{' '}
+                    <span className="text-muted">{t('forms.location')}:</span>{' '}
                     {[diploma.city, diploma.country].filter(Boolean).join(', ') || '—'}
                   </p>
                 </div>
@@ -394,7 +394,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                             onClick={() =>
                               setPreview({
                                 src: getFileUrl(diploma.diplome_picture_1!),
-                                label: `${diploma.title || 'Diploma'} – picture 1`,
+                                label: `${diploma.title || t('forms.diploma')} – ${t('forms.picture')} 1`,
                               })
                             }
                             className="w-full"
@@ -402,7 +402,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                             <img
                               className="h-40 w-full object-contain transition-transform duration-300 hover:scale-105"
                               src={getFileUrl(diploma.diplome_picture_1)}
-                              alt="Diploma picture 1"
+                              alt={`${t('forms.diploma')} ${t('forms.picture')} 1`}
                             />
                           </button>
                         </div>
@@ -414,7 +414,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                             onClick={() =>
                               setPreview({
                                 src: getFileUrl(diploma.diplome_picture_2!),
-                                label: `${diploma.title || 'Diploma'} – picture 2`,
+                                label: `${diploma.title || t('forms.diploma')} – ${t('forms.picture')} 2`,
                               })
                             }
                             className="w-full"
@@ -422,7 +422,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                             <img
                               className="h-40 w-full object-contain transition-transform duration-300 hover:scale-105"
                               src={getFileUrl(diploma.diplome_picture_2)}
-                              alt="Diploma picture 2"
+                              alt={`${t('forms.diploma')} ${t('forms.picture')} 2`}
                             />
                           </button>
                         </div>
@@ -430,7 +430,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
                     </>
                   ) : (
                     <div className="flex h-32 items-center justify-center rounded-2xl border border-dashed border-border text-xs text-muted">
-                      No diploma images uploaded.
+                      {t('forms.noDiplomaImagesUploaded')}
                     </div>
                   )}
                 </div>
@@ -441,33 +441,33 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
           {contact && (
             <section className="rounded-lg border border-border p-3 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-heading">Contact</h4>
+                <h4 className="text-sm font-semibold text-heading">{t('sections.studentContacts')}</h4>
                 <span className="text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-                  {contact.status === 1 ? 'Active' : contact.status === -1 ? 'Archived' : 'Draft'}
+                  {contact.status === 1 ? t('forms.active') : contact.status === -1 ? t('forms.archived') : t('forms.draft')}
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-body">
                 <p>
-                  <span className="text-muted">Name:</span>{' '}
+                  <span className="text-muted">{t('common.name')}:</span>{' '}
                   {`${contact.firstname ?? ''} ${contact.lastname ?? ''}`.trim() || '—'}
                 </p>
                 <p>
-                  <span className="text-muted">Birthday:</span> {contact.birthday || '—'}
+                  <span className="text-muted">{t('forms.birthday')}:</span> {contact.birthday || '—'}
                   </p>
-                  <p>
-                  <span className="text-muted">Email:</span> {contact.email || '—'}
+                <p>
+                  <span className="text-muted">{t('forms.email')}:</span> {contact.email || '—'}
                   </p>
-                  <p>
-                  <span className="text-muted">Phone:</span> {contact.phone || '—'}
+                <p>
+                  <span className="text-muted">{t('forms.phone')}:</span> {contact.phone || '—'}
                   </p>
-                  <p>
-                  <span className="text-muted">Address:</span> {contact.adress || '—'}
+                <p>
+                  <span className="text-muted">{t('forms.address')}:</span> {contact.adress || '—'}
                   </p>
-                  <p>
-                  <span className="text-muted">City:</span> {contact.city || '—'}
+                <p>
+                  <span className="text-muted">{t('forms.city')}:</span> {contact.city || '—'}
                   </p>
-                  <p>
-                  <span className="text-muted">Country:</span> {contact.country || '—'}
+                <p>
+                  <span className="text-muted">{t('forms.country')}:</span> {contact.country || '—'}
                 </p>
               </div>
             </section>
@@ -476,27 +476,27 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
           {linkType && (
             <section className="rounded-lg border border-border p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-heading">Link Type</h4>
+                <h4 className="text-sm font-semibold text-heading">{t('forms.linkType')}</h4>
                 <span className="text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-                  {linkType.status === 1 ? 'Active' : linkType.status === 0 ? 'Disabled' : 'Draft'}
+                  {linkType.status === 1 ? t('forms.active') : linkType.status === 0 ? t('forms.disabled') : t('forms.draft')}
                 </span>
               </div>
               <p className="text-sm text-body">
-                <span className="text-muted">Title:</span> {linkType.title || '—'}
+                <span className="text-muted">{t('common.name')}:</span> {linkType.title || '—'}
               </p>
               {linkType.student_id && (
-                <p className="text-xs text-muted">Linked student ID: {linkType.student_id}</p>
+                <p className="text-xs text-muted">{t('forms.linkedStudentId')}: {linkType.student_id}</p>
               )}
             </section>
           )}
 
           {!student && !diploma && !contact && (
-            <p className="text-sm text-muted">No details available for this student.</p>
+            <p className="text-sm text-muted">{t('forms.noDetailsAvailable')}</p>
           )}
         </div>
       )}
     </BaseModal>
-    <BaseModal isOpen={!!preview} onClose={() => setPreview(null)} title={preview?.label || 'Diploma preview'}>
+    <BaseModal isOpen={!!preview} onClose={() => setPreview(null)} title={preview?.label || t('forms.diplomaPreview')}>
       {preview && (
         <div className="flex flex-col items-center gap-4">
           <img
@@ -509,7 +509,7 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
             onClick={() => setPreview(null)}
             className="px-4 py-2 text-sm font-medium text-primary hover:text-primary/80"
           >
-            Close Preview
+            {t('forms.closePreview')}
           </button>
         </div>
       )}

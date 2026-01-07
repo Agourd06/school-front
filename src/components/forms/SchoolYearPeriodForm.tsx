@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   validateRequired,
   validateDateOrder,
@@ -68,6 +69,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
   isSchoolYearLocked = false,
   initialSchoolYearId,
 }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -107,18 +109,18 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
-    const requiredTitle = validateRequired(title, 'Title');
+    const requiredTitle = validateRequired(title, t('common.name'));
     if (requiredTitle) newErrors.title = requiredTitle;
-    const startReq = validateRequired(startDate, 'Start date');
+    const startReq = validateRequired(startDate, t('forms.startDate'));
     if (startReq) newErrors.start_date = startReq;
-    const endReq = validateRequired(endDate, 'End date');
+    const endReq = validateRequired(endDate, t('forms.endDate'));
     if (endReq) newErrors.end_date = endReq;
     const dateOrder = validateDateOrder(startDate, endDate, {
-      start: 'start date',
-      end: 'end date',
+      start: t('forms.startDate'),
+      end: t('forms.endDate'),
     });
     if (!newErrors.start_date && !newErrors.end_date && dateOrder) newErrors.date = dateOrder;
-    const yearReq = validateSelectRequired(schoolYearId, 'School year');
+    const yearReq = validateSelectRequired(schoolYearId, t('sidebar.schoolYears'));
     if (yearReq) newErrors.schoolYearId = yearReq;
 
     const activeYear = resolveActiveSchoolYear();
@@ -181,7 +183,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-heading">School Year</label>
+        <label className="block text-sm font-medium text-heading">{t('sidebar.schoolYears')}</label>
         {isSchoolYearLocked && (selectedSchoolYear || initialData?.schoolYear) ? (
           <div className="mt-1 p-3 bg-surface border border-border rounded-md">
             <div className="text-sm font-medium text-heading">
@@ -200,7 +202,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
             onChange={(e) => setSchoolYearId(e.target.value ? Number(e.target.value) : '')}
             disabled={isSchoolYearLocked}
             options={[
-              { value: '', label: 'Select a school year' },
+              { value: '', label: t('forms.selectSchoolYear') },
               ...schoolYears.map((y) => ({
                 value: y.id,
                 label: y.title,
@@ -215,7 +217,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
       </div>
 
       <Input
-        label="Title"
+        label={t('common.name')}
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -226,7 +228,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Start Date"
+          label={t('forms.startDate')}
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
@@ -235,7 +237,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Input
-          label="End Date"
+          label={t('forms.endDate')}
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
@@ -247,20 +249,20 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
-          label="Lifecycle Status"
+          label={t('sections.lifecycleStatus')}
           name="lifecycle_status"
           value={lifecycleStatus}
           onChange={(e) => setLifecycleStatus(e.target.value as 'planned' | 'ongoing' | 'completed')}
           options={[
-            { value: 'planned', label: 'Planned' },
-            { value: 'ongoing', label: 'Ongoing' },
-            { value: 'completed', label: 'Completed' },
+            { value: 'planned', label: t('sections.planned') },
+            { value: 'ongoing', label: t('sections.ongoing') },
+            { value: 'completed', label: t('sections.completed') },
           ]}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
 
         <Select
-          label="Status"
+          label={t('common.status')}
           value={status}
           onChange={(e) => setStatus(Number(e.target.value))}
           options={STATUS_OPTIONS_FORM.map((option) => ({
@@ -273,10 +275,10 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

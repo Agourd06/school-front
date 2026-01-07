@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { Input, Select, Button } from '../ui';
 import RichTextEditor from '../inputs/RichTextEditor';
@@ -49,6 +50,7 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
   students,
   attestations,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<StudentAttestationFormData>({
     Idstudent: '',
     Idattestation: '',
@@ -192,15 +194,15 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!form.Idstudent) next.Idstudent = 'Student is required';
-    if (!form.Idattestation) next.Idattestation = 'Attestation is required';
+    if (!form.Idstudent) next.Idstudent = t('forms.studentRequired');
+    if (!form.Idattestation) next.Idattestation = t('forms.attestationRequired');
 
     if (form.dateask && form.datedelivery) {
       const askDate = new Date(form.dateask);
       const deliveryDate = new Date(form.datedelivery);
 
       if (askDate >= deliveryDate) {
-        next.datedelivery = 'Date Delivery must be after Date Asked';
+        next.datedelivery = t('forms.dateDeliveryMustBeAfterDateAsked');
       }
     }
 
@@ -224,7 +226,7 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-heading mb-1">Student *</label>
+          <label className="block text-sm font-medium text-heading mb-1">{t('forms.student')} *</label>
           {initialData ? (
             // Show read-only student info when editing
             <div className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-body">
@@ -233,19 +235,19 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
                   <p className="font-medium">
                     {`${selectedStudent.first_name ?? ''} ${selectedStudent.last_name ?? ''}`.trim() || 
                      selectedStudent.email || 
-                     `Student #${selectedStudent.id}`}
+                     `${t('forms.studentNumber')}${selectedStudent.id}`}
                   </p>
                   {selectedStudent.email && (
                     <p className="text-xs text-muted">{selectedStudent.email}</p>
                   )}
                   {selectedStudent.birthday && (
                     <p className="text-xs text-muted">
-                      Born: {new Date(selectedStudent.birthday).toLocaleDateString()}
+                      {t('forms.born')} {new Date(selectedStudent.birthday).toLocaleDateString()}
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="text-muted italic">Student information not available</p>
+                <p className="text-muted italic">{t('forms.studentInformationNotAvailable')}</p>
               )}
             </div>
           ) : (
@@ -254,20 +256,20 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
               value={form.Idstudent}
               onChange={(value) => handleSearchSelectChange('Idstudent', value)}
               options={[
-                { value: '', label: 'Select a student' },
+                { value: '', label: t('forms.selectStudent') },
                 ...students.map((s) => ({
                   value: s.id,
-                  label: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `Student #${s.id}`,
+                  label: `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() || s.email || `${t('forms.studentNumber')}${s.id}`,
                 })),
               ]}
               error={errors.Idstudent}
-              placeholder="Search student..."
+              placeholder={t('forms.searchStudent')}
             />
           )}
         </div>
         <div>
           <div className="flex items-center justify-between">
-            <label className="block text-sm font-medium text-heading">Attestation *</label>
+            <label className="block text-sm font-medium text-heading">{t('common.attestation')} *</label>
             {form.Idattestation && (
               <button
                 type="button"
@@ -275,7 +277,7 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
                 onClick={() => setAttestationDetailsOpen(true)}
               >
                 <Eye className="h-4 w-4" />
-                View details
+                {t('forms.viewDetails')}
               </button>
             )}
           </div>
@@ -283,20 +285,20 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
             value={form.Idattestation}
             onChange={(value) => handleSearchSelectChange('Idattestation', value)}
             options={[
-              { value: '', label: 'Select an attestation' },
+              { value: '', label: t('forms.selectAttestation') },
               ...attestations.map((a) => ({
                 value: a.id,
                 label: a.title,
               })),
             ]}
             error={errors.Idattestation}
-            placeholder="Search attestation..."
+            placeholder={t('forms.searchAttestation')}
           />
         </div>
       </div>
 
       <Input
-        label="Date Asked"
+        label={t('forms.dateAsked')}
         type="date"
         name="dateask"
         value={form.dateask}
@@ -305,7 +307,7 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
 
       {Boolean(initialData) && (
         <Input
-          label="Date Delivery (optional)"
+          label={t('forms.dateDeliveryOptional')}
           type="date"
           name="datedelivery"
           value={form.datedelivery ?? ''}
@@ -316,18 +318,18 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-heading mb-1">Description</label>
+        <label className="block text-sm font-medium text-heading mb-1">{t('common.description')}</label>
         <div className="pointer-events-none opacity-80">
           <RichTextEditor
             value={form.description ?? ''}
             onChange={() => {}}
-            placeholder="Description will be filled automatically from the attestation."
+            placeholder={t('forms.descriptionWillBeFilledAutomatically')}
           />
         </div>
-        <p className="mt-1 text-xs text-muted">This description mirrors the selected attestation template.</p>
+        <p className="mt-1 text-xs text-muted">{t('forms.descriptionMirrorsAttestationTemplate')}</p>
       </div>
       <Select
-        label="Status"
+        label={t('common.status')}
         name="Status"
         value={form.Status}
         onChange={handleChange}
@@ -339,26 +341,26 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
       <BaseModal
         isOpen={attestationDetailsOpen}
         onClose={() => setAttestationDetailsOpen(false)}
-        title="Attestation details"
+        title={t('forms.attestationDetails')}
       >
         <div className="space-y-3 text-sm text-body">
-          <p className="font-semibold">{selectedAttestation?.title ?? 'No attestation selected'}</p>
+          <p className="font-semibold">{selectedAttestation?.title ?? t('forms.noAttestationSelected')}</p>
           <div
             className="rounded-lg border border-border bg-surface p-3"
             dangerouslySetInnerHTML={{
               __html:
                 selectedAttestation?.description && selectedAttestation.description.trim().length > 0
                   ? selectedAttestation.description
-                  : '<p class="text-muted italic">No description available.</p>',
+                  : `<p class="text-muted italic">${t('forms.noDescriptionAvailable')}.</p>`,
             }}
           />
         </div>

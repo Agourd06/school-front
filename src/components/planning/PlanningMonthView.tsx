@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PlanningStudentEntry } from '../../api/planningStudent';
 import PlanningStatusBadge from '../PlanningStatusBadge';
 
@@ -22,15 +23,15 @@ const formatTime = (time: string) => {
 
 const formatTimeRange = (start: string, end: string) => `${formatTime(start)} - ${formatTime(end)}`;
 
-const formatTeacherName = (entry: PlanningStudentEntry) => {
+const formatTeacherName = (entry: PlanningStudentEntry, t: (key: string) => string) => {
   const first = entry.teacher?.first_name ?? '';
   const last = entry.teacher?.last_name ?? '';
   const full = `${first} ${last}`.trim();
-  return full || `Teacher #${entry.teacher_id}`;
+  return full || `${t('planning.teacherNumber')}${entry.teacher_id}`;
 };
 
-const formatSessionType = (entry: PlanningStudentEntry) =>
-  entry.planningSessionType?.title || `Type #${entry.planning_session_type_id}`;
+const formatSessionType = (entry: PlanningStudentEntry, t: (key: string) => string) =>
+  entry.planningSessionType?.title || `${t('planning.typeNumber')}${entry.planning_session_type_id}`;
 
 const getISODate = (date: Date) => date.toISOString().split('T')[0];
 
@@ -67,6 +68,7 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
   onSelectDate,
   getPeriodLabel,
 }) => {
+  const { t } = useTranslation();
   const [hoveredEntryId, setHoveredEntryId] = useState<number | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,7 +152,15 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
     return monthStart.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
   }, [monthStart]);
 
-  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const weekDays = useMemo(() => [
+    t('planning.weekdayMon'),
+    t('planning.weekdayTue'),
+    t('planning.weekdayWed'),
+    t('planning.weekdayThu'),
+    t('planning.weekdayFri'),
+    t('planning.weekdaySat'),
+    t('planning.weekdaySun'),
+  ], [t]);
 
   useEffect(() => {
     return () => {
@@ -211,7 +221,7 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
     <div className="bg-white shadow rounded-lg border border-gray-200 h-full flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Monthly Schedule</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('planning.monthlySchedule')}</h2>
           <p className="text-sm text-gray-500">{monthLabel}</p>
         </div>
         <div className="flex items-center space-x-2">
@@ -230,21 +240,21 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
             onClick={onPrevMonth}
             className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Prev
+            {t('planning.prev')}
           </button>
           <button
             type="button"
             onClick={onToday}
             className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Today
+            {t('planning.today')}
           </button>
           <button
             type="button"
             onClick={onNextMonth}
             className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Next
+            {t('planning.next')}
           </button>
         </div>
       </div>
@@ -252,7 +262,7 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
       <div className="flex-1 overflow-y-auto p-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-            Loading schedule...
+            {t('planning.loadingSchedule')}
           </div>
         ) : (
           <div className="grid grid-cols-7 gap-1">
@@ -312,8 +322,8 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
                             <div className={`font-semibold truncate ${tone.text}`}>
                               {formatTimeRange(entry.hour_start, entry.hour_end)}
                             </div>
-                            <div className={`truncate ${tone.text}`}>{formatSessionType(entry)}</div>
-                            <div className={`truncate ${tone.muted}`}>{formatTeacherName(entry)}</div>
+                            <div className={`truncate ${tone.text}`}>{formatSessionType(entry, t)}</div>
+                            <div className={`truncate ${tone.muted}`}>{formatTeacherName(entry, t)}</div>
                           </button>
 
                           {/* Hover Overlay - Same as week view */}
@@ -366,7 +376,7 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                       </svg>
-                                      Edit
+                                      {t('modals.edit')}
                                     </button>
                                     <button
                                       type="button"
@@ -391,8 +401,8 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
                                       </svg>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Session Type</p>
-                                      <p className="text-base text-gray-900 font-semibold">{formatSessionType(entry)}</p>
+                                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.sessionType')}</p>
+                                      <p className="text-base text-gray-900 font-semibold">{formatSessionType(entry, t)}</p>
                                     </div>
                                   </div>
                                   <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
@@ -402,8 +412,8 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
                                       </svg>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Teacher</p>
-                                      <p className="text-base text-gray-900 font-semibold">{formatTeacherName(entry)}</p>
+                                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.teacher')}</p>
+                                      <p className="text-base text-gray-900 font-semibold">{formatTeacherName(entry, t)}</p>
                                     </div>
                                   </div>
                                   <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
@@ -413,8 +423,8 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
                                       </svg>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Class</p>
-                                      <p className="text-base text-gray-900 font-semibold">{entry.class?.title || `Class #${entry.class_id}`}</p>
+                                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{t('planning.class')}</p>
+                                      <p className="text-base text-gray-900 font-semibold">{entry.class?.title || `${t('planning.classNumber')}${entry.class_id}`}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -426,7 +436,7 @@ const PlanningMonthView: React.FC<PlanningMonthViewProps> = ({
                     })}
                     {day.entries.length > 3 && (
                       <div className="text-xs text-gray-500 text-center py-1">
-                        +{day.entries.length - 3} more
+                        {t('planning.moreEntries', { count: day.entries.length - 3 })}
                       </div>
                     )}
                   </div>

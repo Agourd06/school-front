@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import RichTextEditor from '../inputs/RichTextEditor';
 import { Input, Select, Button } from '../ui';
@@ -57,6 +58,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
   onDescriptionPreview,
   onFormChange,
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<ClassFormData>({
     title: '',
     description: '',
@@ -123,11 +125,11 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!form.title.trim()) next.title = 'Title is required';
-    if (!form.school_year_id) next.school_year_id = 'School year is required';
-    if (!form.program_id) next.program_id = 'Program is required';
-    if (!form.specialization_id) next.specialization_id = 'Specialization is required';
-    if (!form.level_id) next.level_id = 'Level is required';
+    if (!form.title.trim()) next.title = t('forms.titleRequired');
+    if (!form.school_year_id) next.school_year_id = t('forms.schoolYearRequired');
+    if (!form.program_id) next.program_id = t('forms.programRequired');
+    if (!form.specialization_id) next.specialization_id = t('forms.specializationRequired');
+    if (!form.level_id) next.level_id = t('forms.levelRequired');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -145,21 +147,21 @@ const ClassForm: React.FC<ClassFormProps> = ({
   const descriptionEditor = (
     <div>
       <div className="mb-1 flex items-center justify-between gap-3">
-        <label className="block text-sm font-medium text-heading mb-0">Description</label>
+        <label className="block text-sm font-medium text-heading mb-0">{t('common.description')}</label>
         {onDescriptionPreview && (
           <button
             type="button"
             onClick={onDescriptionPreview}
             className="inline-flex items-center rounded-md border border-success-light px-3 py-1.5 text-xs font-medium text-success hover:bg-success-light focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2"
           >
-            View details
+            {t('common.view')} {t('common.details')}
           </button>
         )}
       </div>
       <RichTextEditor
         value={form.description}
         onChange={(html) => setForm((prev) => ({ ...prev, description: html }))}
-        placeholder="Describe the class..."
+        placeholder={t('forms.describeClass')}
         rows={10}
       />
     </div>
@@ -177,7 +179,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
-          label="Title *"
+          label={`${t('common.name')} *`}
           name="title"
           value={form.title}
           onChange={handleChange}
@@ -185,12 +187,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
-          label="School Year *"
+          label={`${t('sidebar.schoolYears')} *`}
           name="school_year_id"
           value={form.school_year_id}
           onChange={handleChange}
           options={[
-            { value: '', label: 'Select school year' },
+            { value: '', label: t('forms.selectSchoolYear') },
             ...schoolYears.map((year) => ({
               value: year.id,
               label: year.title,
@@ -203,12 +205,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
-          label="Program *"
+          label={`${t('sidebar.programs')} *`}
           name="program_id"
           value={form.program_id}
           onChange={handleChange}
           options={[
-            { value: '', label: 'Select program' },
+            { value: '', label: t('forms.selectProgram') },
             ...programs.map((program) => ({
               value: program.id,
               label: program.title,
@@ -218,13 +220,13 @@ const ClassForm: React.FC<ClassFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
-          label="Specialization *"
+          label={`${t('dashboard.specializations')} *`}
           name="specialization_id"
           value={form.specialization_id}
           onChange={handleChange}
           disabled={!form.program_id}
           options={[
-            { value: '', label: 'Select specialization' },
+            { value: '', label: t('forms.selectSpecialization') },
             ...specializations.map((spec) => ({
               value: spec.id,
               label: spec.title,
@@ -239,13 +241,13 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
-          label="Level *"
+          label={`${t('sidebar.levels')} *`}
           name="level_id"
           value={form.level_id}
           onChange={handleChange}
           disabled={!form.specialization_id}
           options={[
-            { value: '', label: 'Select level' },
+            { value: '', label: t('forms.selectLevel') },
             ...levels.map((level) => ({
               value: level.id,
               label: level.title,
@@ -257,7 +259,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
           }`}
         />
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={form.status}
           onChange={handleChange}
@@ -273,10 +275,10 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
-          {initialData ? 'Update' : 'Create'}
+          {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>
     </form>

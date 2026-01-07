@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useModules,
   useDeleteModule,
@@ -23,8 +24,8 @@ const EMPTY_META = {
   hasPrevious: false,
 };
 
-const statusFilterOptions: SearchSelectOption[] = [
-  { value: 'all', label: 'All statuses' },
+const getStatusFilterOptions = (t: (key: string) => string): SearchSelectOption[] => [
+  { value: 'all', label: t('sections.allStatuses') },
   ...STATUS_OPTIONS.map((opt) => ({ value: String(opt.value), label: opt.label })),
 ];
 
@@ -41,22 +42,25 @@ const stripHtml = (input?: string | null): string => {
   return input.replace(/<[^>]+>/g, '');
 };
 
-const extractErrorMessage = (err: unknown): string => {
-  if (!err) return 'Unexpected error';
+const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
+  if (!err) return t('messages.unexpectedError');
   const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
   const dataMessage = axiosError?.response?.data?.message;
   if (Array.isArray(dataMessage)) return dataMessage.join(', ');
   if (typeof dataMessage === 'string') return dataMessage;
   if (typeof axiosError.message === 'string') return axiosError.message;
-  return 'Unexpected error';
+  return t('messages.unexpectedError');
 };
 
 const ModulesSection: React.FC = () => {
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
     search: '',
   });
+  
+  const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
@@ -160,10 +164,10 @@ const ModulesSection: React.FC = () => {
     try {
       await deleteModuleMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'Module deleted successfully.' });
+      setAlert({ type: 'success', message: t('messages.moduleDeletedSuccessfully') });
       refetchModules();
     } catch (err: unknown) {
-      const message = extractErrorMessage(err);
+      const message = extractErrorMessage(err, t);
       setAlert({ type: 'error', message });
     }
   };
@@ -178,8 +182,8 @@ const ModulesSection: React.FC = () => {
     <div className="space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Modules</h1>
-            <p className="text-sm text-gray-500">Manage modules and their associated courses.</p>
+            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.modules')}</h1>
+            <p className="text-sm text-gray-500">{t('sections.manageModules')}</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -191,7 +195,7 @@ const ModulesSection: React.FC = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Add Module
+              {t('sections.addModule')}
             </Button>
           </div>
         </div>
@@ -215,19 +219,19 @@ const ModulesSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
             isClearable={false}
           />
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Search</label>
+            <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
             <input
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by module title..."
+              placeholder={t('sections.searchByModuleTitle')}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -240,22 +244,22 @@ const ModulesSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  {t('common.name')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Volume
+                  {t('sections.volume')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Coefficient
+                  {t('sections.coefficient')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  PDF Document
+                  {t('sections.pdfDocument')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -263,13 +267,13 @@ const ModulesSection: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading modules…
+                    {t('sections.loadingModules')}
                   </td>
                 </tr>
               ) : modules.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No modules found.
+                    {t('sections.noModulesFound')}
                   </td>
                 </tr>
               ) : (
@@ -283,14 +287,14 @@ const ModulesSection: React.FC = () => {
                         {module.volume !== null && module.volume !== undefined ? (
                           <span className="font-semibold text-gray-900">{module.volume}</span>
                         ) : (
-                          <span className="text-xs text-gray-400">N/A</span>
+                          <span className="text-xs text-gray-400">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         {module.coefficient !== null && module.coefficient !== undefined ? (
                           <span className="font-semibold text-gray-900">{module.coefficient}</span>
                         ) : (
-                          <span className="text-xs text-gray-400">N/A</span>
+                          <span className="text-xs text-gray-400">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
@@ -312,7 +316,7 @@ const ModulesSection: React.FC = () => {
                               type="button"
                               onClick={() => openDescriptionModal(module)}
                               className="inline-flex items-center justify-center rounded-md border border-green-200 p-1.5 text-green-600 hover:bg-green-50 transition-colors"
-                              title="View Details"
+                              title={t('sections.viewDetails')}
                             >
                               <Info className="h-4 w-4" />
                             </button>
@@ -322,7 +326,7 @@ const ModulesSection: React.FC = () => {
                             onClick={() => openAssignmentModal(module)}
                             className="inline-flex items-center rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-600 hover:bg-purple-50"
                           >
-                             Module to course
+                             {t('sections.moduleToCourse')}
                           </button>
                           <EditButton onClick={() => openEditModal(module)} />
                           <DeleteButton onClick={() => requestDelete(module)} />
@@ -371,7 +375,7 @@ const ModulesSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete Module"
+        title={t('sections.deleteModule')}
         entityName={deleteTarget?.title}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
