@@ -32,8 +32,16 @@ export default defineConfig({
     } as any, // Type assertion needed - Vite's terser types may be incomplete
     sourcemap: false,
     target: 'es2020',
-    chunkSizeWarningLimit: 2500, // Increased to allow lazy-loaded PDF chunk (~2MB)
+    chunkSizeWarningLimit: 2000, // Increased to allow lazy-loaded PDF chunk (~2MB)
     // ⛔ NO manualChunks - let Vite decide to avoid TDZ errors
+    // Enable CSS code splitting for better performance
+    cssCodeSplit: true,
+    // Generate manifest for better caching
+    manifest: true,
+    // Report compressed sizes for better visibility
+    reportCompressedSize: true,
+    // Increase assets inline limit to reduce number of requests
+    assetsInlineLimit: 4096, // 4kb - inline smaller assets as base64
   },
   // Optimize dependencies pre-bundling
   optimizeDeps: {

@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Calendar, Clock, User, Building2, BookOpen, CheckCircle2, XCircle, Circle, AlertCircle } from 'lucide-react';
 import type { StudentPresence } from '../../api/studentPresence';
 import type { ClassStudentAssignment } from '../../api/classStudent';
 import type { StudentPresenceStatus } from '../../api/studentPresence';
@@ -12,7 +13,10 @@ import { usePlanningStudents } from '../../hooks/usePlanningStudents';
 import { useClassStudents } from '../../hooks/useClassStudents';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import BaseModal from '../modals/BaseModal';
+import Avatar from '../ui/Avatar';
+import { ToastContainer, type ToastType } from '../ui/Toast';
 import type { PlanningStudentEntry } from '../../api/planningStudent';
+import Button from '../ui/Button';
 
 const formatStudentName = (
   presence: StudentPresence | undefined,
@@ -56,13 +60,55 @@ const getPresenceLabel = (t: (key: string) => string): Record<string, string> =>
   absent: t('sections.absent'),
   late: t('sections.late'),
   excused: t('sections.excused'),
+  'not-marked': t('forms.notMarked'),
 });
 
-const presenceStyles: Record<string, string> = {
-  present: 'border-green-200 bg-green-50 text-green-800',
-  absent: 'border-danger-light bg-danger-light text-danger-dark',
-  late: 'border-yellow-200 bg-yellow-50 text-yellow-800',
-  excused: 'border-purple-200 bg-purple-50 text-purple-800',
+const getPresenceIcon = (status: string) => {
+  switch (status) {
+    case 'present':
+      return CheckCircle2;
+    case 'absent':
+      return XCircle;
+    case 'late':
+      return AlertCircle;
+    case 'excused':
+      return Circle;
+    default:
+      return Circle;
+  }
+};
+
+const presenceStyles: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+  present: {
+    bg: 'bg-green-50',
+    border: 'border-green-200',
+    text: 'text-green-800',
+    icon: 'text-green-600',
+  },
+  absent: {
+    bg: 'bg-red-50',
+    border: 'border-red-200',
+    text: 'text-red-800',
+    icon: 'text-red-600',
+  },
+  late: {
+    bg: 'bg-yellow-50',
+    border: 'border-yellow-200',
+    text: 'text-yellow-800',
+    icon: 'text-yellow-600',
+  },
+  excused: {
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    text: 'text-purple-800',
+    icon: 'text-purple-600',
+  },
+  'not-marked': {
+    bg: 'bg-gray-50',
+    border: 'border-gray-200',
+    text: 'text-gray-600',
+    icon: 'text-gray-500',
+  },
 };
 
 const extractErrorMessage = (err: unknown, t: (key: string) => string): string => {
@@ -75,12 +121,19 @@ const extractErrorMessage = (err: unknown, t: (key: string) => string): string =
   return t('messages.unexpectedError');
 };
 
+interface Toast {
+  id: string;
+  type: ToastType;
+  message: string;
+  undoAction?: () => void;
+}
+
 const StudentPresenceSection: React.FC = () => {
   const { t } = useTranslation();
   const [selectedPlanningId, setSelectedPlanningId] = useState<string>('');
-  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [planningDate, setPlanningDate] = useState('');
   const [activeTab, setActiveTab] = useState<'presence' | 'notes'>('presence');
+  const [toasts, setToasts] = useState<Toast[]>([]);
   
   const presenceLabel = useMemo(() => getPresenceLabel(t), [t]);
   const [noteEditor, setNoteEditor] = useState<{
@@ -88,6 +141,8 @@ const StudentPresenceSection: React.FC = () => {
     note: string;
     remarks: string;
   }>({ presence: null, note: '-1', remarks: '' });
+
+  const studentCardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const presenceParams = useMemo(
     () => ({
@@ -127,14 +182,14 @@ const StudentPresenceSection: React.FC = () => {
         label: labelParts.length ? labelParts.join(' • ') : `${t('planning.planningNumber')}${planning.id}`,
       };
     });
-  }, [filteredPlannings]);
+  }, [filteredPlannings, t]);
 
   useEffect(() => {
     if (!selectedPlanningId) return;
     const exists = filteredPlannings.some((planning) => planning.id === Number(selectedPlanningId));
     if (!exists) {
       setSelectedPlanningId('');
-      setAlert(null);
+      setNoteEditor({ presence: null, note: '-1', remarks: '' });
     }
   }, [filteredPlannings, selectedPlanningId]);
 
@@ -210,32 +265,6 @@ const StudentPresenceSection: React.FC = () => {
       .sort(compareByName);
   }, [planPresences, compareByName]);
 
-  const PAGE_SIZE = 10;
-  const [absentPage, setAbsentPage] = useState(1);
-  const [presentPage, setPresentPage] = useState(1);
-
-  useEffect(() => {
-    setAbsentPage(1);
-    setPresentPage(1);
-  }, [absentPresences.length, presentPresences.length]);
-
-  const paginate = (list: StudentPresence[], page: number) => {
-    const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-    const safePage = Math.min(page, totalPages);
-    const start = (safePage - 1) * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    return {
-      slice: list.slice(start, end),
-      page: safePage,
-      totalPages,
-      startIndex: start + 1,
-      endIndex: Math.min(end, list.length),
-    };
-  };
-
-  const absentPagination = paginate(absentPresences, absentPage);
-  const presentPagination = paginate(presentPresences, presentPage);
-
   const createPresenceMut = useCreateStudentPresence();
   const updatePresenceMut = useUpdateStudentPresence();
 
@@ -252,17 +281,13 @@ const StudentPresenceSection: React.FC = () => {
       return;
     }
 
-    // Prevent concurrent auto-creation runs
     if (isCreatingRef.current) {
       return;
     }
 
     const planningId = Number(selectedPlanningId);
-    
-    // Create a unique key for each student-planning combination
     const createKey = (studentId: number) => `${planningId}-${studentId}`;
     
-    // Check existing presences - use both student_id and student_planning_id to avoid duplicates
     const existingKeys = new Set<string>();
     planPresences.forEach((presence) => {
       if (presence.student_id && presence.student_planning_id) {
@@ -275,13 +300,11 @@ const StudentPresenceSection: React.FC = () => {
       .filter((studentId): studentId is number => Boolean(studentId))
       .filter((studentId) => {
         const key = createKey(studentId);
-        // Only create if not already in database AND not already being created
         return !existingKeys.has(key) && !autoCreatedRef.current.has(key);
       });
 
     if (!missingStudentIds.length) return;
 
-    // Mark as creating to prevent concurrent runs
     isCreatingRef.current = true;
 
     let cancelled = false;
@@ -289,11 +312,8 @@ const StudentPresenceSection: React.FC = () => {
       try {
         for (const studentId of missingStudentIds) {
           if (cancelled) break;
-          
           const key = createKey(studentId);
-          // Double-check before creating (in case another run already created it)
           if (autoCreatedRef.current.has(key)) continue;
-          
           autoCreatedRef.current.add(key);
           
           try {
@@ -306,14 +326,12 @@ const StudentPresenceSection: React.FC = () => {
               status: 1 as StudentPresenceStatus,
             });
           } catch (err: unknown) {
-            // If it's a duplicate error, that's okay - remove from tracking
             const error = err as { response?: { data?: { message?: string } } };
             const message = error?.response?.data?.message || '';
             if (message.toLowerCase().includes('duplicate') || message.toLowerCase().includes('already exists')) {
               console.warn(`Presence already exists for student ${studentId} and planning ${planningId}`);
             } else {
               console.error('Failed to auto-create presence', err);
-              // Remove from tracking on error so it can be retried
               autoCreatedRef.current.delete(key);
             }
           }
@@ -342,30 +360,47 @@ const StudentPresenceSection: React.FC = () => {
   const handlePlanningSelect = (value: number | string | '') => {
     const strValue = value === '' ? '' : String(value);
     setSelectedPlanningId(strValue);
-    setAlert(null);
     setNoteEditor({ presence: null, note: '-1', remarks: '' });
   };
 
+  const addToast = (type: ToastType, message: string, undoAction?: () => void) => {
+    const id = `toast-${Date.now()}-${Math.random()}`;
+    setToasts((prev) => [...prev, { id, type, message, undoAction }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
   const handleMarkPresence = async (presence: StudentPresence, nextPresence: StudentPresence['presence']) => {
+    const previousStatus = presence.presence;
     try {
-      // Always update existing presence record
       await updatePresenceMut.mutateAsync({
         id: presence.id,
         data: { presence: nextPresence },
       });
-      setAlert({ type: 'success', message: t('forms.markedAs', { name: formatStudentName(presence, undefined, t), status: presenceLabel[nextPresence] }) });
+      
+      const studentName = formatStudentName(presence, undefined, t);
+      const statusLabel = presenceLabel[nextPresence];
+      
+      addToast(
+        'success',
+        t('forms.markedAs', { name: studentName, status: statusLabel }),
+        () => {
+          handleMarkPresence(presence, previousStatus as StudentPresence['presence']);
+        }
+      );
+      
       refetchPresences();
     } catch (err: unknown) {
-      setAlert({ type: 'error', message: extractErrorMessage(err, t) });
+      addToast('error', extractErrorMessage(err, t));
     }
   };
-
 
   const openNoteEditor = (presence: StudentPresence) => {
     setNoteEditor({
       presence,
-      note:
-        presence.note === null || presence.note === undefined ? '-1' : String(presence.note),
+      note: presence.note === null || presence.note === undefined ? '-1' : String(presence.note),
       remarks: presence.remarks ?? '',
     });
   };
@@ -382,11 +417,11 @@ const StudentPresenceSection: React.FC = () => {
           remarks: noteEditor.remarks || undefined,
         },
       });
-      setAlert({ type: 'success', message: t('forms.presenceUpdatedSuccessfully') });
+      addToast('success', t('forms.presenceUpdatedSuccessfully'));
       closeNoteEditor();
       refetchPresences();
     } catch (err: unknown) {
-      setAlert({ type: 'error', message: extractErrorMessage(err, t) });
+      addToast('error', extractErrorMessage(err, t));
     }
   };
 
@@ -397,98 +432,124 @@ const StudentPresenceSection: React.FC = () => {
     return course.coefficient ?? '—';
   }, [selectedPlanning]);
 
-  const renderPresenceItem = (
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>, index: number, total: number) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = index < total - 1 ? index + 1 : 0;
+      studentCardRefs.current.get(nextIndex)?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = index > 0 ? index - 1 : total - 1;
+      studentCardRefs.current.get(prevIndex)?.focus();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const card = studentCardRefs.current.get(index);
+      const button = card?.querySelector('button[data-action]') as HTMLButtonElement;
+      button?.click();
+    }
+  };
+
+  const renderStudentCard = (
     presence: StudentPresence,
-    side: 'left' | 'right',
-    showEdit = false
+    index: number,
+    total: number,
+    side: 'present' | 'absent'
   ) => {
     const studentInfo = classStudentMap.get(presence.student_id ?? 0);
-    const chipStyle = presenceStyles[presence.presence] ?? 'border-gray-200 bg-gray-50 text-gray-600';
-    const containerStyle =
-      side === 'left'
-        ? 'border-orange-200 bg-orange-50/80'
-        : 'border-green-200 bg-green-50/80';
-    const titleColor = side === 'left' ? 'text-orange-900' : 'text-green-900';
-    const metaColor = side === 'left' ? 'text-orange-600' : 'text-green-600';
+    const studentName = formatStudentName(presence, studentInfo, t);
+    const status = presence.presence || 'not-marked';
+    const statusConfig = presenceStyles[status] || presenceStyles['not-marked'];
+    const StatusIcon = getPresenceIcon(status);
+    const isPresent = side === 'present';
+
     return (
-      <li
+      <div
         key={presence.id}
-        className={`rounded-2xl border p-4 shadow-sm flex items-start justify-between gap-3 ${containerStyle}`}
+        ref={(el) => {
+          if (el) studentCardRefs.current.set(index, el);
+        }}
+        tabIndex={0}
+        onKeyDown={(e) => handleKeyDown(e, index, total)}
+        className={`group rounded-lg border p-4 shadow-sm transition-all hover:shadow-md hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+          isPresent ? statusConfig.bg : 'bg-white'
+        } ${statusConfig.border}`}
       >
-        <div className="space-y-1">
-          <p className={`font-semibold leading-tight ${titleColor}`}>{formatStudentName(presence, studentInfo, t)}</p>
-          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${chipStyle}`}>
-            {presenceLabel[presence.presence] ?? presence.presence}
-          </span>
-          <div className={`text-xs ${metaColor}`}>
-            Note: {presence.note ?? -1} •{' '}
-            {presence.remarks ? (
+        <div className="flex items-center gap-3">
+          <Avatar name={studentName} size="md" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 truncate">{studentName}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <StatusIcon className={`w-4 h-4 ${statusConfig.icon}`} />
+              <span className={`text-xs font-medium ${statusConfig.text}`}>
+                {presenceLabel[status] || status}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
+              <span>Note: {presence.note ?? -1}</span>
+              {presence.remarks && (
+                <button
+                  type="button"
+                  onClick={() => openNoteEditor(presence)}
+                  className="text-primary hover:underline"
+                >
+                  {t('forms.viewRemarks')}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {activeTab === 'presence' && (
               <button
                 type="button"
-                className="text-inherit underline-offset-2 hover:underline"
-                onClick={() =>
-                  setNoteEditor({
-                    presence,
-                    note:
-                      presence.note === null || presence.note === undefined
-                        ? '-1'
-                        : String(presence.note),
-                    remarks: presence.remarks ?? '',
-                  })
-                }
+                data-action="toggle"
+                onClick={() => handleMarkPresence(presence, isPresent ? 'absent' : 'present')}
+                disabled={updatePresenceMut.isPending}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isPresent
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
               >
-                {t('forms.viewRemarks')}
+                {updatePresenceMut.isPending ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  </span>
+                ) : isPresent ? (
+                  t('forms.markAbsent')
+                ) : (
+                  t('forms.markPresent')
+                )}
               </button>
-            ) : (
-              t('forms.noRemarks')
+            )}
+            {activeTab === 'notes' && isPresent && (
+              <button
+                type="button"
+                onClick={() => openNoteEditor(presence)}
+                className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400"
+                aria-label={t('forms.addNote')}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {showEdit && (
-            <button
-              type="button"
-              onClick={() => openNoteEditor(presence)}
-              className={`rounded-full border p-2 ${
-                side === 'left'
-                  ? 'border-orange-300 text-orange-600 hover:text-orange-700 hover:border-orange-400'
-                  : 'border-green-300 text-green-600 hover:text-green-700 hover:border-green-400'
-              }`}
-              aria-label={t('forms.editNoteAndRemarks')}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z" />
-              </svg>
-            </button>
-          )}
-          {side === 'left' ? (
-            <button
-              type="button"
-              onClick={() => handleMarkPresence(presence, 'present')}
-              className="rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white hover:bg-orange-600"
-            >
-              {t('forms.markPresent')}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => handleMarkPresence(presence, 'absent')}
-              className="rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-50"
-            >
-              {t('forms.markAbsent')}
-            </button>
-          )}
-        </div>
-      </li>
+      </div>
     );
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentPresence')}</h1>
-          <p className="text-sm text-muted">
+          <h1 className="text-2xl font-bold text-gray-900">{t('sidebar.studentPresence')}</h1>
+          <p className="text-sm text-gray-600 mt-1">
             {t('forms.selectPlanningSessionToLoad')}
           </p>
         </div>
@@ -498,10 +559,10 @@ const StudentPresenceSection: React.FC = () => {
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-full transition ${
+              className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
                 activeTab === tab
-                  ? 'bg-card text-primary shadow'
-                  : 'text-muted hover:text-body'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               {tab === 'presence' ? t('sections.present') : t('common.notes')}
@@ -510,273 +571,243 @@ const StudentPresenceSection: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-body">{t('forms.planningDate')}</label>
-          <input
-            type="date"
-            value={planningDate}
-            onChange={(event) => {
-              setPlanningDate(event.target.value);
-              setSelectedPlanningId('');
-              setAlert(null);
-              setNoteEditor({ presence: null, note: '-1', remarks: '' });
-            }}
-            className="w-full rounded-md border border-border bg-card text-body px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+      {/* Planning Selector - Combined */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {t('forms.planningSession')}
+        </label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">{t('forms.planningDate')}</label>
+            <input
+              type="date"
+              value={planningDate}
+              onChange={(event) => {
+                setPlanningDate(event.target.value);
+                setSelectedPlanningId('');
+                setNoteEditor({ presence: null, note: '-1', remarks: '' });
+              }}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <SearchSelect
+            label={t('forms.selectedSession')}
+            value={selectedPlanningId}
+            onChange={handlePlanningSelect}
+            options={planningOptions}
+            placeholder={
+              planningDate
+                ? planningOptions.length
+                  ? t('forms.selectPlanning')
+                  : t('forms.noPlanningOnThisDate')
+                : t('forms.selectDateFirst')
+            }
+            isLoading={planningLoading}
+            disabled={!planningDate || planningOptions.length === 0}
           />
         </div>
-        <SearchSelect
-          label={t('forms.planningSession')}
-          value={selectedPlanningId}
-          onChange={handlePlanningSelect}
-          options={planningOptions}
-          placeholder={
-            planningDate
-              ? planningOptions.length
-                ? t('forms.selectPlanning')
-                : t('forms.noPlanningOnThisDate')
-              : t('forms.selectDateFirst')
-          }
-          isLoading={planningLoading}
-          disabled={!planningDate || planningOptions.length === 0}
-        />
+      </div>
 
-        {planningDetail && (
-          <div className="rounded-2xl border border-primary-light bg-primary-light p-4 text-sm text-heading shadow-inner">
-            <p className="text-xs uppercase tracking-wide text-primary mb-2">{t('forms.planningDetails')}</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              <div>
-                <p className="text-xs text-primary">{t('sidebar.classes')}</p>
-                <p className="font-semibold">{planningDetail.classTitle}</p>
+      {selectedPlanningId && planningDetail ? (
+        <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] gap-6">
+          {/* Left Column - Student Lists (65%) */}
+          <div className="space-y-6">
+            {activeTab === 'presence' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Absent / Not Marked Column */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <div className="p-4 border-b border-gray-200 bg-red-50/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                          <XCircle className="w-4 h-4 text-red-600" />
+                          {t('forms.absentNotYetMarked')}
+                        </h3>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {absentPresences.length} {absentPresences.length === 1 ? t('common.student') : t('common.student') + 's'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 max-h-[600px] overflow-y-auto">
+                    {presenceLoading || classStudentsLoading ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="animate-pulse">
+                            <div className="h-20 bg-gray-200 rounded-lg" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : absentPresences.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">{t('forms.noStudentsMarkedAbsent')}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {absentPresences.map((presence, index) =>
+                          renderStudentCard(presence, index, absentPresences.length, 'absent')
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Present Column */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <div className="p-4 border-b border-gray-200 bg-green-50/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          {t('forms.presentStudents')}
+                        </h3>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {presentPresences.length} {presentPresences.length === 1 ? t('common.student') : t('common.student') + 's'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 max-h-[600px] overflow-y-auto">
+                    {presenceLoading || classStudentsLoading ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="animate-pulse">
+                            <div className="h-20 bg-gray-200 rounded-lg" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : presentPresences.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <Circle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">{t('forms.noStudentsMarkedPresent')}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {presentPresences.map((presence, index) =>
+                          renderStudentCard(presence, index, presentPresences.length, 'present')
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-primary">{t('sections.period')}</p>
-                <p className="font-semibold">{planningDetail.period}</p>
+            ) : (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    {t('forms.presentStudents')} · {t('common.notes')}
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {presentPresences.length} {presentPresences.length === 1 ? t('common.student') : t('common.student') + 's'}
+                  </p>
+                </div>
+                <div className="p-4 max-h-[600px] overflow-y-auto">
+                  {presenceLoading || classStudentsLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="h-20 bg-gray-200 rounded-lg" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : presentPresences.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <Circle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">{t('forms.markStudentsAsPresentToManage')}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {presentPresences.map((presence, index) =>
+                        renderStudentCard(presence, index, presentPresences.length, 'present')
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-primary">{t('common.date')}</p>
-                <p className="font-semibold">{planningDetail.date}</p>
-              </div>
-              <div>
-                <p className="text-xs text-primary">{t('common.time')}</p>
-                <p className="font-semibold">{planningDetail.time}</p>
-              </div>
-              <div>
-                <p className="text-xs text-primary">{t('sections.teacher')}</p>
-                <p className="font-semibold">{planningDetail.teacher}</p>
-              </div>
-              <div>
-                <p className="text-xs text-primary">{t('forms.classroom')}</p>
-                <p className="font-semibold">{planningDetail.classroom}</p>
+            )}
+          </div>
+
+          {/* Right Column - Session Summary (35% - Sticky) */}
+          <div className="lg:sticky lg:top-4 h-fit">
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-primary" />
+                {t('forms.sessionOverview')}
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('common.date')}</p>
+                    <p className="text-sm font-medium text-gray-900">{planningDetail.date}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('common.time')}</p>
+                    <p className="text-sm font-medium text-gray-900">{planningDetail.time}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <User className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('sections.teacher')}</p>
+                    <p className="text-sm font-medium text-gray-900">{planningDetail.teacher}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Building2 className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('forms.classroom')}</p>
+                    <p className="text-sm font-medium text-gray-900">{planningDetail.classroom}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <BookOpen className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-500">{t('sidebar.classes')}</p>
+                    <p className="text-sm font-medium text-gray-900">{planningDetail.classTitle}</p>
+                    <p className="text-xs text-gray-500 mt-1">{t('sections.period')}: {planningDetail.period}</p>
+                  </div>
+                </div>
+                {activeTab === 'notes' && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 mb-1">{t('sections.coefficient')}</p>
+                    <p className="text-2xl font-semibold text-primary">{courseCoefficient}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )}
-      </div>
-
-      {alert && (
-        <div
-          className={`rounded-md border px-4 py-2 text-sm ${
-            alert.type === 'success'
-              ? 'border-success-light bg-success-light text-success-dark'
-              : 'border-danger-light bg-danger-light text-danger-dark'
-          }`}
-        >
-          {alert.message}
         </div>
-      )}
-
-      {presenceError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-          {(presenceError as Error).message}
-        </div>
-      )}
-      {classStudentsError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-          {(classStudentsError as Error).message}
-        </div>
-      )}
-
-      {activeTab === 'presence' ? (
-        !selectedPlanningId ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card text-body bg-gray-50 p-6 text-center text-sm text-muted">
+      ) : (
+        <div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
+          <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-sm text-gray-600">
             {planningDate
               ? planningOptions.length
                 ? t('forms.selectPlanningSessionToLoad')
                 : t('forms.noPlanningSessionsFound')
               : t('forms.selectDateToView')}
-          </div>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{t('forms.classRoster')} · {t('forms.absentNotYetMarked')}</p>
-                  <p className="text-xs text-muted">
-                    {absentPresences.length} student{absentPresences.length === 1 ? '' : 's'}
-                  </p>
-                </div>
-              </div>
-              {presenceLoading || classStudentsLoading ? (
-                <div className="py-12 text-center text-sm text-muted">{t('sections.loadingStudents')}</div>
-              ) : absentPresences.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted">{t('forms.everyoneIsMarkedPresent')}</div>
-              ) : (
-                <>
-                  <ul className="space-y-3">
-                    {absentPagination.slice.map((presence) => renderPresenceItem(presence, 'left', false))}
-                  </ul>
-                  {absentPresences.length > PAGE_SIZE && (
-                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
-                      <span>
-                        {t('sections.showing')} {absentPagination.startIndex}–{absentPagination.endIndex} {t('sections.of')} {absentPresences.length}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setAbsentPage((prev) => Math.max(1, prev - 1))}
-                          disabled={absentPagination.page === 1}
-                          className="rounded-full border px-2 py-1 disabled:opacity-40"
-                        >
-                          {t('common.previous')}
-                        </button>
-                        <span>
-                          {absentPagination.page}/{absentPagination.totalPages}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setAbsentPage((prev) => Math.min(absentPagination.totalPages, prev + 1))}
-                          disabled={absentPagination.page === absentPagination.totalPages}
-                          className="rounded-full border px-2 py-1 disabled:opacity-40"
-                        >
-                          {t('common.next')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{t('forms.presentStudents')}</p>
-                  <p className="text-xs text-muted">
-                    {presentPresences.length} student{presentPresences.length === 1 ? '' : 's'}
-                  </p>
-                </div>
-              </div>
-              {presenceLoading || classStudentsLoading ? (
-                <div className="py-12 text-center text-sm text-muted">Loading students…</div>
-              ) : presentPresences.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted">{t('forms.markStudentsAsPresent')}</div>
-              ) : (
-                <>
-                  <ul className="space-y-3">
-                    {presentPagination.slice.map((presence) => renderPresenceItem(presence, 'right', false))}
-                  </ul>
-                  {presentPresences.length > PAGE_SIZE && (
-                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
-                      <span>
-                        {t('sections.showing')} {presentPagination.startIndex}–{presentPagination.endIndex} {t('sections.of')} {presentPresences.length}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setPresentPage((prev) => Math.max(1, prev - 1))}
-                          disabled={presentPagination.page === 1}
-                          className="rounded-full border px-2 py-1 disabled:opacity-40"
-                        >
-                          {t('common.previous')}
-                        </button>
-                        <span>
-                          {presentPagination.page}/{presentPagination.totalPages}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setPresentPage((prev) => Math.min(presentPagination.totalPages, prev + 1))}
-                          disabled={presentPagination.page === presentPagination.totalPages}
-                          className="rounded-full border px-2 py-1 disabled:opacity-40"
-                        >
-                          {t('common.next')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        )
-      ) : !selectedPlanningId ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card text-body bg-gray-50 p-6 text-center text-sm text-muted">
-            {planningDate
-            ? planningOptions.length
-              ? t('forms.selectPlanningSessionToReview')
-              : t('forms.noPlanningSessionsFound')
-            : t('forms.selectDateToView')}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900 shadow-inner">
-            <p className="text-xs uppercase tracking-wide text-sky-500 mb-1">Coefficient</p>
-            <p className="text-2xl font-semibold">
-              {courseCoefficient}
-            </p>
-          </div>
-          <div className="space-y-3 rounded-2xl border border-green-100 bg-white p-4 shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{t('forms.presentStudents')} · {t('common.notes')}</p>
-                <p className="text-xs text-muted">
-                  {presentPresences.length} student{presentPresences.length === 1 ? '' : 's'}
-                </p>
-              </div>
-            </div>
-            {presenceLoading || classStudentsLoading ? (
-              <div className="py-12 text-center text-sm text-muted">Loading students…</div>
-            ) : presentPresences.length === 0 ? (
-              <div className="py-12 text-center text-sm text-muted">{t('forms.markStudentsAsPresentToManage')}</div>
-            ) : (
-              <>
-                <ul className="space-y-3">
-                  {presentPagination.slice.map((presence) => renderPresenceItem(presence, 'right', true))}
-                </ul>
-                {presentPresences.length > PAGE_SIZE && (
-                  <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-muted">
-                      <span>
-                      {t('sections.showing')} {presentPagination.startIndex}–{presentPagination.endIndex} {t('sections.of')} {presentPresences.length}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPresentPage((prev) => Math.max(1, prev - 1))}
-                        disabled={presentPagination.page === 1}
-                        className="rounded-full border px-2 py-1 disabled:opacity-40"
-                      >
-                        {t('common.previous')}
-                      </button>
-                      <span>
-                        {presentPagination.page}/{presentPagination.totalPages}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setPresentPage((prev) => Math.min(presentPagination.totalPages, prev + 1))}
-                        disabled={presentPagination.page === presentPagination.totalPages}
-                        className="rounded-full border px-2 py-1 disabled:opacity-40"
-                      >
-                        {t('common.next')}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          </p>
         </div>
       )}
 
+      {/* Error Messages */}
+      {presenceError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {(presenceError as Error).message}
+        </div>
+      )}
+      {classStudentsError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {(classStudentsError as Error).message}
+        </div>
+      )}
+
+      {/* Note Editor Modal */}
       {noteEditor.presence && (
         <BaseModal
           isOpen
@@ -792,47 +823,42 @@ const StudentPresenceSection: React.FC = () => {
             }}
           >
             <div>
-              <label className="block text-sm font-medium text-body mb-1">Note</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.notes')}</label>
               <input
                 type="number"
-                className="w-full rounded-md border border-border bg-card text-body px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 value={noteEditor.note}
                 onChange={(event) => setNoteEditor((prev) => ({ ...prev, note: event.target.value }))}
                 placeholder="-1"
               />
-              <p className="mt-1 text-xs text-muted">{t('forms.useMinusOneToIndicate')}</p>
+              <p className="mt-1 text-xs text-gray-500">{t('forms.useMinusOneToIndicate')}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-body mb-1">Remarks</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('forms.remarks')}</label>
               <textarea
-                className="w-full rounded-md border border-border bg-card text-body px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 rows={4}
                 value={noteEditor.remarks}
                 onChange={(event) => setNoteEditor((prev) => ({ ...prev, remarks: event.target.value }))}
                 placeholder={t('forms.addOptionalRemarks')}
               />
             </div>
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={closeNoteEditor}
-                className="text-sm font-medium text-gray-600 hover:text-gray-800"
-              >
+            <div className="flex items-center justify-end gap-3 pt-4">
+              <Button type="button" variant="secondary" onClick={closeNoteEditor}>
                 {t('common.cancel')}
-              </button>
-              <button
-                type="submit"
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:brightness-95"
-              >
+              </Button>
+              <Button type="submit" variant="primary">
                 {t('common.save')}
-              </button>
+              </Button>
             </div>
           </form>
         </BaseModal>
       )}
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 };
 
 export default StudentPresenceSection;
-

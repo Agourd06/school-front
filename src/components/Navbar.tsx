@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
@@ -25,11 +25,69 @@ const Navbar: React.FC = () => {
     i18n.changeLanguage(newLang);
   };
 
+  // Helper function to darken a hex color
+  const darkenColor = (hex: string, percent: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.max(0, Math.floor((num >> 16) * (1 - percent / 100)));
+    const g = Math.max(0, Math.floor(((num >> 8) & 0x00ff) * (1 - percent / 100)));
+    const b = Math.max(0, Math.floor((num & 0x0000ff) * (1 - percent / 100)));
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  };
+
+  // Get navbar background gradient - use company colors when logged in, default colors otherwise
+  const navbarBackground = useMemo(() => {
+    if (user && company) {
+      // When logged in, use company colors
+      const primaryColor = company.primaryColor || '#2563eb';
+      const secondaryColor = company.secondaryColor || '#0ea5e9';
+      
+      // Create a gradient: darker primary -> primary -> secondary
+      // Only darken if it's a hex color
+      let startColor = primaryColor;
+      if (primaryColor.startsWith('#')) {
+        startColor = darkenColor(primaryColor, 20);
+      }
+      
+      return `linear-gradient(135deg, ${startColor} 0%, ${primaryColor} 50%, ${secondaryColor} 100%)`;
+    }
+    // Default gradient when not logged in
+    return 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)';
+  }, [user, company]);
+
+  // Get border color - use primary color when logged in
+  const borderColor = useMemo(() => {
+    if (user && company?.primaryColor) {
+      const primaryColor = company.primaryColor;
+      // For hex colors, add opacity using color-mix or rgba conversion
+      if (primaryColor.startsWith('#')) {
+        // Convert hex to rgba with 30% opacity
+        const hex = primaryColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, 0.3)`;
+      }
+      // For rgb/rgba colors, adjust opacity
+      if (primaryColor.startsWith('rgb')) {
+        return primaryColor.replace(/rgba?\(([^)]+)\)/, (match, values) => {
+          const colors = values.split(',').map((v: string) => v.trim());
+          if (colors.length === 3) {
+            return `rgba(${colors.join(', ')}, 0.3)`;
+          }
+          return match;
+        });
+      }
+      return primaryColor;
+    }
+    return 'rgba(30, 58, 138, 0.3)'; // Default blue-900/30
+  }, [user, company]);
+
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-40 text-white shadow-md border-b border-blue-900/30"
+      className="fixed top-0 left-0 right-0 z-40 text-white shadow-md"
       style={{
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)',
+        background: navbarBackground,
+        borderBottom: `1px solid ${borderColor}`,
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

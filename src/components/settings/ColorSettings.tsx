@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { companyApi } from '../../api/company';
 import { useAuth } from '../../hooks/useAuth';
 import { applyThemeToDocument, mergeTheme, defaultTheme } from '../../theme/colors';
@@ -9,6 +10,7 @@ interface ColorSettingsProps {
 }
 
 const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,7 +72,7 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
       // Reset success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to save colors';
+      const errorMessage = err.response?.data?.message || t('settings.failedToSaveColors');
       setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
     } finally {
       setSaving(false);
@@ -80,7 +82,7 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-500">Loading color settings...</div>
+        <div className="text-gray-500">{t('settings.loadingColorSettings')}</div>
       </div>
     );
   }
@@ -88,9 +90,9 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Company Colors</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('settings.companyColors')}</h3>
         <p className="text-sm text-gray-600">
-          Customize your company's brand colors. Changes will be applied immediately.
+          {t('settings.customizeBrandColors')}
         </p>
       </div>
 
@@ -102,14 +104,14 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
 
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-          Colors saved successfully!
+          {t('settings.colorsSavedSuccessfully')}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label htmlFor="primary-color" className="block text-sm font-medium text-gray-700 mb-2">
-            Primary Color
+            {t('settings.primaryColor')}
           </label>
           <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-4">
             <input
@@ -120,8 +122,8 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
               className="h-12 w-12 rounded-lg border border-gray-300 bg-white shadow-sm cursor-pointer"
             />
             <div>
-              <p className="text-sm font-medium text-gray-900">Brand accents & buttons</p>
-              <p className="text-xs text-gray-500">Used for primary actions everywhere</p>
+              <p className="text-sm font-medium text-gray-900">{t('settings.brandAccentsButtons')}</p>
+              <p className="text-xs text-gray-500">{t('settings.usedForPrimaryActions')}</p>
               <p className="text-xs text-gray-400 mt-1 font-mono">{primaryColor}</p>
             </div>
           </div>
@@ -129,7 +131,7 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
 
         <div>
           <label htmlFor="secondary-color" className="block text-sm font-medium text-gray-700 mb-2">
-            Secondary Color
+            {t('settings.secondaryColor')}
           </label>
           <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-4">
             <input
@@ -140,8 +142,8 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
               className="h-12 w-12 rounded-lg border border-gray-300 bg-white shadow-sm cursor-pointer"
             />
             <div>
-              <p className="text-sm font-medium text-gray-900">Highlights & links</p>
-              <p className="text-xs text-gray-500">Used for secondary buttons and states</p>
+              <p className="text-sm font-medium text-gray-900">{t('settings.highlightsLinks')}</p>
+              <p className="text-xs text-gray-500">{t('settings.usedForSecondaryButtons')}</p>
               <p className="text-xs text-gray-400 mt-1 font-mono">{secondaryColor}</p>
             </div>
           </div>
@@ -154,7 +156,7 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
           disabled={saving}
           className="px-6"
         >
-          {saving ? 'Saving...' : 'Save Colors'}
+          {saving ? t('settings.saving') : t('settings.saveColors')}
         </Button>
       </div>
     </div>

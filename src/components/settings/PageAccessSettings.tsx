@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { pagesApi } from '../../api/pages';
 import type { Page } from '../../api/pages';
 import type { Profile } from '../../types/profile';
@@ -16,6 +17,7 @@ const EMPTY_META = {
 };
 
 const PageAccessSettings: React.FC = () => {
+  const { t } = useTranslation();
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [search, setSearch] = useState('');
   const [pages, setPages] = useState<Page[]>([]);
@@ -55,7 +57,7 @@ const PageAccessSettings: React.FC = () => {
       setPages(response.data);
       setMeta(response.meta);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to load pages';
+      const errorMessage = err.response?.data?.message || t('settings.failedToLoadPages');
       setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
     } finally {
       setLoading(false);
@@ -73,7 +75,7 @@ const PageAccessSettings: React.FC = () => {
       const data = await pagesApi.getPagesForProfile(profile);
       setAssignedPageIds(new Set(data.map(p => p.id)));
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to load profile pages';
+      const errorMessage = err.response?.data?.message || t('settings.failedToLoadProfilePages');
       setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
     } finally {
       setLoading(false);
@@ -137,7 +139,7 @@ const PageAccessSettings: React.FC = () => {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to update access';
+      const errorMessage = err.response?.data?.message || t('settings.failedToUpdateAccess');
       setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
     } finally {
       setSaving(false);
@@ -147,7 +149,7 @@ const PageAccessSettings: React.FC = () => {
   if (loading && pages.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-gray-500">Loading pages...</div>
+        <div className="text-gray-500">{t('settings.loadingPages')}</div>
       </div>
     );
   }
@@ -155,9 +157,9 @@ const PageAccessSettings: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Page Access Management</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('settings.pageAccessManagement')}</h3>
         <p className="text-sm text-gray-600">
-          Assign pages to profiles to control which users can access which routes.
+          {t('settings.assignPagesToProfiles')}
         </p>
       </div>
 
@@ -172,13 +174,13 @@ const PageAccessSettings: React.FC = () => {
 
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-          Access updated successfully!
+          {t('settings.accessUpdatedSuccessfully')}
         </div>
       )}
 
       <div>
         <label htmlFor="profile-select" className="block text-sm font-medium text-gray-700 mb-2">
-          Select Profile
+          {t('settings.selectProfile')}
         </label>
         <select
           id="profile-select"
@@ -186,7 +188,7 @@ const PageAccessSettings: React.FC = () => {
           onChange={(e) => setSelectedProfile(e.target.value as Profile)}
           className="w-full sm:w-auto rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none bg-white"
         >
-          <option value="">-- Select Profile --</option>
+          <option value="">{t('settings.selectProfilePlaceholder')}</option>
           {PROFILE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -200,36 +202,36 @@ const PageAccessSettings: React.FC = () => {
           {/* Search Input */}
           <div>
             <label htmlFor="page-search" className="block text-sm font-medium text-gray-700 mb-2">
-              Search Pages
+              {t('settings.searchPages')}
             </label>
             <input
               id="page-search"
               type="text"
               value={search}
               onChange={handleSearchChange}
-              placeholder="Search by title or route..."
+              placeholder={t('settings.searchByTitleOrRoute')}
               className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none bg-white"
             />
           </div>
 
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Check the pages you want to assign to <strong>{PROFILE_OPTIONS.find(p => p.value === selectedProfile)?.label}</strong> profile:
+              {t('settings.checkPagesToAssign')} <strong>{PROFILE_OPTIONS.find(p => p.value === selectedProfile)?.label}</strong> {t('settings.profile')}
             </p>
             <span className="text-sm font-medium text-gray-700">
-              Showing {pages.length} of {meta.total} pages
-              {assignedPageIds.size > 0 && ` • ${assignedPageIds.size} selected`}
+              {t('settings.showingPagesOf', { count: pages.length, total: meta.total })}
+              {assignedPageIds.size > 0 && ` • ${assignedPageIds.size} ${t('settings.selected')}`}
             </span>
           </div>
 
           {loading && pages.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Loading pages...</p>
+              <p className="text-gray-500">{t('settings.loadingPages')}</p>
             </div>
           ) : pages.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500">
-                {search ? 'No pages found matching your search' : 'No pages available'}
+                {search ? t('settings.noPagesFound') : t('settings.noPagesAvailable')}
               </p>
             </div>
           ) : (
@@ -258,7 +260,7 @@ const PageAccessSettings: React.FC = () => {
               {meta.totalPages > 1 && (
                 <div className="flex items-center justify-between border-t border-gray-200 pt-4">
                   <div className="text-sm text-gray-600">
-                    Page {meta.page} of {meta.totalPages} • {meta.total} total pages
+                    {t('settings.pageOfTotal', { page: meta.page, totalPages: meta.totalPages })} • {meta.total} {t('settings.totalPages')}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -267,7 +269,7 @@ const PageAccessSettings: React.FC = () => {
                       variant="secondary"
                       size="sm"
                     >
-                      Previous
+                      {t('common.previous')}
                     </Button>
                     <Button
                       onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
@@ -275,7 +277,7 @@ const PageAccessSettings: React.FC = () => {
                       variant="secondary"
                       size="sm"
                     >
-                      Next
+                      {t('common.next')}
                     </Button>
                   </div>
                 </div>
@@ -289,7 +291,7 @@ const PageAccessSettings: React.FC = () => {
               disabled={saving || !selectedProfile}
               className="px-6"
             >
-              {saving ? 'Saving...' : 'Save Access Changes'}
+              {saving ? t('settings.saving') : t('settings.saveAccessChanges')}
             </Button>
           </div>
         </div>
@@ -297,7 +299,7 @@ const PageAccessSettings: React.FC = () => {
 
       {!selectedProfile && (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">Please select a profile to manage page access</p>
+          <p className="text-gray-500">{t('settings.pleaseSelectProfile')}</p>
         </div>
       )}
     </div>

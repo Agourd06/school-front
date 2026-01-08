@@ -171,12 +171,16 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
                                       label: `${diploma.title || t('forms.diploma')} – ${t('forms.picture')} 1`,
                                     })
                                   }
-                                  className="w-full"
+                                  className="w-full h-48 flex items-center justify-center bg-gray-50"
                                 >
                                   <img
-                                    className="h-48 w-full object-contain transition-transform duration-300 hover:scale-105"
+                                    className="max-h-48 w-full object-contain transition-transform duration-300 hover:scale-105"
                                     src={picture1Url}
                                     alt={`${t('forms.diplomaPicture')} 1`}
+                                    loading="lazy"
+                                    decoding="async"
+                                    width="400"
+                                    height="192"
                                   />
                                 </button>
                               </div>
@@ -191,12 +195,16 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
                                       label: `${diploma.title || t('forms.diploma')} – ${t('forms.picture')} 2`,
                                     })
                                   }
-                                  className="w-full"
+                                  className="w-full h-48 flex items-center justify-center bg-gray-50"
                                 >
                                   <img
-                                    className="h-48 w-full object-contain transition-transform duration-300 hover:scale-105"
+                                    className="max-h-48 w-full object-contain transition-transform duration-300 hover:scale-105"
                                     src={picture2Url}
                                     alt={`${t('forms.diplomaPicture')} 2`}
+                                    loading="lazy"
+                                    decoding="async"
+                                    width="400"
+                                    height="192"
                                   />
                                 </button>
                               </div>

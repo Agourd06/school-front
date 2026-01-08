@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { Input, Select, Button } from '../ui';
 import { useCreateClassroomType, useUpdateClassroomType } from '../../hooks/useClassroomTypes';
@@ -12,6 +13,7 @@ interface ClassroomTypeModalProps {
 }
 
 const ClassroomTypeModal: React.FC<ClassroomTypeModalProps> = ({ isOpen, onClose, item }) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(item?.title || '');
   const [status, setStatus] = useState<number>(item?.status ?? 1);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,7 @@ const ClassroomTypeModal: React.FC<ClassroomTypeModalProps> = ({ isOpen, onClose
     setError(null);
 
     if (!title.trim()) {
-      setError('Title is required');
+      setError(t('forms.titleRequired'));
       return;
     }
 
@@ -62,7 +64,7 @@ const ClassroomTypeModal: React.FC<ClassroomTypeModalProps> = ({ isOpen, onClose
       } else if (typeof axiosError.message === 'string') {
         setError(axiosError.message);
       } else {
-        setError('An error occurred');
+        setError(t('messages.errorOccurred'));
       }
     }
   };
@@ -71,7 +73,7 @@ const ClassroomTypeModal: React.FC<ClassroomTypeModalProps> = ({ isOpen, onClose
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={item ? 'Edit Classroom Type' : 'Create Classroom Type'}
+      title={item ? t('settings.editClassroomType') : t('settings.createClassroomType')}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -81,7 +83,7 @@ const ClassroomTypeModal: React.FC<ClassroomTypeModalProps> = ({ isOpen, onClose
         )}
 
         <Input
-          label="Title"
+          label={t('settings.title')}
           name="title"
           value={title}
           onChange={(e) => {
@@ -93,22 +95,30 @@ const ClassroomTypeModal: React.FC<ClassroomTypeModalProps> = ({ isOpen, onClose
         />
 
         <Select
-          label="Status"
+          label={t('common.status')}
           name="status"
           value={status}
           onChange={(e) => setStatus(Number(e.target.value))}
-          options={STATUS_OPTIONS_FORM.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }))}
+          options={STATUS_OPTIONS_FORM.map((opt) => {
+            const statusLabels: Record<number, string> = {
+              0: t('forms.disabled'),
+              1: t('forms.active'),
+              2: t('forms.pending'),
+              [-1]: t('forms.archived'),
+            };
+            return {
+              value: opt.value,
+              label: statusLabels[opt.value] || opt.label,
+            };
+          })}
         />
 
         <div className="flex justify-end space-x-3 pt-4">
           <Button type="button" variant="secondary" onClick={onClose} disabled={createMutation.isPending || updateMutation.isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="primary" isLoading={createMutation.isPending || updateMutation.isPending}>
-            {item ? 'Update' : 'Create'}
+            {item ? t('common.update') : t('common.create')}
           </Button>
         </div>
       </form>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import StudentLinkTypesSection from '../sections/StudentLinkTypesSection';
 import ClassRoomTypesSection from './ClassRoomTypesSection';
 import PlanningSessionTypesSection from '../sections/PlanningSessionTypesSection';
@@ -6,12 +7,13 @@ import PlanningSessionTypesSection from '../sections/PlanningSessionTypesSection
 type TypesSubTab = 'linkTypes' | 'classRoomTypes' | 'planningSessionTypes';
 
 const TypesSettings: React.FC = () => {
+  const { t } = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState<TypesSubTab>('linkTypes');
 
   const subTabs: Array<{ id: TypesSubTab; label: string }> = [
-    { id: 'linkTypes', label: 'Link Types' },
-    { id: 'classRoomTypes', label: 'Class Room Types' },
-    { id: 'planningSessionTypes', label: 'Planning Session Types' },
+    { id: 'linkTypes', label: t('settings.linkTypes') },
+    { id: 'classRoomTypes', label: t('settings.classRoomTypes') },
+    { id: 'planningSessionTypes', label: t('settings.planningSessionTypes') },
   ];
 
   return (

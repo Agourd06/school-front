@@ -141,12 +141,16 @@ const StudentDetailsButton: React.FC<StudentDetailsButtonProps> = ({ studentId }
                                   label: `${diploma.title || 'Diploma'} – picture 1`,
                                 })
                               }
-                              className="w-full"
+                              className="w-full h-40 flex items-center justify-center bg-gray-50"
                             >
                               <img
-                                className="h-40 w-full object-contain transition-transform duration-300 hover:scale-105"
+                                className="max-h-40 w-full object-contain transition-transform duration-300 hover:scale-105"
                                 src={getFileUrl(diploma.diplome_picture_1)}
                                 alt="Diploma picture 1"
+                                loading="lazy"
+                                decoding="async"
+                                width="400"
+                                height="160"
                               />
                             </button>
                           </div>
@@ -161,12 +165,16 @@ const StudentDetailsButton: React.FC<StudentDetailsButtonProps> = ({ studentId }
                                   label: `${diploma.title || 'Diploma'} – picture 2`,
                                 })
                               }
-                              className="w-full"
+                              className="w-full h-40 flex items-center justify-center bg-gray-50"
                             >
                               <img
-                                className="h-40 w-full object-contain transition-transform duration-300 hover:scale-105"
+                                className="max-h-40 w-full object-contain transition-transform duration-300 hover:scale-105"
                                 src={getFileUrl(diploma.diplome_picture_2)}
                                 alt="Diploma picture 2"
+                                loading="lazy"
+                                decoding="async"
+                                width="400"
+                                height="160"
                               />
                             </button>
                           </div>

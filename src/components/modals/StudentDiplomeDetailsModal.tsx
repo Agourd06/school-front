@@ -30,10 +30,26 @@ const StudentDiplomeDetailsModal: React.FC<Props> = ({ isOpen, onClose, item }) 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {item.diplome_picture_1 && (
-            <img src={getFileUrl(item.diplome_picture_1)} alt="diplome 1" className="w-full max-h-[70vh] object-contain border rounded" />
+            <div className="aspect-video bg-gray-50 border rounded overflow-hidden">
+              <img 
+                src={getFileUrl(item.diplome_picture_1)} 
+                alt="diplome 1" 
+                className="w-full h-full object-contain" 
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
           )}
           {item.diplome_picture_2 && (
-            <img src={getFileUrl(item.diplome_picture_2)} alt="diplome 2" className="w-full max-h-[70vh] object-contain border rounded" />
+            <div className="aspect-video bg-gray-50 border rounded overflow-hidden">
+              <img 
+                src={getFileUrl(item.diplome_picture_2)} 
+                alt="diplome 2" 
+                className="w-full h-full object-contain" 
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
           )}
           {!item.diplome_picture_1 && !item.diplome_picture_2 && (
             <div className="text-sm text-gray-500">No images uploaded.</div>

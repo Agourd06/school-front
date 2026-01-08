@@ -124,7 +124,7 @@ const StudentLinkTypesSection: React.FC = () => {
     try {
       await deleteLinkTypeMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
-      setAlert({ type: 'success', message: 'Link type deleted successfully.' });
+      setAlert({ type: 'success', message: t('settings.linkTypeDeletedSuccessfully') });
       refetchLinkTypes();
     } catch (err: unknown) {
       const message = extractErrorMessage(err, t);
@@ -178,7 +178,7 @@ const StudentLinkTypesSection: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <SearchSelect
-            label="Status"
+            label={t('common.status')}
             value={filters.status}
             onChange={handleFilterChange('status')}
             options={statusFilterOptions}
@@ -186,11 +186,11 @@ const StudentLinkTypesSection: React.FC = () => {
           />
           <div className="md:col-span-2">
             <Input
-              label="Search"
+              label={t('common.search')}
               type="text"
               value={filters.search}
               onChange={handleSearchChange}
-              placeholder="Search by title..."
+              placeholder={t('forms.searchByTitle')}
               className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
@@ -202,13 +202,13 @@ const StudentLinkTypesSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  {t('settings.title')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -216,13 +216,13 @@ const StudentLinkTypesSection: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={3} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading link types…
+                    {t('settings.loadingLinkTypes')}
                   </td>
                 </tr>
               ) : linkTypes.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No link types found.
+                    {t('settings.noLinkTypesFound')}
                   </td>
                 </tr>
               ) : (
@@ -261,7 +261,7 @@ const StudentLinkTypesSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete Link Type"
+        title={t('settings.deleteLinkType')}
         entityName={deleteTarget?.title}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

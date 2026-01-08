@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ColorSettings from '../components/settings/ColorSettings';
 import PageAccessSettings from '../components/settings/PageAccessSettings';
 import TypesSettings from '../components/settings/TypesSettings';
@@ -6,19 +7,20 @@ import TypesSettings from '../components/settings/TypesSettings';
 type SettingsTab = 'colors' | 'access' | 'types';
 
 const SettingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<SettingsTab>('colors');
 
   const tabs: Array<{ id: SettingsTab; label: string }> = [
-    { id: 'colors', label: 'Colors' },
-    { id: 'access', label: 'Page Access' },
-    { id: 'types', label: 'Types' },
+    { id: 'colors', label: t('settings.colors') },
+    { id: 'access', label: t('settings.pageAccess') },
+    { id: 'types', label: t('settings.types') },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-sm text-gray-600">Manage your company settings and page access</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('settings.settings')}</h1>
+        <p className="text-sm text-gray-600">{t('settings.manageCompanySettings')}</p>
       </div>
 
       {/* Tabs */}

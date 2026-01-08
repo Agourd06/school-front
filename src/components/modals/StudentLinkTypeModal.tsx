@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateStudentLinkType, useUpdateStudentLinkType } from '../../hooks/useStudentLinkTypes';
 import { StudentLinkTypeForm, type StudentLinkType } from '../forms';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 const StudentLinkTypeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
+  const { t } = useTranslation();
   const createMut = useCreateStudentLinkType();
   const updateMut = useUpdateStudentLinkType();
 
@@ -26,7 +28,7 @@ const StudentLinkTypeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Link Type' : 'Add Link Type'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? t('settings.editLinkType') : t('settings.addLinkType')}>
       <StudentLinkTypeForm
         initialData={item}
         onSubmit={handleSubmit}

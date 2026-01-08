@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
@@ -9,52 +9,70 @@ import TeacherRoute from './components/guards/TeacherRoute';
 import DashboardLayout from './components/layouts/DashboardLayout';
 import StudentLayout from './components/layouts/StudentLayout';
 import TeacherLayout from './components/layouts/TeacherLayout';
-import AuthPage from './pages/AuthPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import RegistrationPage from './pages/RegistrationPage';
-import SetPasswordPage from './pages/SetPasswordPage';
-import ProfilePage from './pages/ProfilePage';
-import DashboardHomePage from './pages/dashboard/DashboardHomePage';
-import ProgramsPage from './pages/dashboard/ProgramsPage';
-import SpecializationsPage from './pages/dashboard/SpecializationsPage';
-import LevelsPage from './pages/dashboard/LevelsPage';
-import SchoolYearsPage from './pages/dashboard/SchoolYearsPage';
-import SchoolYearPeriodsPage from './pages/dashboard/SchoolYearPeriodsPage';
-import ClassesPage from './pages/dashboard/ClassesPage';
-import CoursesPage from './pages/dashboard/CoursesPage';
-import ModulesPage from './pages/dashboard/ModulesPage';
-import ClassRoomsPage from './pages/dashboard/ClassRoomsPage';
-import StudentsPage from './pages/dashboard/StudentsPage';
-import ClassStudentsPage from './pages/dashboard/ClassStudentsPage';
-import PlanningPage from './pages/dashboard/PlanningPage';
-import StudentReportsPage from './pages/dashboard/StudentReportsPage';
-import StudentPresencePage from './pages/dashboard/StudentPresencePage';
-import StudentNotesPage from './pages/dashboard/StudentNotesPage';
-import StudentReportDetailsPage from './pages/dashboard/StudentReportDetailsPage';
-import PlanningSessionTypesPage from './pages/dashboard/PlanningSessionTypesPage';
-import TeachersPage from './pages/dashboard/TeachersPage';
-import AdministratorsPage from './pages/dashboard/AdministratorsPage';
-import StudentLinkTypesPage from './pages/dashboard/StudentLinkTypesPage';
-import StudentContactsPage from './pages/dashboard/StudentContactsPage';
-import StudentDiplomesPage from './pages/dashboard/StudentDiplomesPage';
-import LevelPricingsPage from './pages/dashboard/LevelPricingsPage';
-import StudentPaymentsPage from './pages/dashboard/StudentPaymentsPage';
-import AttestationsPage from './pages/dashboard/AttestationsPage';
-import StudentAttestationsPage from './pages/dashboard/StudentAttestationsPage';
-import ClassCoursesPage from './pages/dashboard/ClassCoursesPage';
-import UsersPage from './pages/dashboard/UsersPage';
-import CompaniesPage from './pages/dashboard/CompaniesPage';
-import SettingsPage from './pages/SettingsPage';
-import StudentDashboardPage from './pages/student/StudentDashboardPage';
-import StudentSchedulePage from './pages/student/StudentSchedulePage';
-import StudentGradesPage from './pages/student/StudentGradesPage';
-import StudentAttendancePage from './pages/student/StudentAttendancePage';
-import TeacherDashboardPage from './pages/teacher/TeacherDashboardPage';
-import TeacherPlanningsPage from './pages/teacher/TeacherPlanningsPage';
-import TeacherAttendancePage from './pages/teacher/TeacherAttendancePage';
-import TeacherGradesPage from './pages/teacher/TeacherGradesPage';
-import TeacherLinksPage from './pages/teacher/TeacherLinksPage';
-import TeacherHomeworkPage from './pages/teacher/TeacherHomeworkPage';
+
+// Lazy load all page components for code splitting
+const AuthPage = lazy(() => import('./pages/AuthPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const RegistrationPage = lazy(() => import('./pages/RegistrationPage'));
+const SetPasswordPage = lazy(() => import('./pages/SetPasswordPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+
+// Dashboard pages
+const DashboardHomePage = lazy(() => import('./pages/dashboard/DashboardHomePage'));
+const ProgramsPage = lazy(() => import('./pages/dashboard/ProgramsPage'));
+const SpecializationsPage = lazy(() => import('./pages/dashboard/SpecializationsPage'));
+const LevelsPage = lazy(() => import('./pages/dashboard/LevelsPage'));
+const SchoolYearsPage = lazy(() => import('./pages/dashboard/SchoolYearsPage'));
+const SchoolYearPeriodsPage = lazy(() => import('./pages/dashboard/SchoolYearPeriodsPage'));
+const ClassesPage = lazy(() => import('./pages/dashboard/ClassesPage'));
+const CoursesPage = lazy(() => import('./pages/dashboard/CoursesPage'));
+const ModulesPage = lazy(() => import('./pages/dashboard/ModulesPage'));
+const ClassRoomsPage = lazy(() => import('./pages/dashboard/ClassRoomsPage'));
+const StudentsPage = lazy(() => import('./pages/dashboard/StudentsPage'));
+const ClassStudentsPage = lazy(() => import('./pages/dashboard/ClassStudentsPage'));
+const PlanningPage = lazy(() => import('./pages/dashboard/PlanningPage'));
+const StudentReportsPage = lazy(() => import('./pages/dashboard/StudentReportsPage'));
+const StudentPresencePage = lazy(() => import('./pages/dashboard/StudentPresencePage'));
+const StudentNotesPage = lazy(() => import('./pages/dashboard/StudentNotesPage'));
+const StudentReportDetailsPage = lazy(() => import('./pages/dashboard/StudentReportDetailsPage'));
+const PlanningSessionTypesPage = lazy(() => import('./pages/dashboard/PlanningSessionTypesPage'));
+const TeachersPage = lazy(() => import('./pages/dashboard/TeachersPage'));
+const AdministratorsPage = lazy(() => import('./pages/dashboard/AdministratorsPage'));
+const StudentLinkTypesPage = lazy(() => import('./pages/dashboard/StudentLinkTypesPage'));
+const StudentContactsPage = lazy(() => import('./pages/dashboard/StudentContactsPage'));
+const StudentDiplomesPage = lazy(() => import('./pages/dashboard/StudentDiplomesPage'));
+const LevelPricingsPage = lazy(() => import('./pages/dashboard/LevelPricingsPage'));
+const StudentPaymentsPage = lazy(() => import('./pages/dashboard/StudentPaymentsPage'));
+const AttestationsPage = lazy(() => import('./pages/dashboard/AttestationsPage'));
+const StudentAttestationsPage = lazy(() => import('./pages/dashboard/StudentAttestationsPage'));
+const ClassCoursesPage = lazy(() => import('./pages/dashboard/ClassCoursesPage'));
+const UsersPage = lazy(() => import('./pages/dashboard/UsersPage'));
+const CompaniesPage = lazy(() => import('./pages/dashboard/CompaniesPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+
+// Student pages
+const StudentDashboardPage = lazy(() => import('./pages/student/StudentDashboardPage'));
+const StudentSchedulePage = lazy(() => import('./pages/student/StudentSchedulePage'));
+const StudentGradesPage = lazy(() => import('./pages/student/StudentGradesPage'));
+const StudentAttendancePage = lazy(() => import('./pages/student/StudentAttendancePage'));
+
+// Teacher pages
+const TeacherDashboardPage = lazy(() => import('./pages/teacher/TeacherDashboardPage'));
+const TeacherPlanningsPage = lazy(() => import('./pages/teacher/TeacherPlanningsPage'));
+const TeacherAttendancePage = lazy(() => import('./pages/teacher/TeacherAttendancePage'));
+const TeacherGradesPage = lazy(() => import('./pages/teacher/TeacherGradesPage'));
+const TeacherLinksPage = lazy(() => import('./pages/teacher/TeacherLinksPage'));
+const TeacherHomeworkPage = lazy(() => import('./pages/teacher/TeacherHomeworkPage'));
+
+// Loading fallback component
+const PageLoadingFallback: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <div className="text-xl font-bold text-primary">{t('common.loading')}</div>
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const { t } = useTranslation();
@@ -84,7 +102,7 @@ const App: React.FC = () => {
                 <Navigate to="/programs" replace />
               )
             ) : (
-              <><Navbar /><div className="pt-16"><AuthPage /></div></>
+              <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><AuthPage /></Suspense></div></>
             )
           } 
         />
@@ -104,7 +122,7 @@ const App: React.FC = () => {
                 <Navigate to="/programs" replace />
               )
             ) : (
-              <RegistrationPage />
+              <Suspense fallback={<PageLoadingFallback />}><RegistrationPage /></Suspense>
             )
           } 
         />
@@ -128,13 +146,13 @@ const App: React.FC = () => {
                 <Navigate to="/programs" replace />
               )
             ) : (
-              <><Navbar /><div className="pt-16"><ResetPasswordPage /></div></>
+              <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><ResetPasswordPage /></Suspense></div></>
             )
           } 
         />
         <Route 
           path="/set-password" 
-          element={<SetPasswordPage />} 
+          element={<Suspense fallback={<PageLoadingFallback />}><SetPasswordPage /></Suspense>} 
         />
         {/* Protected routes with Dashboard Layout - accessible to 'admin' and 'support' profiles */}
         <Route
@@ -142,7 +160,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <DashboardHomePage />
+                <Suspense fallback={<PageLoadingFallback />}><DashboardHomePage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -152,7 +170,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <ProgramsPage />
+                <Suspense fallback={<PageLoadingFallback />}><ProgramsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -162,7 +180,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <SpecializationsPage />
+                <Suspense fallback={<PageLoadingFallback />}><SpecializationsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -172,7 +190,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <LevelsPage />
+                <Suspense fallback={<PageLoadingFallback />}><LevelsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -182,7 +200,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <SchoolYearsPage />
+                <Suspense fallback={<PageLoadingFallback />}><SchoolYearsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -192,7 +210,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <SchoolYearPeriodsPage />
+                <Suspense fallback={<PageLoadingFallback />}><SchoolYearPeriodsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -202,7 +220,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <ClassesPage />
+                <Suspense fallback={<PageLoadingFallback />}><ClassesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -212,7 +230,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <CoursesPage />
+                <Suspense fallback={<PageLoadingFallback />}><CoursesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -222,7 +240,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <ModulesPage />
+                <Suspense fallback={<PageLoadingFallback />}><ModulesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -232,7 +250,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <ClassRoomsPage />
+                <Suspense fallback={<PageLoadingFallback />}><ClassRoomsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -242,7 +260,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentsPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -252,7 +270,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <ClassStudentsPage />
+                <Suspense fallback={<PageLoadingFallback />}><ClassStudentsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -262,7 +280,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <PlanningPage />
+                <Suspense fallback={<PageLoadingFallback />}><PlanningPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -272,7 +290,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentReportsPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentReportsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -282,7 +300,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentPresencePage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentPresencePage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -292,7 +310,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentNotesPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentNotesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -302,7 +320,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentReportDetailsPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentReportDetailsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -312,7 +330,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <PlanningSessionTypesPage />
+                <Suspense fallback={<PageLoadingFallback />}><PlanningSessionTypesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -322,7 +340,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <TeachersPage />
+                <Suspense fallback={<PageLoadingFallback />}><TeachersPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -332,7 +350,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <AdministratorsPage />
+                <Suspense fallback={<PageLoadingFallback />}><AdministratorsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -342,7 +360,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentLinkTypesPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentLinkTypesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -352,7 +370,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentContactsPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentContactsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -362,7 +380,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentDiplomesPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentDiplomesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -372,7 +390,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <LevelPricingsPage />
+                <Suspense fallback={<PageLoadingFallback />}><LevelPricingsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -382,7 +400,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentPaymentsPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentPaymentsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -392,7 +410,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <AttestationsPage />
+                <Suspense fallback={<PageLoadingFallback />}><AttestationsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -402,7 +420,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <StudentAttestationsPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentAttestationsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -412,7 +430,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <ClassCoursesPage />
+                <Suspense fallback={<PageLoadingFallback />}><ClassCoursesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -422,7 +440,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <UsersPage />
+                <Suspense fallback={<PageLoadingFallback />}><UsersPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -432,7 +450,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <CompaniesPage />
+                <Suspense fallback={<PageLoadingFallback />}><CompaniesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -442,7 +460,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <SettingsPage />
+                <Suspense fallback={<PageLoadingFallback />}><SettingsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -453,7 +471,7 @@ const App: React.FC = () => {
           element={
             <StudentRoute>
               <StudentLayout>
-                <StudentDashboardPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentDashboardPage /></Suspense>
               </StudentLayout>
             </StudentRoute>
           }
@@ -463,7 +481,7 @@ const App: React.FC = () => {
           element={
             <StudentRoute>
               <StudentLayout>
-                <StudentSchedulePage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentSchedulePage /></Suspense>
               </StudentLayout>
             </StudentRoute>
           }
@@ -473,7 +491,7 @@ const App: React.FC = () => {
           element={
             <StudentRoute>
               <StudentLayout>
-                <StudentGradesPage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentGradesPage /></Suspense>
               </StudentLayout>
             </StudentRoute>
           }
@@ -483,7 +501,7 @@ const App: React.FC = () => {
           element={
             <StudentRoute>
               <StudentLayout>
-                <StudentAttendancePage />
+                <Suspense fallback={<PageLoadingFallback />}><StudentAttendancePage /></Suspense>
               </StudentLayout>
             </StudentRoute>
           }
@@ -494,7 +512,7 @@ const App: React.FC = () => {
           element={
             <TeacherRoute>
               <TeacherLayout>
-                <TeacherDashboardPage />
+                <Suspense fallback={<PageLoadingFallback />}><TeacherDashboardPage /></Suspense>
               </TeacherLayout>
             </TeacherRoute>
           }
@@ -504,7 +522,7 @@ const App: React.FC = () => {
           element={
             <TeacherRoute>
               <TeacherLayout>
-                <TeacherPlanningsPage />
+                <Suspense fallback={<PageLoadingFallback />}><TeacherPlanningsPage /></Suspense>
               </TeacherLayout>
             </TeacherRoute>
           }
@@ -514,7 +532,7 @@ const App: React.FC = () => {
           element={
             <TeacherRoute>
               <TeacherLayout>
-                <TeacherAttendancePage />
+                <Suspense fallback={<PageLoadingFallback />}><TeacherAttendancePage /></Suspense>
               </TeacherLayout>
             </TeacherRoute>
           }
@@ -524,7 +542,7 @@ const App: React.FC = () => {
           element={
             <TeacherRoute>
               <TeacherLayout>
-                <TeacherGradesPage />
+                <Suspense fallback={<PageLoadingFallback />}><TeacherGradesPage /></Suspense>
               </TeacherLayout>
             </TeacherRoute>
           }
@@ -534,7 +552,7 @@ const App: React.FC = () => {
           element={
             <TeacherRoute>
               <TeacherLayout>
-                <TeacherLinksPage />
+                <Suspense fallback={<PageLoadingFallback />}><TeacherLinksPage /></Suspense>
               </TeacherLayout>
             </TeacherRoute>
           }
@@ -544,7 +562,7 @@ const App: React.FC = () => {
           element={
             <TeacherRoute>
               <TeacherLayout>
-                <TeacherHomeworkPage />
+                <Suspense fallback={<PageLoadingFallback />}><TeacherHomeworkPage /></Suspense>
               </TeacherLayout>
             </TeacherRoute>
           }
@@ -554,7 +572,7 @@ const App: React.FC = () => {
           path="/profile" 
           element={
             <ProtectedRoute requireDashboardAccess={false}>
-              <><Navbar /><div className="pt-16"><ProfilePage /></div></>
+              <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><ProfilePage /></Suspense></div></>
             </ProtectedRoute>
           } 
         />

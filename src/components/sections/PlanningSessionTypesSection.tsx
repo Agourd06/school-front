@@ -205,19 +205,19 @@ const PlanningSessionTypesSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  {t('settings.title')}
                 </th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Type
+                  {t('settings.type')}
                 </th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Coefficient
+                  {t('settings.coefficient')}
                 </th>
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
+                  {t('common.status')}
                 </th>
                 <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('common.actions')}
                 </th>
               </tr>
             </thead>
@@ -225,13 +225,13 @@ const PlanningSessionTypesSection: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading planning session types…
+                    {t('settings.loadingPlanningSessionTypes')}
                   </td>
                 </tr>
               ) : types.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No planning session types found.
+                    {t('settings.noPlanningSessionTypesFound')}
                   </td>
                 </tr>
               ) : (
@@ -253,7 +253,7 @@ const PlanningSessionTypesSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusStyles[type.status]}`}>
-                        {type.status === 'active' ? 'Active' : 'Inactive'}
+                        {type.status === 'active' ? t('forms.active') : t('forms.inactive')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
@@ -295,7 +295,7 @@ const PlanningSessionTypesSection: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteMut.isPending}
-        title="Delete Planning Session Type"
+        title={t('settings.deletePlanningSessionType')}
         entityName={deleteTarget?.title}
       />
     </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { PlanningSessionTypeForm } from '../forms';
 import type { PlanningSessionType, PlanningSessionTypeStatus } from '../../api/planningSessionType';
@@ -27,6 +28,7 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
   isSubmitting,
   serverError,
 }) => {
+  const { t } = useTranslation();
   const handleSubmit = async (formData: PlanningSessionTypeFormValues) => {
     await onSubmit({
       ...formData,
@@ -44,7 +46,7 @@ const PlanningSessionTypeModal: React.FC<PlanningSessionTypeModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialData ? 'Edit Planning Session Type' : 'Add Planning Session Type'}
+      title={initialData ? t('settings.editPlanningSessionType') : t('settings.addPlanningSessionType')}
       className="sm:max-w-lg"
     >
       <PlanningSessionTypeForm

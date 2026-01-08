@@ -74,7 +74,7 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
       )}
 
       <Input
-        label={t('common.name')}
+        label={t('settings.title')}
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -87,10 +87,18 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
         label={t('common.status')}
         value={status}
         onChange={(e) => setStatus(Number(e.target.value))}
-        options={STATUS_OPTIONS_FORM.map((opt) => ({
-          value: opt.value,
-          label: opt.label,
-        }))}
+        options={STATUS_OPTIONS_FORM.map((opt) => {
+          const statusLabels: Record<number, string> = {
+            0: t('forms.disabled'),
+            1: t('forms.active'),
+            2: t('forms.pending'),
+            [-1]: t('forms.archived'),
+          };
+          return {
+            value: opt.value,
+            label: statusLabels[opt.value] || opt.label,
+          };
+        })}
       />
 
       <div className="flex justify-end space-x-3 pt-2">
