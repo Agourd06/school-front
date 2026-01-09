@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { countriesApi } from '../../api/countries';
 
 export interface CombinedRegistrationFormData {
@@ -26,6 +27,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
   onSubmit,
   loading,
 }) => {
+  const { t } = useTranslation();
   const [countries, setCountries] = useState<Array<{ name: string }>>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(false);
@@ -80,17 +82,17 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-6 text-body">
       <div>
-        <h2 className="text-2xl font-bold text-heading mb-2">Create Your Account</h2>
-        <p className="text-muted">Set up your company and administrator account</p>
+        <h2 className="text-2xl font-bold text-heading mb-2">{t('registration.createYourAccount')}</h2>
+        <p className="text-muted">{t('registration.setUpCompanyAndAdmin')}</p>
       </div>
 
       {/* Company Section */}
       <div className="space-y-4 pb-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-heading">Company Information</h3>
+        <h3 className="text-lg font-semibold text-heading">{t('registration.companyInformation')}</h3>
 
         <div>
           <label htmlFor="company-name" className="block text-sm font-medium text-heading mb-2">
-            Company Name <span className="text-red-500">*</span>
+            {t('registration.companyName')} <span className="text-red-500">*</span>
           </label>
           <input
             id="company-name"
@@ -99,13 +101,13 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             value={data.companyName}
             onChange={handleChange('companyName')}
             className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder="Acme Schools"
+            placeholder={t('registration.companyNamePlaceholder')}
           />
         </div>
 
         <div>
           <label htmlFor="company-email" className="block text-sm font-medium text-heading mb-2">
-            Company Email <span className="text-red-500">*</span>
+            {t('registration.companyEmail')} <span className="text-red-500">*</span>
           </label>
           <input
             id="company-email"
@@ -114,13 +116,13 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             value={data.companyEmail}
             onChange={handleChange('companyEmail')}
             className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder="contact@acmeschools.com"
+            placeholder={t('registration.companyEmailPlaceholder')}
           />
         </div>
 
         <div>
           <label htmlFor="company-phone" className="block text-sm font-medium text-heading mb-2">
-            Phone Number
+            {t('registration.phoneNumber')}
           </label>
           <input
             id="company-phone"
@@ -128,14 +130,14 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             value={data.companyPhone}
             onChange={handleChange('companyPhone')}
             className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder="+1-444-555-1212"
+            placeholder={t('registration.phonePlaceholder')}
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="company-country" className="block text-sm font-medium text-heading mb-2">
-              Country
+              {t('forms.country')}
             </label>
             <select
               id="company-country"
@@ -143,9 +145,9 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               onChange={handleChange('country')}
               className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
             >
-              <option value="">Select a country</option>
+              <option value="">{t('registration.selectACountry')}</option>
               {loadingCountries ? (
-                <option disabled>Loading countries...</option>
+                <option disabled>{t('registration.loadingCountries')}</option>
               ) : (
                 countries.map((country) => (
                   <option key={country.name} value={country.name}>
@@ -158,7 +160,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
 
           <div>
             <label htmlFor="company-city" className="block text-sm font-medium text-heading mb-2">
-              City
+              {t('forms.city')}
             </label>
             <select
               id="company-city"
@@ -169,10 +171,10 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             >
               <option value="">
                 {!data.country
-                  ? 'Select a country first'
+                  ? t('registration.selectCountryFirst')
                   : loadingCities
-                  ? 'Loading cities...'
-                  : 'Select a city'}
+                  ? t('registration.loadingCities')
+                  : t('registration.selectACity')}
               </option>
               {cities.map((city) => (
                 <option key={city} value={city}>
@@ -186,14 +188,14 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
 
       {/* User Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-heading">Administrator Account</h3>
+        <h3 className="text-lg font-semibold text-heading">{t('registration.administratorAccount')}</h3>
         <p className="text-sm text-muted">
-          Your account will be created with administrator profile (full access)
+          {t('registration.accountWillBeCreatedWithAdminProfile')}
         </p>
 
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-heading mb-2">
-            Username <span className="text-red-500">*</span>
+            {t('registration.username')} <span className="text-red-500">*</span>
           </label>
           <input
             id="username"
@@ -202,13 +204,13 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             value={data.username}
             onChange={handleChange('username')}
             className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder="jane.doe"
+            placeholder={t('registration.usernamePlaceholder')}
           />
         </div>
 
         <div>
           <label htmlFor="user-email" className="block text-sm font-medium text-heading mb-2">
-            Email Address <span className="text-red-500">*</span>
+            {t('forms.email')} <span className="text-red-500">*</span>
           </label>
           <input
             id="user-email"
@@ -217,10 +219,10 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             value={data.userEmail}
             onChange={handleChange('userEmail')}
             className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder="jane@example.com"
+            placeholder={t('registration.userEmailPlaceholder')}
           />
           <p className="mt-1 text-xs text-muted">
-            An invitation email with a password setup link will be sent to this email
+            {t('registration.invitationEmailNote')}
           </p>
         </div>
       </div>
@@ -230,7 +232,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
         disabled={loading}
         className="w-full bg-primary text-primary-foreground py-3 px-4 rounded-lg font-semibold hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
-        {loading ? 'Creating Account...' : 'Create Account'}
+        {loading ? t('registration.creatingAccount') : t('registration.createAccount')}
       </button>
     </form>
   );
