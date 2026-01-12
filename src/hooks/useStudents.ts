@@ -69,12 +69,15 @@ export const useStudentDetails = (id: number) => {
  * Get all students without active reports
  * Returns a plain array (not paginated) of students that don't have any active student report
  * Automatically filtered by company_id from JWT token
- * Can be filtered by school_year_id, school_year_period_id, and/or class_id
+ * Can be filtered by school_year_id and/or class_id
+ * Note: school_year_period_id is NOT supported by backend (database column doesn't exist)
  */
 export const useStudentsWithoutReport = (params?: GetStudentsWithoutReportParams) => {
   return useQuery({
     queryKey: ['students', 'without-report', params],
     queryFn: () => studentsApi.getWithoutReport(params),
+    // Only enable query if we have at least school_year_id (required for filtering)
+    enabled: params?.school_year_id !== undefined,
   });
 };
 

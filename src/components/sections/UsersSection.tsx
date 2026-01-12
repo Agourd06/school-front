@@ -1,13 +1,25 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DataTableGeneric from '../../components/DataTableGeneric';
-import { useUsers, useUpdateUser } from '../../hooks/useUsers';
+import { 
+  useUsers, 
+  useUpdateUser, 
+  useSendPasswordInvitationById,
+  useCreateUser 
+} from '../../hooks/useUsers';
 import type { FilterParams, ListState } from '../../types/api';
 import { UserModal, DeleteModal } from '../../components/modals';
 import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
-import { EditButton, DeleteButton } from '../ui';
+import { EditButton, DeleteButton, Button } from '../ui';
+import { ToastContainer, type ToastType } from '../ui/Toast';
 import type { User } from '../../api/users';
+
+interface Toast {
+  id: string;
+  type: ToastType;
+  message: string;
+}
 
 const UsersSection: React.FC = () => {
   const { t } = useTranslation();
@@ -20,6 +32,8 @@ const UsersSection: React.FC = () => {
   });
   const [modal, setModal] = React.useState<{ type: 'user' | null; data?: User | null }>({ type: null });
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [wasCreatingUser, setWasCreatingUser] = React.useState(false);
 
   const params: FilterParams = {
     page: state.pagination.page,
@@ -42,8 +56,56 @@ const UsersSection: React.FC = () => {
   }, [response, isLoading, error]);
 
   const updater = useUpdateUser();
+  const createUser = useCreateUser();
+  const sendInvitation = useSendPasswordInvitationById();
+
+  // Show success message when user is created and modal closes
+  React.useEffect(() => {
+    if (wasCreatingUser && createUser.isSuccess && !modal.type) {
+      handleUserCreated();
+      setWasCreatingUser(false);
+    }
+  }, [createUser.isSuccess, modal.type, wasCreatingUser]);
+
+  const addToast = (type: ToastType, message: string) => {
+    const id = `toast-${Date.now()}-${Math.random()}`;
+    setToasts((prev) => [...prev, { id, type, message }]);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
+  const extractErrorMessage = (err: unknown): string => {
+    if (!err) return t('messages.unexpectedError') || 'An unexpected error occurred';
+    const axiosError = err as { response?: { data?: { message?: string | string[] } }; message?: string };
+    const dataMessage = axiosError?.response?.data?.message;
+    if (Array.isArray(dataMessage)) return dataMessage.join(', ');
+    if (typeof dataMessage === 'string') return dataMessage;
+    if (typeof axiosError.message === 'string') return axiosError.message;
+    return t('messages.unexpectedError') || 'An unexpected error occurred';
+  };
+
   const performDelete = async (id: number) => {
-    await updater.mutateAsync({ id, status: -2 });
+    try {
+      await updater.mutateAsync({ id, status: -2 });
+      addToast('success', t('messages.userDeletedSuccessfully') || 'User deleted successfully');
+    } catch (err) {
+      addToast('error', extractErrorMessage(err));
+    }
+  };
+
+  const handleResendInvitation = async (userId: number) => {
+    try {
+      await sendInvitation.mutateAsync(userId);
+      addToast('success', t('messages.passwordInvitationEmailSent') || 'Password invitation email sent successfully');
+    } catch (err) {
+      addToast('error', extractErrorMessage(err));
+    }
+  };
+
+  const handleUserCreated = () => {
+    addToast('success', t('messages.userCreatedSuccessfully') || 'User created successfully. Password setup email has been sent automatically.');
   };
 
   const requestDelete = (id: number) => {
@@ -62,8 +124,15 @@ const UsersSection: React.FC = () => {
     }
   };
 
-  const openModal = (data?: User | null) => setModal({ type: 'user', data: data ?? null });
-  const closeModal = () => setModal({ type: null });
+  const openModal = (data?: User | null) => {
+    setModal({ type: 'user', data: data ?? null });
+    setWasCreatingUser(!data); // Track if we're creating (no data) or editing (has data)
+  };
+  const closeModal = () => {
+    setModal({ type: null });
+    // Reset the flag after a short delay to allow the success check
+    setTimeout(() => setWasCreatingUser(false), 100);
+  };
 
   const handleSearch = useCallback((q: string) => {
     setState(prev => {
@@ -98,10 +167,11 @@ const UsersSection: React.FC = () => {
         filterOptions={STATUS_OPTIONS}
         renderRow={(user: User, onEdit, onDelete, index) => {
           const profileLabelKey = `profile.${user.profile}`;
+          const isPending = user.status === 2;
           return (
             <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">{user.username}</p>
                   <p className="text-sm text-gray-500">{user.email}</p>
                   <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
@@ -114,8 +184,27 @@ const UsersSection: React.FC = () => {
                       <StatusBadge value={user.status} />
                     </div>
                   </div>
+                  {isPending && (
+                    <div className="mt-2">
+                      <p className="text-xs text-yellow-600 italic">
+                        {t('messages.userPendingPasswordSetup') || 'User is pending password setup. An email was sent automatically.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex items-center gap-2">
+                  {isPending && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleResendInvitation(user.id)}
+                      isLoading={sendInvitation.isPending}
+                      disabled={sendInvitation.isPending}
+                      className="text-xs"
+                    >
+                      {t('sections.resendInvitation') || 'Resend Invitation'}
+                    </Button>
+                  )}
                   <EditButton onClick={() => onEdit(user)} />
                   <DeleteButton onClick={() => onDelete(user.id)} />
                 </div>
@@ -126,7 +215,11 @@ const UsersSection: React.FC = () => {
       />
 
       {modal.type === 'user' && (
-        <UserModal isOpen onClose={closeModal} user={modal.data} />
+        <UserModal 
+          isOpen 
+          onClose={closeModal}
+          user={modal.data} 
+        />
       )}
 
       <DeleteModal
@@ -137,6 +230,8 @@ const UsersSection: React.FC = () => {
         onConfirm={handleConfirmDelete}
         isLoading={updater.isPending}
       />
+
+      <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </>
   );
 };

@@ -441,6 +441,11 @@ const StudentReportsSection: React.FC = () => {
     return rows;
   }, [filteredStudents, reportDetailsMap, selectedStudentId]);
 
+  // Memoize report IDs from filteredStudents to prevent unnecessary effect triggers
+  const filteredReportIds = useMemo(() => {
+    return filteredStudents.map((entry) => entry.report?.id).filter((id): id is number => id !== undefined && id !== null);
+  }, [filteredStudents]);
+
   useEffect(() => {
     // If a student is selected, fetch details for that student using student_id filter
     if (selectedStudentId !== null) {
@@ -459,10 +464,14 @@ const StudentReportsSection: React.FC = () => {
             limit: 100,
           });
           if (cancelled) return;
-          setReportDetailsMap((prev) => ({
-            ...prev,
-            [reportId]: response.data,
-          }));
+          setReportDetailsMap((prev) => {
+            // Only update if we don't already have the data (prevent race conditions)
+            if (prev[reportId]) return prev;
+            return {
+              ...prev,
+              [reportId]: response.data,
+            };
+          });
         } catch (error) {
           console.error('Failed to fetch report details for student', selectedStudentId, error);
         }
@@ -475,9 +484,7 @@ const StudentReportsSection: React.FC = () => {
     }
 
     // Otherwise, fetch for all missing reports (original behavior)
-    const missingReportIds = filteredStudents
-      .map((entry) => entry.report?.id)
-      .filter((id): id is number => id !== undefined && id !== null && !(id in reportDetailsMap));
+    const missingReportIds = filteredReportIds.filter((id) => !(id in reportDetailsMap));
     if (missingReportIds.length === 0) return;
 
     let cancelled = false;
@@ -497,7 +504,10 @@ const StudentReportsSection: React.FC = () => {
       setReportDetailsMap((prev) => {
         const next = { ...prev };
         results.forEach(({ reportId, details }) => {
-          next[reportId] = details;
+          // Only update if we don't already have the data (prevent race conditions)
+          if (!next[reportId]) {
+            next[reportId] = details;
+          }
         });
         return next;
       });
@@ -507,7 +517,7 @@ const StudentReportsSection: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [filteredStudents, reportDetailsMap, selectedStudentId]);
+  }, [filteredReportIds, reportDetailsMap, selectedStudentId, filteredStudents]);
 
   const studentReportMap = useMemo(() => {
     const map = new Map<number, StudentReport | null>();
@@ -829,15 +839,16 @@ const StudentReportsSection: React.FC = () => {
   );
 
   // Fetch students without reports when creating a new report
-  // Filter by selected year, period, and class
+  // Filter by selected year and class (backend doesn't support school_year_period_id filter)
   const studentsWithoutReportParams = useMemo(() => {
-    if (!selectedYear || !selectedPeriod) return undefined;
+    if (!selectedYear) return undefined;
     return {
       school_year_id: Number(selectedYear),
-      school_year_period_id: Number(selectedPeriod),
+      // Note: school_year_period_id is not supported by backend for this endpoint
+      // Backend error: "Unknown column 'c.school_year_period_id' in 'where clause'"
       class_id: selectedClass ? Number(selectedClass) : undefined,
     };
-  }, [selectedYear, selectedPeriod, selectedClass]);
+  }, [selectedYear, selectedClass]);
 
   const { data: studentsWithoutReport } = useStudentsWithoutReport(studentsWithoutReportParams);
 

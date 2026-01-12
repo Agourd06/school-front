@@ -67,14 +67,38 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
   disablePeriodSelect = false,
 }) => {
   const { t } = useTranslation();
-  const [form, setForm] = useState<StudentReportFormData>({
-    school_year_id: '',
-    school_year_period_id: '',
-    student_id: '',
-    remarks: '',
-    mention: '',
-    passed: false,
-    status: 2,
+  // Track if form has been initialized to prevent resetting after user input
+  const formInitializedRef = React.useRef(false);
+  const previousInitialDataIdRef = React.useRef<number | undefined>(undefined);
+  
+  // Memoize the initialData ID to prevent unnecessary effect triggers
+  const initialDataId = useMemo(() => initialData?.id, [initialData?.id]);
+
+  const [form, setForm] = useState<StudentReportFormData>(() => {
+    // Initialize form state only once on mount
+    if (initialData) {
+      const normalizedStatus = statusOptionsSelect.some((opt) => opt.value === initialData.status)
+        ? initialData.status
+        : 2;
+      return {
+        school_year_period_id: initialData.school_year_period_id ?? '',
+        student_id: initialData.student_id ?? '',
+        school_year_id: initialData.school_year_id ?? '',
+        remarks: initialData.remarks ?? '',
+        mention: initialData.mention ?? '',
+        passed: !!initialData.passed,
+        status: normalizedStatus,
+      };
+    }
+    return {
+      school_year_id: presetValues?.school_year_id ?? '',
+      school_year_period_id: presetValues?.school_year_period_id ?? '',
+      student_id: presetValues?.student_id ?? '',
+      remarks: '',
+      mention: '',
+      passed: false,
+      status: 2,
+    };
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<{ src: string; label: string } | null>(null);
@@ -93,34 +117,57 @@ const StudentReportForm: React.FC<StudentReportFormProps> = ({
   const contact = studentDetailsData?.contact;
   const linkType = studentDetailsData?.linkType ?? contact?.studentLinkType;
 
+  // Only reset form when initialData ID actually changes (switching between edit/create or different records)
   useEffect(() => {
-    if (initialData) {
-      const normalizedStatus = statusOptionsSelect.some((opt) => opt.value === initialData.status)
-        ? initialData.status
-        : 2;
-      setForm({
-        school_year_period_id: initialData.school_year_period_id ?? '',
-        student_id: initialData.student_id ?? '',
-        school_year_id: initialData.school_year_id ?? '',
-        remarks: initialData.remarks ?? '',
-        mention: initialData.mention ?? '',
-        passed: !!initialData.passed,
-        status: normalizedStatus,
-      });
-    } else {
-      setForm({
-        school_year_id: '',
-        school_year_period_id: '',
-        student_id: '',
-        remarks: '',
-        mention: '',
-        passed: false,
-        status: 2,
-        ...presetValues,
-      });
+    const currentInitialDataId = initialDataId;
+    const previousInitialDataId = previousInitialDataIdRef.current;
+    const wasEditing = previousInitialDataId !== undefined;
+    const isEditing = currentInitialDataId !== undefined;
+
+    // Reset initialization flag when switching between edit/create modes
+    if (wasEditing !== isEditing) {
+      formInitializedRef.current = false;
     }
-    setErrors({});
-  }, [initialData, presetValues]);
+
+    // Only reset if:
+    // 1. We're switching to a different record (different ID)
+    // 2. We're switching between edit and create mode
+    // 3. Form hasn't been initialized yet
+    const shouldReset = currentInitialDataId !== previousInitialDataId || !formInitializedRef.current;
+
+    if (shouldReset) {
+      if (initialData && currentInitialDataId) {
+        const normalizedStatus = statusOptionsSelect.some((opt) => opt.value === initialData.status)
+          ? initialData.status
+          : 2;
+        setForm({
+          school_year_period_id: initialData.school_year_period_id ?? '',
+          student_id: initialData.student_id ?? '',
+          school_year_id: initialData.school_year_id ?? '',
+          remarks: initialData.remarks ?? '',
+          mention: initialData.mention ?? '',
+          passed: !!initialData.passed,
+          status: normalizedStatus,
+        });
+        formInitializedRef.current = true;
+        previousInitialDataIdRef.current = currentInitialDataId;
+      } else if (!formInitializedRef.current && !initialData) {
+        // Only initialize with presetValues on first mount when creating new
+        setForm({
+          school_year_id: presetValues?.school_year_id ?? '',
+          school_year_period_id: presetValues?.school_year_period_id ?? '',
+          student_id: presetValues?.student_id ?? '',
+          remarks: '',
+          mention: '',
+          passed: false,
+          status: 2,
+        });
+        formInitializedRef.current = true;
+        previousInitialDataIdRef.current = undefined;
+      }
+      setErrors({});
+    }
+  }, [initialDataId, initialData, presetValues?.school_year_id, presetValues?.school_year_period_id, presetValues?.student_id]);
 
   const validate = () => {
     const e: Record<string, string> = {};

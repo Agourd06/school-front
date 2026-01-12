@@ -98,5 +98,15 @@ export const usersApi = {
     const response = await api.delete(`/users/${id}`);
     return response.data;
   },
+
+  sendPasswordInvitationById: async (id: number): Promise<{ message: string }> => {
+    const response = await api.post(`/users/${id}/send-password-invitation`);
+    return response.data;
+  },
+
+  sendPasswordInvitationByEmail: async (email: string): Promise<{ message: string }> => {
+    const response = await api.post('/users/send-password-invitation-by-email', { email });
+    return response.data;
+  },
 };
 

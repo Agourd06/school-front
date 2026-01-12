@@ -54,7 +54,8 @@ export type GetAllStudentsParams = {
 
 export type GetStudentsWithoutReportParams = {
   school_year_id?: number;
-  school_year_period_id?: number;
+  // Note: school_year_period_id is not supported by backend (database column doesn't exist)
+  // Removed to prevent backend errors
   class_id?: number;
 };
 
@@ -126,12 +127,13 @@ export const studentsApi = {
    * Get all students without active reports
    * Returns a plain array (not paginated) of students that don't have any active student report
    * Automatically filtered by company_id from JWT token
-   * Can be filtered by school_year_id, school_year_period_id, and/or class_id
+   * Can be filtered by school_year_id and/or class_id
+   * Note: school_year_period_id is NOT supported by backend (database column doesn't exist)
    */
   async getWithoutReport(params?: GetStudentsWithoutReportParams): Promise<Student[]> {
     const qp = new URLSearchParams();
     if (params?.school_year_id) qp.append('school_year_id', String(params.school_year_id));
-    if (params?.school_year_period_id) qp.append('school_year_period_id', String(params.school_year_period_id));
+    // Removed school_year_period_id - backend doesn't support it (causes database error)
     if (params?.class_id) qp.append('class_id', String(params.class_id));
     const qs = qp.toString();
     const url = qs ? `/students/without-report?${qs}` : '/students/without-report';

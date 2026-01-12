@@ -7,7 +7,6 @@ import { PROFILE_DEFAULT, PROFILE_OPTIONS } from '../../types/profile';
 export interface UserFormData {
   username: string;
   email: string;
-  password: string;
   profile: Profile;
 }
 
@@ -40,7 +39,6 @@ const UserForm: React.FC<UserFormProps> = ({
   const [formData, setFormData] = useState<UserFormData>({
     username: '',
     email: '',
-    password: '',
     profile: PROFILE_DEFAULT,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -52,14 +50,12 @@ const UserForm: React.FC<UserFormProps> = ({
       setFormData({
         username: initialData.username || '',
         email: initialData.email || '',
-        password: '',
         profile: initialData.profile || PROFILE_DEFAULT,
       });
     } else {
       setFormData({
         username: '',
         email: '',
-        password: '',
         profile: PROFILE_DEFAULT,
       });
     }
@@ -77,10 +73,6 @@ const UserForm: React.FC<UserFormProps> = ({
       newErrors.email = t('forms.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = t('forms.emailInvalid');
-    }
-
-    if (!isEditing && !formData.password.trim()) {
-      newErrors.password = t('forms.passwordRequired');
     }
 
     setErrors(newErrors);
@@ -146,15 +138,11 @@ const UserForm: React.FC<UserFormProps> = ({
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
-      <Input
-        label={isEditing ? t('forms.newPassword') + ' (' + t('forms.leaveBlankToKeepCurrent') + ')' : t('forms.password')}
-        type="password"
-        name="password"
-        value={formData.password}
-        onChange={handleChange}
-        error={errors.password}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
+      {!isEditing && (
+        <p className="text-xs text-muted mt-1">
+          {t('forms.userPasswordEmailNote') || 'A password setup email will be sent automatically to the user.'}
+        </p>
+      )}
 
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>

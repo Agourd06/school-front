@@ -51,3 +51,25 @@ export const useDeleteUser = () => {
     },
   });
 };
+
+export const useSendPasswordInvitationById = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: usersApi.sendPasswordInvitationById,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+
+export const useSendPasswordInvitationByEmail = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: usersApi.sendPasswordInvitationByEmail,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};

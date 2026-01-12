@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { authApi } from '../api/auth';
 import { companyApi } from '../api/company';
@@ -117,19 +117,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
+  // Track applied theme colors to prevent unnecessary re-applications
+  const appliedThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
+
   useEffect(() => {
     if (user?.company) {
-      applyThemeToDocument(
-        mergeTheme({
-          primary: user.company.primaryColor ?? defaultTheme.primary,
-          secondary: user.company.secondaryColor ?? defaultTheme.secondary,
-          accent: user.company.secondaryColor ?? defaultTheme.secondary,
-        })
-      );
+      const primary = user.company.primaryColor ?? defaultTheme.primary;
+      const secondary = user.company.secondaryColor ?? defaultTheme.secondary;
+      
+      // Only apply theme if colors actually changed
+      if (
+        appliedThemeRef.current?.primary !== primary ||
+        appliedThemeRef.current?.secondary !== secondary
+      ) {
+        applyThemeToDocument(
+          mergeTheme({
+            primary,
+            secondary,
+            accent: secondary,
+          })
+        );
+        appliedThemeRef.current = { primary, secondary };
+      }
     } else {
-      applyThemeToDocument(defaultTheme);
+      // Only apply default theme if we haven't already applied it
+      if (appliedThemeRef.current !== null) {
+        applyThemeToDocument(defaultTheme);
+        appliedThemeRef.current = null;
+      }
     }
-  }, [user?.company]);
+  }, [user?.company?.primaryColor, user?.company?.secondaryColor]);
+
+  // Track if we've fetched company to prevent infinite loops
+  const companyFetchedRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (
@@ -139,25 +159,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user.company.primaryColor &&
         user.company.secondaryColor)
     ) {
+      // Reset ref if user changes or company already has colors
+      if (!user || !user.company_id) {
+        companyFetchedRef.current = null;
+      }
       return;
     }
+
+    // Prevent fetching if we've already fetched for this company_id
+    if (companyFetchedRef.current === user.company_id) {
+      return;
+    }
+
+    // Mark that we're fetching for this company_id
+    companyFetchedRef.current = user.company_id;
 
     const fetchCompany = async () => {
       try {
         const company = await companyApi.getById(user.company_id!);
+        
+        // Only update if the company data actually changed
         setUser((prev) => {
-          if (!prev) return prev;
+          if (!prev || prev.company_id !== user.company_id) {
+            // User changed while fetching, don't update
+            return prev;
+          }
+          
+          // Check if company data is different before updating
+          const currentCompany = prev.company;
+          if (
+            currentCompany?.id === company.id &&
+            currentCompany?.primaryColor === company.primaryColor &&
+            currentCompany?.secondaryColor === company.secondaryColor
+          ) {
+            // No change needed, return previous to prevent re-render
+            return prev;
+          }
+          
           const nextUser = { ...prev, company };
           localStorage.setItem('user', JSON.stringify(nextUser));
           return nextUser;
         });
       } catch (error) {
+        // Reset ref on error so we can retry if needed
+        companyFetchedRef.current = null;
         // Silently fail - company colors are optional
       }
     };
 
     fetchCompany();
-  }, [user]);
+  }, [user?.company_id, user?.company?.id, user?.company?.primaryColor, user?.company?.secondaryColor]);
 
   const login = async (email: string, password: string) => {
     try {

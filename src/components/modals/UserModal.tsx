@@ -2,7 +2,7 @@ import React from 'react';
 import { useCreateUser, useUpdateUser } from '../../hooks/useUsers';
 import { useCompanyId } from '../../hooks/useCompanyId';
 import BaseModal from './BaseModal';
-import { UserForm, type User } from '../forms';
+import { UserForm, type User, type UserFormData } from '../forms';
 import type { UpdateUserRequest } from '../../api/users';
 
 interface UserModalProps {
@@ -18,28 +18,26 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
 
   const isEditing = !!user;
 
-  const handleSubmit = async (formData: { username: string; email: string; password: string; profile: string }) => {
+  const handleSubmit = async (formData: UserFormData) => {
     if (isEditing && user) {
-      const updateData: UpdateUserRequest & { password?: string } = {
+      const updateData: UpdateUserRequest = {
         username: formData.username,
         email: formData.email,
         profile: formData.profile as any,
       };
 
-      // Only include password if it's provided
-      if (formData.password.trim()) {
-        (updateData as { password: string }).password = formData.password;
-      }
-
       await updateUser.mutateAsync({ id: user.id, ...updateData });
     } else {
-      await createUser.mutateAsync({
+      // For new users: password is always sent via email automatically
+      const createData = {
         username: formData.username,
         email: formData.email,
-        password: formData.password,
         profile: formData.profile as any,
         company_id: companyId,
-      });
+      };
+
+      // Backend will automatically send invitation email when password is not provided
+      await createUser.mutateAsync(createData);
     }
     onClose();
   };
