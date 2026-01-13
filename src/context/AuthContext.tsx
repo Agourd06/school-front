@@ -262,12 +262,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('token', token);
       
       // Check if user is admin (determined early to skip unnecessary API calls)
+      // Use both roles array and profile check for reliability
       const isAdminUser = roles.includes('admin') || userData.profile === 'admin';
       
-      // Only fetch allowedPages if:
-      // 1. They're not in the login response
-      // 2. User is NOT admin (admin users don't need allowedPages - they bypass the check)
-      if (!allowedPages.length && !isAdminUser) {
+      // IMPORTANT: Admin users NEVER need to fetch allowedPages - they have full access
+      // Only fetch for non-admin users who don't have allowedPages in the login response
+      if (!isAdminUser && !allowedPages.length) {
         try {
           // Token is now in localStorage, axios interceptor will pick it up
           const { pagesApi } = await import('../api/pages');
@@ -275,9 +275,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           allowedPages = routesResponse.routes || [];
         } catch (error: unknown) {
           // Silently fail - non-critical, permissions will be checked per route
-          // Admin users bypass this check entirely, so this is only for non-admin users
-          // If fetch fails (e.g., 401), user will be checked per route based on their roles
-          // Don't log error - this is expected if backend doesn't support the endpoint or token isn't valid yet
+          // This can fail if:
+          // - Token isn't valid yet (timing issue)
+          // - Backend doesn't support the endpoint
+          // - User doesn't have permission
+          // We catch it here so it doesn't block login
         }
       }
 
