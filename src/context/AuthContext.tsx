@@ -101,14 +101,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         
         // Get allowedPages from user object or separate storage
-        const allowedPages = parsedUser.allowedPages || JSON.parse(storedAllowedPages || '[]');
+        let allowedPages = parsedUser.allowedPages || JSON.parse(storedAllowedPages || '[]');
+        let roles = Array.isArray(parsedUser.roles) ? parsedUser.roles : [];
+        
+        // CRITICAL: If user has profile 'admin', always ensure they have 'admin' role
+        // This ensures admin users always have access to all routes
+        if (profile === 'admin' && !roles.includes('admin')) {
+          roles = ['admin', ...roles.filter(r => r !== 'admin')];
+          // Update parsedUser to persist the fix
+          parsedUser.roles = roles;
+          localStorage.setItem('user', JSON.stringify(parsedUser));
+        }
         
         setToken(storedToken);
         setUser({
           ...parsedUser,
           profile,
           company: normalizeCompany(parsedUser.company),
-          roles: parsedUser.roles || [],
+          roles,
           allowedPages: Array.isArray(allowedPages) ? allowedPages : [],
         });
         
@@ -239,8 +249,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Invalid login response: missing token or user data');
       }
 
-      const allowedPages = userData.allowedPages || [];
-      const roles = userData.roles || [];
+      let allowedPages = userData.allowedPages || [];
+      let roles = Array.isArray(userData.roles) ? userData.roles : [];
+
+      // CRITICAL: If user has profile 'admin', always ensure they have 'admin' role
+      // This ensures admin users always have access to all routes, regardless of backend response
+      if (userData.profile === 'admin' && !roles.includes('admin')) {
+        roles = ['admin', ...roles.filter(r => r !== 'admin')];
+      }
+      
+      // Save token FIRST so axios interceptor can use it for subsequent API calls
+      localStorage.setItem('token', token);
+      
+      // Check if user is admin (determined early to skip unnecessary API calls)
+      const isAdminUser = roles.includes('admin') || userData.profile === 'admin';
+      
+      // Only fetch allowedPages if:
+      // 1. They're not in the login response
+      // 2. User is NOT admin (admin users don't need allowedPages - they bypass the check)
+      if (!allowedPages.length && !isAdminUser) {
+        try {
+          // Token is now in localStorage, axios interceptor will pick it up
+          const { pagesApi } = await import('../api/pages');
+          const routesResponse = await pagesApi.getMyRoutes();
+          allowedPages = routesResponse.routes || [];
+        } catch (error: unknown) {
+          // Silently fail - non-critical, permissions will be checked per route
+          // Admin users bypass this check entirely, so this is only for non-admin users
+          // If fetch fails (e.g., 401), user will be checked per route based on their roles
+          // Don't log error - this is expected if backend doesn't support the endpoint or token isn't valid yet
+        }
+      }
 
       const user: User = {
         id: userData.id!,
@@ -253,11 +292,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         allowedPages,
       };
 
-      setToken(token);
-      setUser(user);
-      localStorage.setItem('token', token);
+      // CRITICAL: Update localStorage FIRST before state, so components reading from localStorage get the latest data
+      // Note: Token was already set above before fetching allowedPages
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('allowedPages', JSON.stringify(allowedPages));
+      
+      // Then update React state - this ensures both are in sync
+      setToken(token);
+      setUser(user);
+      
       applyThemeToDocument(
         mergeTheme({
           primary: user.company?.primaryColor ?? defaultTheme.primary,
@@ -305,7 +348,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshPermissions = async () => {
     try {
       const { pagesApi } = await import('../api/pages');
-      const routes = await pagesApi.getMyRoutes();
+      const routesResponse = await pagesApi.getMyRoutes();
+      const routes = routesResponse.routes || [];
       
       setUser((prev) => {
         if (!prev) return prev;

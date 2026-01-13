@@ -81,17 +81,72 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const pagePath = requiredPage.startsWith('/') ? requiredPage : `/${requiredPage}`;
     
     // Admin users have full access - bypass allowedPages check
-    const isAdmin = Array.isArray(user.roles) && user.roles.includes('admin');
+    // Check both context and localStorage as fallback (for immediate post-login state sync)
+    const contextRoles = Array.isArray(user.roles) ? user.roles : [];
+    const storedUserStr = localStorage.getItem('user');
+    let storedRoles: string[] = [];
+    try {
+      if (storedUserStr) {
+        const storedUser = JSON.parse(storedUserStr);
+        storedRoles = Array.isArray(storedUser.roles) ? storedUser.roles : [];
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
     
-    // Use user.allowedPages from context instead of localStorage
-    const hasAccess = isAdmin || (Array.isArray(user.allowedPages) && user.allowedPages.includes(pagePath));
+    // Use roles from context if available, otherwise fallback to localStorage (for immediate post-login)
+    // Also check localStorage if context roles don't include admin (in case it was just set)
+    // Fallback: Also check if profile is 'admin' (in case roles aren't set yet)
+    const userRoles = contextRoles.length > 0 ? contextRoles : storedRoles;
+    const isAdmin = userRoles.includes('admin') || storedRoles.includes('admin') || user.profile === 'admin';
+    
+    // Use user.allowedPages from context if available, otherwise check localStorage
+    const contextAllowedPages = Array.isArray(user.allowedPages) ? user.allowedPages : [];
+    let storedAllowedPages: string[] = [];
+    try {
+      const storedAllowedPagesStr = localStorage.getItem('allowedPages');
+      if (storedAllowedPagesStr) {
+        storedAllowedPages = JSON.parse(storedAllowedPagesStr);
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+    const allowedPages = contextAllowedPages.length > 0 ? contextAllowedPages : storedAllowedPages;
+    
+    const hasAccess = isAdmin || (Array.isArray(allowedPages) && allowedPages.includes(pagePath));
     
     if (!hasAccess) {
       return <StableRedirect to={unauthorizedRedirect} />;
     }
   } else {
     // Fallback to profile-based check if no specific page is required
-    // Check dashboard access if required
+    // BUT: Admin users (via roles) should always have access, regardless of profile check
+    
+    // Check if user is admin (from context or localStorage as fallback)
+    // Always check localStorage as fallback for immediate post-login state sync
+    const contextRoles = Array.isArray(user.roles) ? user.roles : [];
+    const storedUserStr = localStorage.getItem('user');
+    let storedRoles: string[] = [];
+    try {
+      if (storedUserStr) {
+        const storedUser = JSON.parse(storedUserStr);
+        storedRoles = Array.isArray(storedUser.roles) ? storedUser.roles : [];
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+    // If context has roles, use them. Otherwise fallback to localStorage (for immediate post-login)
+    // Also check localStorage if context roles don't include admin (in case it was just set)
+    // Fallback: Also check if profile is 'admin' (in case roles aren't set yet)
+    const userRoles = contextRoles.length > 0 ? contextRoles : storedRoles;
+    const isAdmin = userRoles.includes('admin') || storedRoles.includes('admin') || user.profile === 'admin';
+    
+    // If admin, allow access regardless of profile check
+    if (isAdmin) {
+      return <>{children}</>;
+    }
+    
+    // For non-admin users, check dashboard access if required
     if (requireDashboardAccess && !hasDashboardAccess(user.profile)) {
       return <StableRedirect to={authRedirect} />;
     }
