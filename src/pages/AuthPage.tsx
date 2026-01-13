@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { 
   LoginForm, 
   ForgotPasswordForm, 
@@ -33,7 +33,6 @@ const AUTH_CONFIG: Record<
 const AuthPage: React.FC = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const {  Component } = AUTH_CONFIG[authMode];
 
@@ -43,7 +42,7 @@ const AuthPage: React.FC = () => {
     if (mode && ['login', 'forgot-password'].includes(mode)) {
       setAuthMode(mode as AuthMode);
     }
-  }, [searchParams, navigate]);
+  }, [searchParams]);
 
   const handleModeChange = (mode: AuthMode) => {
     setAuthMode(mode);
@@ -89,7 +88,10 @@ const AuthPage: React.FC = () => {
 
         {/* Form */}
         <Component
-          onSuccess={() => setAuthMode('login')}
+          onSuccess={() => {
+            // Navigation will happen automatically via useEffect when user state updates
+            setAuthMode('login');
+          }}
           showLinks={false}
         />
 

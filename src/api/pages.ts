@@ -179,34 +179,63 @@ export const pagesApi = {
 
   /**
    * Assign a page to a profile
-   * Creates a profile-page assignment
+   * @deprecated This endpoint has been removed. Use rolesApi.assignPage(roleId, pageId) instead.
+   * Migration: Profiles have been replaced with roles. Use /roles/:roleId/pages endpoint.
    */
-  assignPageToProfile: async (data: AssignProfilePageRequest): Promise<ProfilePage> => {
-    const response = await api.post('/pages/assign', data);
-    return response.data;
+  assignPageToProfile: async (_data: AssignProfilePageRequest): Promise<ProfilePage> => {
+    throw new Error(
+      `The /pages/assign endpoint has been removed. ` +
+      `Please use rolesApi.assignPage(roleId, pageId) to assign pages to a role. ` +
+      `See docs/PAGES_ENDPOINT_MIGRATION.md for migration guide.`
+    );
   },
 
   /**
    * Remove a page assignment from a profile
+   * @deprecated This endpoint has been removed. Use rolesApi.removePage(roleId, pageId) instead.
+   * Migration: Profiles have been replaced with roles. Use /roles/:roleId/pages/:pageId endpoint.
    */
   removePageFromProfile: async (profile: Profile, pageId: number): Promise<void> => {
-    await api.delete(`/pages/assign/${profile}/${pageId}`);
+    throw new Error(
+      `The /pages/assign/${profile}/${pageId} endpoint has been removed. ` +
+      `Please use rolesApi.removePage(roleId, pageId) to remove pages from a role. ` +
+      `See docs/PAGES_ENDPOINT_MIGRATION.md for migration guide.`
+    );
   },
 
   /**
    * Get all pages assigned to a specific profile
+   * @deprecated This endpoint has been removed. Use rolesApi.getPages(roleId) instead.
+   * Migration: Profiles have been replaced with roles. Use /roles/:roleId/pages endpoint.
    */
   getPagesForProfile: async (profile: Profile): Promise<Page[]> => {
-    const response = await api.get(`/pages/profile/${profile}`);
-    return response.data;
+    throw new Error(
+      `The /pages/profile/${profile} endpoint has been removed. ` +
+      `Please use rolesApi.getPages(roleId) to get pages for a role. ` +
+      `See docs/PAGES_ENDPOINT_MIGRATION.md for migration guide.`
+    );
+  },
+
+  /**
+   * Get pages assigned to a specific role (admin only)
+   * Alternative endpoint: You can also use rolesApi.getPages(roleId)
+   */
+  getPagesForRole: async (roleId: number): Promise<Page[]> => {
+    const response = await api.get(`/roles/${roleId}/pages`);
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   /**
    * Get all profiles that have access to a specific page
+   * @deprecated This endpoint has been removed. Profiles have been replaced with roles.
+   * Migration: Use roles API to get roles that have access to a page.
    */
   getProfilesForPage: async (pageId: number): Promise<Profile[]> => {
-    const response = await api.get(`/pages/page/${pageId}/profiles`);
-    return response.data;
+    throw new Error(
+      `The /pages/page/${pageId}/profiles endpoint has been removed. ` +
+      `Profiles have been replaced with roles. ` +
+      `See docs/PAGES_ENDPOINT_MIGRATION.md for migration guide.`
+    );
   },
 
   /**

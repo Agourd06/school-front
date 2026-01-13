@@ -1,0 +1,166 @@
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import BaseModal from './BaseModal';
+import { useUserRoles, useAssignRoleToUser, useRemoveRoleFromUser } from '../../hooks/useUserRoles';
+import { useRoles } from '../../hooks/useRoles';
+import { Button } from '../ui';
+import type { User } from '../../api/users';
+import type { Role } from '../../api/roles';
+
+interface UserRolesModalProps {
+  isOpen: boolean;
+  user: User | null;
+  onClose: () => void;
+}
+
+const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }) => {
+  const { t } = useTranslation();
+  const userId = user?.id ?? null;
+  
+  const { data: userRoles = [], refetch: refetchUserRoles } = useUserRoles(userId);
+  const { data: rolesResp } = useRoles({ page: 1, limit: 100 });
+  const allRoles = rolesResp?.data ?? [];
+  
+  const assignRoleMut = useAssignRoleToUser();
+  const removeRoleMut = useRemoveRoleFromUser();
+  
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const assignedRoleIds = new Set(userRoles.map((r: Role) => r.id));
+
+  useEffect(() => {
+    if (isOpen && userId) {
+      refetchUserRoles();
+    }
+  }, [isOpen, userId, refetchUserRoles]);
+
+  useEffect(() => {
+    if (alert) {
+      const timeout = setTimeout(() => setAlert(null), 5000);
+      return () => clearTimeout(timeout);
+    }
+  }, [alert]);
+
+  const handleToggleRole = async (role: Role) => {
+    if (!userId) return;
+    
+    setLoading(true);
+    setAlert(null);
+
+    try {
+      if (assignedRoleIds.has(role.id)) {
+        await removeRoleMut.mutateAsync({ userId, roleId: role.id });
+        setAlert({ type: 'success', message: t('messages.roleRemovedFromUser') || `Role "${role.label}" removed successfully` });
+      } else {
+        await assignRoleMut.mutateAsync({ userId, roleId: role.id });
+        setAlert({ type: 'success', message: t('messages.roleAssignedToUser') || `Role "${role.label}" assigned successfully` });
+      }
+      refetchUserRoles();
+    } catch (error: unknown) {
+      const errorMessage = (error as Error)?.message || t('messages.unexpectedError') || 'An error occurred';
+      setAlert({ type: 'error', message: errorMessage });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`${t('sections.manageRolesFor') || 'Manage Roles for'} ${user.username || user.email}`}
+      className="sm:max-w-2xl"
+    >
+      <div className="space-y-4">
+        {alert && (
+          <div className={`rounded-md border px-4 py-2 text-sm ${
+            alert.type === 'success'
+              ? 'border-success-light bg-success-light text-success-dark'
+              : 'border-danger-light bg-danger-light text-danger-dark'
+          }`}>
+            {alert.message}
+          </div>
+        )}
+
+        <div>
+          <p className="text-sm text-muted mb-4">
+            {t('sections.selectRolesForUser') || 'Select roles to assign to this user. Users with multiple roles will have access to all pages assigned to any of their roles.'}
+          </p>
+
+          <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4">
+            {allRoles.length === 0 ? (
+              <p className="text-sm text-muted text-center py-4">
+                {t('forms.loadingRoles') || 'Loading roles...'}
+              </p>
+            ) : (
+              allRoles.map((role: Role) => {
+                const isAssigned = assignedRoleIds.has(role.id);
+                return (
+                  <div
+                    key={role.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                      isAssigned
+                        ? 'bg-primary-transparent border-primary'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-heading">{role.label}</span>
+                        <span className="text-xs text-muted">({role.code})</span>
+                        {role.is_system && (
+                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">
+                            System
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant={isAssigned ? 'secondary' : 'primary'}
+                      size="sm"
+                      onClick={() => handleToggleRole(role)}
+                      disabled={loading}
+                      className="ml-4"
+                    >
+                      {isAssigned ? t('common.remove') || 'Remove' : t('common.assign') || 'Assign'}
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {userRoles.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-heading mb-2">
+              {t('sections.currentRoles') || 'Current Roles'}:
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {userRoles.map((role: Role) => (
+                <span
+                  key={role.id}
+                  className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-primary-transparent text-primary border border-primary"
+                >
+                  {role.label}
+                  {role.is_system && <span className="ml-1 text-xs">(System)</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end pt-4 border-t border-gray-200">
+          <Button variant="secondary" onClick={onClose}>
+            {t('common.close') || 'Close'}
+          </Button>
+        </div>
+      </div>
+    </BaseModal>
+  );
+};
+
+export default UserRolesModal;

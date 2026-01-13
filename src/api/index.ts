@@ -7,4 +7,7 @@ export * from './module';
 export * from './schoolYear';
 export * from './schoolYearPeriod';
 export * from './classStudent';
+export * from './roles';
+export * from './userRoles';
+export * from './pages';
 export { default as api } from './axios';

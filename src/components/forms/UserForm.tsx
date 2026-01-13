@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input, Select, Button } from '../ui';
+import { Input, Button } from '../ui';
+import { useRoles } from '../../hooks/useRoles';
+import type { Role } from '../../api/roles';
 import type { Profile } from '../../types/profile';
-import { PROFILE_DEFAULT, PROFILE_OPTIONS } from '../../types/profile';
 
 export interface UserFormData {
   username: string;
   email: string;
-  profile: Profile;
+  role_ids: number[]; // REQUIRED: At least one role
+  // profile field is REMOVED - replaced with roles system
 }
 
 export interface User {
@@ -36,10 +38,13 @@ const UserForm: React.FC<UserFormProps> = ({
   serverError,
 }) => {
   const { t } = useTranslation();
+  const { data: rolesResp } = useRoles({ page: 1, limit: 100 });
+  const roles = rolesResp?.data ?? [];
+  
   const [formData, setFormData] = useState<UserFormData>({
     username: '',
     email: '',
-    profile: PROFILE_DEFAULT,
+    role_ids: [],
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -50,13 +55,13 @@ const UserForm: React.FC<UserFormProps> = ({
       setFormData({
         username: initialData.username || '',
         email: initialData.email || '',
-        profile: initialData.profile || PROFILE_DEFAULT,
+        role_ids: [], // Will be loaded separately via useUserRoles hook
       });
     } else {
       setFormData({
         username: '',
         email: '',
-        profile: PROFILE_DEFAULT,
+        role_ids: [],
       });
     }
     setErrors({});
@@ -73,6 +78,11 @@ const UserForm: React.FC<UserFormProps> = ({
       newErrors.email = t('forms.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = t('forms.emailInvalid');
+    }
+
+    // REQUIRED: At least one role must be selected
+    if (!isEditing && formData.role_ids.length === 0) {
+      newErrors.role_ids = t('forms.atLeastOneRoleRequired') || 'Please select at least one role';
     }
 
     setErrors(newErrors);
@@ -129,19 +139,67 @@ const UserForm: React.FC<UserFormProps> = ({
         className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
       />
 
-      <Select
-        label={t('forms.profile')}
-        name="profile"
-        value={formData.profile}
-        onChange={handleChange}
-        options={PROFILE_OPTIONS}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
-
       {!isEditing && (
-        <p className="text-xs text-muted mt-1">
-          {t('forms.userPasswordEmailNote') || 'A password setup email will be sent automatically to the user.'}
-        </p>
+        <>
+          <div>
+            <label className="block text-sm font-medium text-heading mb-2">
+              {t('forms.roles') || 'Roles'} * <span className="text-danger">(Required)</span>
+            </label>
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3">
+              {roles.length === 0 ? (
+                <p className="text-sm text-muted">{t('forms.loadingRoles') || 'Loading roles...'}</p>
+              ) : (
+                roles.map((role: Role) => (
+                  <label key={role.id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      checked={formData.role_ids.includes(role.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            role_ids: [...prev.role_ids, role.id]
+                          }));
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            role_ids: prev.role_ids.filter(id => id !== role.id)
+                          }));
+                        }
+                        // Clear error when user selects a role
+                        if (errors.role_ids) {
+                          setErrors(prev => ({ ...prev, role_ids: '' }));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-body">
+                      {role.label} 
+                      <span className="text-xs text-muted ml-1">
+                        ({role.code})
+                        {role.is_system && <span className="ml-1 text-blue-600">[System]</span>}
+                      </span>
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+            {errors.role_ids && (
+              <p className="mt-1 text-sm text-danger">{errors.role_ids}</p>
+            )}
+            <p className="mt-1 text-xs text-muted">
+              {t('forms.selectAtLeastOneRole') || 'Please select at least one role for this user.'}
+            </p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+            <p className="text-sm text-blue-900 font-medium mb-1">
+              📧 {t('forms.passwordSetupEmail') || 'Password Setup Email'}
+            </p>
+            <p className="text-xs text-blue-800">
+              {t('forms.passwordSetupEmailNote') || 'A password setup email with a secure link will be automatically sent to the user\'s email address. The user must click the link to set their password.'}
+            </p>
+          </div>
+        </>
       )}
 
       <div className="flex justify-end space-x-3 pt-4">

@@ -17,14 +17,18 @@ export interface LoginResponse {
     profile: Profile;
     company_id?: number | null;
     company?: Company | null;
+    roles?: string[];
+    allowedPages?: string[];
   };
 }
 
 export interface RegisterRequest {
   email: string;
-  password: string;
   username: string;
-  profile?: Profile;
+  company_id: number; // Required for initial registration (first user for company)
+  // Password is NEVER provided - backend always sends password setup email
+  // profile field is REMOVED - replaced with roles system (first user gets admin automatically)
+  // role_ids field is NOT accepted - first user gets admin role automatically
 }
 
 export interface RegisterResponse {

@@ -23,18 +23,19 @@ export interface User {
 
 export interface CreateUserRequest {
   username: string;
-  password?: string; // Optional - backend will auto-generate if not provided
   email: string;
   profile?: Profile;
   company_id: number; // Required for public registration
+  role_ids: number[]; // REQUIRED: At least one role must be assigned
+  // Password is NEVER provided - backend always sends password setup email
 }
 
 export interface UpdateUserRequest {
   username?: string;
   email?: string;
-  profile?: Profile;
   status?: number;
   company_id?: number;
+  // profile field is REMOVED - replaced with roles system (manage via /users/:id/roles)
 }
 
 export const usersApi = {

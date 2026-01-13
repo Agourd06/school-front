@@ -12,6 +12,7 @@ export interface CombinedRegistrationFormData {
   // User fields
   username: string;
   userEmail: string;
+  // Password is NEVER provided - backend always sends password setup email
 }
 
 interface CombinedRegistrationFormProps {
@@ -221,8 +222,20 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
             placeholder={t('registration.userEmailPlaceholder')}
           />
-          <p className="mt-1 text-xs text-muted">
-            {t('registration.invitationEmailNote')}
+        </div>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-sm text-blue-900 font-medium mb-1">
+            📧 {t('registration.passwordSetupEmail') || 'Configuration du mot de passe par email'}
+          </p>
+          <p className="text-xs text-blue-800">
+            {t('registration.passwordSetupEmailNote') || 'Un email avec un lien sécurisé pour définir votre mot de passe sera automatiquement envoyé à votre adresse email. Vous devrez cliquer sur le lien pour définir votre mot de passe.'}
+          </p>
+        </div>
+
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-sm text-green-800 font-medium">
+            ✅ {t('registration.autoAdminNote') || 'Vous deviendrez automatiquement l\'administrateur de votre entreprise. Aucune sélection de rôle nécessaire.'}
           </p>
         </div>
       </div>

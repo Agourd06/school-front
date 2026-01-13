@@ -106,17 +106,29 @@ const Navbar: React.FC = () => {
             </button>
             <div className="flex items-center gap-2">
               {user && companyLogo ? (
-                <img
-                  src={getFileUrl(companyLogo)}
-                  alt={company?.name || 'Company logo'}
-                  className="h-10 w-auto max-w-[200px] object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
-                />
+                <Link
+                  to="/settings"
+                  className="cursor-pointer hover:opacity-90 transition-opacity"
+                  title="Go to Settings"
+                >
+                  <img
+                    src={getFileUrl(companyLogo)}
+                    alt={company?.name || 'Company logo'}
+                    className="h-10 w-auto max-w-[200px] object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+                  />
+                </Link>
               ) : (
-                <img
-                  src="/edusol_logo.png"
-                  alt="Edusol - La fiabilité à portée de main"
-                  className="h-12 w-auto object-contain drop-shadow-[5px_5px_15px_rgba(255,255,255,2)]"
-                />
+                <Link
+                  to={user ? "/settings" : "/auth"}
+                  className="cursor-pointer hover:opacity-90 transition-opacity"
+                  title={user ? "Go to Settings" : "Go to Login"}
+                >
+                  <img
+                    src="/edusol_logo.png"
+                    alt="Edusol - La fiabilité à portée de main"
+                    className="h-12 w-auto object-contain drop-shadow-[5px_5px_15px_rgba(255,255,255,2)]"
+                  />
+                </Link>
               )}
             </div>
           </div>

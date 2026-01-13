@@ -21,6 +21,8 @@ interface User {
   profile: Profile;
   company_id?: number | null;
   company?: Company | null;
+  roles?: string[];
+  allowedPages?: string[];
 }
 
 interface AuthContextType {
@@ -32,6 +34,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
+  refreshPermissions: () => Promise<void>;
   isLoading: boolean;
   companyId: number | null;
 }
@@ -72,6 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
+    const storedAllowedPages = localStorage.getItem('allowedPages');
 
     if (storedToken && storedUser) {
       try {
@@ -96,12 +100,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.setItem('user', JSON.stringify(parsedUser));
         }
         
+        // Get allowedPages from user object or separate storage
+        const allowedPages = parsedUser.allowedPages || JSON.parse(storedAllowedPages || '[]');
+        
         setToken(storedToken);
         setUser({
           ...parsedUser,
           profile,
           company: normalizeCompany(parsedUser.company),
+          roles: parsedUser.roles || [],
+          allowedPages: Array.isArray(allowedPages) ? allowedPages : [],
         });
+        
+        // Store allowedPages separately for easy access
+        if (allowedPages.length > 0) {
+          localStorage.setItem('allowedPages', JSON.stringify(allowedPages));
+        }
+        
         applyThemeToDocument(
           mergeTheme({
             primary: parsedUser?.company?.primaryColor ?? defaultTheme.primary,
@@ -112,6 +127,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (error) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('allowedPages');
       }
     }
     setIsLoading(false);
@@ -215,13 +231,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       const data = await authApi.login({ email, password });
 
-      // Handle your backend's response structure: {access_token, user: {id, email, username, profile}}
+      // Handle your backend's response structure: {token, user: {id, email, username, profile, roles, allowedPages}}
       const token = data.token;
       const userData = data.user;
 
       if (!token || !userData) {
         throw new Error('Invalid login response: missing token or user data');
       }
+
+      const allowedPages = userData.allowedPages || [];
+      const roles = userData.roles || [];
 
       const user: User = {
         id: userData.id!,
@@ -230,13 +249,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         profile: userData.profile,
         company_id: userData.company_id ?? null,
         company: normalizeCompany(userData.company),
+        roles,
+        allowedPages,
       };
-
 
       setToken(token);
       setUser(user);
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('allowedPages', JSON.stringify(allowedPages));
       applyThemeToDocument(
         mergeTheme({
           primary: user.company?.primaryColor ?? defaultTheme.primary,
@@ -251,16 +272,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (username: string, email: string, password: string, profile: Profile = 'admin') => {
+  const register = async (username: string, email: string, _password: string, _profile: Profile = 'admin') => {
     try {
       setIsLoading(true);
-      await authApi.register({ username, email, password, profile });
+      // Note: RegisterRequest only accepts username, email, and company_id
+      // Password and profile are not accepted - backend sends password setup email
+      await authApi.register({ username, email, company_id: 1 });
       // Note: Registration doesn't return a token, user needs to login
       // setToken(data.token);
       // setUser(data.user);
       // localStorage.setItem('token', data.token);
       // localStorage.setItem('user', JSON.stringify(data.user));
-      await login(email, password);
+      // Note: User cannot login immediately after registration since backend sends password setup email
+      // User must click the link in the email to set their password first
+      // await login(email, _password);
     } catch (error) {
       throw error;
     } finally {
@@ -273,7 +298,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('allowedPages');
     applyThemeToDocument(defaultTheme);
+  };
+
+  const refreshPermissions = async () => {
+    try {
+      const { pagesApi } = await import('../api/pages');
+      const routes = await pagesApi.getMyRoutes();
+      
+      setUser((prev) => {
+        if (!prev) return prev;
+        const updated = { ...prev, allowedPages: routes };
+        localStorage.setItem('user', JSON.stringify(updated));
+        localStorage.setItem('allowedPages', JSON.stringify(routes));
+        return updated;
+      });
+    } catch (error) {
+      console.error('Failed to refresh permissions:', error);
+    }
   };
 
   const forgotPassword = async (email: string) => {
@@ -311,6 +354,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     forgotPassword,
     resetPassword,
     changePassword,
+    refreshPermissions,
     isLoading,
     companyId,
   };

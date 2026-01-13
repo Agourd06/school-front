@@ -1,8 +1,10 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import { getDefaultRoute } from './utils/permissions';
 import Navbar from './components/Navbar';
+
 import ProtectedRoute from './components/guards/ProtectedRoute';
 import StudentRoute from './components/guards/StudentRoute';
 import TeacherRoute from './components/guards/TeacherRoute';
@@ -49,6 +51,8 @@ const ClassCoursesPage = lazy(() => import('./pages/dashboard/ClassCoursesPage')
 const UsersPage = lazy(() => import('./pages/dashboard/UsersPage'));
 const CompaniesPage = lazy(() => import('./pages/dashboard/CompaniesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const RolesPage = lazy(() => import('./pages/dashboard/RolesPage'));
+const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 
 // Student pages
 const StudentDashboardPage = lazy(() => import('./pages/student/StudentDashboardPage'));
@@ -74,9 +78,26 @@ const PageLoadingFallback: React.FC = () => {
   );
 };
 
+// Stable redirect component to prevent infinite loops
+const StableRedirect: React.FC<{ to: string }> = ({ to }) => {
+  const location = useLocation();
+  // Only redirect if we're not already on the target route
+  if (location.pathname === to) {
+    return null;
+  }
+  return <Navigate to={to} replace />;
+};
+
 const App: React.FC = () => {
   const { t } = useTranslation();
   const { user, isLoading } = useAuth();
+
+  // Memoize default route to prevent infinite loops
+  // Only recalculate when profile or allowedPages actually change
+  const allowedPagesKey = user?.allowedPages ? JSON.stringify([...user.allowedPages].sort()) : '';
+  const defaultRoute = useMemo(() => {
+    return getDefaultRoute(user);
+  }, [user?.profile, allowedPagesKey]);
 
   if (isLoading) {
     return (
@@ -94,13 +115,7 @@ const App: React.FC = () => {
           path="/auth" 
           element={
             user ? (
-              user.profile === 'student' ? (
-                <Navigate to="/student" replace />
-              ) : user.profile === 'teacher' ? (
-                <Navigate to="/teacher" replace />
-              ) : (
-                <Navigate to="/programs" replace />
-              )
+              <StableRedirect to={defaultRoute} />
             ) : (
               <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><AuthPage /></Suspense></div></>
             )
@@ -114,13 +129,7 @@ const App: React.FC = () => {
           path="/registerMyschool" 
           element={
             user ? (
-              user.profile === 'student' ? (
-                <Navigate to="/student" replace />
-              ) : user.profile === 'teacher' ? (
-                <Navigate to="/teacher" replace />
-              ) : (
-                <Navigate to="/programs" replace />
-              )
+              <StableRedirect to={defaultRoute} />
             ) : (
               <Suspense fallback={<PageLoadingFallback />}><RegistrationPage /></Suspense>
             )
@@ -138,13 +147,7 @@ const App: React.FC = () => {
           path="/reset-password" 
           element={
             user ? (
-              user.profile === 'student' ? (
-                <Navigate to="/student" replace />
-              ) : user.profile === 'teacher' ? (
-                <Navigate to="/teacher" replace />
-              ) : (
-                <Navigate to="/programs" replace />
-              )
+              <StableRedirect to={defaultRoute} />
             ) : (
               <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><ResetPasswordPage /></Suspense></div></>
             )
@@ -458,11 +461,27 @@ const App: React.FC = () => {
         <Route
           path="/settings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPage="/settings">
               <DashboardLayout>
                 <Suspense fallback={<PageLoadingFallback />}><SettingsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/roles"
+          element={
+            <ProtectedRoute requiredPage="/roles">
+              <DashboardLayout>
+                <Suspense fallback={<PageLoadingFallback />}><RolesPage /></Suspense>
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/unauthorized"
+          element={
+            <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><UnauthorizedPage /></Suspense></div></>
           }
         />
         {/* Student routes with StudentLayout */}
@@ -567,12 +586,14 @@ const App: React.FC = () => {
             </TeacherRoute>
           }
         />
-        {/* Profile route with Navbar */}
+        {/* Profile route with DashboardLayout (includes Sidebar) */}
         <Route 
           path="/profile" 
           element={
             <ProtectedRoute requireDashboardAccess={false}>
-              <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><ProfilePage /></Suspense></div></>
+              <DashboardLayout>
+                <Suspense fallback={<PageLoadingFallback />}><ProfilePage /></Suspense>
+              </DashboardLayout>
             </ProtectedRoute>
           } 
         />
@@ -580,13 +601,7 @@ const App: React.FC = () => {
           path="/" 
           element={
             user ? (
-              user.profile === 'student' ? (
-                <Navigate to="/student" replace />
-              ) : user.profile === 'teacher' ? (
-                <Navigate to="/teacher" replace />
-              ) : (
-                <Navigate to="/programs" replace />
-              )
+              <StableRedirect to={defaultRoute} />
             ) : (
               <Navigate to="/auth" replace />
             )
@@ -597,13 +612,7 @@ const App: React.FC = () => {
           path="*" 
           element={
             user ? (
-              user.profile === 'student' ? (
-                <Navigate to="/student" replace />
-              ) : user.profile === 'teacher' ? (
-                <Navigate to="/teacher" replace />
-              ) : (
-                <Navigate to="/programs" replace />
-              )
+              <StableRedirect to={defaultRoute} />
             ) : (
               <Navigate to="/auth" replace />
             )

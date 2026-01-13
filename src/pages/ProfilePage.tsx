@@ -104,7 +104,7 @@ const ProfilePage: React.FC = () => {
   const profileLabel = getProfileLabel(user.profile);
 
   return (
-    <div className="min-h-screen bg-surface py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-surface py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-heading">My Profile</h1>

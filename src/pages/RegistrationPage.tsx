@@ -3,16 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
 import { companyApi } from '../api/company';
-import { usersApi } from '../api/users';
+import { authApi } from '../api/auth';
 import type { CreateCompanyRequest } from '../api/company';
-import type { CreateUserRequest } from '../api/users';
+import type { RegisterRequest } from '../api/auth';
 import {
   ErrorAlert,
   RegistrationSuccess,
 } from '../components/registration';
 import CombinedRegistrationForm, { type CombinedRegistrationFormData } from '../components/registration/CombinedRegistrationForm';
-import { PROFILE_DEFAULT } from '../types/profile';
-// Note: PROFILE_DEFAULT is now 'admin' (administrateur) - has access to everything
+// Note: profile field has been REMOVED - replaced with roles system
+// First user automatically gets admin role - no profile or role_ids needed
 
 type Step = 'form' | 'success';
 
@@ -30,6 +30,7 @@ const RegistrationPage: React.FC = () => {
     city: '',
     username: '',
     userEmail: '',
+    // Password is NEVER provided - backend always sends password setup email
   });
   const [createdCompanyName, setCreatedCompanyName] = useState<string>('');
 
@@ -55,17 +56,25 @@ const RegistrationPage: React.FC = () => {
 
       const company = await companyApi.create(companyPayload);
 
-      // Step 2: Create user (always admin profile)
-      const userPayload: CreateUserRequest = {
+      // Step 2: Register first admin user (public endpoint, no auth required)
+      // First user automatically gets admin role - no role_ids needed
+      // Password is NEVER provided - backend always sends password setup email
+      // profile field is REMOVED - backend handles role assignment automatically
+      const userPayload: RegisterRequest = {
         username: formData.username.trim(),
         email: formData.userEmail.trim(),
-        profile: PROFILE_DEFAULT, // Always admin profile
-        company_id: company.id,
-        // Password is not provided - backend will send invitation email with token link
+        company_id: company.id, // Required: Link user to the created company
+        // DO NOT send: profile (removed), role_ids (not accepted), password (email-based)
+        // Backend automatically assigns admin role to first user
       };
 
-      // Backend will send an invitation email with a token link to set password
-      await usersApi.create(userPayload);
+      // Use /auth/register endpoint (public, no JWT token needed)
+      // Backend automatically assigns admin role to first user for the company
+      // Backend will send password setup email with secure token link
+      const registerResult = await authApi.register(userPayload);
+      
+      // Registration successful - user is now admin
+      console.log('Registration successful:', registerResult);
       
       setCreatedCompanyName(company.name);
       setStep('success');

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { tabToRoutePath, routePathToTab, type RouteTab } from "../utils/routeMapping";
+import { usePermissions } from "../utils/permissions";
 
 interface SidebarProps {
   activeTab: RouteTab;
@@ -18,29 +19,18 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { hasPageAccess, isAdmin } = usePermissions();
   const [isParametersOpen, setIsParametersOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+  // Define closeMobile early to ensure it's available everywhere
+  const closeMobile = () => setIsMobileOpen(false);
+
   // Determine active tab from current route
   const currentRouteTab = routePathToTab(location.pathname) || activeTab;
 
-  const toggleParameters = () => {
-    setIsParametersOpen(!isParametersOpen);
-  };
-
-  const toggleGroup = (title: string) => {
-    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
-  };
-
-  useEffect(() => {
-    const handler = () => setIsMobileOpen((prev) => !prev);
-    window.addEventListener("toggle-sidebar", handler as EventListener);
-    return () => window.removeEventListener("toggle-sidebar", handler as EventListener);
-  }, []);
-
-  const closeMobile = () => setIsMobileOpen(false);
-
+  // Define parameter groups first (before using them in useMemo)
   const parameterGroups: Array<{
     title: string;
     titleKey: string;
@@ -158,6 +148,51 @@ const Sidebar: React.FC<SidebarProps> = ({
    
    
   ];
+
+  // Filter menu items based on allowedPages (RBAC)
+  // If user is admin, show all items; otherwise filter by allowedPages
+  const filterMenuItems = useMemo(() => {
+    return (items: Array<{ tab: SidebarProps['activeTab']; labelKey: string }>) => {
+      // Admin sees everything
+      if (isAdmin()) {
+        return items;
+      }
+      
+      // Filter items based on allowedPages
+      return items.filter((item) => {
+        const route = tabToRoutePath(item.tab);
+        return hasPageAccess(route);
+      });
+    };
+  }, [hasPageAccess, isAdmin]);
+
+  // Filter parameter groups to only show groups with accessible items
+  const filteredParameterGroups = useMemo(() => {
+    return parameterGroups.filter((group) => {
+      // Admin sees all groups
+      if (isAdmin()) {
+        return true;
+      }
+      
+      // Filter groups: only show if they have at least one accessible item
+      const accessibleItems = filterMenuItems(group.items);
+      return accessibleItems.length > 0;
+    });
+  }, [isAdmin, filterMenuItems, parameterGroups]);
+
+  const toggleParameters = () => {
+    setIsParametersOpen(!isParametersOpen);
+  };
+
+  const toggleGroup = (title: string) => {
+    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
+
+  useEffect(() => {
+    const handler = () => setIsMobileOpen((prev) => !prev);
+    window.addEventListener("toggle-sidebar", handler as EventListener);
+    return () => window.removeEventListener("toggle-sidebar", handler as EventListener);
+  }, []);
 
   return (
     <div className="min-h-screen bg-surface">
@@ -278,8 +313,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             {/* Dropdown Content */}
             {isParametersOpen && (
               <div className="mt-2 space-y-3 pb-8">
-                {parameterGroups.map((group) => {
+                {filteredParameterGroups.map((group) => {
                   const isGroupOpen = openGroups[group.title] ?? true;
+                  const accessibleItems = filterMenuItems(group.items);
+                  
+                  // Don't render group if it has no accessible items
+                  if (accessibleItems.length === 0) {
+                    return null;
+                  }
+                  
                   return (
                     <div key={group.title} className="space-y-1">
                       <button
@@ -298,7 +340,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       </button>
                       {isGroupOpen && (
                         <div className="ml-4 space-y-1 border-l border-border pl-4">
-                          {group.items.map((item) => {
+                          {accessibleItems.map((item) => {
                             const route = tabToRoutePath(item.tab);
                             const isActive = currentRouteTab === item.tab;
                             return (
@@ -328,39 +370,41 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* Settings Link */}
-          <div className="mt-auto pt-4 border-t border-border">
-            <Link
-              to="/settings"
-              onClick={closeMobile}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === '/settings'
-                  ? 'bg-primary-transparent text-primary'
-                  : 'text-muted hover:bg-primary-transparent hover:text-primary'
-              }`}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {/* Settings Link - Only show if user has access */}
+          {(isAdmin() || hasPageAccess('/settings')) && (
+            <div className="mt-auto pt-4 border-t border-border">
+              <Link
+                to="/settings"
+                onClick={closeMobile}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === '/settings'
+                    ? 'bg-primary-transparent text-primary'
+                    : 'text-muted hover:bg-primary-transparent hover:text-primary'
+                }`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              {t('sidebar.settings')}
-            </Link>
-          </div>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                {t('sidebar.settings')}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

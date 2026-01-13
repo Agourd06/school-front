@@ -13,6 +13,30 @@ const api = axios.create({
   timeout: 10000,
 });
 
+// Check if an endpoint is public (doesn't require authentication)
+const isPublicEndpoint = (url: string | undefined, method: string = 'GET'): boolean => {
+  if (!url) return false;
+  
+  // Auth endpoints are always public
+  if (url.includes('/auth/')) {
+    return true;
+  }
+  
+  // For POST requests to /company or /users, check if we're on registration page
+  // These are public during initial registration
+  if (method === 'POST') {
+    const currentPath = window.location.pathname;
+    const isRegistrationPage = currentPath === '/registerMyschool' || currentPath === '/signup';
+    
+    // POST /company or POST /users during registration are public
+    if (isRegistrationPage && (url === '/company' || url === '/users' || url.endsWith('/company') || url.endsWith('/users'))) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
@@ -27,10 +51,25 @@ api.interceptors.request.use(
         config.headers['Content-Type'] = 'application/json';
       }
     }
+    
+    // Only add auth token if:
+    // 1. There's a token in localStorage
+    // 2. The endpoint is NOT a public endpoint
     const token = localStorage.getItem('token');
-    if (token) {
+    const requestUrl = config.url || '';
+    const method = config.method?.toUpperCase() || 'GET';
+    const isPublic = isPublicEndpoint(requestUrl, method);
+    
+    if (token && !isPublic) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (isPublic) {
+      // Explicitly remove Authorization header for public endpoints
+      // This ensures no auth header is sent even if a token exists
+      if (config.headers) {
+        delete config.headers.Authorization;
+      }
     }
+    
     return config;
   },
   (error) => {
@@ -58,6 +97,11 @@ api.interceptors.response.use(
                             fullUrl.includes('/auth/forgot-password') ||
                             fullUrl.includes('/auth/reset-password');
       
+      // Check if this is a public registration endpoint (company/user creation during registration)
+      const isPublicRegistrationEndpoint = (requestUrl.includes('/company') || requestUrl.includes('/users')) &&
+                                          (requestUrl.endsWith('/company') || requestUrl.endsWith('/users') || 
+                                           !requestUrl.includes('/company/') && !requestUrl.includes('/users/'));
+      
       // Don't redirect on 401 if we're on a public registration page
       const currentPath = window.location.pathname;
       const isPublicRoute = currentPath === '/registerMyschool' || 
@@ -67,14 +111,15 @@ api.interceptors.response.use(
                            currentPath.startsWith('/set-password') ||
                            currentPath.startsWith('/login');
       
-      // Only redirect if it's NOT an auth endpoint and NOT a public route
+      // Only redirect if it's NOT an auth endpoint, NOT a public registration endpoint, and NOT a public route
       // This means it's an authenticated request that failed (token expired, etc.)
-      if (!isAuthEndpoint && !isPublicRoute) {
+      if (!isAuthEndpoint && !isPublicRegistrationEndpoint && !isPublicRoute) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('allowedPages');
         window.location.href = '/auth?mode=login';
       }
-      // For auth endpoints on public routes, just reject the error so the form can handle it
+      // For auth endpoints and public registration endpoints on public routes, just reject the error so the form can handle it
     }
     return Promise.reject(error);
   }

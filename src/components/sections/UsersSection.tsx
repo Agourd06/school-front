@@ -14,6 +14,7 @@ import StatusBadge from '../../components/StatusBadge';
 import { EditButton, DeleteButton, Button } from '../ui';
 import { ToastContainer, type ToastType } from '../ui/Toast';
 import type { User } from '../../api/users';
+import UserRolesModal from '../modals/UserRolesModal';
 
 interface Toast {
   id: string;
@@ -31,6 +32,7 @@ const UsersSection: React.FC = () => {
     filters: { search: '', status: undefined },
   });
   const [modal, setModal] = React.useState<{ type: 'user' | null; data?: User | null }>({ type: null });
+  const [rolesModalUser, setRolesModalUser] = React.useState<User | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<{ id: number; name?: string } | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [wasCreatingUser, setWasCreatingUser] = React.useState(false);
@@ -166,7 +168,8 @@ const UsersSection: React.FC = () => {
         searchPlaceholder={t('sections.searchByNameOrEmail')}
         filterOptions={STATUS_OPTIONS}
         renderRow={(user: User, onEdit, onDelete, index) => {
-          const profileLabelKey = `profile.${user.profile}`;
+          const profileLabelKey = user.profile ? `profile.${user.profile}` : 'profile.undefined';
+          const profileDisplay = t(profileLabelKey) || user.profile || t('profile.undefined') || 'Undefined';
           const isPending = user.status === 2;
           return (
             <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
@@ -177,7 +180,7 @@ const UsersSection: React.FC = () => {
                   <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-2">
                       <span>{t('forms.profileLabel')}</span>
-                      <span className="font-medium text-gray-700 capitalize">{t(profileLabelKey)}</span>
+                      <span className="font-medium text-gray-700 capitalize">{profileDisplay}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span>{t('forms.statusLabel')}</span>
@@ -205,6 +208,15 @@ const UsersSection: React.FC = () => {
                       {t('sections.resendInvitation') || 'Resend Invitation'}
                     </Button>
                   )}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setRolesModalUser(user)}
+                    className="text-xs"
+                    title={t('sections.manageRoles') || 'Manage Roles'}
+                  >
+                    {t('sections.roles') || 'Roles'}
+                  </Button>
                   <EditButton onClick={() => onEdit(user)} />
                   <DeleteButton onClick={() => onDelete(user.id)} />
                 </div>
@@ -221,6 +233,12 @@ const UsersSection: React.FC = () => {
           user={modal.data} 
         />
       )}
+
+      <UserRolesModal
+        isOpen={!!rolesModalUser}
+        user={rolesModalUser}
+        onClose={() => setRolesModalUser(null)}
+      />
 
       <DeleteModal
         isOpen={!!deleteTarget}

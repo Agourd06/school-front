@@ -1,5 +1,6 @@
 export { default as BaseModal } from './BaseModal';
 export { default as UserModal } from './UserModal';
+export { default as UserRolesModal } from './UserRolesModal';
 export { default as CompanyModal } from './CompanyModal';
 export { default as DeleteModal } from './DeleteModal';
 export { default as CourseModal } from './CourseModal';
@@ -23,4 +24,5 @@ export { default as LevelModal } from './LevelModal';
 export { default as ClassModal } from './ClassModal';
 export { default as AdministratorModal } from './AdministratorModal';
 export { default as ClassStudentModal } from './ClassStudentModal';
+export { default as RoleModal } from './RoleModal';
 

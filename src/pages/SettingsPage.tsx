@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import ColorSettings from '../components/settings/ColorSettings';
 import PageAccessSettings from '../components/settings/PageAccessSettings';
 import TypesSettings from '../components/settings/TypesSettings';
+import RolesSettings from '../components/settings/RolesSettings';
 
-type SettingsTab = 'colors' | 'access' | 'types';
+type SettingsTab = 'colors' | 'access' | 'types' | 'roles';
 
 const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -14,6 +15,7 @@ const SettingsPage: React.FC = () => {
     { id: 'colors', label: t('settings.colors') },
     { id: 'access', label: t('settings.pageAccess') },
     { id: 'types', label: t('settings.types') },
+    { id: 'roles', label: t('settings.roles') },
   ];
 
   return (
@@ -48,6 +50,7 @@ const SettingsPage: React.FC = () => {
         {activeTab === 'colors' && <ColorSettings />}
         {activeTab === 'access' && <PageAccessSettings />}
         {activeTab === 'types' && <TypesSettings />}
+        {activeTab === 'roles' && <RolesSettings />}
       </div>
     </div>
   );

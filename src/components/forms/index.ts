@@ -78,3 +78,6 @@ export { default as StudentDiplomeStepForm } from './StudentDiplomeStepForm';
 export { default as StudentContactStepForm } from './StudentContactStepForm';
 export { default as StudentLinkTypeStepForm } from './StudentLinkTypeStepForm';
 
+export { default as RoleForm } from './RoleForm';
+export type { RoleFormData } from './RoleForm';
+

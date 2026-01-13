@@ -32,20 +32,22 @@ const RegistrationSuccess: React.FC<RegistrationSuccessProps> = ({
       </div>
 
       <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-left">
-        <p className="text-sm text-heading font-medium mb-2">{t('registration.whatsNext')}</p>
+        <p className="text-sm text-heading font-medium mb-2">{t('registration.whatsNext') || 'What\'s Next?'}</p>
         <div className="space-y-3">
           <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <p className="text-sm text-green-900 font-semibold mb-2">✓ {t('registration.invitationEmailSent')}</p>
+            <p className="text-sm text-green-900 font-semibold mb-2">
+              ✓ {t('registration.invitationEmailSent') || 'Password Setup Email Sent'}
+            </p>
             <p className="text-xs text-green-800 mb-2">
-              {t('registration.passwordSetupInvitationSent', { email: userEmail })}
+              {t('registration.passwordSetupInvitationSent', { email: userEmail }) || `A password setup invitation has been sent to ${userEmail}.`}
             </p>
           </div>
           <ul className="text-sm text-primary space-y-1 list-disc list-inside">
-            <li>{t('registration.checkEmailInbox')}</li>
-            <li>{t('registration.clickLinkToSetPassword')}</li>
-            <li>{t('registration.invitationLinkValid24Hours')}</li>
-            <li>{t('registration.afterSettingPasswordLogin', { username })}</li>
-            <li>{t('registration.ifNoEmailCheckSpam')}</li>
+            <li>{t('registration.checkEmailInbox') || 'Check your email inbox (and spam folder) for the password setup link'}</li>
+            <li>{t('registration.clickLinkToSetPassword') || 'Click the link in the email to set your password'}</li>
+            <li>{t('registration.invitationLinkValid24Hours') || 'The password setup link is valid for 24 hours'}</li>
+            <li>{t('registration.afterSettingPasswordLogin', { username }) || `After setting your password, you can login with your username ${username}`}</li>
+            <li>{t('registration.ifNoEmailCheckSpam') || 'If you don\'t receive the email, please check your spam folder or contact support'}</li>
           </ul>
         </div>
       </div>

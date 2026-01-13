@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCreateUser, useUpdateUser } from '../../hooks/useUsers';
 import { useCompanyId } from '../../hooks/useCompanyId';
 import BaseModal from './BaseModal';
@@ -12,6 +13,7 @@ interface UserModalProps {
 }
 
 const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
+  const { t } = useTranslation();
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const companyId = useCompanyId();
@@ -23,20 +25,29 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
       const updateData: UpdateUserRequest = {
         username: formData.username,
         email: formData.email,
-        profile: formData.profile as any,
+        // profile field is REMOVED - manage roles via /users/:id/roles endpoint
       };
 
       await updateUser.mutateAsync({ id: user.id, ...updateData });
     } else {
-      // For new users: password is always sent via email automatically
+      // For new users: password is ALWAYS set via email link - NEVER provided through form
+      // REQUIRED: role_ids must be provided
+      if (!formData.role_ids || formData.role_ids.length === 0) {
+        throw new Error('At least one role is required');
+      }
+
       const createData = {
         username: formData.username,
         email: formData.email,
-        profile: formData.profile as any,
-        company_id: companyId,
+        company_id: companyId!,
+        role_ids: formData.role_ids, // REQUIRED
+        // Password is NEVER included - backend always sends password setup email
+        // profile field is REMOVED - replaced with roles system
       };
 
-      // Backend will automatically send invitation email when password is not provided
+      // Backend will automatically send password setup email with secure token link
+      // User must click the link to set their password
+      // Backend automatically creates user_roles entries from role_ids
       await createUser.mutateAsync(createData);
     }
     onClose();
@@ -46,7 +57,7 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Edit User' : 'Add User'}
+      title={isEditing ? (t('sections.editUser') || 'Edit User') : (t('sections.addUser') || 'Add User')}
     >
       <UserForm
         initialData={user}
