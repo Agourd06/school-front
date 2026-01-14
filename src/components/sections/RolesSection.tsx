@@ -80,15 +80,16 @@ const RolesSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('settings.roles') || t('sidebar.roles') || 'Roles'}</h3>
-          <p className="text-sm text-gray-600">{t('sections.manageRoles') || 'Manage roles'}</p>
-        </div>
-        <Button variant="primary" onClick={openCreateModal}>
-          + {t('sections.addRole') || 'Add Role'}
-        </Button>
-      </div>
+      <PageHeader
+        titleKey="pages.rolesTitle"
+        descriptionKey="pages.rolesDescription"
+        icon={<KeyRound className="w-5 h-5" />}
+        actions={
+          <Button variant="primary" onClick={openCreateModal}>
+            + {t('sections.addRole') || 'Add Role'}
+          </Button>
+        }
+      />
 
       {alert && (
         <div className={`rounded-md border px-4 py-2 text-sm ${
@@ -100,7 +101,7 @@ const RolesSection: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

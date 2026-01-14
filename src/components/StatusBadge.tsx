@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 type StatusValue = number | null | undefined;
 
 const STATUS_STYLES: Record<number, { labelKey: string; className: string }> = {
-  1: { labelKey: 'forms.active', className: 'bg-green-100 text-green-800' },
-  2: { labelKey: 'forms.pending', className: 'bg-yellow-100 text-yellow-800' },
-  0: { labelKey: 'forms.disabled', className: 'bg-gray-100 text-gray-800' },
-  [-1]: { labelKey: 'forms.archived', className: 'bg-blue-100 text-blue-800' },
-  [-2]: { labelKey: 'forms.deleted', className: 'bg-red-100 text-red-800' },
+  1: { labelKey: 'forms.active', className: 'bg-emerald-50 text-emerald-700 border border-emerald-200' },
+  2: { labelKey: 'forms.pending', className: 'bg-amber-50 text-amber-700 border border-amber-200' },
+  0: { labelKey: 'forms.disabled', className: 'bg-slate-100 text-slate-600 border border-slate-200' },
+  [-1]: { labelKey: 'forms.archived', className: 'bg-blue-50 text-blue-700 border border-blue-200' },
+  [-2]: { labelKey: 'forms.deleted', className: 'bg-red-50 text-red-700 border border-red-200' },
 };
 
 interface StatusBadgeProps {
@@ -22,7 +22,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ value }) => {
     className: 'bg-gray-100 text-gray-800',
   };
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.className}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${info.className}`}>
       {t(info.labelKey)}
     </span>
   );

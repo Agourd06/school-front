@@ -139,7 +139,7 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Input
           label="Student"
           value={studentName}
@@ -157,7 +157,7 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Input
           label="Title"
           value={form.title}
@@ -172,7 +172,7 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Input
           label="Diplome"
           value={form.diplome}
@@ -186,7 +186,7 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <SearchSelect
           label="Country"
           value={form.country || ''}
@@ -212,8 +212,8 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-heading">Diplome picture 1</label>
             <div className="mt-1 flex items-start gap-3">

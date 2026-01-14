@@ -10,8 +10,8 @@ import CourseModal from '../modals/CourseModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import ModuleAssignmentModal from '../modals/ModuleAssignmentModal';
-import { EditButton, DeleteButton, Button, PdfActions } from '../ui';
-import { Info } from 'lucide-react';
+import { EditButton, DeleteButton, Button, PdfActions, PageHeader } from '../ui';
+import { Info, BookOpen } from 'lucide-react';
 import type { Course } from '../../api/course';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -180,12 +180,11 @@ const CoursesSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.courses')}</h1>
-            <p className="text-sm text-gray-500">{t('sections.manageCourses')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.coursesTitle"
+          descriptionKey="pages.coursesDescription"
+          icon={<BookOpen className="w-5 h-5" />}
+          actions={
             <Button
               type="button"
               variant="primary"
@@ -197,8 +196,8 @@ const CoursesSection: React.FC = () => {
               </svg>
               {t('sections.addCourse')}
             </Button>
-          </div>
-        </div>
+          }
+        />
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -238,24 +237,24 @@ const CoursesSection: React.FC = () => {
         </div>
     
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('common.name')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('sections.volume')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('sections.coefficient')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('common.status')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('sections.pdfDocument')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -263,7 +262,7 @@ const CoursesSection: React.FC = () => {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="bg-white divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
@@ -281,9 +280,9 @@ const CoursesSection: React.FC = () => {
                   const statusValue = typeof course.status === 'number' ? course.status : 0;
                   const hasDescription = !!stripHtml(course.description ?? '');
                   return (
-                    <tr key={course.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{course.title}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                    <tr key={course.id} className="transition-colors hover:bg-gray-50/50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{course.title}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         {course.volume !== null && course.volume !== undefined ? (
                           <span className="font-semibold text-gray-900">{course.volume}</span>
                         ) : (
@@ -315,7 +314,7 @@ const CoursesSection: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => openDescriptionModal(course)}
-                              className="inline-flex items-center justify-center rounded-md border border-green-200 p-1.5 text-green-600 hover:bg-green-50 transition-colors"
+                              className="inline-flex items-center justify-center rounded-md border border-emerald-200 bg-white px-2.5 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1"
                               title={t('sections.viewDetails')}
                             >
                               <Info className="h-4 w-4" />
@@ -324,7 +323,7 @@ const CoursesSection: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => openAssignmentModal(course)}
-                            className="inline-flex items-center rounded-md border border-purple-200 px-3 py-1.5 text-xs font-medium text-purple-600 hover:bg-purple-50"
+                            className="inline-flex items-center rounded-md border border-purple-200 bg-white px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1"
                           >
                             {t('sections.courseToModule')}
                           </button>

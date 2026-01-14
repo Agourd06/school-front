@@ -5,7 +5,8 @@ import Pagination from '../Pagination';
 import BaseModal from '../modals/BaseModal';
 import StudentReportDetailModal, { type StudentReportDetailFormValues } from '../modals/StudentReportDetailModal';
 import DeleteModal from '../modals/DeleteModal';
-import { EditButton, DeleteButton, Button } from '../ui';
+import { EditButton, DeleteButton, Button, PageHeader } from '../ui';
+import { FileSearch } from 'lucide-react';
 import type { StudentReport } from '../../api/studentReport';
 import type { StudentReportDetail } from '../../api/studentReportDetail';
 import type { Teacher } from '../../api/teachers';
@@ -275,14 +276,11 @@ const StudentReportDetailsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentReportDetails')}</h1>
-          <p className="text-sm text-gray-500">
-            {t('forms.filterStudentReportsAndManage')}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        titleKey="pages.studentReportDetailsTitle"
+        descriptionKey="pages.studentReportDetailsDescription"
+        icon={<FileSearch className="w-5 h-5" />}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SearchSelect

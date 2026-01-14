@@ -9,7 +9,8 @@ import Pagination from '../Pagination';
 import { StudentLinkTypeModal } from '../modals';
 import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
-import { EditButton, DeleteButton, Input, Button } from '../ui';
+import { EditButton, DeleteButton, Input, Button, PageHeader } from '../ui';
+import { Link2 } from 'lucide-react';
 import type { StudentLinkType } from '../../api/studentLinkType';
 import { STATUS_OPTIONS } from '../../constants/status';
 
@@ -140,12 +141,11 @@ const StudentLinkTypesSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentLinkTypes')}</h1>
-            <p className="text-sm text-gray-500">{t('sections.manageStudentLinkTypes')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.studentLinkTypesTitle"
+          descriptionKey="pages.studentLinkTypesDescription"
+          icon={<Link2 className="w-5 h-5" />}
+          actions={
             <Button
               type="button"
               variant="primary"
@@ -157,8 +157,8 @@ const StudentLinkTypesSection: React.FC = () => {
               </svg>
               {t('sections.addStudentLinkType')}
             </Button>
-          </div>
-        </div>
+          }
+        />
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -196,7 +196,7 @@ const StudentLinkTypesSection: React.FC = () => {
           </div>
         </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import Pagination from './Pagination';
 import SearchBar from './SearchBar';
 import FilterDropdown from './FilterDropdown';
-import { Button } from './ui';
+import { Button, PageHeader } from './ui';
 
 type ListState<T> = {
   data: T[];
@@ -27,6 +27,9 @@ interface StatusOption {
 
 interface DataTableGenericProps<T> {
   title: string;
+  titleKey?: string;
+  descriptionKey?: string;
+  icon?: React.ReactNode;
   state: ListState<T>;
   onAdd: () => void;
   onEdit: (item: T) => void;
@@ -43,6 +46,9 @@ interface DataTableGenericProps<T> {
 
 function DataTableGeneric<T extends { id: number }>({
   title,
+  titleKey,
+  descriptionKey,
+  icon,
   state,
   onAdd,
   onEdit,
@@ -68,21 +74,49 @@ function DataTableGeneric<T extends { id: number }>({
   ];
 
   return (
-    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-      <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
-        <h3 className="text-lg leading-6 font-medium text-heading">{title}</h3>
-        <Button
-          type="button"
-          variant="primary"
-          onClick={onAdd}
-          className="inline-flex items-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          {addButtonText}
-        </Button>
-      </div>
+    <div className="space-y-6">
+      {titleKey && descriptionKey ? (
+        <PageHeader
+          titleKey={titleKey}
+          descriptionKey={descriptionKey}
+          icon={icon}
+          actions={
+            <Button
+              type="button"
+              variant="primary"
+              onClick={onAdd}
+              className="inline-flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              {addButtonText}
+            </Button>
+          }
+        />
+      ) : (
+        <div className="border-b border-gray-200 bg-white pb-6 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={onAdd}
+                className="inline-flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {addButtonText}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden transition-shadow duration-200 hover:shadow-lg">
 
       <div className="px-4 py-3 bg-surface border-t border-border">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -149,6 +183,7 @@ function DataTableGeneric<T extends { id: number }>({
           )}
         </>
       )}
+    </div>
     </div>
   );
 }

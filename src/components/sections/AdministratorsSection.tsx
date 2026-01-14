@@ -9,7 +9,8 @@ import Pagination from '../Pagination';
 import AdministratorModal from '../modals/AdministratorModal';
 import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
-import { EditButton, DeleteButton, Button } from '../ui';
+import { EditButton, DeleteButton, Button, PageHeader } from '../ui';
+import { Shield } from 'lucide-react';
 import type { Administrator } from '../../api/administrators';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
@@ -165,12 +166,11 @@ const AdministratorsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.administrators')}</h1>
-            <p className="text-sm text-gray-500">{t('sections.manageAdministrators')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.administratorsTitle"
+          descriptionKey="pages.administratorsDescription"
+          icon={<Shield className="w-5 h-5" />}
+          actions={
             <Button
               type="button"
               variant="primary"
@@ -182,8 +182,8 @@ const AdministratorsSection: React.FC = () => {
               </svg>
               {t('sections.addAdministrator')}
             </Button>
-          </div>
-        </div>
+          }
+        />
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -223,7 +223,7 @@ const AdministratorsSection: React.FC = () => {
       </div>
       
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

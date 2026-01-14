@@ -9,7 +9,8 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import SchoolYearPeriodModal from '../modals/SchoolYearPeriodModal';
 import DeleteModal from '../modals/DeleteModal';
-import { EditButton, DeleteButton, Button } from '../ui';
+import { EditButton, DeleteButton, Button, PageHeader } from '../ui';
+import { CalendarDays } from 'lucide-react';
 import type { SchoolYearPeriod } from '../../api/schoolYearPeriod';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { useSchoolYear } from '../../context/SchoolYearContext';
@@ -193,32 +194,12 @@ const SchoolYearPeriodsSection: React.FC = () => {
   return (
     <div className="space-y-6">
       
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">School Year Periods</h1>
-            <p className="text-sm text-gray-500">Manage school year periods and their date ranges.</p>
-            {selectedSchoolYearId && selectedSchoolYear && (
-              <div className="mt-2">
-                <span className="text-sm text-gray-600">
-                  School Year: <span className="font-medium text-gray-900">{selectedSchoolYear.title}</span>
-                  {selectedSchoolYear.start_date && selectedSchoolYear.end_date && (
-                    <span className="text-xs text-gray-500 ml-2">
-                      ({formatDateWithMonthDay(selectedSchoolYear.start_date)} - {formatDateWithMonthDay(selectedSchoolYear.end_date)})
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
-            {!selectedSchoolYearId && (
-              <div className="mt-2 p-4 bg-primary-light border border-primary-light rounded-md">
-                <p className="text-sm text-primary">
-                  <strong>No school year selected.</strong> Please select a school year from the School Years section to view and manage its periods.
-                </p>
-              </div>
-            )}
-          </div>
-          {selectedSchoolYearId && (
-            <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.schoolYearPeriodsTitle"
+          descriptionKey="pages.schoolYearPeriodsDescription"
+          icon={<CalendarDays className="w-5 h-5" />}
+          actions={
+            selectedSchoolYearId ? (
               <Button
                 type="button"
                 variant="primary"
@@ -230,9 +211,28 @@ const SchoolYearPeriodsSection: React.FC = () => {
                 </svg>
                 Add Period
               </Button>
-            </div>
-          )}
-        </div>
+            ) : undefined
+          }
+        />
+        {selectedSchoolYearId && selectedSchoolYear && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-900">
+              <span className="font-medium">School Year:</span> {selectedSchoolYear.title}
+              {selectedSchoolYear.start_date && selectedSchoolYear.end_date && (
+                <span className="text-xs text-blue-700 ml-2">
+                  ({formatDateWithMonthDay(selectedSchoolYear.start_date)} - {formatDateWithMonthDay(selectedSchoolYear.end_date)})
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+        {!selectedSchoolYearId && (
+          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
+            <p className="text-sm text-amber-900">
+              <strong>No school year selected.</strong> Please select a school year from the School Years section to view and manage its periods.
+            </p>
+          </div>
+        )}
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -293,7 +293,7 @@ const SchoolYearPeriodsSection: React.FC = () => {
               </div>
             </div>
 
-          <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

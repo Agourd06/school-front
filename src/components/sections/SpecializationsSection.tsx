@@ -10,8 +10,8 @@ import Pagination from '../Pagination';
 import SpecializationModal from '../modals/SpecializationModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
-import { EditButton, DeleteButton, Button, Input, PdfActions } from '../ui';
-import { Info } from 'lucide-react';
+import { EditButton, DeleteButton, Button, Input, PdfActions, PageHeader } from '../ui';
+import { Info, Target } from 'lucide-react';
 import type { Specialization } from '../../api/specialization';
 import type { Program } from '../../api/program';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
@@ -211,49 +211,52 @@ const SpecializationsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              {t('dashboard.specializations')}
-              {selectedProgram && (
-                <span className="text-base font-normal text-gray-600 ml-2">
-                  ({selectedProgram.title})
-                </span>
+        <PageHeader
+          titleKey="pages.specializationsTitle"
+          descriptionKey="pages.specializationsDescription"
+          icon={<Target className="w-5 h-5" />}
+          actions={
+            <>
+              {selectedProgramId && navigateBackToPrograms && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    clearSelectedProgram();
+                    setFilters((prev) => ({ ...prev, program: '' }));
+                    navigateBackToPrograms();
+                  }}
+                  className="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 focus:ring-gray-500"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  {t('common.previous')}
+                </Button>
               )}
-            </h1>
-            <p className="text-sm text-gray-500">{t('sections.manageSpecializations')}</p>
+              {selectedProgramId && (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={openCreateModal}
+                  className="inline-flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {t('sections.addSpecialization')}
+                </Button>
+              )}
+            </>
+          }
+        />
+        {selectedProgram && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-900">
+              <span className="font-medium">Program:</span> {selectedProgram.title}
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            {selectedProgramId && navigateBackToPrograms && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  clearSelectedProgram();
-                  setFilters((prev) => ({ ...prev, program: '' }));
-                  navigateBackToPrograms();
-                }}
-                className="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 focus:ring-gray-500"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                {t('common.previous')}
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="primary"
-              onClick={openCreateModal}
-              className="inline-flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              {t('sections.addSpecialization')}
-            </Button>
-          </div>
-        </div>
+        )}
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -300,7 +303,7 @@ const SpecializationsSection: React.FC = () => {
           </div>
         </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

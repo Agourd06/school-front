@@ -28,7 +28,12 @@ const StudentLinkTypeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? t('settings.editLinkType') : t('settings.addLinkType')}>
+    <BaseModal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={isEditing ? t('settings.editLinkType') : t('settings.addLinkType')}
+      className="max-w-md"
+    >
       <StudentLinkTypeForm
         initialData={item}
         onSubmit={handleSubmit}

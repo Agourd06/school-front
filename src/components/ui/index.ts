@@ -8,6 +8,7 @@ export { default as FormField } from './FormField';
 export { default as Textarea } from './Textarea';
 export { default as PdfActions } from './PdfActions';
 export { default as PdfFileInput } from './PdfFileInput';
+export { default as PageHeader } from './PageHeader';
 
 export type { InputProps } from './Input';
 export type { SelectProps, SelectOption } from './Select';

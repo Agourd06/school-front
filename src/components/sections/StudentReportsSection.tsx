@@ -26,6 +26,8 @@ import type { SortKey } from '../reportSection/types';
 import { getFileUrl } from '../../utils/apiConfig';
 import { studentReportDetailApi } from '../../api/studentReportDetail';
 import CoursesNotesModal from '../reportSection/CoursesNotesModal';
+import { PageHeader } from '../ui';
+import { FileBarChart } from 'lucide-react';
 // Dynamic import for PDF export to reduce initial bundle size
 // @react-pdf/renderer is a large library (~2MB), so we only load it when needed
 
@@ -1120,12 +1122,11 @@ const StudentReportsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentReports')}</h1>
-        <p className="text-sm text-gray-500">
-          {t('sections.manageStudentReports')}
-        </p>
-      </div>
+      <PageHeader
+        titleKey="pages.studentReportsTitle"
+        descriptionKey="pages.studentReportsDescription"
+        icon={<FileBarChart className="w-5 h-5" />}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SearchSelect

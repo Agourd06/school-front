@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Building } from 'lucide-react';
 import DataTableGeneric from '../../components/DataTableGeneric';
 import type { FilterParams, ListState } from '../../types/api';
 import { useCompanies, useUpdateCompany } from '../../hooks/useCompanies';
@@ -82,6 +83,9 @@ const CompaniesSection: React.FC = () => {
     <>
       <DataTableGeneric
         title={t('sidebar.companies')}
+        titleKey="pages.companiesTitle"
+        descriptionKey="pages.companiesDescription"
+        icon={<Building className="w-5 h-5" />}
         state={state}
         onAdd={() => open(null)}
         onEdit={(item) => open(item)}

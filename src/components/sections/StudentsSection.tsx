@@ -9,12 +9,14 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import { StudentModal, StudentOnboardingModal } from '../modals';
 import DeleteModal from '../modals/DeleteModal';
-import { EditButton, DeleteButton, Input, Button } from '../ui';
+import ExcelImportModal from '../modals/ExcelImportModal';
+import { EditButton, DeleteButton, Input, Button, PageHeader } from '../ui';
 import StatusBadge from '../../components/StatusBadge';
 import type { Student } from '../../api/students';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
-import { Mail } from 'lucide-react';
+import { Mail, Upload, Download, Users } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const EMPTY_META = {
   page: 1,
@@ -52,9 +54,11 @@ const StudentsSection: React.FC = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [excelImportOpen, setExcelImportOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set());
 
   const params = useMemo(
     () => ({
@@ -167,12 +171,14 @@ const StudentsSection: React.FC = () => {
       [field]: value === undefined || value === null ? '' : String(value),
     }));
     setPagination((prev) => ({ ...prev, page: 1 }));
+    setSelectedStudents(new Set()); // Clear selection when filters change
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setFilters((prev) => ({ ...prev, search: value }));
     setPagination((prev) => ({ ...prev, page: 1 }));
+    setSelectedStudents(new Set()); // Clear selection when search changes
   };
 
   const handleModalClose = () => {
@@ -203,6 +209,11 @@ const StudentsSection: React.FC = () => {
     try {
       await deleteStudentMut.mutateAsync(deleteTarget.id);
       setDeleteTarget(null);
+      setSelectedStudents((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(deleteTarget.id);
+        return newSet;
+      });
       setAlert({ type: 'success', message: t('messages.studentDeletedSuccessfully') });
       refetchStudents();
     } catch (err: unknown) {
@@ -226,14 +237,85 @@ const StudentsSection: React.FC = () => {
     return getFileUrl(picture);
   };
 
+  // Selection handlers
+  const handleSelectStudent = (studentId: number) => {
+    setSelectedStudents((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(students.map((s) => s.id));
+      setSelectedStudents(allIds);
+    } else {
+      setSelectedStudents(new Set());
+    }
+  };
+
+  const isAllSelected = students.length > 0 && students.every((s) => selectedStudents.has(s.id));
+  const isSomeSelected = students.some((s) => selectedStudents.has(s.id));
+
+  // Export to Excel
+  const handleExportToExcel = () => {
+    if (selectedStudents.size === 0) return;
+
+    const selectedStudentsData = students.filter((s) => selectedStudents.has(s.id));
+
+    // Prepare data with the same structure as import
+    const exportData = selectedStudentsData.map((student) => ({
+      email: student.email || '',
+      phone: student.phone || '',
+      first_name: student.first_name || '',
+      last_name: student.last_name || '',
+      birthday: student.birthday || '',
+      gender: student.gender || '',
+    }));
+
+    // Create workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, 'students_export.xlsx');
+
+    setAlert({ type: 'success', message: `Exported ${selectedStudents.size} student(s) to Excel successfully!` });
+  };
+
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.students')}</h1>
-            <p className="text-sm text-gray-500">{t('sections.manageStudents')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.studentsTitle"
+          descriptionKey="pages.studentsDescription"
+          icon={<Users className="w-5 h-5" />}
+          actions={
+            <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleExportToExcel}
+              disabled={selectedStudents.size === 0}
+              className="inline-flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export to Excel
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setExcelImportOpen(true)}
+              className="inline-flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Import Students (Excel)
+            </Button>
             <Button
               type="button"
               variant="primary"
@@ -245,14 +327,15 @@ const StudentsSection: React.FC = () => {
               </svg>
               {t('sections.addStudent')}
             </Button>
-          </div>
-        </div>
+            </>
+          }
+        />
         {alert && (
           <div
-            className={`mt-4 rounded-md border px-4 py-2 text-sm ${
+            className={`mt-4 rounded-lg border-2 px-4 py-3 text-sm shadow-sm ${
               alert.type === 'success'
-                ? 'border-success-light bg-success-light text-success-dark'
-                : 'border-danger-light bg-danger-light text-danger-dark'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-red-200 bg-red-50 text-red-800'
             }`}
           >
             {alert.message}
@@ -264,92 +347,112 @@ const StudentsSection: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <SearchSelect
-            label={t('common.status')}
-            value={filters.status}
-            onChange={handleFilterChange('status')}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
-          <div className="md:col-span-2">
-            <Input
-              label={t('common.search')}
-              type="text"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder={t('forms.searchByStudentName')}
-              className="shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+        <div className="bg-white rounded-xl border border-gray-200 shadow-md p-5 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <SearchSelect
+              label={t('common.status')}
+              value={filters.status}
+              onChange={handleFilterChange('status')}
+              options={statusFilterOptions}
+              isClearable={false}
             />
+            <div className="md:col-span-2">
+              <Input
+                label={t('common.search')}
+                type="text"
+                value={filters.search}
+                onChange={handleSearchChange}
+                placeholder={t('forms.searchByStudentName')}
+                className="shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+            </div>
           </div>
         </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    title="Select All"
+                  />
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('common.name')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('forms.genderPhone')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('common.status')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('common.actions')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="bg-white divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
                     {t('forms.loadingStudents')}
                   </td>
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-500">
                     {t('forms.noStudentsFound')}
                   </td>
                 </tr>
               ) : (
                 students.map((student) => {
                   const pictureUrl = getPictureUrl(student.picture);
+                  const isSelected = selectedStudents.has(student.id);
                   return (
-                    <tr key={student.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    <tr key={student.id} className={`transition-colors ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50/50'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleSelectStudent(student.id)}
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           {pictureUrl && (
                             <img
                               src={pictureUrl}
                               alt={`${student.first_name} ${student.last_name}`}
-                              className="h-10 w-10 rounded-full object-cover border"
+                              className="h-10 w-10 rounded-full object-cover border border-gray-200"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
                           )}
-                          <div>
+                          <div className="text-sm font-semibold text-gray-900">
                             {student.first_name} {student.last_name}
                           </div>
                         </div>
                       </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      <div className="font-medium text-gray-900 capitalize">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 capitalize">
                         {student.gender || '—'}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 mt-0.5">
                         {student.phone || '—'}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge value={student.status} />
                     </td>
-                    <td className="px-4 py-3 text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         {student.status === 2 && (
                           <Button
@@ -388,8 +491,14 @@ const StudentsSection: React.FC = () => {
           itemsPerPage={meta.limit}
           hasNext={meta.hasNext}
           hasPrevious={meta.hasPrevious}
-          onPageChange={(page) => setPagination((prev) => ({ ...prev, page }))}
-          onPageSizeChange={(limit) => setPagination({ page: 1, limit })}
+          onPageChange={(page) => {
+            setPagination((prev) => ({ ...prev, page }));
+            setSelectedStudents(new Set()); // Clear selection when page changes
+          }}
+          onPageSizeChange={(limit) => {
+            setPagination({ page: 1, limit });
+            setSelectedStudents(new Set()); // Clear selection when page size changes
+          }}
           isLoading={isLoading}
         />
       </div>
@@ -407,6 +516,16 @@ const StudentsSection: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteStudentMut.isPending}
+      />
+
+      <ExcelImportModal
+        isOpen={excelImportOpen}
+        onClose={() => setExcelImportOpen(false)}
+        onImportSuccess={() => {
+          setSelectedStudents(new Set()); // Clear selection after import
+          refetchStudents();
+          setAlert({ type: 'success', message: 'Students imported successfully!' });
+        }}
       />
     </div>
   );

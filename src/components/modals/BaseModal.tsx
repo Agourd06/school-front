@@ -18,7 +18,7 @@ const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, children,
       <div className="absolute inset-0 p-2 sm:p-4 flex items-center justify-center">
         <div className={`w-[96vw] max-w-none bg-white border rounded-md shadow-lg p-4 sm:p-6 max-h-[92vh] overflow-y-auto ${className ?? ''}`}>
           <div className={`mt-1 ${contentClassName ?? ''}`}>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-medium text-gray-900">{title}</h3>
             <button
               onClick={onClose}

@@ -1,14 +1,18 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { getFileUrl } from '../utils/apiConfig';
+import { getProfileLabel } from '../types/profile';
+import { LogOut, User, Settings, ChevronDown, Menu, Globe } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const company = user?.company;
   const companyLogo = company?.logo;
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const rawUser = user as { username?: string; email?: string } | null;
   const displayName = rawUser?.username || rawUser?.email || 'User';
@@ -20,157 +24,213 @@ const Navbar: React.FC = () => {
     .join('')
     .toUpperCase();
 
+  // Get user role label
+  const userRoleLabel = useMemo(() => {
+    if (user?.profile) {
+      return getProfileLabel(user.profile);
+    }
+    if (user?.roles && user.roles.length > 0) {
+      return user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1);
+    }
+    return 'User';
+  }, [user]);
+
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'fr' : 'en';
     i18n.changeLanguage(newLang);
   };
 
-  // Helper function to darken a hex color
-  const darkenColor = (hex: string, percent: number): string => {
-    const num = parseInt(hex.replace('#', ''), 16);
-    const r = Math.max(0, Math.floor((num >> 16) * (1 - percent / 100)));
-    const g = Math.max(0, Math.floor(((num >> 8) & 0x00ff) * (1 - percent / 100)));
-    const b = Math.max(0, Math.floor((num & 0x0000ff) * (1 - percent / 100)));
-    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-  };
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
 
-  // Get navbar background gradient - use company colors when logged in, default colors otherwise
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserMenuOpen]);
+
+  // Get navbar background gradient
   const navbarBackground = useMemo(() => {
     if (user && company) {
-      // When logged in, use company colors
       const primaryColor = company.primaryColor || '#2563eb';
       const secondaryColor = company.secondaryColor || '#0ea5e9';
       
-      // Create a gradient: darker primary -> primary -> secondary
-      // Only darken if it's a hex color
       let startColor = primaryColor;
       if (primaryColor.startsWith('#')) {
-        startColor = darkenColor(primaryColor, 20);
+        const num = parseInt(primaryColor.replace('#', ''), 16);
+        const r = Math.max(0, Math.floor((num >> 16) * 0.8));
+        const g = Math.max(0, Math.floor(((num >> 8) & 0x00ff) * 0.8));
+        const b = Math.max(0, Math.floor((num & 0x0000ff) * 0.8));
+        startColor = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
       }
       
       return `linear-gradient(135deg, ${startColor} 0%, ${primaryColor} 50%, ${secondaryColor} 100%)`;
     }
-    // Default gradient when not logged in
-    return 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)';
-  }, [user, company]);
-
-  // Get border color - use primary color when logged in
-  const borderColor = useMemo(() => {
-    if (user && company?.primaryColor) {
-      const primaryColor = company.primaryColor;
-      // For hex colors, add opacity using color-mix or rgba conversion
-      if (primaryColor.startsWith('#')) {
-        // Convert hex to rgba with 30% opacity
-        const hex = primaryColor.replace('#', '');
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
-        return `rgba(${r}, ${g}, ${b}, 0.3)`;
-      }
-      // For rgb/rgba colors, adjust opacity
-      if (primaryColor.startsWith('rgb')) {
-        return primaryColor.replace(/rgba?\(([^)]+)\)/, (match, values) => {
-          const colors = values.split(',').map((v: string) => v.trim());
-          if (colors.length === 3) {
-            return `rgba(${colors.join(', ')}, 0.3)`;
-          }
-          return match;
-        });
-      }
-      return primaryColor;
-    }
-    return 'rgba(30, 58, 138, 0.3)'; // Default blue-900/30
+    return 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0ea5e9 100%)';
   }, [user, company]);
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-40 text-white shadow-md"
+      className="fixed top-0 left-0 right-0 z-50 h-14 bg-white/5 backdrop-blur-md border-b border-white/10"
       style={{
         background: navbarBackground,
-        borderBottom: `1px solid ${borderColor}`,
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-3">
-            {/* Mobile: sidebar toggle */}
+      <div className="h-full max-w-[1920px] mx-auto px-[21px] sm:px-[29px] lg:px-[45px] pl-[27px] sm:pl-[33px] lg:pl-[55px]">
+        <div className="h-full flex items-center justify-between">
+          {/* Left: Logo & Mobile Menu */}
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
             <button
               type="button"
-              aria-label={t('navbar.openSidebar')}
-              className="inline-flex items-center justify-center p-2 rounded-md hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50 sm:hidden"
               onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
+              className="sm:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label={t('navbar.openSidebar')}
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Menu className="h-5 w-5 text-white" />
             </button>
-            <div className="flex items-center gap-2">
+
+            {/* Logo */}
+            <Link
+              to={user ? "/settings" : "/auth"}
+              className="flex items-center gap-3 group"
+            >
               {user && companyLogo ? (
-                <Link
-                  to="/settings"
-                  className="cursor-pointer hover:opacity-90 transition-opacity"
-                  title="Go to Settings"
-                >
-                  <img
-                    src={getFileUrl(companyLogo)}
-                    alt={company?.name || 'Company logo'}
-                    className="h-10 w-auto max-w-[200px] object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
-                  />
-                </Link>
+                <img
+                  src={getFileUrl(companyLogo)}
+                  alt={company?.name || 'Company logo'}
+                  className="h-8 w-auto max-w-[180px] object-contain transition-opacity group-hover:opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                />
               ) : (
-                <Link
-                  to={user ? "/settings" : "/auth"}
-                  className="cursor-pointer hover:opacity-90 transition-opacity"
-                  title={user ? "Go to Settings" : "Go to Login"}
-                >
-                  <img
-                    src="/edusol_logo.png"
-                    alt="Edusol - La fiabilité à portée de main"
-                    className="h-12 w-auto object-contain drop-shadow-[5px_5px_15px_rgba(255,255,255,2)]"
-                  />
-                </Link>
+                <img
+                  src="/edusol_logo.png"
+                  alt="Edusol"
+                  className="h-9 w-auto object-contain transition-opacity group-hover:opacity-90 drop-shadow-[3px_5px_9px_rgba(255,255,255,1.5)]"
+                />
               )}
-            </div>
+            </Link>
           </div>
-          
-          <div className="flex items-center space-x-3">
-            {/* Language Switcher */}
-            <button
-              onClick={toggleLanguage}
-              className="px-3 py-2 rounded-md text-sm font-medium bg-white/15 border border-white/25 hover:bg-white/25 hover:border-white/35 transition-all text-white shadow-sm"
-              title={t('language.switchLanguage')}
-            >
-              {i18n.language === 'en' ? 'FR' : 'EN'}
-            </button>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-3">
             {user ? (
               <>
-                <div className="hidden sm:flex flex-col items-end leading-tight">
-                  <span className="text-sm font-semibold text-white">{displayName}</span>
-                  <span className="text-xs text-blue-100">{t('navbar.welcomeBack')}</span>
-                </div>
-                <Link
-                  to="/profile"
-                  className="h-10 w-10 flex items-center justify-center rounded-full bg-white/15 text-sm font-semibold uppercase hover:bg-white/25 transition-all cursor-pointer text-white shadow-sm"
-                  title={t('navbar.viewProfile')}
-                >
-                  {initials || 'U'}
-                </Link>
+                {/* Language Switcher */}
                 <button
-                  onClick={logout}
-                  className="px-4 py-2 rounded-md text-sm font-medium bg-white/15 border border-white/25 hover:bg-white/25 hover:border-white/35 transition-all text-white shadow-sm"
+                  onClick={toggleLanguage}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-all duration-200 group relative"
+                  title={t('language.switchLanguage')}
+                  aria-label={t('language.switchLanguage')}
                 >
-                  {t('navbar.logout')}
+                  <Globe className="h-5 w-5 text-white/90 group-hover:text-white transition-colors" />
+                  <span className="absolute -top-1 -right-1 text-[10px] font-medium text-white bg-white/20 rounded-full px-1.5 py-0.5">
+                    {i18n.language === 'en' ? 'EN' : 'FR'}
+                  </span>
                 </button>
+
+                {/* User Menu */}
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all duration-200 group"
+                  >
+                    {/* Avatar */}
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400/50 via-blue-500/50 to-purple-500/50 blur-md" />
+                      <div className="relative h-9 w-9 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-sm font-semibold shadow-lg border-2 border-white/20">
+                        {initials || 'U'}
+                      </div>
+                    </div>
+
+                    {/* User Info - Hidden on mobile */}
+                    <div className="hidden md:flex flex-col items-start">
+                      <span className="text-sm font-semibold text-white leading-tight">
+                        {displayName}
+                      </span>
+                      <span className="text-xs text-white/70 leading-tight">
+                        {userRoleLabel}
+                      </span>
+                    </div>
+
+                    <ChevronDown
+                      className={`h-4 w-4 text-white/70 transition-transform duration-200 ${
+                        isUserMenuOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      {/* User Info Header */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-sm font-semibold">
+                            {initials || 'U'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {displayName}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {userRoleLabel}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-1">
+                        <Link
+                          to="/profile"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <User className="h-4 w-4 text-gray-400" />
+                          <span>{t('navbar.profile')}</span>
+                        </Link>
+                        <Link
+                          to="/settings"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <Settings className="h-4 w-4 text-gray-400" />
+                          <span>{t('navbar.settings')}</span>
+                        </Link>
+                      </div>
+
+                      {/* Logout */}
+                      <div className="border-t border-gray-100 pt-1">
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            logout();
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          <span>{t('navbar.logout')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
-              <div className="flex space-x-2">
-                <Link
-                  to="/auth?mode=login"
-                  className="px-4 py-2 rounded-md text-sm font-medium bg-white text-blue-700 shadow-md hover:bg-blue-50 hover:shadow-lg transition-all font-semibold"
-                >
-                  {t('navbar.login')}
-                </Link>
-              </div>
+              <Link
+                to="/auth?mode=login"
+                className="px-4 py-2 rounded-lg bg-white text-blue-600 font-medium text-sm hover:bg-blue-50 transition-colors shadow-sm"
+              >
+                {t('navbar.login')}
+              </Link>
             )}
           </div>
         </div>

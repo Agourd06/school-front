@@ -213,7 +213,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         <div className="p-6 h-full flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-heading">Edusol</h2>
+            <img 
+              src="/edusol_logo.png" 
+              alt="Edusol" 
+              className="h-10 w-auto object-contain"
+            />
             <div className="flex items-center gap-2">
               {onToggleCollapse && (
                 <button

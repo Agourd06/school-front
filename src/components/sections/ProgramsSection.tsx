@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import { ProgramModal, DeleteModal, DescriptionModal } from '../modals';
-import { EditButton, DeleteButton, Button, PdfActions } from '../ui';
+import { EditButton, DeleteButton, Button, PdfActions, PageHeader } from '../ui';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
-import { Info } from 'lucide-react';
+import { Info, GraduationCap } from 'lucide-react';
 import type { Program } from '../../api/program';
 
 const EMPTY_META = {
@@ -144,12 +144,11 @@ const ProgramsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.programs')}</h1>
-            <p className="text-sm text-gray-500">{t('sections.managePrograms')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.programsTitle"
+          descriptionKey="pages.programsDescription"
+          icon={<GraduationCap className="w-5 h-5" />}
+          actions={
             <Button
               type="button"
               variant="primary"
@@ -161,8 +160,8 @@ const ProgramsSection: React.FC = () => {
               </svg>
               {t('sections.addProgram')}
             </Button>
-          </div>
-        </div>
+          }
+        />
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -201,7 +200,7 @@ const ProgramsSection: React.FC = () => {
           </div>
         </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

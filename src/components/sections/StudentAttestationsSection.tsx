@@ -11,7 +11,8 @@ import Pagination from '../Pagination';
 import StudentAttestationModal from '../modals/StudentAttestationModal';
 import DeleteModal from '../modals/DeleteModal';
 import BaseModal from '../modals/BaseModal';
-import { EditButton, DeleteButton, Button } from '../ui';
+import { EditButton, DeleteButton, Button, PageHeader } from '../ui';
+import { FileCheck } from 'lucide-react';
 import type { StudentAttestation } from '../../api/studentAttestation';
 import type { Attestation } from '../../api/attestation';
 import type { Student } from '../../api/students';
@@ -210,12 +211,11 @@ const StudentAttestationsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.studentAttestations')}</h1>
-            <p className="text-sm text-gray-500">{t('sections.manageStudentAttestations')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.studentAttestationsTitle"
+          descriptionKey="pages.studentAttestationsDescription"
+          icon={<FileCheck className="w-5 h-5" />}
+          actions={
             <Button
               type="button"
               variant="primary"
@@ -227,8 +227,8 @@ const StudentAttestationsSection: React.FC = () => {
               </svg>
               {t('sections.addStudentAttestation')}
             </Button>
-          </div>
-        </div>
+          }
+        />
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -283,7 +283,7 @@ const StudentAttestationsSection: React.FC = () => {
           </div>
         </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

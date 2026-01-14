@@ -1,5 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { PageHeader } from '../../ui';
+import { Calendar } from 'lucide-react';
 import type { PlanningHeaderProps, PlanningViewMode } from '../types';
 
 const PlanningHeader: React.FC<PlanningHeaderProps> = ({ viewMode, onViewModeChange, showForm, onToggleForm }) => {
@@ -11,12 +13,13 @@ const PlanningHeader: React.FC<PlanningHeaderProps> = ({ viewMode, onViewModeCha
   ];
 
   return (
-  <div className="flex items-center justify-between">
-    <div>
-      <h1 className="text-xl font-semibold text-gray-900">{t('planning.classPlanning')}</h1>
-      <p className="text-sm text-gray-500">{t('planning.scheduleAndManageSessions')}</p>
-    </div>
-    <div className="flex items-center gap-3">
+    <>
+      <PageHeader
+        titleKey="pages.planningTitle"
+        descriptionKey="pages.planningDescription"
+        icon={<Calendar className="w-5 h-5" />}
+        actions={
+          <div className="flex items-center gap-3">
       <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
         {modes.map((mode) => (
           <button
@@ -59,10 +62,12 @@ const PlanningHeader: React.FC<PlanningHeaderProps> = ({ viewMode, onViewModeCha
             </>
           )}
         </button>
-        <span className="text-xs text-gray-400 hidden sm:inline">{t('planning.pressCtrlFToToggle')}</span>
-      </div>
-    </div>
-  </div>
+            <span className="text-xs text-gray-400 hidden sm:inline">{t('planning.pressCtrlFToToggle')}</span>
+          </div>
+          </div>
+        }
+      />
+    </>
   );
 };
 

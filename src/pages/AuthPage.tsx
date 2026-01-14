@@ -82,9 +82,14 @@ const AuthPage: React.FC = () => {
   return (
     <AuthLayout>
       <div className="w-full max-w-md mx-auto">
-      
-
-       
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <img 
+            src="/edusol_logo.png" 
+            alt="Edusol" 
+            className="h-16 w-auto mx-auto object-contain"
+          />
+        </div>
 
         {/* Form */}
         <Component

@@ -11,7 +11,8 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import LevelPricingModal, { type LevelPricingFormValues } from '../modals/LevelPricingModal';
 import DeleteModal from '../modals/DeleteModal';
-import { EditButton, DeleteButton, Button } from '../ui';
+import { EditButton, DeleteButton, Button, PageHeader } from '../ui';
+import { DollarSign } from 'lucide-react';
 import type { LevelPricing, LevelPricingStatus } from '../../api/levelPricing';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -205,12 +206,11 @@ const LevelPricingsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.levelPricings')}</h1>
-            <p className="text-sm text-gray-500">{t('sections.manageLevelPricings')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.levelPricingsTitle"
+          descriptionKey="pages.levelPricingsDescription"
+          icon={<DollarSign className="w-5 h-5" />}
+          actions={
             <Button
               type="button"
               variant="primary"
@@ -222,8 +222,8 @@ const LevelPricingsSection: React.FC = () => {
               </svg>
               {t('sections.addLevelPricing')}
             </Button>
-          </div>
-        </div>
+          }
+        />
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -270,7 +270,7 @@ const LevelPricingsSection: React.FC = () => {
           </div>
         </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

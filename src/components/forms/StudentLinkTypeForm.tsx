@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
-import { Input, Select, Button } from '../ui';
+import { Button } from '../ui';
 
 export interface StudentLinkTypeFormData {
   title: string;
@@ -60,7 +60,46 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div>
+        <label className="block text-sm font-medium text-heading mb-1">
+          {t('settings.title')}
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={t('forms.linkTypePlaceholder')}
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-body placeholder:text-muted/70 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+        />
+        {error && <p className="mt-1 text-sm text-danger">{error}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-heading mb-1">
+          {t('common.status')}
+        </label>
+        <select
+          value={status}
+          onChange={(e) => setStatus(Number(e.target.value))}
+          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-body shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors custom-select"
+        >
+          {STATUS_OPTIONS_FORM.map((opt) => {
+            const statusLabels: Record<number, string> = {
+              0: t('forms.disabled'),
+              1: t('forms.active'),
+              2: t('forms.pending'),
+              [-1]: t('forms.archived'),
+            };
+            return (
+              <option key={opt.value} value={opt.value}>
+                {statusLabels[opt.value] || opt.label}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+
       {serverError && (
         <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
           {serverError}
@@ -73,39 +112,21 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
         </div>
       )}
 
-      <Input
-        label={t('settings.title')}
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder={t('forms.linkTypePlaceholder')}
-        error={error}
-        className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-      />
-
-      <Select
-        label={t('common.status')}
-        value={status}
-        onChange={(e) => setStatus(Number(e.target.value))}
-        options={STATUS_OPTIONS_FORM.map((opt) => {
-          const statusLabels: Record<number, string> = {
-            0: t('forms.disabled'),
-            1: t('forms.active'),
-            2: t('forms.pending'),
-            [-1]: t('forms.archived'),
-          };
-          return {
-            value: opt.value,
-            label: statusLabels[opt.value] || opt.label,
-          };
-        })}
-      />
-
-      <div className="flex justify-end space-x-3 pt-2">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
+      <div className="flex justify-end space-x-3 pt-3">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           {t('common.cancel')}
         </Button>
-        <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting}>
+        <Button
+          type="submit"
+          variant="primary"
+          isLoading={isSubmitting}
+          disabled={isSubmitting}
+        >
           {initialData ? t('common.update') : t('common.create')}
         </Button>
       </div>

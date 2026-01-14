@@ -18,7 +18,8 @@ import { STATUS_OPTIONS } from '../../constants/status';
 import { studentsApi } from '../../api/students';
 import BaseModal from '../modals/BaseModal';
 import { getFileUrl } from '../../utils/apiConfig';
-import { Info } from 'lucide-react';
+import { Info, UserPlus } from 'lucide-react';
+import { PageHeader } from '../ui';
 
 type StudentLite = {
   id: number;
@@ -558,11 +559,12 @@ const ClassStudentsSection: React.FC = () => {
 
   return (
     <>
+      <PageHeader
+        titleKey="pages.classStudentsTitle"
+        descriptionKey="pages.classStudentsDescription"
+        icon={<UserPlus className="w-5 h-5" />}
+      />
       <div className="mb-6">
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">{t('sections.classAssignments')}</h2>
-          <p className="text-sm text-gray-500 mt-1">{t('sections.manageStudentAssignments')}</p>
-        </div>
 
         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <SearchSelect

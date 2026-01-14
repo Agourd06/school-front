@@ -12,6 +12,7 @@ import { UserModal, DeleteModal } from '../../components/modals';
 import { STATUS_OPTIONS } from '../../constants/status';
 import StatusBadge from '../../components/StatusBadge';
 import { EditButton, DeleteButton, Button } from '../ui';
+import { Users } from 'lucide-react';
 import { ToastContainer, type ToastType } from '../ui/Toast';
 import type { User } from '../../api/users';
 import UserRolesModal from '../modals/UserRolesModal';
@@ -152,6 +153,9 @@ const UsersSection: React.FC = () => {
     <>
       <DataTableGeneric
         title={t('sidebar.users')}
+        titleKey="pages.usersTitle"
+        descriptionKey="pages.usersDescription"
+        icon={<Users className="w-5 h-5" />}
         state={state}
         onAdd={() => openModal(null)}
         onEdit={(item) => openModal(item)}

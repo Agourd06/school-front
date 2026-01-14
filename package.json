@@ -28,13 +28,15 @@
     "react-router-dom": "^7.9.4",
     "react-select": "^5.10.2",
     "suneditor": "^2.47.8",
-    "suneditor-react": "^3.6.1"
+    "suneditor-react": "^3.6.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.9.1",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "@types/xlsx": "^0.0.35",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
     "baseline-browser-mapping": "^2.9.11",

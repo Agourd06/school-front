@@ -19,7 +19,7 @@ const EditButton: React.FC<EditButtonProps> = ({
       onClick={(e) => onClick(e)}
       disabled={disabled}
       title={title}
-      className={`inline-flex items-center justify-center rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-body hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`inline-flex items-center justify-center rounded-md border border-border bg-white px-2.5 py-1.5 text-xs font-medium text-body hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${className}`}
     >
       <svg
         className="w-4 h-4"

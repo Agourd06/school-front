@@ -26,9 +26,9 @@ const Input: React.FC<InputProps> = ({
       <input
         id={inputId}
         disabled={disabled}
-        className={`mt-1 block w-full rounded-md border bg-card px-3 py-2 text-sm text-body placeholder:text-muted shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary ${
-          error ? 'border-danger focus:ring-danger focus:border-danger' : 'border-border'
-        } ${disabled ? 'cursor-not-allowed bg-muted-foreground text-muted' : ''} ${className}`}
+        className={`mt-1.5 block w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-body placeholder:text-muted/70 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${
+          error ? 'border-danger focus:ring-danger/20 focus:border-danger' : 'border-gray-300'
+        } ${disabled ? 'cursor-not-allowed bg-gray-50 text-muted opacity-60' : 'hover:border-gray-400'} ${className}`}
         {...props}
       />
       {error && <p className="text-sm text-danger">{error}</p>}

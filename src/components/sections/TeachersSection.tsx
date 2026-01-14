@@ -10,8 +10,9 @@ import Pagination from '../Pagination';
 import TeacherModal from '../modals/TeacherModal';
 import DeleteModal from '../modals/DeleteModal';
 import StatusBadge from '../../components/StatusBadge';
-import { EditButton, DeleteButton, Input, Button } from '../ui';
+import { EditButton, DeleteButton, Input, Button, PageHeader } from '../ui';
 import type { Teacher } from '../../api/teachers';
+import { UserCheck } from 'lucide-react';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Mail } from 'lucide-react';
@@ -210,12 +211,11 @@ const TeachersSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.teachers')}</h1>
-            <p className="text-sm text-gray-500">{t('sections.manageTeachers')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.teachersTitle"
+          descriptionKey="pages.teachersDescription"
+          icon={<UserCheck className="w-5 h-5" />}
+          actions={
             <Button
               type="button"
               variant="primary"
@@ -227,8 +227,8 @@ const TeachersSection: React.FC = () => {
               </svg>
               {t('sections.addTeacher')}
             </Button>
-          </div>
-        </div>
+          }
+        />
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -246,46 +246,48 @@ const TeachersSection: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <SearchSelect
-            label={t('common.status')}
-            value={filters.status}
-            onChange={handleFilterChange('status')}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
-          <div className="md:col-span-2">
-            <Input
-              label={t('common.search')}
-              type="text"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder={t('sections.searchByNameOrEmail')}
-              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+        <div className="bg-white rounded-xl border border-gray-200 shadow-md p-5 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <SearchSelect
+              label={t('common.status')}
+              value={filters.status}
+              onChange={handleFilterChange('status')}
+              options={statusFilterOptions}
+              isClearable={false}
             />
+            <div className="md:col-span-2">
+              <Input
+                label={t('common.search')}
+                type="text"
+                value={filters.search}
+                onChange={handleSearchChange}
+                placeholder={t('sections.searchByNameOrEmail')}
+                className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   Teacher
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   Contact
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('common.status')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
                   {t('common.actions')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="bg-white divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-500">
@@ -302,31 +304,31 @@ const TeachersSection: React.FC = () => {
                 teachers.map((teacher) => {
                   const pictureUrl = getPictureUrl(teacher.picture);
                   return (
-                    <tr key={teacher.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                    <tr key={teacher.id} className="transition-colors hover:bg-gray-50/50">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           {pictureUrl && (
                             <img
                               src={pictureUrl}
                               alt="avatar"
-                              className="h-10 w-10 rounded-full object-cover border"
+                              className="h-10 w-10 rounded-full object-cover border border-gray-200"
                             />
                           )}
-                          <div>
-                            <div>{teacher.first_name} {teacher.last_name}</div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            {teacher.first_name} {teacher.last_name}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="space-y-1">
-                          <div>{teacher.email}</div>
+                          <div className="text-sm text-gray-900">{teacher.email}</div>
                           {teacher.phone && <div className="text-xs text-gray-500">{teacher.phone}</div>}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge value={teacher.status} />
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
                           {teacher.status === 2 && (
                             <Button

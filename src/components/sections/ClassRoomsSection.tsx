@@ -8,7 +8,8 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import ClassRoomModal from '../modals/ClassRoomModal';
 import DeleteModal from '../modals/DeleteModal';
-import { EditButton, DeleteButton, Button, Input } from '../ui';
+import { EditButton, DeleteButton, Button, Input, PageHeader } from '../ui';
+import { Building2 } from 'lucide-react';
 import type { ClassRoom } from '../../api/classRoom';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -147,12 +148,11 @@ const ClassRoomsSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-heading">{t('sidebar.classRooms')}</h1>
-            <p className="text-sm text-muted">{t('sections.manageClassRooms')}</p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          titleKey="pages.classRoomsTitle"
+          descriptionKey="pages.classRoomsDescription"
+          icon={<Building2 className="w-5 h-5" />}
+          actions={
             <Button
               type="button"
               variant="primary"
@@ -164,8 +164,8 @@ const ClassRoomsSection: React.FC = () => {
               </svg>
               {t('sections.addClassRoom')}
             </Button>
-          </div>
-        </div>
+          }
+        />
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -204,7 +204,7 @@ const ClassRoomsSection: React.FC = () => {
           </div>
         </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">

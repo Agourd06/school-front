@@ -5,7 +5,8 @@ import Pagination from '../Pagination';
 import ClassCourseModal, { type ClassCourseFormValues } from '../modals/ClassCourseModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
-import { Button, EditButton, DeleteButton } from '../ui';
+import { Button, EditButton, DeleteButton, PageHeader } from '../ui';
+import { BookMarked } from 'lucide-react';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import type { ClassCourse, ClassCourseStatus } from '../../api/classCourse';
 import {
@@ -266,20 +267,19 @@ const ClassCoursesSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{t('sidebar.classCourses')}</h1>
-          <p className="text-sm text-gray-500">{t('forms.manageCoursesAssignedToClasses')}</p>
-        </div>
-        <div className="flex items-center gap-3">
+      <PageHeader
+        titleKey="pages.classCoursesTitle"
+        descriptionKey="pages.classCoursesDescription"
+        icon={<BookMarked className="w-5 h-5" />}
+        actions={
           <Button type="button" variant="primary" onClick={openCreateModal} className="inline-flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             {t('forms.addClassCourse')}
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {alert && (
         <div
@@ -359,7 +359,7 @@ const ClassCoursesSection: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
