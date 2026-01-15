@@ -23,6 +23,7 @@ const StudentLayout: React.FC<StudentLayoutProps> = ({ children }) => {
     { path: '/student/schedule', label: 'Schedule', icon: '📅' },
     { path: '/student/grades', label: 'Grades', icon: '📝' },
     { path: '/student/attendance', label: 'Attendance', icon: '✓' },
+    { path: '/student/attestations', label: 'Attestations', icon: '📜' },
   ];
 
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');

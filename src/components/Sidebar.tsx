@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { tabToRoutePath, routePathToTab, type RouteTab } from "../utils/routeMapping";
 import { usePermissions } from "../utils/permissions";
+import { useAuth } from "../hooks/useAuth";
 
 interface SidebarProps {
   activeTab: RouteTab;
@@ -11,6 +12,11 @@ interface SidebarProps {
   isCollapsed?: boolean;
 }
 
+/**
+ * Sidebar component for dashboard layout
+ * SECURITY: This sidebar should NEVER be shown to students or teachers
+ * They have their own layouts (StudentLayout, TeacherLayout) without sidebar
+ */
 const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
@@ -20,9 +26,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { t } = useTranslation();
   const location = useLocation();
   const { hasPageAccess, isAdmin } = usePermissions();
+  const { user } = useAuth();
   const [isParametersOpen, setIsParametersOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+  // SECURITY: Sidebar should NEVER render for students or teachers
+  // If this component somehow renders for them, return null immediately
+  // This is a safety check in addition to DashboardLayout protection
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
+  const isStudent = userRoles.includes('student') || user?.profile === 'student';
+  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user?.profile === 'teacher' || user?.profile === 'prof';
+  
+  if (isStudent || isTeacher) {
+    return null; // Don't render anything - they should use their own layouts
+  }
 
   // Define closeMobile early to ensure it's available everywhere
   const closeMobile = () => setIsMobileOpen(false);

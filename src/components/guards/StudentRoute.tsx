@@ -41,8 +41,13 @@ const StudentRoute: React.FC<StudentRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // Check if user is a student
-  if (user.profile !== 'student') {
+  // SECURITY: Check roles/profile from server-validated user data (from useAuth context)
+  // Roles and profile are validated from database on app init - cannot be manipulated client-side
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  const userRoles = Array.isArray(user.roles) ? user.roles : [];
+  const isStudent = userRoles.includes('student') || user.profile === 'student';
+  
+  if (!isStudent) {
     // Redirect non-students to dashboard or auth
     return <Navigate to={hasDashboardAccess(user.profile) ? '/programs' : redirectTo} replace />;
   }

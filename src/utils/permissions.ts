@@ -1,50 +1,69 @@
 import { useAuth } from '../hooks/useAuth';
 
 /**
- * Check if user has a specific role
+ * SECURITY: These functions must use React context (server-validated data)
+ * Never read from localStorage directly - it can be manipulated by attackers
+ * 
+ * Note: These functions require useAuth hook and should only be called within React components
+ * For non-component contexts, use the usePermissions hook instead
  */
-export const hasRole = (roleCode: string): boolean => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+/**
+ * Check if user has a specific role
+ * WARNING: This function requires user from useAuth hook - cannot be called outside React components
+ * @deprecated Use usePermissions hook instead for React components
+ */
+export const hasRole = (user: { roles?: string[] } | null, roleCode: string): boolean => {
+  if (!user) return false;
   return Array.isArray(user.roles) && user.roles.includes(roleCode);
 };
 
 /**
  * Check if user has access to a specific page/route
  * Admin users always have access (bypass check)
+ * WARNING: This function requires user from useAuth hook - cannot be called outside React components
+ * @deprecated Use usePermissions hook instead for React components
  */
-export const hasPageAccess = (pagePath: string): boolean => {
+export const hasPageAccess = (user: { roles?: string[]; allowedPages?: string[] } | null, pagePath: string): boolean => {
+  if (!user) return false;
+  
   // Admin users have full access - bypass allowedPages check
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = Array.isArray(user.roles) && user.roles.includes('admin');
   
   if (isAdmin) {
     return true; // Admin has access to all pages
   }
   
-  const allowedPages = JSON.parse(localStorage.getItem('allowedPages') || '[]');
-  return Array.isArray(allowedPages) && allowedPages.includes(pagePath);
+  const allowedPages = Array.isArray(user.allowedPages) ? user.allowedPages : [];
+  return allowedPages.includes(pagePath);
 };
 
 /**
  * Check if user has admin role
+ * WARNING: This function requires user from useAuth hook - cannot be called outside React components
+ * @deprecated Use usePermissions hook instead for React components
  */
-export const isAdmin = (): boolean => {
-  return hasRole('admin');
+export const isAdmin = (user: { roles?: string[] } | null): boolean => {
+  return hasRole(user, 'admin');
 };
 
 /**
  * Get all allowed pages for current user
+ * WARNING: This function requires user from useAuth hook - cannot be called outside React components
+ * @deprecated Use usePermissions hook instead for React components
  */
-export const getAllowedPages = (): string[] => {
-  const allowedPages = JSON.parse(localStorage.getItem('allowedPages') || '[]');
-  return Array.isArray(allowedPages) ? allowedPages : [];
+export const getAllowedPages = (user: { allowedPages?: string[] } | null): string[] => {
+  if (!user) return [];
+  return Array.isArray(user.allowedPages) ? user.allowedPages : [];
 };
 
 /**
  * Get all roles for current user
+ * WARNING: This function requires user from useAuth hook - cannot be called outside React components
+ * @deprecated Use usePermissions hook instead for React components
  */
-export const getUserRoles = (): string[] => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+export const getUserRoles = (user: { roles?: string[] } | null): string[] => {
+  if (!user) return [];
   return Array.isArray(user.roles) ? user.roles : [];
 };
 
@@ -54,16 +73,22 @@ export const getUserRoles = (): string[] => {
  * 
  * Note: This function should be memoized when used in components to prevent infinite loops
  */
-export const getDefaultRoute = (user: { profile?: string; allowedPages?: string[] } | null): string => {
+export const getDefaultRoute = (user: { profile?: string; roles?: string[]; allowedPages?: string[] } | null): string => {
   if (!user) {
     return '/auth';
   }
 
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  const userRoles = Array.isArray(user.roles) ? user.roles : [];
+  const isStudent = userRoles.includes('student') || user.profile === 'student';
+  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user.profile === 'teacher' || user.profile === 'prof';
+
   // Student and teacher profiles have their own routes
-  if (user.profile === 'student') {
+  if (isStudent) {
     return '/student';
   }
-  if (user.profile === 'teacher') {
+  // Handle both 'teacher' and 'prof' (professor) profiles - route to teacher pages
+  if (isTeacher) {
     return '/teacher';
   }
 

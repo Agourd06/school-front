@@ -1,10 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Input, Button } from '../components/ui';
 import { getProfileLabel } from '../types/profile';
 
 const ProfilePage: React.FC = () => {
-  const { user, changePassword } = useAuth();
+  const { user, changePassword, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // SECURITY: Redirect students/teachers from /profile (dashboard profile) to their own profile pages
+  // BUT allow access to ProfilePage when accessed through /student/profile or /teacher/profile
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  useEffect(() => {
+    if (!isLoading && user) {
+      const userRoles = Array.isArray(user.roles) ? user.roles : [];
+      const isStudent = userRoles.includes('student') || user.profile === 'student';
+      const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user.profile === 'teacher' || user.profile === 'prof';
+      const currentPath = window.location.pathname;
+      
+      // Only redirect from /profile (dashboard profile) - NOT from /student/profile or /teacher/profile
+      if (currentPath === '/profile') {
+        if (isStudent) {
+          console.log('[ProfilePage] Redirecting student from /profile to /student/profile', { roles: userRoles, profile: user.profile });
+          window.location.replace('/student/profile');
+        } else if (isTeacher) {
+          console.log('[ProfilePage] Redirecting teacher from /profile to /teacher/profile', { roles: userRoles, profile: user.profile });
+          window.location.replace('/teacher/profile');
+        }
+      }
+    }
+  }, [user, isLoading]);
+
+  // Show loading while checking
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="text-xl font-bold text-primary">Loading...</div>
+      </div>
+    );
+  }
+
+  // SECURITY: Only block rendering if student/teacher accessing /profile (dashboard profile)
+  // Allow access when accessed through /student/profile or /teacher/profile
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
+  const isStudent = userRoles.includes('student') || user?.profile === 'student';
+  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user?.profile === 'teacher' || user?.profile === 'prof';
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  
+  // Only show redirect message if accessing /profile (not /student/profile or /teacher/profile)
+  if ((isStudent || isTeacher) && currentPath === '/profile') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="text-xl font-bold text-primary">Redirecting...</div>
+      </div>
+    );
+  }
+
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -109,6 +161,23 @@ const ProfilePage: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-heading">My Profile</h1>
           <p className="mt-2 text-sm text-muted">View and manage your account information</p>
+          
+          {/* Helper message and button for students/teachers - only show on /profile (not on /student/profile) */}
+          {(isStudent || isTeacher) && currentPath === '/profile' && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800 mb-3">
+                {isStudent 
+                  ? 'You are a student. Access your student dashboard to view your schedule, grades, and attendance.'
+                  : 'You are a teacher. Access your teacher dashboard to manage your classes and students.'}
+              </p>
+              <button
+                onClick={() => navigate(isStudent ? '/student' : '/teacher')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                {isStudent ? 'Go to Student Dashboard' : 'Go to Teacher Dashboard'}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -209,4 +278,3 @@ const ProfilePage: React.FC = () => {
 };
 
 export default ProfilePage;
-

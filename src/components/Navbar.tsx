@@ -35,6 +35,22 @@ const Navbar: React.FC = () => {
     return 'User';
   }, [user]);
 
+  // Get profile link based on user roles/profile - students go to /student/profile, teachers to /teacher/profile, others to /profile
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  const profileLink = useMemo(() => {
+    const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
+    const isStudent = userRoles.includes('student') || user?.profile === 'student';
+    const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user?.profile === 'teacher' || user?.profile === 'prof';
+    
+    if (isStudent) {
+      return '/student/profile';
+    }
+    if (isTeacher) {
+      return '/teacher/profile';
+    }
+    return '/profile';
+  }, [user]);
+
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'fr' : 'en';
     i18n.changeLanguage(newLang);
@@ -190,7 +206,7 @@ const Navbar: React.FC = () => {
                       {/* Menu Items */}
                       <div className="py-1">
                         <Link
-                          to="/profile"
+                          to={profileLink}
                           onClick={() => setIsUserMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >

@@ -1,9 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import * as XLSX from 'xlsx';
 import BaseModal from './BaseModal';
 import { Button } from '../ui';
-import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { useCreateStudent } from '../../hooks/useStudents';
 
 interface ExcelStudentRow {
@@ -28,11 +27,16 @@ const ExcelImportModal: React.FC<{
   onClose: () => void;
   onImportSuccess?: () => void;
 }> = ({ isOpen, onClose, onImportSuccess }) => {
-  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [validatedStudents, setValidatedStudents] = useState<ValidatedStudent[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<{
+    successCount: number;
+    duplicateErrors: Array<{ rowIndex: number; email: string; name: string }>;
+    otherErrors: string[];
+  } | null>(null);
   const createStudentMut = useCreateStudent();
 
   const normalizeColumnName = (name: string): string => {
@@ -85,7 +89,7 @@ const ExcelImportModal: React.FC<{
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
 
     if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
-      alert('Please select a valid Excel file (.xlsx or .xls)');
+      setFileError('Please select a valid Excel file (.xlsx or .xls)');
       return;
     }
 
@@ -99,7 +103,7 @@ const ExcelImportModal: React.FC<{
       const data = XLSX.utils.sheet_to_json(worksheet, { raw: false });
 
       if (data.length === 0) {
-        alert('The Excel file is empty or has no data rows.');
+        setFileError('The Excel file is empty or has no data rows.');
         setIsProcessing(false);
         return;
       }
@@ -110,7 +114,7 @@ const ExcelImportModal: React.FC<{
       const missingColumns = REQUIRED_COLUMNS.filter((col) => !availableColumns.includes(col));
 
       if (missingColumns.length > 0) {
-        alert(
+        setFileError(
           `Missing required columns: ${missingColumns.join(', ')}. Please ensure your Excel file has these columns (case-insensitive).`
         );
         setIsProcessing(false);
@@ -120,9 +124,10 @@ const ExcelImportModal: React.FC<{
       // Validate each row
       const validated = data.map((row, index) => validateStudent(row as Record<string, any>, index));
       setValidatedStudents(validated);
+      setFileError(null); // Clear any previous errors
     } catch (error) {
       console.error('Error parsing Excel file:', error);
-      alert('Error reading Excel file. Please make sure it is a valid Excel file.');
+      setFileError('Error reading Excel file. Please make sure it is a valid Excel file.');
     } finally {
       setIsProcessing(false);
     }
@@ -134,8 +139,10 @@ const ExcelImportModal: React.FC<{
 
     setImportProgress({ current: 0, total: validStudents.length });
     setIsProcessing(true);
+    setImportResult(null); // Clear previous results
 
-    const errors: string[] = [];
+    const duplicateErrors: Array<{ rowIndex: number; email: string; name: string }> = [];
+    const otherErrors: string[] = [];
     let successCount = 0;
 
     for (let i = 0; i < validStudents.length; i++) {
@@ -154,30 +161,40 @@ const ExcelImportModal: React.FC<{
         successCount++;
       } catch (error: any) {
         const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error';
-        errors.push(`Row ${student.rowIndex} (${student.email}): ${errorMessage}`);
+        const errorMessageLower = String(errorMessage).toLowerCase();
+        
+        // Check if this is a duplicate error
+        if (
+          errorMessageLower.includes('already exists') ||
+          errorMessageLower.includes('duplicate entry') ||
+          errorMessageLower.includes('duplicate')
+        ) {
+          duplicateErrors.push({
+            rowIndex: student.rowIndex,
+            email: student.email,
+            name: `${student.first_name} ${student.last_name}`.trim() || student.email,
+          });
+        } else {
+          otherErrors.push(`Row ${student.rowIndex} (${student.email}): ${errorMessage}`);
+        }
       }
 
       setImportProgress({ current: i + 1, total: validStudents.length });
     }
 
     setIsProcessing(false);
-
-    if (errors.length > 0) {
-      alert(`Import completed with errors:\n\n${errors.slice(0, 10).join('\n')}${errors.length > 10 ? `\n... and ${errors.length - 10} more errors` : ''}`);
-    } else {
-      alert(`Successfully imported ${successCount} student(s)!`);
-    }
+    setImportResult({ successCount, duplicateErrors, otherErrors });
 
     if (successCount > 0 && onImportSuccess) {
       onImportSuccess();
     }
-
-    handleClose();
   };
 
   const handleClose = () => {
     setValidatedStudents([]);
     setImportProgress({ current: 0, total: 0 });
+    setFileError(null);
+    setImportResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -196,6 +213,24 @@ const ExcelImportModal: React.FC<{
       contentClassName="p-6"
     >
       <div className="space-y-6">
+        {/* File Error Display */}
+        {fileError && (
+          <div className="rounded-md border border-danger-light bg-danger-light px-4 py-3 text-sm text-danger-dark">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">{fileError}</div>
+              <button
+                type="button"
+                onClick={() => setFileError(null)}
+                className="text-danger-dark hover:text-danger flex-shrink-0"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* File Upload Section */}
         {validatedStudents.length === 0 && (
           <div className="space-y-4">
@@ -264,6 +299,7 @@ const ExcelImportModal: React.FC<{
                 size="sm"
                 onClick={() => {
                   setValidatedStudents([]);
+                  setImportResult(null);
                   if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                   }
@@ -392,6 +428,67 @@ const ExcelImportModal: React.FC<{
               </div>
             )}
 
+            {/* Import Result */}
+            {importResult && !isProcessing && (
+              <div className="space-y-3">
+                {importResult.successCount > 0 && (
+                  <div className="rounded-md border border-success-light bg-success-light px-4 py-3 text-sm text-success-dark">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium">Successfully imported {importResult.successCount} student(s)!</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {importResult.duplicateErrors.length > 0 && (
+                  <div className="rounded-md border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium text-yellow-800 mb-2">
+                          The following student(s) already exist and were skipped:
+                        </p>
+                        <ul className="list-disc list-inside space-y-1 text-yellow-700">
+                          {importResult.duplicateErrors.map((err, idx) => (
+                            <li key={idx}>
+                              Row {err.rowIndex}: {err.name} ({err.email})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {importResult.otherErrors.length > 0 && (
+                  <div className="rounded-md border border-danger-light bg-danger-light px-4 py-3 text-sm text-danger-dark">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium mb-2">Import completed with errors:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {importResult.otherErrors.slice(0, 5).map((err, idx) => (
+                            <li key={idx}>{err}</li>
+                          ))}
+                          {importResult.otherErrors.length > 5 && (
+                            <li>... and {importResult.otherErrors.length - 5} more error(s)</li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {importResult.successCount === 0 && importResult.duplicateErrors.length === 0 && importResult.otherErrors.length === 0 && (
+                  <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                    No students were imported.
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="secondary" onClick={handleClose} disabled={isProcessing}>
@@ -401,7 +498,7 @@ const ExcelImportModal: React.FC<{
                 type="button"
                 variant="primary"
                 onClick={handleImport}
-                disabled={!allValid || isProcessing || validatedStudents.filter((s) => s.isValid).length === 0}
+                disabled={!allValid || isProcessing || validatedStudents.filter((s) => s.isValid).length === 0 || !!importResult}
                 isLoading={isProcessing}
               >
                 {isProcessing ? 'Importing...' : `Import ${validatedStudents.filter((s) => s.isValid).length} Student(s)`}

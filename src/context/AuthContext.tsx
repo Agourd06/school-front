@@ -72,75 +72,86 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // SECURITY CRITICAL: Always validate user from server on app init
+  // Never trust localStorage for roles/profile - always fetch from database
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    const storedAllowedPages = localStorage.getItem('allowedPages');
+    const validateUserFromServer = async () => {
+      const storedToken = localStorage.getItem('token');
+      
+      if (!storedToken) {
+        setIsLoading(false);
+        return;
+      }
 
-    if (storedToken && storedUser) {
       try {
-        const parsedUser = JSON.parse(storedUser);
+        // Always fetch fresh user data from server - never trust localStorage
+        // This prevents role manipulation attacks (e.g., editing localStorage to become admin)
+        const profileResponse = await authApi.getProfile();
+        const serverUser = profileResponse.user as User & { roles?: string[]; allowedPages?: string[] };
         
-        // Migration: Convert old 'role' field to 'profile' if needed
-        // Map old 'user' role to 'admin' profile (default), 'admin' stays as 'admin'
-        let profile: Profile = parsedUser.profile;
-        if (!profile && parsedUser.role) {
-          // Migrate from old role system
-          // Both 'user' and 'admin' roles map to 'admin' profile (administrateur has access to everything)
-          profile = 'admin';
-          // Update localStorage with migrated data
-          parsedUser.profile = profile;
-          delete parsedUser.role;
-          localStorage.setItem('user', JSON.stringify(parsedUser));
-        } else if (!profile) {
-          // Default to 'admin' (administrateur) if neither profile nor role exists
-          // Admin has access to everything
-          profile = 'admin';
-          parsedUser.profile = profile;
-          localStorage.setItem('user', JSON.stringify(parsedUser));
+        if (!serverUser) {
+          // Invalid token or user doesn't exist - clear everything
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('allowedPages');
+          setIsLoading(false);
+          return;
         }
-        
-        // Get allowedPages from user object or separate storage
-        let allowedPages = parsedUser.allowedPages || JSON.parse(storedAllowedPages || '[]');
-        let roles = Array.isArray(parsedUser.roles) ? parsedUser.roles : [];
-        
-        // CRITICAL: If user has profile 'admin', always ensure they have 'admin' role
-        // This ensures admin users always have access to all routes
-        if (profile === 'admin' && !roles.includes('admin')) {
-          roles = ['admin', ...roles.filter(r => r !== 'admin')];
-          // Update parsedUser to persist the fix
-          parsedUser.roles = roles;
-          localStorage.setItem('user', JSON.stringify(parsedUser));
+
+        // Get allowedPages from server (via getMyRoutes endpoint)
+        let allowedPages: string[] = [];
+        try {
+          const { pagesApi } = await import('../api/pages');
+          const routesResponse = await pagesApi.getMyRoutes();
+          allowedPages = Array.isArray(routesResponse) ? routesResponse : [];
+        } catch (error) {
+          // Non-critical - permissions will be checked per route
+          // Use allowedPages from server user if available
+          allowedPages = Array.isArray(serverUser.allowedPages) ? serverUser.allowedPages : [];
         }
+
+        // Use ONLY server-validated data - never modify roles/profile client-side
+        const validatedUser: User = {
+          id: serverUser.id!,
+          email: serverUser.email,
+          username: serverUser.username,
+          profile: serverUser.profile, // From server DB - cannot be manipulated
+          company_id: serverUser.company_id ?? null,
+          company: normalizeCompany(serverUser.company),
+          roles: Array.isArray(serverUser.roles) ? serverUser.roles : [], // From server DB - cannot be manipulated
+          allowedPages: allowedPages, // From server DB - cannot be manipulated
+        };
+
+        // SECURITY: Store validated data ONLY for caching/offline detection
+        // NEVER use localStorage for auth decisions - always validate from server
+        // This cache can be manipulated by attackers, so it's only used for UX, not security
+        localStorage.setItem('user', JSON.stringify(validatedUser));
+        localStorage.setItem('allowedPages', JSON.stringify(allowedPages));
         
+        // Update state with server-validated data
         setToken(storedToken);
-        setUser({
-          ...parsedUser,
-          profile,
-          company: normalizeCompany(parsedUser.company),
-          roles,
-          allowedPages: Array.isArray(allowedPages) ? allowedPages : [],
-        });
-        
-        // Store allowedPages separately for easy access
-        if (allowedPages.length > 0) {
-          localStorage.setItem('allowedPages', JSON.stringify(allowedPages));
-        }
+        setUser(validatedUser);
         
         applyThemeToDocument(
           mergeTheme({
-            primary: parsedUser?.company?.primaryColor ?? defaultTheme.primary,
-            secondary: parsedUser?.company?.secondaryColor ?? defaultTheme.secondary,
-            accent: parsedUser?.company?.secondaryColor ?? defaultTheme.secondary,
+            primary: validatedUser.company?.primaryColor ?? defaultTheme.primary,
+            secondary: validatedUser.company?.secondaryColor ?? defaultTheme.secondary,
+            accent: validatedUser.company?.secondaryColor ?? defaultTheme.secondary,
           })
         );
       } catch (error) {
+        // Token invalid or server error - clear everything
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('allowedPages');
+        setToken(null);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    validateUserFromServer();
   }, []);
 
   // Track applied theme colors to prevent unnecessary re-applications
@@ -249,14 +260,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error('Invalid login response: missing token or user data');
       }
 
+      // SECURITY: Use ONLY server-provided roles - never modify client-side
+      // Roles come from database and cannot be manipulated
       let allowedPages = userData.allowedPages || [];
       let roles = Array.isArray(userData.roles) ? userData.roles : [];
-
-      // CRITICAL: If user has profile 'admin', always ensure they have 'admin' role
-      // This ensures admin users always have access to all routes, regardless of backend response
-      if (userData.profile === 'admin' && !roles.includes('admin')) {
-        roles = ['admin', ...roles.filter(r => r !== 'admin')];
-      }
+      
+      // NEVER modify roles client-side - always trust server response
       
       // Save token FIRST so axios interceptor can use it for subsequent API calls
       localStorage.setItem('token', token);
@@ -272,7 +281,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Token is now in localStorage, axios interceptor will pick it up
           const { pagesApi } = await import('../api/pages');
           const routesResponse = await pagesApi.getMyRoutes();
-          allowedPages = routesResponse.routes || [];
+          allowedPages = Array.isArray(routesResponse) ? routesResponse : [];
         } catch (error: unknown) {
           // Silently fail - non-critical, permissions will be checked per route
           // This can fail if:
@@ -294,8 +303,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         allowedPages,
       };
 
-      // CRITICAL: Update localStorage FIRST before state, so components reading from localStorage get the latest data
-      // Note: Token was already set above before fetching allowedPages
+      // SECURITY: Store server-validated user data (only for caching - never used for auth)
+      // Roles and profile come directly from server response - never modified client-side
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('allowedPages', JSON.stringify(allowedPages));
       
@@ -347,15 +356,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     applyThemeToDocument(defaultTheme);
   };
 
+  // SECURITY: Refresh permissions from server - never modify roles/profile
   const refreshPermissions = async () => {
     try {
       const { pagesApi } = await import('../api/pages');
       const routesResponse = await pagesApi.getMyRoutes();
-      const routes = routesResponse.routes || [];
+      const routes = Array.isArray(routesResponse) ? routesResponse : [];
       
+      // Update only allowedPages from server - never modify roles/profile
       setUser((prev) => {
         if (!prev) return prev;
         const updated = { ...prev, allowedPages: routes };
+        // Store updated data (only for caching - never used for auth)
         localStorage.setItem('user', JSON.stringify(updated));
         localStorage.setItem('allowedPages', JSON.stringify(routes));
         return updated;

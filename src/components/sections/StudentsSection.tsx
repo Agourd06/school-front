@@ -260,7 +260,6 @@ const StudentsSection: React.FC = () => {
   };
 
   const isAllSelected = students.length > 0 && students.every((s) => selectedStudents.has(s.id));
-  const isSomeSelected = students.some((s) => selectedStudents.has(s.id));
 
   // Export to Excel
   const handleExportToExcel = () => {

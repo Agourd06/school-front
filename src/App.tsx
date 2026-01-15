@@ -46,7 +46,8 @@ const StudentDiplomesPage = lazy(() => import('./pages/dashboard/StudentDiplomes
 const LevelPricingsPage = lazy(() => import('./pages/dashboard/LevelPricingsPage'));
 const StudentPaymentsPage = lazy(() => import('./pages/dashboard/StudentPaymentsPage'));
 const AttestationsPage = lazy(() => import('./pages/dashboard/AttestationsPage'));
-const StudentAttestationsPage = lazy(() => import('./pages/dashboard/StudentAttestationsPage'));
+const DashboardStudentAttestationsPage = lazy(() => import('./pages/dashboard/StudentAttestationsPage'));
+
 const ClassCoursesPage = lazy(() => import('./pages/dashboard/ClassCoursesPage'));
 const UsersPage = lazy(() => import('./pages/dashboard/UsersPage'));
 const CompaniesPage = lazy(() => import('./pages/dashboard/CompaniesPage'));
@@ -59,6 +60,7 @@ const StudentDashboardPage = lazy(() => import('./pages/student/StudentDashboard
 const StudentSchedulePage = lazy(() => import('./pages/student/StudentSchedulePage'));
 const StudentGradesPage = lazy(() => import('./pages/student/StudentGradesPage'));
 const StudentAttendancePage = lazy(() => import('./pages/student/StudentAttendancePage'));
+const StudentAttestationsPage = lazy(() => import('./pages/student/StudentAttestationsPage'));
 
 // Teacher pages
 const TeacherDashboardPage = lazy(() => import('./pages/teacher/TeacherDashboardPage'));
@@ -157,7 +159,142 @@ const App: React.FC = () => {
           path="/set-password" 
           element={<Suspense fallback={<PageLoadingFallback />}><SetPasswordPage /></Suspense>} 
         />
-        {/* Protected routes with Dashboard Layout - accessible to 'admin' and 'support' profiles */}
+        {/* SECURITY: Student and Teacher routes MUST come BEFORE dashboard routes */}
+        {/* This ensures students/teachers can access their pages without being blocked */}
+        {/* Student routes with StudentLayout - NO sidebar, only bottom navigation */}
+        <Route
+          path="/student"
+          element={
+            <StudentRoute>
+              <StudentLayout>
+                <Suspense fallback={<PageLoadingFallback />}><StudentDashboardPage /></Suspense>
+              </StudentLayout>
+            </StudentRoute>
+          }
+        />
+        <Route
+          path="/student/schedule"
+          element={
+            <StudentRoute>
+              <StudentLayout>
+                <Suspense fallback={<PageLoadingFallback />}><StudentSchedulePage /></Suspense>
+              </StudentLayout>
+            </StudentRoute>
+          }
+        />
+        <Route
+          path="/student/grades"
+          element={
+            <StudentRoute>
+              <StudentLayout>
+                <Suspense fallback={<PageLoadingFallback />}><StudentGradesPage /></Suspense>
+              </StudentLayout>
+            </StudentRoute>
+          }
+        />
+        <Route
+          path="/student/attendance"
+          element={
+            <StudentRoute>
+              <StudentLayout>
+                <Suspense fallback={<PageLoadingFallback />}><StudentAttendancePage /></Suspense>
+              </StudentLayout>
+            </StudentRoute>
+          }
+        />
+        <Route
+          path="/student/attestations"
+          element={
+            <StudentRoute>
+              <StudentLayout>
+                <Suspense fallback={<PageLoadingFallback />}><StudentAttestationsPage /></Suspense>
+              </StudentLayout>
+            </StudentRoute>
+          }
+        />
+        <Route
+          path="/student/profile"
+          element={
+            <StudentRoute>
+              <StudentLayout>
+                <Suspense fallback={<PageLoadingFallback />}><ProfilePage /></Suspense>
+              </StudentLayout>
+            </StudentRoute>
+          }
+        />
+        {/* Teacher routes with TeacherLayout - NO sidebar, only bottom navigation */}
+        <Route
+          path="/teacher"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <Suspense fallback={<PageLoadingFallback />}><TeacherDashboardPage /></Suspense>
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/plannings"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <Suspense fallback={<PageLoadingFallback />}><TeacherPlanningsPage /></Suspense>
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/attendance"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <Suspense fallback={<PageLoadingFallback />}><TeacherAttendancePage /></Suspense>
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/grades"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <Suspense fallback={<PageLoadingFallback />}><TeacherGradesPage /></Suspense>
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/links"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <Suspense fallback={<PageLoadingFallback />}><TeacherLinksPage /></Suspense>
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/profile"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <Suspense fallback={<PageLoadingFallback />}><ProfilePage /></Suspense>
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        <Route
+          path="/teacher/homework"
+          element={
+            <TeacherRoute>
+              <TeacherLayout>
+                <Suspense fallback={<PageLoadingFallback />}><TeacherHomeworkPage /></Suspense>
+              </TeacherLayout>
+            </TeacherRoute>
+          }
+        />
+        {/* Protected routes with Dashboard Layout - accessible to 'admin' and 'support' profiles ONLY */}
+        {/* SECURITY: These routes use ProtectedRoute which blocks students/teachers */}
         <Route
           path="/dashboard"
           element={
@@ -423,7 +560,7 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <Suspense fallback={<PageLoadingFallback />}><StudentAttestationsPage /></Suspense>
+                <Suspense fallback={<PageLoadingFallback />}><DashboardStudentAttestationsPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -484,109 +621,11 @@ const App: React.FC = () => {
             <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><UnauthorizedPage /></Suspense></div></>
           }
         />
-        {/* Student routes with StudentLayout */}
-        <Route
-          path="/student"
-          element={
-            <StudentRoute>
-              <StudentLayout>
-                <Suspense fallback={<PageLoadingFallback />}><StudentDashboardPage /></Suspense>
-              </StudentLayout>
-            </StudentRoute>
-          }
-        />
-        <Route
-          path="/student/schedule"
-          element={
-            <StudentRoute>
-              <StudentLayout>
-                <Suspense fallback={<PageLoadingFallback />}><StudentSchedulePage /></Suspense>
-              </StudentLayout>
-            </StudentRoute>
-          }
-        />
-        <Route
-          path="/student/grades"
-          element={
-            <StudentRoute>
-              <StudentLayout>
-                <Suspense fallback={<PageLoadingFallback />}><StudentGradesPage /></Suspense>
-              </StudentLayout>
-            </StudentRoute>
-          }
-        />
-        <Route
-          path="/student/attendance"
-          element={
-            <StudentRoute>
-              <StudentLayout>
-                <Suspense fallback={<PageLoadingFallback />}><StudentAttendancePage /></Suspense>
-              </StudentLayout>
-            </StudentRoute>
-          }
-        />
-        {/* Teacher routes with TeacherLayout */}
-        <Route
-          path="/teacher"
-          element={
-            <TeacherRoute>
-              <TeacherLayout>
-                <Suspense fallback={<PageLoadingFallback />}><TeacherDashboardPage /></Suspense>
-              </TeacherLayout>
-            </TeacherRoute>
-          }
-        />
-        <Route
-          path="/teacher/plannings"
-          element={
-            <TeacherRoute>
-              <TeacherLayout>
-                <Suspense fallback={<PageLoadingFallback />}><TeacherPlanningsPage /></Suspense>
-              </TeacherLayout>
-            </TeacherRoute>
-          }
-        />
-        <Route
-          path="/teacher/attendance"
-          element={
-            <TeacherRoute>
-              <TeacherLayout>
-                <Suspense fallback={<PageLoadingFallback />}><TeacherAttendancePage /></Suspense>
-              </TeacherLayout>
-            </TeacherRoute>
-          }
-        />
-        <Route
-          path="/teacher/grades"
-          element={
-            <TeacherRoute>
-              <TeacherLayout>
-                <Suspense fallback={<PageLoadingFallback />}><TeacherGradesPage /></Suspense>
-              </TeacherLayout>
-            </TeacherRoute>
-          }
-        />
-        <Route
-          path="/teacher/links"
-          element={
-            <TeacherRoute>
-              <TeacherLayout>
-                <Suspense fallback={<PageLoadingFallback />}><TeacherLinksPage /></Suspense>
-              </TeacherLayout>
-            </TeacherRoute>
-          }
-        />
-        <Route
-          path="/teacher/homework"
-          element={
-            <TeacherRoute>
-              <TeacherLayout>
-                <Suspense fallback={<PageLoadingFallback />}><TeacherHomeworkPage /></Suspense>
-              </TeacherLayout>
-            </TeacherRoute>
-          }
-        />
-        {/* Profile route with DashboardLayout (includes Sidebar) */}
+        {/* Profile route with DashboardLayout (includes Sidebar) - ONLY for admin/support profiles */}
+        {/* SECURITY: Student/teacher routes are defined earlier (before dashboard routes) */}
+        {/* This ensures they can access their pages without being blocked */}
+        {/* SECURITY: Students and teachers are redirected to their pages via ProtectedRoute */}
+        {/* Profile page - ONLY for admin/support profiles */}
         <Route 
           path="/profile" 
           element={

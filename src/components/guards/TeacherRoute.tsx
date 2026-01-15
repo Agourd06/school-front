@@ -41,8 +41,13 @@ const TeacherRoute: React.FC<TeacherRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // Check if user is a teacher
-  if (user.profile !== 'teacher') {
+  // SECURITY: Check roles/profile from server-validated user data (from useAuth context)
+  // Roles and profile are validated from database on app init - cannot be manipulated client-side
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  const userRoles = Array.isArray(user.roles) ? user.roles : [];
+  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user.profile === 'teacher' || user.profile === 'prof';
+  
+  if (!isTeacher) {
     // Redirect non-teachers to dashboard or auth
     return <Navigate to={hasDashboardAccess(user.profile) ? '/programs' : redirectTo} replace />;
   }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import Navbar from '../Navbar';
 import Sidebar from '../Sidebar';
 import { SchoolYearProvider } from '../../context/SchoolYearContext';
@@ -13,15 +14,65 @@ interface DashboardLayoutProps {
 
 /**
  * Layout component that wraps all dashboard pages with:
- * - Sidebar navigation
+ * - Sidebar navigation (ONLY for admin/support profiles)
  * - Context providers (SchoolYear, Program, Specialization)
  * - Responsive sidebar toggle
+ * 
+ * SECURITY: This layout is ONLY for admin/support profiles
+ * Students and teachers are automatically redirected to their pages
  */
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const { user, isLoading } = useAuth();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const location = useLocation();
 
-  const navigate = useNavigate();
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="text-xl font-bold text-primary">Loading...</div>
+      </div>
+    );
+  }
+
+  // SECURITY: Block students and teachers from seeing DashboardLayout IMMEDIATELY
+  // This check happens BEFORE any rendering to prevent sidebar from showing
+  // Students/teachers should NEVER see DashboardLayout or its Sidebar
+  // CRITICAL: This is a second line of defense - ProtectedRoute should catch it first
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  const userRoles = Array.isArray(user?.roles) ? user.roles : [];
+  const isStudent = userRoles.includes('student') || user?.profile === 'student';
+  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user?.profile === 'teacher' || user?.profile === 'prof';
+  
+  if (isStudent) {
+    if (typeof window !== 'undefined' && window.location.pathname !== '/student') {
+      console.log('[DashboardLayout] Redirecting student to /student', { roles: userRoles, profile: user?.profile });
+      window.location.replace('/student');
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-surface">
+          <div className="text-xl font-bold text-primary">Redirecting to student page...</div>
+        </div>
+      );
+    }
+    return <Navigate to="/student" replace />;
+  }
+  if (isTeacher) {
+    if (typeof window !== 'undefined' && window.location.pathname !== '/teacher') {
+      console.log('[DashboardLayout] Redirecting teacher to /teacher', { roles: userRoles, profile: user?.profile });
+      window.location.replace('/teacher');
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-surface">
+          <div className="text-xl font-bold text-primary">Redirecting to teacher page...</div>
+        </div>
+      );
+    }
+    return <Navigate to="/teacher" replace />;
+  }
+
+  // Only render DashboardLayout if user is NOT student/teacher
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   // Get current route tab from location pathname
   const currentRouteTab = routePathToTab(location.pathname) || 'programs';
@@ -37,8 +88,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   const handleTabChange = (tab: RouteTab) => {
     const route = tabToRoutePath(tab);
-    navigate(route);
+    if (route) {
+      window.location.href = route;
+    }
   };
+
+  // Double-check: Ensure we NEVER render Sidebar for students/teachers
+  // This check happens before rendering to prevent any sidebar flash
+  const shouldRenderSidebar = user && user.profile !== 'student' && user.profile !== 'teacher' && user.profile !== 'prof';
 
   return (
     <SchoolYearProvider>
@@ -46,14 +103,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <SpecializationProvider>
           <Navbar />
           <div className="min-h-screen bg-surface flex pt-16">
-            <Sidebar
-              activeTab={currentRouteTab}
-              onTabChange={handleTabChange}
-              onToggleCollapse={toggleSidebarVisibility}
-              isCollapsed={!isSidebarVisible}
-            />
+            {/* SECURITY: Only render Sidebar for admin/support profiles */}
+            {/* Students/teachers should NEVER see this sidebar */}
+            {shouldRenderSidebar && (
+              <Sidebar
+                activeTab={currentRouteTab}
+                onTabChange={handleTabChange}
+                onToggleCollapse={toggleSidebarVisibility}
+                isCollapsed={!isSidebarVisible}
+              />
+            )}
 
-            {!isSidebarVisible && (
+            {/* Only show sidebar toggle button if sidebar should be rendered */}
+            {shouldRenderSidebar && !isSidebarVisible && (
               <button
                 type="button"
                 onClick={toggleSidebarVisibility}
@@ -68,7 +130,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
             <main
               className={`flex-1 transition-all duration-300 ${
-                isSidebarVisible ? 'ml-64' : 'ml-0'
+                shouldRenderSidebar && isSidebarVisible ? 'ml-64' : 'ml-0'
               }`}
               role="main"
             >

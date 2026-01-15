@@ -76,77 +76,78 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <StableRedirect to={authRedirect} />;
   }
 
+  // SECURITY: Block students and teachers from accessing ANY dashboard routes
+  // ProtectedRoute is ONLY used for dashboard routes (not student/teacher routes)
+  // Students/teachers should NEVER see DashboardLayout (with sidebar) or dashboard pages
+  // Complete role separation is mandatory - redirect them to their own pages immediately
+  // CRITICAL: This check must happen BEFORE DashboardLayout renders (which includes Sidebar)
+  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
+  const userRoles = Array.isArray(user.roles) ? user.roles : [];
+  const isStudent = userRoles.includes('student') || user.profile === 'student';
+  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user.profile === 'teacher' || user.profile === 'prof';
+  
+  if (isStudent) {
+    // Students can ONLY access /student/* routes - block all dashboard routes
+    // Force immediate redirect - this bypasses React Router completely
+    if (typeof window !== 'undefined' && window.location.pathname !== '/student') {
+      console.log('[ProtectedRoute] Redirecting student to /student', { roles: userRoles, profile: user.profile });
+      window.location.replace('/student'); // Use replace instead of href to prevent back button
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-surface">
+          <div className="text-xl font-bold text-primary">Redirecting to student page...</div>
+        </div>
+      );
+    }
+    return <StableRedirect to="/student" />;
+  }
+  if (isTeacher) {
+    // Teachers can ONLY access /teacher/* routes - block all dashboard routes
+    // Force immediate redirect - this bypasses React Router completely
+    if (typeof window !== 'undefined' && window.location.pathname !== '/teacher') {
+      console.log('[ProtectedRoute] Redirecting teacher to /teacher', { roles: userRoles, profile: user.profile });
+      window.location.replace('/teacher'); // Use replace instead of href to prevent back button
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-surface">
+          <div className="text-xl font-bold text-primary">Redirecting to teacher page...</div>
+        </div>
+      );
+    }
+    return <StableRedirect to="/teacher" />;
+  }
+
+  // SECURITY: Use ONLY server-validated user data from React context
+  // Never read from localStorage - it can be manipulated by attackers
+  
   // RBAC: Check page access if requiredPage is specified
   if (requiredPage) {
     const pagePath = requiredPage.startsWith('/') ? requiredPage : `/${requiredPage}`;
     
     // Admin users have full access - bypass allowedPages check
-    // Check both context and localStorage as fallback (for immediate post-login state sync)
-    const contextRoles = Array.isArray(user.roles) ? user.roles : [];
-    const storedUserStr = localStorage.getItem('user');
-    let storedRoles: string[] = [];
-    try {
-      if (storedUserStr) {
-        const storedUser = JSON.parse(storedUserStr);
-        storedRoles = Array.isArray(storedUser.roles) ? storedUser.roles : [];
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
+    // Use ONLY server-validated roles from context (never localStorage)
+    const userRoles = Array.isArray(user.roles) ? user.roles : [];
+    const isAdmin = userRoles.includes('admin');
     
-    // Use roles from context if available, otherwise fallback to localStorage (for immediate post-login)
-    // Also check localStorage if context roles don't include admin (in case it was just set)
-    // Fallback: Also check if profile is 'admin' (in case roles aren't set yet)
-    const userRoles = contextRoles.length > 0 ? contextRoles : storedRoles;
-    const isAdmin = userRoles.includes('admin') || storedRoles.includes('admin') || user.profile === 'admin';
+    // Use ONLY server-validated allowedPages from context (never localStorage)
+    const allowedPages = Array.isArray(user.allowedPages) ? user.allowedPages : [];
     
-    // Use user.allowedPages from context if available, otherwise check localStorage
-    const contextAllowedPages = Array.isArray(user.allowedPages) ? user.allowedPages : [];
-    let storedAllowedPages: string[] = [];
-    try {
-      const storedAllowedPagesStr = localStorage.getItem('allowedPages');
-      if (storedAllowedPagesStr) {
-        storedAllowedPages = JSON.parse(storedAllowedPagesStr);
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
-    const allowedPages = contextAllowedPages.length > 0 ? contextAllowedPages : storedAllowedPages;
-    
-    const hasAccess = isAdmin || (Array.isArray(allowedPages) && allowedPages.includes(pagePath));
+    const hasAccess = isAdmin || allowedPages.includes(pagePath);
     
     if (!hasAccess) {
       return <StableRedirect to={unauthorizedRedirect} />;
     }
   } else {
     // Fallback to profile-based check if no specific page is required
-    // BUT: Admin users (via roles) should always have access, regardless of profile check
+    // Use ONLY server-validated roles from context (never localStorage)
+    const userRoles = Array.isArray(user.roles) ? user.roles : [];
+    const isAdmin = userRoles.includes('admin');
     
-    // Check if user is admin (from context or localStorage as fallback)
-    // Always check localStorage as fallback for immediate post-login state sync
-    const contextRoles = Array.isArray(user.roles) ? user.roles : [];
-    const storedUserStr = localStorage.getItem('user');
-    let storedRoles: string[] = [];
-    try {
-      if (storedUserStr) {
-        const storedUser = JSON.parse(storedUserStr);
-        storedRoles = Array.isArray(storedUser.roles) ? storedUser.roles : [];
-      }
-    } catch (e) {
-      // Ignore parse errors
-    }
-    // If context has roles, use them. Otherwise fallback to localStorage (for immediate post-login)
-    // Also check localStorage if context roles don't include admin (in case it was just set)
-    // Fallback: Also check if profile is 'admin' (in case roles aren't set yet)
-    const userRoles = contextRoles.length > 0 ? contextRoles : storedRoles;
-    const isAdmin = userRoles.includes('admin') || storedRoles.includes('admin') || user.profile === 'admin';
-    
-    // If admin, allow access regardless of profile check
+    // If admin (from server-validated roles), allow access regardless of profile check
     if (isAdmin) {
       return <>{children}</>;
     }
     
     // For non-admin users, check dashboard access if required
+    // Profile is also server-validated, so this is safe
     if (requireDashboardAccess && !hasDashboardAccess(user.profile)) {
       return <StableRedirect to={authRedirect} />;
     }

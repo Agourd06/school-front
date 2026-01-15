@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { KeyRound } from 'lucide-react';
 import { useRoles, useDeleteRole } from '../../hooks/useRoles';
-import { Button, EditButton, DeleteButton } from '../ui';
+import { Button, EditButton, DeleteButton, PageHeader } from '../ui';
 import Pagination from '../Pagination';
 import DeleteModal from '../modals/DeleteModal';
 import RoleModal from '../modals/RoleModal';
 import type { Role } from '../../api/roles';
-import { isAdmin } from '../../utils/permissions';
+import { usePermissions } from '../../utils/permissions';
 
 const EMPTY_META = {
   page: 1,
@@ -19,6 +20,7 @@ const EMPTY_META = {
 
 const RolesSection: React.FC = () => {
   const { t } = useTranslation();
+  const { isAdmin } = usePermissions(); // SECURITY: Use server-validated permissions
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters] = useState({ search: '' });
   const [modalOpen, setModalOpen] = useState(false);
