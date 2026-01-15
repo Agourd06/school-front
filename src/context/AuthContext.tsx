@@ -270,13 +270,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Save token FIRST so axios interceptor can use it for subsequent API calls
       localStorage.setItem('token', token);
       
-      // Check if user is admin (determined early to skip unnecessary API calls)
-      // Use both roles array and profile check for reliability
-      const isAdminUser = roles.includes('admin') || userData.profile === 'admin';
-      
-      // IMPORTANT: Admin users NEVER need to fetch allowedPages - they have full access
-      // Only fetch for non-admin users who don't have allowedPages in the login response
-      if (!isAdminUser && !allowedPages.length) {
+      // IMPORTANT: All users (including admins) need allowedPages from server
+      // The backend sets allowedPages based on role-page assignments
+      // New admins only have /settings and /users in allowedPages
+      // Only fetch if allowedPages is not in the login response
+      if (!allowedPages.length) {
         try {
           // Token is now in localStorage, axios interceptor will pick it up
           const { pagesApi } = await import('../api/pages');

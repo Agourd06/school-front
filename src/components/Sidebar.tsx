@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { hasPageAccess, isAdmin } = usePermissions();
+  const { hasPageAccess } = usePermissions();
   const { user } = useAuth();
   const [isParametersOpen, setIsParametersOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -169,35 +169,28 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   // Filter menu items based on allowedPages (RBAC)
-  // If user is admin, show all items; otherwise filter by allowedPages
+  // IMPORTANT: Even admin users must have pages in allowedPages - no bypass
+  // The backend sets allowedPages based on role-page assignments
+  // New admins only have /settings and /users in allowedPages
   const filterMenuItems = useMemo(() => {
     return (items: Array<{ tab: SidebarProps['activeTab']; labelKey: string }>) => {
-      // Admin sees everything
-      if (isAdmin()) {
-        return items;
-      }
-      
-      // Filter items based on allowedPages
+      // Filter items based on allowedPages (applies to all users, including admins)
       return items.filter((item) => {
         const route = tabToRoutePath(item.tab);
         return hasPageAccess(route);
       });
     };
-  }, [hasPageAccess, isAdmin]);
+  }, [hasPageAccess]);
 
   // Filter parameter groups to only show groups with accessible items
   const filteredParameterGroups = useMemo(() => {
     return parameterGroups.filter((group) => {
-      // Admin sees all groups
-      if (isAdmin()) {
-        return true;
-      }
-      
       // Filter groups: only show if they have at least one accessible item
+      // This applies to all users, including admins
       const accessibleItems = filterMenuItems(group.items);
       return accessibleItems.length > 0;
     });
-  }, [isAdmin, filterMenuItems, parameterGroups]);
+  }, [filterMenuItems, parameterGroups]);
 
   const toggleParameters = () => {
     setIsParametersOpen(!isParametersOpen);
@@ -394,7 +387,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Settings Link - Only show if user has access */}
-          {(isAdmin() || hasPageAccess('/settings')) && (
+          {hasPageAccess('/settings') && (
             <div className="mt-auto pt-4 border-t border-border">
               <Link
                 to="/settings"

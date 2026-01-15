@@ -26,9 +26,13 @@ export interface RegisterRequest {
   email: string;
   username: string;
   company_id: number; // Required for initial registration (first user for company)
+  captchaToken?: string; // CAPTCHA token (optional for first user - already verified during company creation)
+  captchaAnswer?: string; // CAPTCHA answer (optional for first user - already verified during company creation)
   // Password is NEVER provided - backend always sends password setup email
   // profile field is REMOVED - replaced with roles system (first user gets admin automatically)
   // role_ids field is NOT accepted - first user gets admin role automatically
+  // NOTE: For the first user created as part of company registration, CAPTCHA is skipped
+  // because it was already verified during company creation. The token is consumed there.
 }
 
 export interface RegisterResponse {
@@ -83,7 +87,6 @@ export const authApi = {
   },
 
   register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-   
     const response = await api.post('/auth/register', data);
     return response.data;
   },

@@ -4,12 +4,14 @@ import type { PaginatedResponse, SearchParams } from '../types/api';
 
 /**
  * Page interface - represents a predefined page/route in the system
+ * 
+ * NOTE: Pages are now global and shared across all companies.
+ * The company_id field has been removed from the backend.
  */
 export interface Page {
   id: number;
   title: string;
   route: string;
-  company_id: number;
   created_at: string;
   updated_at: string;
   profilePages?: ProfilePage[];
@@ -146,6 +148,32 @@ export const pagesApi = {
     const url = queryString ? `/pages?${queryString}` : '/pages';
     const response = await api.get(url);
     return toPaginated(response.data);
+  },
+
+  /**
+   * Get all pages by fetching multiple paginated requests
+   * Useful when you need all pages but the API has a limit (e.g., 100)
+   */
+  getAllPages: async (search?: string): Promise<Page[]> => {
+    const allPages: Page[] = [];
+    let page = 1;
+    const limit = 100; // Maximum allowed by backend
+    let hasMore = true;
+
+    while (hasMore) {
+      const params: GetPagesParams = { page, limit };
+      if (search && search.trim()) {
+        params.search = search.trim();
+      }
+      
+      const response = await pagesApi.getAll(params);
+      allPages.push(...response.data);
+      
+      hasMore = response.meta.hasNext;
+      page++;
+    }
+
+    return allPages;
   },
 
   /**

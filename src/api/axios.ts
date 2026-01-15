@@ -22,6 +22,11 @@ const isPublicEndpoint = (url: string | undefined, method: string = 'GET'): bool
     return true;
   }
   
+  // CAPTCHA endpoints are always public
+  if (url.includes('/captcha/')) {
+    return true;
+  }
+  
   // For POST requests to /company or /users, check if we're on registration page
   // These are public during initial registration
   if (method === 'POST') {

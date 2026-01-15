@@ -4,6 +4,7 @@ export { default as CompanyForm } from './CompanyForm';
 export { default as UserForm } from './UserForm';
 export { default as CombinedRegistrationForm } from './CombinedRegistrationForm';
 export { default as RegistrationSuccess } from './RegistrationSuccess';
+export { default as Captcha } from './Captcha';
 export type { CompanyFormData } from './CompanyForm';
 export type { UserFormData } from './UserForm';
 export type { CombinedRegistrationFormData } from './CombinedRegistrationForm';

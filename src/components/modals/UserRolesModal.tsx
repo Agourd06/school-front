@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useUserRoles, useAssignRoleToUser, useRemoveRoleFromUser } from '../../hooks/useUserRoles';
 import { useRoles } from '../../hooks/useRoles';
+import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui';
 import type { User } from '../../api/users';
 import type { Role } from '../../api/roles';
@@ -15,6 +16,7 @@ interface UserRolesModalProps {
 
 const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }) => {
   const { t } = useTranslation();
+  const { user: currentUser } = useAuth(); // Get current logged-in user
   const userId = user?.id ?? null;
   
   const { data: userRoles = [], refetch: refetchUserRoles } = useUserRoles(userId);
@@ -28,6 +30,9 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
   const [loading, setLoading] = useState(false);
 
   const assignedRoleIds = new Set(userRoles.map((r: Role) => r.id));
+  
+  // Check if user is trying to manage their own roles
+  const isManagingSelf = currentUser?.id === userId;
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -44,6 +49,15 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
 
   const handleToggleRole = async (role: Role) => {
     if (!userId) return;
+    
+    // Prevent managing own roles
+    if (isManagingSelf) {
+      setAlert({ 
+        type: 'error', 
+        message: t('messages.cannotModifyOwnRoles') || 'You cannot modify roles for your own account' 
+      });
+      return;
+    }
     
     setLoading(true);
     setAlert(null);
@@ -85,6 +99,15 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
           </div>
         )}
 
+        {isManagingSelf && (
+          <div className="rounded-md border border-warning-light bg-warning-light px-4 py-3 text-sm text-warning-dark">
+            <p className="font-medium mb-1">{t('messages.selfManagementRestricted') || 'Self-Management Restricted'}</p>
+            <p className="text-xs">
+              {t('messages.cannotModifyOwnRolesDescription') || 'You cannot modify roles for your own account. Please ask another administrator to manage your roles.'}
+            </p>
+          </div>
+        )}
+
         <div>
           <p className="text-sm text-muted mb-4">
             {t('sections.selectRolesForUser') || 'Select roles to assign to this user. Users with multiple roles will have access to all pages assigned to any of their roles.'}
@@ -122,8 +145,9 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
                       variant={isAssigned ? 'secondary' : 'primary'}
                       size="sm"
                       onClick={() => handleToggleRole(role)}
-                      disabled={loading}
+                      disabled={loading || isManagingSelf}
                       className="ml-4"
+                      title={isManagingSelf ? (t('messages.cannotModifyOwnRoles') || 'You cannot modify your own roles') : undefined}
                     >
                       {isAssigned ? t('common.remove') || 'Remove' : t('common.assign') || 'Assign'}
                     </Button>

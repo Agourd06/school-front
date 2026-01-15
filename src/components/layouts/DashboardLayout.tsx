@@ -46,7 +46,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   
   if (isStudent) {
     if (typeof window !== 'undefined' && window.location.pathname !== '/student') {
-      console.log('[DashboardLayout] Redirecting student to /student', { roles: userRoles, profile: user?.profile });
       window.location.replace('/student');
       return (
         <div className="min-h-screen flex items-center justify-center bg-surface">
@@ -58,7 +57,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   }
   if (isTeacher) {
     if (typeof window !== 'undefined' && window.location.pathname !== '/teacher') {
-      console.log('[DashboardLayout] Redirecting teacher to /teacher', { roles: userRoles, profile: user?.profile });
       window.location.replace('/teacher');
       return (
         <div className="min-h-screen flex items-center justify-center bg-surface">

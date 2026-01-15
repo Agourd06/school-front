@@ -62,6 +62,8 @@ export interface CreateCompanyRequest {
   secondaryColor?: string;
   country?: string;
   city?: string;
+  captchaToken?: string;
+  captchaAnswer?: string;
 }
 
 export interface UpdateCompanyRequest {
@@ -151,7 +153,12 @@ export const companyApi = {
     const payload: CreateCompanyRequest = {
       ...rest,
       status: incomingStatus ?? 1,
+      // Always include CAPTCHA fields if provided (required for company creation)
+      // Don't use conditional spread - always include if they exist in the data
+      ...(data.captchaToken ? { captchaToken: data.captchaToken } : {}),
+      ...(data.captchaAnswer ? { captchaAnswer: data.captchaAnswer } : {}),
     };
+    
     const response = await api.post('/company', payload);
     return normalizeCompany(response.data);
   },

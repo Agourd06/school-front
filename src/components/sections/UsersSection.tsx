@@ -7,6 +7,7 @@ import {
   useSendPasswordInvitationById,
   useCreateUser 
 } from '../../hooks/useUsers';
+import { useAuth } from '../../hooks/useAuth';
 import type { FilterParams, ListState } from '../../types/api';
 import { UserModal, DeleteModal } from '../../components/modals';
 import { STATUS_OPTIONS } from '../../constants/status';
@@ -25,6 +26,8 @@ interface Toast {
 
 const UsersSection: React.FC = () => {
   const { t } = useTranslation();
+  const { user: currentUser } = useAuth(); // Get current logged-in user
+  
   const [state, setState] = React.useState<ListState<User>>({
     data: [],
     loading: false,
@@ -38,6 +41,7 @@ const UsersSection: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [wasCreatingUser, setWasCreatingUser] = React.useState(false);
 
+
   const params: FilterParams = {
     page: state.pagination.page,
     limit: state.pagination.limit,
@@ -48,15 +52,20 @@ const UsersSection: React.FC = () => {
 
   React.useEffect(() => {
     if (response) {
+      // Filter out current user from the data
+      const filteredData = currentUser?.id 
+        ? response.data.filter(user => user.id !== currentUser.id)
+        : response.data;
+      
       setState(prev => ({
         ...prev,
-        data: response.data,
+        data: filteredData,
         loading: isLoading,
         error: (error as { message?: string })?.message || null,
         pagination: response.meta,
       }));
     }
-  }, [response, isLoading, error]);
+  }, [response, isLoading, error, currentUser?.id]);
 
   const updater = useUpdateUser();
   const createUser = useCreateUser();
@@ -112,6 +121,11 @@ const UsersSection: React.FC = () => {
   };
 
   const requestDelete = (id: number) => {
+    // Prevent deleting self
+    if (currentUser?.id === id) {
+      addToast('error', t('messages.cannotDeleteYourself') || 'You cannot delete your own account');
+      return;
+    }
     const user = state.data.find((item) => item.id === id);
     if (!user) return;
     setDeleteTarget({ id, name: user.username || user.email || undefined });
@@ -128,6 +142,11 @@ const UsersSection: React.FC = () => {
   };
 
   const openModal = (data?: User | null) => {
+    // Prevent editing self
+    if (data && currentUser?.id === data.id) {
+      addToast('error', t('messages.cannotEditYourself') || 'You cannot edit your own account');
+      return;
+    }
     setModal({ type: 'user', data: data ?? null });
     setWasCreatingUser(!data); // Track if we're creating (no data) or editing (has data)
   };
@@ -175,11 +194,20 @@ const UsersSection: React.FC = () => {
           const profileLabelKey = user.profile ? `profile.${user.profile}` : 'profile.undefined';
           const profileDisplay = t(profileLabelKey) || user.profile || t('profile.undefined') || 'Undefined';
           const isPending = user.status === 2;
+          const isCurrentUser = currentUser?.id === user.id;
+          
           return (
             <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{user.username}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-900">{user.username}</p>
+                    {isCurrentUser && (
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">
+                        {t('common.you') || 'You'}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500">{user.email}</p>
                   <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-2">
@@ -198,9 +226,16 @@ const UsersSection: React.FC = () => {
                       </p>
                     </div>
                   )}
+                  {isCurrentUser && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500 italic">
+                        {t('messages.cannotManageYourself') || 'You cannot edit, delete, or modify roles for your own account'}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {isPending && (
+                  {isPending && !isCurrentUser && (
                     <Button
                       variant="secondary"
                       size="sm"
@@ -212,17 +247,21 @@ const UsersSection: React.FC = () => {
                       {t('sections.resendInvitation') || 'Resend Invitation'}
                     </Button>
                   )}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setRolesModalUser(user)}
-                    className="text-xs"
-                    title={t('sections.manageRoles') || 'Manage Roles'}
-                  >
-                    {t('sections.roles') || 'Roles'}
-                  </Button>
-                  <EditButton onClick={() => onEdit(user)} />
-                  <DeleteButton onClick={() => onDelete(user.id)} />
+                  {!isCurrentUser && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setRolesModalUser(user)}
+                        className="text-xs"
+                        title={t('sections.manageRoles') || 'Manage Roles'}
+                      >
+                        {t('sections.roles') || 'Roles'}
+                      </Button>
+                      <EditButton onClick={() => onEdit(user)} />
+                      <DeleteButton onClick={() => onDelete(user.id)} />
+                    </>
+                  )}
                 </div>
               </div>
             </li>

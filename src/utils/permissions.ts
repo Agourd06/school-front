@@ -20,20 +20,16 @@ export const hasRole = (user: { roles?: string[] } | null, roleCode: string): bo
 
 /**
  * Check if user has access to a specific page/route
- * Admin users always have access (bypass check)
+ * IMPORTANT: Even admin users must have pages in allowedPages - no bypass
  * WARNING: This function requires user from useAuth hook - cannot be called outside React components
  * @deprecated Use usePermissions hook instead for React components
  */
 export const hasPageAccess = (user: { roles?: string[]; allowedPages?: string[] } | null, pagePath: string): boolean => {
   if (!user) return false;
   
-  // Admin users have full access - bypass allowedPages check
-  const isAdmin = Array.isArray(user.roles) && user.roles.includes('admin');
-  
-  if (isAdmin) {
-    return true; // Admin has access to all pages
-  }
-  
+  // IMPORTANT: Even admin users must have pages in allowedPages
+  // The backend sets allowedPages based on role-page assignments
+  // New admins only have /settings and /users in allowedPages
   const allowedPages = Array.isArray(user.allowedPages) ? user.allowedPages : [];
   return allowedPages.includes(pagePath);
 };
@@ -108,7 +104,27 @@ export const usePermissions = () => {
   };
   
   const hasPageAccessCheck = (pagePath: string): boolean => {
-    return Array.isArray(user?.allowedPages) && user.allowedPages.includes(pagePath);
+    if (!user?.allowedPages || !Array.isArray(user.allowedPages)) {
+      return false;
+    }
+    
+    // Normalize the route to check (same logic as ProtectedRoute)
+    const normalizeRoute = (route: string): string => {
+      let normalized = route.trim();
+      if (!normalized.startsWith('/')) {
+        normalized = `/${normalized}`;
+      }
+      // Remove trailing slash (except for root)
+      if (normalized.length > 1 && normalized.endsWith('/')) {
+        normalized = normalized.slice(0, -1);
+      }
+      return normalized;
+    };
+    
+    const normalizedPagePath = normalizeRoute(pagePath);
+    const normalizedAllowedPages = user.allowedPages.map(normalizeRoute);
+    
+    return normalizedAllowedPages.includes(normalizedPagePath);
   };
   
   const isAdminCheck = (): boolean => {

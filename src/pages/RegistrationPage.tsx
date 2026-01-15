@@ -11,8 +11,10 @@ import {
   RegistrationSuccess,
 } from '../components/registration';
 import CombinedRegistrationForm, { type CombinedRegistrationFormData } from '../components/registration/CombinedRegistrationForm';
+import { generateUsernameFromCompanyName } from '../utils/usernameGenerator';
 // Note: profile field has been REMOVED - replaced with roles system
 // First user automatically gets admin role - no profile or role_ids needed
+// Username is auto-generated as "admin_[companyName]" and email uses company email
 
 type Step = 'form' | 'success';
 
@@ -28,15 +30,39 @@ const RegistrationPage: React.FC = () => {
     companyPhone: '',
     country: '',
     city: '',
-    username: '',
-    userEmail: '',
-    // Password is NEVER provided - backend always sends password setup email
+    acceptedPrivacyPolicy: false,
+    acceptedTermsOfUse: false,
   });
   const [createdCompanyName, setCreatedCompanyName] = useState<string>('');
+  const [generatedUsername, setGeneratedUsername] = useState<string>('');
+  const [captchaToken, setCaptchaToken] = useState<string>('');
+  const [captchaAnswer, setCaptchaAnswer] = useState<string | undefined>(undefined);
+  const [captchaError, setCaptchaError] = useState<string>('');
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'fr' : 'en';
     i18n.changeLanguage(newLang);
+  };
+
+  const handleCaptchaVerify = async (token: string, answer: string) => {
+    // Store pre-verified CAPTCHA data for form submission
+    // The CAPTCHA component has already called /api/captcha/pre-verify
+    // The token is now pre-verified and valid for 5 minutes
+    
+    // Validate token and answer before storing
+    if (!token || !token.trim()) {
+      setCaptchaError(t('registration.captchaVerificationFailed') || 'CAPTCHA verification failed - invalid token');
+      return;
+    }
+    
+    if (!answer || !answer.trim()) {
+      setCaptchaError(t('registration.captchaVerificationFailed') || 'CAPTCHA verification failed - invalid answer');
+      return;
+    }
+    
+    setCaptchaToken(token.trim());
+    setCaptchaAnswer(answer.trim());
+    setCaptchaError(''); // Clear any previous errors
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,12 +72,19 @@ const RegistrationPage: React.FC = () => {
 
     try {
       // Step 1: Create company
+      // Validate CAPTCHA before proceeding
+      if (!captchaToken || !captchaToken.trim() || captchaAnswer === undefined || !captchaAnswer.trim()) {
+        throw new Error(t('registration.captchaRequired') || 'Please complete the CAPTCHA verification');
+      }
+
       const companyPayload: CreateCompanyRequest = {
         name: formData.companyName.trim(),
         email: formData.companyEmail.trim(),
         phone: formData.companyPhone.trim() || undefined,
         country: formData.country.trim() || undefined,
         city: formData.city.trim() || undefined,
+        captchaToken: captchaToken.trim(), // Include CAPTCHA token (required by backend) - ensure it's a string
+        captchaAnswer: (captchaAnswer as string).trim(), // Include CAPTCHA answer (required by backend, validated above)
       };
 
       const company = await companyApi.create(companyPayload);
@@ -60,23 +93,45 @@ const RegistrationPage: React.FC = () => {
       // First user automatically gets admin role - no role_ids needed
       // Password is NEVER provided - backend always sends password setup email
       // profile field is REMOVED - backend handles role assignment automatically
+      // Username is auto-generated as "admin_[companyName]"
+      // Email uses company email
+      // NOTE: CAPTCHA was already verified during company creation
+      // The backend should allow user registration without CAPTCHA when company_id is provided
+      // If backend still requires CAPTCHA, we'll need to handle that case
+      
+      // Step 2: Register first admin user (public endpoint, no auth required)
+      // NOTE: The CAPTCHA token was consumed during company creation
+      // For the first user (admin) created as part of company registration, we skip CAPTCHA
+      // because it was already verified during company creation. The backend should handle this
+      // by checking if this is the first user (userCountForCompany === 0) and skip CAPTCHA verification.
+      //
+      // IMPORTANT: New admin users should only have access to /settings and /users pages initially.
+      // The backend should create a default admin role with only these two pages assigned.
+      // The admin can then assign pages to other roles, but cannot modify their own role's pages.
+      
+      const generatedUsername = generateUsernameFromCompanyName(formData.companyName);
+      
+      // Skip CAPTCHA for first user - it was already verified during company creation
+      // The token was consumed, so we don't send it again
+      // Backend should recognize this is the first user and skip CAPTCHA verification
       const userPayload: RegisterRequest = {
-        username: formData.username.trim(),
-        email: formData.userEmail.trim(),
+        username: generatedUsername,
+        email: formData.companyEmail.trim(), // Use company email as user email
         company_id: company.id, // Required: Link user to the created company
+        // CAPTCHA fields are NOT included - already verified during company creation
+        // Backend should skip CAPTCHA verification for first user (userCountForCompany === 0)
         // DO NOT send: profile (removed), role_ids (not accepted), password (email-based)
         // Backend automatically assigns admin role to first user
+        // NOTE: Backend should assign a default admin role with only /settings and /users pages
       };
-
+      
       // Use /auth/register endpoint (public, no JWT token needed)
       // Backend automatically assigns admin role to first user for the company
       // Backend will send password setup email with secure token link
-      const registerResult = await authApi.register(userPayload);
-      
-      // Registration successful - user is now admin
-      console.log('Registration successful:', registerResult);
+      await authApi.register(userPayload);
       
       setCreatedCompanyName(company.name);
+      setGeneratedUsername(generatedUsername);
       setStep('success');
     } catch (err: unknown) {
       console.error('Registration error:', err);
@@ -114,6 +169,10 @@ const RegistrationPage: React.FC = () => {
       }
       
       setError(errorMessage);
+      // Reset CAPTCHA on error - user will need to solve a new one
+      setCaptchaToken('');
+      setCaptchaAnswer(undefined);
+      // Reset CAPTCHA component state by clearing verified status
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
@@ -171,14 +230,18 @@ const RegistrationPage: React.FC = () => {
               onChange={setFormData}
               onSubmit={handleSubmit}
               loading={loading}
+              captchaToken={captchaToken}
+              captchaAnswer={captchaAnswer}
+              onCaptchaVerify={handleCaptchaVerify}
+              captchaError={captchaError}
             />
           )}
 
           {step === 'success' && (
             <RegistrationSuccess
               companyName={createdCompanyName}
-              userEmail={formData.userEmail}
-              username={formData.username}
+              userEmail={formData.companyEmail}
+              username={generatedUsername}
               onGoToLogin={handleGoToLogin}
             />
           )}

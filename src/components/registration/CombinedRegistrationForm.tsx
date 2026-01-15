@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { countriesApi } from '../../api/countries';
+import Captcha from './Captcha';
 
 export interface CombinedRegistrationFormData {
-  // Company fields
+  // Company fields only
   companyName: string;
   companyEmail: string;
   companyPhone: string;
   country: string;
   city: string;
-  // User fields
-  username: string;
-  userEmail: string;
+  // Legal agreements
+  acceptedPrivacyPolicy: boolean;
+  acceptedTermsOfUse: boolean;
+  // Username and email are auto-generated from company data
   // Password is NEVER provided - backend always sends password setup email
 }
 
@@ -20,13 +22,22 @@ interface CombinedRegistrationFormProps {
   onChange: (data: CombinedRegistrationFormData) => void;
   onSubmit: (e: React.FormEvent) => void;
   loading: boolean;
+  captchaToken?: string;
+  captchaAnswer?: string;
+  onCaptchaVerify?: (token: string, answer: string) => Promise<void>;
+  captchaError?: string;
 }
+
 
 const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
   data,
   onChange,
   onSubmit,
   loading,
+  captchaToken,
+  captchaAnswer,
+  onCaptchaVerify,
+  captchaError,
 }) => {
   const { t } = useTranslation();
   const [countries, setCountries] = useState<Array<{ name: string }>>([]);
@@ -80,6 +91,12 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
     onChange({ ...data, [field]: e.target.value });
   };
 
+  const handleCheckboxChange = (field: 'acceptedPrivacyPolicy' | 'acceptedTermsOfUse') => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    onChange({ ...data, [field]: e.target.checked });
+  };
+
   return (
     <form onSubmit={onSubmit} className="space-y-6 text-body">
       <div>
@@ -88,12 +105,15 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
       </div>
 
       {/* Company Section */}
-      <div className="space-y-4 pb-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-heading">{t('registration.companyInformation')}</h3>
+      <div className="space-y-5 pb-6 border-b border-border/60">
+        <div>
+          <h3 className="text-lg font-semibold text-heading mb-1">{t('registration.companyInformation')}</h3>
+          <p className="text-xs text-muted">{t('registration.companyInformationDescription') || 'Enter your school or organization details'}</p>
+        </div>
 
         <div>
-          <label htmlFor="company-name" className="block text-sm font-medium text-heading mb-2">
-            {t('registration.companyName')} <span className="text-red-500">*</span>
+          <label htmlFor="company-name" className="block text-sm font-semibold text-heading mb-2">
+            {t('registration.companyName')} <span className="text-danger">*</span>
           </label>
           <input
             id="company-name"
@@ -101,14 +121,14 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             required
             value={data.companyName}
             onChange={handleChange('companyName')}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+            className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border"
             placeholder={t('registration.companyNamePlaceholder')}
           />
         </div>
 
         <div>
-          <label htmlFor="company-email" className="block text-sm font-medium text-heading mb-2">
-            {t('registration.companyEmail')} <span className="text-red-500">*</span>
+          <label htmlFor="company-email" className="block text-sm font-semibold text-heading mb-2">
+            {t('registration.companyEmail')} <span className="text-danger">*</span>
           </label>
           <input
             id="company-email"
@@ -116,13 +136,16 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             required
             value={data.companyEmail}
             onChange={handleChange('companyEmail')}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+            className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border"
             placeholder={t('registration.companyEmailPlaceholder')}
           />
+          <p className="mt-1.5 text-xs text-muted">
+            {t('registration.companyEmailNote') || 'This email will also be used for your administrator account'}
+          </p>
         </div>
 
         <div>
-          <label htmlFor="company-phone" className="block text-sm font-medium text-heading mb-2">
+          <label htmlFor="company-phone" className="block text-sm font-semibold text-heading mb-2">
             {t('registration.phoneNumber')}
           </label>
           <input
@@ -130,7 +153,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             type="tel"
             value={data.companyPhone}
             onChange={handleChange('companyPhone')}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+            className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border"
             placeholder={t('registration.phonePlaceholder')}
           />
         </div>
@@ -144,7 +167,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               id="company-country"
               value={data.country}
               onChange={handleChange('country')}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+              className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border custom-select"
             >
               <option value="">{t('registration.selectACountry')}</option>
               {loadingCountries ? (
@@ -168,7 +191,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               value={data.city}
               onChange={handleChange('city')}
               disabled={!data.country || loadingCities}
-              className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border disabled:opacity-50 disabled:cursor-not-allowed custom-select"
             >
               <option value="">
                 {!data.country
@@ -187,65 +210,100 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
         </div>
       </div>
 
-      {/* User Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-heading">{t('registration.administratorAccount')}</h3>
-        <p className="text-sm text-muted">
-          {t('registration.accountWillBeCreatedWithAdminProfile')}
-        </p>
+      {/* Legal Agreements */}
+      <div className="space-y-4 pt-2">
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="privacy-policy"
+              checked={data.acceptedPrivacyPolicy}
+              onChange={handleCheckboxChange('acceptedPrivacyPolicy')}
+              className="mt-1 h-4 w-4 text-primary border-border/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              required
+            />
+            <label htmlFor="privacy-policy" className="text-sm text-heading cursor-pointer flex-1">
+              {t('registration.iHaveReadAndAgreeTo') || 'I have read and agree to the'}{' '}
+              <a
+                href="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary font-semibold hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {t('registration.privacyPolicy') || 'Privacy Policy'}
+              </a>
+            </label>
+          </div>
 
-        <div>
-          <label htmlFor="username" className="block text-sm font-medium text-heading mb-2">
-            {t('registration.username')} <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="username"
-            type="text"
-            required
-            value={data.username}
-            onChange={handleChange('username')}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder={t('registration.usernamePlaceholder')}
-          />
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="terms-of-use"
+              checked={data.acceptedTermsOfUse}
+              onChange={handleCheckboxChange('acceptedTermsOfUse')}
+              className="mt-1 h-4 w-4 text-primary border-border/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              required
+            />
+            <label htmlFor="terms-of-use" className="text-sm text-heading cursor-pointer flex-1">
+              {t('registration.iHaveReadAndAgreeTo') || 'I have read and agree to the'}{' '}
+              <a
+                href="/terms-of-use"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary font-semibold hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {t('registration.termsOfUse') || 'Terms of Use'}
+              </a>
+            </label>
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="user-email" className="block text-sm font-medium text-heading mb-2">
-            {t('forms.email')} <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="user-email"
-            type="email"
-            required
-            value={data.userEmail}
-            onChange={handleChange('userEmail')}
-            className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
-            placeholder={t('registration.userEmailPlaceholder')}
-          />
-        </div>
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-900 font-medium mb-1">
-            📧 {t('registration.passwordSetupEmail') || 'Configuration du mot de passe par email'}
-          </p>
-          <p className="text-xs text-blue-800">
-            {t('registration.passwordSetupEmailNote') || 'Un email avec un lien sécurisé pour définir votre mot de passe sera automatiquement envoyé à votre adresse email. Vous devrez cliquer sur le lien pour définir votre mot de passe.'}
-          </p>
-        </div>
-
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <p className="text-sm text-green-800 font-medium">
-            ✅ {t('registration.autoAdminNote') || 'Vous deviendrez automatiquement l\'administrateur de votre entreprise. Aucune sélection de rôle nécessaire.'}
-          </p>
-        </div>
+        {/* CAPTCHA - Only show after both checkboxes are accepted */}
+        {data.acceptedPrivacyPolicy && data.acceptedTermsOfUse && onCaptchaVerify && (
+          <div className="pt-2">
+            <Captcha
+              onVerify={onCaptchaVerify}
+              onError={() => {
+                // Error is handled by parent component
+              }}
+              disabled={loading}
+              isVerified={!!captchaToken && captchaAnswer !== undefined}
+            />
+            {captchaError && (
+              <div className="mt-2 text-sm text-danger bg-danger/10 border border-danger/20 rounded-lg p-2.5" role="alert">
+                {captchaError}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <button
         type="submit"
-        disabled={loading}
-        className="w-full bg-primary text-primary-foreground py-3 px-4 rounded-lg font-semibold hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        disabled={
+          loading || 
+          !data.companyName.trim() || 
+          !data.companyEmail.trim() || 
+          !data.acceptedPrivacyPolicy || 
+          !data.acceptedTermsOfUse ||
+          !captchaToken ||
+          captchaAnswer === undefined
+        }
+        className="w-full bg-primary text-primary-foreground py-3.5 px-4 rounded-xl font-semibold hover:bg-primary/95 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
       >
-        {loading ? t('registration.creatingAccount') : t('registration.createAccount')}
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {t('registration.creatingAccount')}
+          </span>
+        ) : (
+          t('registration.createAccount')
+        )}
       </button>
     </form>
   );

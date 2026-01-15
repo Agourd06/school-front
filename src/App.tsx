@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { getDefaultRoute } from './utils/permissions';
+import { usePagesInitialization } from './hooks/usePagesInitialization';
+import { useRestrictNewAdminRole } from './hooks/useRestrictNewAdminRole';
 import Navbar from './components/Navbar';
 
 import ProtectedRoute from './components/guards/ProtectedRoute';
@@ -52,6 +54,13 @@ const ClassCoursesPage = lazy(() => import('./pages/dashboard/ClassCoursesPage')
 const UsersPage = lazy(() => import('./pages/dashboard/UsersPage'));
 const CompaniesPage = lazy(() => import('./pages/dashboard/CompaniesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const ColorsSettingsPage = lazy(() => import('./pages/settings/ColorsSettingsPage'));
+const PageAccessSettingsPage = lazy(() => import('./pages/settings/PageAccessSettingsPage'));
+const RolesSettingsPage = lazy(() => import('./pages/settings/RolesSettingsPage'));
+const TypesSettings = lazy(() => import('./components/settings/TypesSettings'));
+const LinkTypesPage = lazy(() => import('./pages/settings/types/LinkTypesPage'));
+const ClassroomTypesPage = lazy(() => import('./pages/settings/types/ClassroomTypesPage'));
+const PlanningTypesPage = lazy(() => import('./pages/settings/types/PlanningTypesPage'));
 const RolesPage = lazy(() => import('./pages/dashboard/RolesPage'));
 const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 
@@ -93,6 +102,22 @@ const StableRedirect: React.FC<{ to: string }> = ({ to }) => {
 const App: React.FC = () => {
   const { t } = useTranslation();
   const { user, isLoading } = useAuth();
+
+  // Initialize pages in database on app startup (only for admin users)
+  // Pages are global and shared across all companies
+  // Check both old profile field and new roles array for backward compatibility
+  const isAdmin = user?.profile === 'admin' || user?.roles?.includes('admin') === true;
+  console.log('[App] User:', user);
+  console.log('[App] isAdmin:', isAdmin);
+  console.log('[App] user?.profile:', user?.profile);
+  console.log('[App] user?.roles:', user?.roles);
+  usePagesInitialization(isAdmin, true);
+  
+  // Safety net: Restrict new admin users to only /settings and /users pages
+  // NOTE: Backend now handles this automatically during user creation.
+  // This hook is kept as a safety net in case backend restriction fails.
+  // Set to false to disable if backend is confirmed working correctly.
+  useRestrictNewAdminRole(true); // Set to false to disable safety net
 
   // Memoize default route to prevent infinite loops
   // Only recalculate when profile or allowedPages actually change
@@ -595,6 +620,7 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         />
+        {/* Settings routes with nested structure */}
         <Route
           path="/settings"
           element={
@@ -604,7 +630,85 @@ const App: React.FC = () => {
               </DashboardLayout>
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Default redirect to colors */}
+          <Route
+            index
+            element={
+              <ProtectedRoute requiredPage="/settings">
+                <Suspense fallback={<PageLoadingFallback />}><ColorsSettingsPage /></Suspense>
+              </ProtectedRoute>
+            }
+          />
+          {/* Main settings tabs */}
+          <Route
+            path="colors"
+            element={
+              <ProtectedRoute requiredPage="/settings">
+                <Suspense fallback={<PageLoadingFallback />}><ColorsSettingsPage /></Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="access"
+            element={
+              <ProtectedRoute requiredPage="/settings">
+                <Suspense fallback={<PageLoadingFallback />}><PageAccessSettingsPage /></Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="roles"
+            element={
+              <ProtectedRoute requiredPage="/settings">
+                <Suspense fallback={<PageLoadingFallback />}><RolesSettingsPage /></Suspense>
+              </ProtectedRoute>
+            }
+          />
+          {/* Types settings with nested sub-routes */}
+          <Route
+            path="types"
+            element={
+              <ProtectedRoute requiredPage="/settings/types">
+                <Suspense fallback={<PageLoadingFallback />}><TypesSettings /></Suspense>
+              </ProtectedRoute>
+            }
+          >
+            {/* Default redirect to link */}
+            <Route
+              index
+              element={
+                <ProtectedRoute requiredPage="/settings/types">
+                  <Suspense fallback={<PageLoadingFallback />}><LinkTypesPage /></Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="link"
+              element={
+                <ProtectedRoute requiredPage="/settings/types">
+                  <Suspense fallback={<PageLoadingFallback />}><LinkTypesPage /></Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="classroom"
+              element={
+                <ProtectedRoute requiredPage="/settings/types">
+                  <Suspense fallback={<PageLoadingFallback />}><ClassroomTypesPage /></Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="planning"
+              element={
+                <ProtectedRoute requiredPage="/settings/types">
+                  <Suspense fallback={<PageLoadingFallback />}><PlanningTypesPage /></Suspense>
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+        </Route>
         <Route
           path="/roles"
           element={

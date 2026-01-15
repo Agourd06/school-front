@@ -21,10 +21,8 @@ const ProfilePage: React.FC = () => {
       // Only redirect from /profile (dashboard profile) - NOT from /student/profile or /teacher/profile
       if (currentPath === '/profile') {
         if (isStudent) {
-          console.log('[ProfilePage] Redirecting student from /profile to /student/profile', { roles: userRoles, profile: user.profile });
           window.location.replace('/student/profile');
         } else if (isTeacher) {
-          console.log('[ProfilePage] Redirecting teacher from /profile to /teacher/profile', { roles: userRoles, profile: user.profile });
           window.location.replace('/teacher/profile');
         }
       }
