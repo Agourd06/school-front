@@ -107,10 +107,6 @@ const App: React.FC = () => {
   // Pages are global and shared across all companies
   // Check both old profile field and new roles array for backward compatibility
   const isAdmin = user?.profile === 'admin' || user?.roles?.includes('admin') === true;
-  console.log('[App] User:', user);
-  console.log('[App] isAdmin:', isAdmin);
-  console.log('[App] user?.profile:', user?.profile);
-  console.log('[App] user?.roles:', user?.roles);
   usePagesInitialization(isAdmin, true);
   
   // Safety net: Restrict new admin users to only /settings and /users pages
@@ -144,7 +140,7 @@ const App: React.FC = () => {
             user ? (
               <StableRedirect to={defaultRoute} />
             ) : (
-              <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><AuthPage /></Suspense></div></>
+              <><Navbar /><div style={{ paddingTop: 'var(--navbar-height, 4rem)' }}><Suspense fallback={<PageLoadingFallback />}><AuthPage /></Suspense></div></>
             )
           } 
         />
@@ -176,7 +172,7 @@ const App: React.FC = () => {
             user ? (
               <StableRedirect to={defaultRoute} />
             ) : (
-              <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><ResetPasswordPage /></Suspense></div></>
+              <><Navbar /><div style={{ paddingTop: 'var(--navbar-height, 4rem)' }}><Suspense fallback={<PageLoadingFallback />}><ResetPasswordPage /></Suspense></div></>
             )
           } 
         />
@@ -631,20 +627,11 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         >
-          {/* Default redirect to colors */}
-          <Route
-            index
-            element={
-              <ProtectedRoute requiredPage="/settings">
-                <Suspense fallback={<PageLoadingFallback />}><ColorsSettingsPage /></Suspense>
-              </ProtectedRoute>
-            }
-          />
           {/* Main settings tabs */}
           <Route
             path="colors"
             element={
-              <ProtectedRoute requiredPage="/settings">
+              <ProtectedRoute requiredPage="/settings/colors">
                 <Suspense fallback={<PageLoadingFallback />}><ColorsSettingsPage /></Suspense>
               </ProtectedRoute>
             }
@@ -652,7 +639,7 @@ const App: React.FC = () => {
           <Route
             path="access"
             element={
-              <ProtectedRoute requiredPage="/settings">
+              <ProtectedRoute requiredPage="/settings/access">
                 <Suspense fallback={<PageLoadingFallback />}><PageAccessSettingsPage /></Suspense>
               </ProtectedRoute>
             }
@@ -660,7 +647,7 @@ const App: React.FC = () => {
           <Route
             path="roles"
             element={
-              <ProtectedRoute requiredPage="/settings">
+              <ProtectedRoute requiredPage="/settings/roles">
                 <Suspense fallback={<PageLoadingFallback />}><RolesSettingsPage /></Suspense>
               </ProtectedRoute>
             }
@@ -669,24 +656,15 @@ const App: React.FC = () => {
           <Route
             path="types"
             element={
-              <ProtectedRoute requiredPage="/settings/types">
+              <ProtectedRoute requiredPage="/settings">
                 <Suspense fallback={<PageLoadingFallback />}><TypesSettings /></Suspense>
               </ProtectedRoute>
             }
           >
-            {/* Default redirect to link */}
-            <Route
-              index
-              element={
-                <ProtectedRoute requiredPage="/settings/types">
-                  <Suspense fallback={<PageLoadingFallback />}><LinkTypesPage /></Suspense>
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="link"
               element={
-                <ProtectedRoute requiredPage="/settings/types">
+                <ProtectedRoute requiredPage="/settings/types/link">
                   <Suspense fallback={<PageLoadingFallback />}><LinkTypesPage /></Suspense>
                 </ProtectedRoute>
               }
@@ -694,7 +672,7 @@ const App: React.FC = () => {
             <Route
               path="classroom"
               element={
-                <ProtectedRoute requiredPage="/settings/types">
+                <ProtectedRoute requiredPage="/settings/types/classroom">
                   <Suspense fallback={<PageLoadingFallback />}><ClassroomTypesPage /></Suspense>
                 </ProtectedRoute>
               }
@@ -702,7 +680,7 @@ const App: React.FC = () => {
             <Route
               path="planning"
               element={
-                <ProtectedRoute requiredPage="/settings/types">
+                <ProtectedRoute requiredPage="/settings/types/planning">
                   <Suspense fallback={<PageLoadingFallback />}><PlanningTypesPage /></Suspense>
                 </ProtectedRoute>
               }
@@ -722,7 +700,7 @@ const App: React.FC = () => {
         <Route
           path="/unauthorized"
           element={
-            <><Navbar /><div className="pt-16"><Suspense fallback={<PageLoadingFallback />}><UnauthorizedPage /></Suspense></div></>
+            <><Navbar /><div style={{ paddingTop: 'var(--navbar-height, 4rem)' }}><Suspense fallback={<PageLoadingFallback />}><UnauthorizedPage /></Suspense></div></>
           }
         />
         {/* Profile route with DashboardLayout (includes Sidebar) - ONLY for admin/support profiles */}

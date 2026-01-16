@@ -31,17 +31,17 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = tru
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-extrabold text-gray-900">
+        <h2 className="text-3xl font-extrabold text-heading">
           {t('auth.forgotYourPassword')}
         </h2>
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-body">
           {t('auth.enterEmailForReset')}
         </p>
       </div>
       
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block text-sm font-medium text-heading">
             {t('auth.emailAddress')}
           </label>
           <input
@@ -49,7 +49,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = tru
             name="email"
             type="email"
             required
-            className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+            className="mt-1 appearance-none relative block w-full px-3 py-2 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
             placeholder={t('auth.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -78,11 +78,11 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ showLinks = tru
 
         {showLinks && (
           <div className="text-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-body">
               {t('auth.rememberYourPassword')}{' '}
               <Link
                 to="/auth?mode=login"
-                className="font-medium text-primary hover:text-primary/80"
+                className="font-medium text-secondary hover:text-secondary/80"
               >
                 {t('auth.signIn')}
               </Link>

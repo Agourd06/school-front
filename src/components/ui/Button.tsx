@@ -25,10 +25,10 @@ const Button: React.FC<ButtonProps> = ({
   const variantStyles: Record<ButtonVariant, string> = {
     primary: 'bg-primary text-primary-foreground hover:bg-primary-hover focus-visible:ring-primary shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
     secondary:
-      'bg-white text-body border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus-visible:ring-primary shadow-sm hover:shadow-md transition-all duration-200',
+      'bg-white text-secondary border-2 border-secondary hover:bg-secondary/5 hover:border-secondary/80 focus-visible:ring-secondary shadow-sm hover:shadow-md transition-all duration-200',
     danger: 'bg-white text-danger border-2 border-danger hover:bg-red-50 hover:border-red-600 focus-visible:ring-danger shadow-sm hover:shadow-md transition-all duration-200',
     ghost:
-      'text-body border border-gray-300 bg-transparent hover:bg-gray-50 hover:border-gray-400 focus-visible:ring-gray-400 focus-visible:ring-offset-2 transition-all duration-200',
+      'text-secondary border border-secondary/40 bg-transparent hover:bg-secondary/5 hover:border-secondary/60 focus-visible:ring-secondary focus-visible:ring-offset-2 transition-all duration-200',
   };
 
   const sizeStyles: Record<ButtonSize, string> = {

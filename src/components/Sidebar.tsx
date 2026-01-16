@@ -27,7 +27,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   const { hasPageAccess } = usePermissions();
   const { user } = useAuth();
-  const [isParametersOpen, setIsParametersOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
@@ -192,10 +191,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     });
   }, [filterMenuItems, parameterGroups]);
 
-  const toggleParameters = () => {
-    setIsParametersOpen(!isParametersOpen);
-  };
-
   const toggleGroup = (title: string) => {
     setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
   };
@@ -235,7 +230,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   aria-label={isCollapsed ? t('sidebar.showSidebar') : t('sidebar.hideSidebar')}
-                  className="hidden sm:inline-flex items-center justify-center rounded-full border border-border p-2 text-muted hover:bg-primary-transparent hover:text-primary transition"
+                  className="hidden sm:inline-flex items-center justify-center rounded-full border border-tertiary p-2 text-muted hover:bg-secondary/5 hover:text-secondary transition"
                   onClick={onToggleCollapse}
                 >
                   <svg
@@ -257,7 +252,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 type="button"
                 aria-label={t('sidebar.closeSidebar')}
-                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-primary-transparent-50 hover:text-primary transition-colors"
+                className="sm:hidden inline-flex items-center justify-center p-2 rounded-md hover:bg-secondary/5 hover:text-secondary transition-colors"
                 onClick={closeMobile}
               >
                 <svg
@@ -279,123 +274,79 @@ const Sidebar: React.FC<SidebarProps> = ({
 
 
 
-          {/* Parameters Section */}
-          <div className="mb-6 flex-1 overflow-y-auto pr-2">
-            <button
-              onClick={toggleParameters}
-              className="w-full text-left px-4 py-3 rounded-lg font-medium transition-colors text-heading hover:bg-primary-transparent hover:text-primary"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <svg
-                    className="w-5 h-5 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+          {/* Menu Groups - Displayed directly without Parameters wrapper */}
+          <div className="mb-6 flex-1 overflow-y-auto pr-2 space-y-3 pb-8">
+            {filteredParameterGroups.map((group) => {
+              const isGroupOpen = openGroups[group.title] ?? true;
+              const accessibleItems = filterMenuItems(group.items);
+              
+              // Don't render group if it has no accessible items
+              if (accessibleItems.length === 0) {
+                return null;
+              }
+              
+              return (
+                <div key={group.title} className="space-y-1">
+                  <button
+                    onClick={() => toggleGroup(group.title)}
+                    className="flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm font-bold uppercase tracking-wide text-heading hover:bg-secondary/5 hover:text-secondary transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  {t('sidebar.parameters')}
-                </div>
-                <svg
-                  className={`w-4 h-4 transition-transform ${
-                    isParametersOpen ? "rotate-180" : ""
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </button>
-
-            {/* Dropdown Content */}
-            {isParametersOpen && (
-              <div className="mt-2 space-y-3 pb-8">
-                {filteredParameterGroups.map((group) => {
-                  const isGroupOpen = openGroups[group.title] ?? true;
-                  const accessibleItems = filterMenuItems(group.items);
-                  
-                  // Don't render group if it has no accessible items
-                  if (accessibleItems.length === 0) {
-                    return null;
-                  }
-                  
-                  return (
-                    <div key={group.title} className="space-y-1">
-                      <button
-                        onClick={() => toggleGroup(group.title)}
-                        className="flex w-full items-center justify-between rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted hover:bg-primary-transparent hover:text-primary transition-colors"
-                      >
-                        <span>{t(group.titleKey)}</span>
-                        <svg
-                          className={`h-4 w-4 transition-transform ${isGroupOpen ? 'rotate-180' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                      {isGroupOpen && (
-                        <div className="ml-4 space-y-1 border-l border-border pl-4">
-                          {accessibleItems.map((item) => {
-                            const route = tabToRoutePath(item.tab);
-                            const isActive = currentRouteTab === item.tab;
-                            return (
-                              <Link
-                                key={item.tab}
-                                to={route}
-                                onClick={() => {
-                                  onTabChange(item.tab);
-                                  closeMobile();
-                                }}
-                                className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                                  isActive
-                                    ? 'bg-primary-transparent text-primary font-medium'
-                                    : 'text-muted hover:bg-primary-transparent hover:text-primary'
-                                }`}
-                              >
-                                {t(item.labelKey)}
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
+                    <span className="font-bold">{t(group.titleKey)}</span>
+                    <svg
+                      className={`h-5 w-5 transition-transform ${isGroupOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {isGroupOpen && (
+                    <div className="ml-4 space-y-1 border-l border-tertiary pl-4">
+                      {accessibleItems.map((item) => {
+                        const route = tabToRoutePath(item.tab);
+                        const isActive = currentRouteTab === item.tab;
+                        return (
+                          <Link
+                            key={item.tab}
+                            to={route}
+                            onClick={() => {
+                              onTabChange(item.tab);
+                              closeMobile();
+                            }}
+                            className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                              isActive
+                                ? 'bg-secondary/10 text-secondary font-medium border-l-2 border-secondary'
+                                : 'text-muted hover:bg-secondary/5 hover:text-secondary'
+                            }`}
+                          >
+                            {t(item.labelKey)}
+                          </Link>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Settings Link - Only show if user has access */}
-          {hasPageAccess('/settings') && (
-            <div className="mt-auto pt-4 border-t border-border">
+          {/* Settings Link - Show if user has /settings page OR any settings sub-tab */}
+          {(hasPageAccess('/settings') ||
+            hasPageAccess('/settings/colors') ||
+            hasPageAccess('/settings/access') ||
+            hasPageAccess('/settings/roles') ||
+            hasPageAccess('/settings/types/link') ||
+            hasPageAccess('/settings/types/classroom') ||
+            hasPageAccess('/settings/types/planning')) && (
+            <div className="mt-auto pt-4 border-t border-tertiary/20">
               <Link
                 to="/settings"
                 onClick={closeMobile}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   location.pathname === '/settings'
-                    ? 'bg-primary-transparent text-primary'
-                    : 'text-muted hover:bg-primary-transparent hover:text-primary'
+                    ? 'bg-secondary/10 text-secondary border-l-2 border-secondary'
+                    : 'text-muted hover:bg-secondary/5 hover:text-secondary'
                 }`}
               >
                 <svg

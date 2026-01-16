@@ -26,7 +26,7 @@ export interface CreateUserRequest {
   email: string;
   profile?: Profile;
   company_id: number; // Required for public registration
-  role_ids: number[]; // REQUIRED: At least one role must be assigned
+  role_ids?: number[]; // Optional: Roles can be assigned after user creation via /users/:id/roles endpoint
   // Password is NEVER provided - backend always sends password setup email
 }
 

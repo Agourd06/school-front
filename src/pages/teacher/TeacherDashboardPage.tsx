@@ -153,7 +153,7 @@ const TeacherDashboardPage: React.FC = () => {
                 </div>
                 <Link
                   to={`/teacher/attendance?planning=${planning.id}`}
-                  className="text-primary hover:text-primary-dark text-sm font-medium"
+                  className="text-secondary hover:text-secondary/80 text-sm font-medium"
                 >
                   View →
                 </Link>

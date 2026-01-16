@@ -11,12 +11,11 @@ import { useAuth } from '../../hooks/useAuth';
 import type { FilterParams, ListState } from '../../types/api';
 import { UserModal, DeleteModal } from '../../components/modals';
 import { STATUS_OPTIONS } from '../../constants/status';
-import StatusBadge from '../../components/StatusBadge';
-import { EditButton, DeleteButton, Button } from '../ui';
 import { Users } from 'lucide-react';
 import { ToastContainer, type ToastType } from '../ui/Toast';
 import type { User } from '../../api/users';
 import UserRolesModal from '../modals/UserRolesModal';
+import UserRow from '../UserRow';
 
 interface Toast {
   id: string;
@@ -188,83 +187,22 @@ const UsersSection: React.FC = () => {
           pagination: { ...prev.pagination, page: 1 },
         }))}
         addButtonText={t('sections.addUser')}
-        searchPlaceholder={t('sections.searchByNameOrEmail')}
+        searchPlaceholder={t('sections.searchByName') || 'Search by name...'}
         filterOptions={STATUS_OPTIONS}
         renderRow={(user: User, onEdit, onDelete, index) => {
-          const profileLabelKey = user.profile ? `profile.${user.profile}` : 'profile.undefined';
-          const profileDisplay = t(profileLabelKey) || user.profile || t('profile.undefined') || 'Undefined';
-          const isPending = user.status === 2;
           const isCurrentUser = currentUser?.id === user.id;
           
           return (
-            <li key={user.id ?? index} className="px-4 py-4 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-900">{user.username}</p>
-                    {isCurrentUser && (
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">
-                        {t('common.you') || 'You'}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500">{user.email}</p>
-                  <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
-                      <span>{t('forms.profileLabel')}</span>
-                      <span className="font-medium text-gray-700 capitalize">{profileDisplay}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span>{t('forms.statusLabel')}</span>
-                      <StatusBadge value={user.status} />
-                    </div>
-                  </div>
-                  {isPending && (
-                    <div className="mt-2">
-                      <p className="text-xs text-yellow-600 italic">
-                        {t('messages.userPendingPasswordSetup') || 'User is pending password setup. An email was sent automatically.'}
-                      </p>
-                    </div>
-                  )}
-                  {isCurrentUser && (
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-500 italic">
-                        {t('messages.cannotManageYourself') || 'You cannot edit, delete, or modify roles for your own account'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {isPending && !isCurrentUser && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleResendInvitation(user.id)}
-                      isLoading={sendInvitation.isPending}
-                      disabled={sendInvitation.isPending}
-                      className="text-xs"
-                    >
-                      {t('sections.resendInvitation') || 'Resend Invitation'}
-                    </Button>
-                  )}
-                  {!isCurrentUser && (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setRolesModalUser(user)}
-                        className="text-xs"
-                        title={t('sections.manageRoles') || 'Manage Roles'}
-                      >
-                        {t('sections.roles') || 'Roles'}
-                      </Button>
-                      <EditButton onClick={() => onEdit(user)} />
-                      <DeleteButton onClick={() => onDelete(user.id)} />
-                    </>
-                  )}
-                </div>
-              </div>
-            </li>
+            <UserRow
+              key={user.id ?? index}
+              user={user}
+              isCurrentUser={isCurrentUser}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onManageRoles={(user) => setRolesModalUser(user)}
+              onResendInvitation={handleResendInvitation}
+              isResendingInvitation={sendInvitation.isPending}
+            />
           );
         }}
       />

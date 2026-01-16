@@ -16,6 +16,7 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
   const [saving, setSaving] = useState(false);
   const [primaryColor, setPrimaryColor] = useState(defaultTheme.primary);
   const [secondaryColor, setSecondaryColor] = useState(defaultTheme.secondary);
+  const [tertiaryColor, setTertiaryColor] = useState(defaultTheme.tertiary);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -29,10 +30,11 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
       mergeTheme({
         primary: primaryColor,
         secondary: secondaryColor,
+        tertiary: tertiaryColor,
         accent: secondaryColor,
       })
     );
-  }, [primaryColor, secondaryColor]);
+  }, [primaryColor, secondaryColor, tertiaryColor]);
 
   const loadCompanyColors = async () => {
     if (!user?.company_id) return;
@@ -45,6 +47,9 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
       }
       if (company.secondaryColor) {
         setSecondaryColor(company.secondaryColor);
+      }
+      if (company.tertiaryColor) {
+        setTertiaryColor(company.tertiaryColor);
       }
     } catch (err) {
       console.error('Failed to load company colors', err);
@@ -64,6 +69,7 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
       await companyApi.update(user.company_id, {
         primaryColor,
         secondaryColor,
+        tertiaryColor,
       });
 
       setSuccess(true);
@@ -90,61 +96,81 @@ const ColorSettings: React.FC<ColorSettingsProps> = ({ onSuccess }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('settings.companyColors')}</h3>
-        <p className="text-sm text-gray-600">
+        <h3 className="text-lg font-semibold text-heading mb-2">{t('settings.companyColors')}</h3>
+        <p className="text-sm text-body">
           {t('settings.customizeBrandColors')}
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+        <div className="bg-danger-light border border-danger text-danger-dark px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+        <div className="bg-success-light border border-success text-success-dark px-4 py-3 rounded-lg">
           {t('settings.colorsSavedSuccessfully')}
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div>
-          <label htmlFor="primary-color" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="primary-color" className="block text-sm font-medium text-heading mb-2">
             {t('settings.primaryColor')}
           </label>
-          <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-4">
+          <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-white px-4 py-4">
             <input
               id="primary-color"
               type="color"
               value={primaryColor}
               onChange={(e) => setPrimaryColor(e.target.value)}
-              className="h-12 w-12 rounded-lg border border-gray-300 bg-white shadow-sm cursor-pointer"
+              className="h-12 w-12 rounded-lg border border-primary bg-white shadow-sm cursor-pointer"
             />
             <div>
-              <p className="text-sm font-medium text-gray-900">{t('settings.brandAccentsButtons')}</p>
-              <p className="text-xs text-gray-500">{t('settings.usedForPrimaryActions')}</p>
-              <p className="text-xs text-gray-400 mt-1 font-mono">{primaryColor}</p>
+              <p className="text-sm font-medium text-heading">{t('settings.brandAccentsButtons')}</p>
+              <p className="text-xs text-body">{t('settings.usedForPrimaryActions')}</p>
+              <p className="text-xs text-muted mt-1 font-mono">{primaryColor}</p>
             </div>
           </div>
         </div>
 
         <div>
-          <label htmlFor="secondary-color" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="secondary-color" className="block text-sm font-medium text-heading mb-2">
             {t('settings.secondaryColor')}
           </label>
-          <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-4">
+          <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-white px-4 py-4">
             <input
               id="secondary-color"
               type="color"
               value={secondaryColor}
               onChange={(e) => setSecondaryColor(e.target.value)}
-              className="h-12 w-12 rounded-lg border border-gray-300 bg-white shadow-sm cursor-pointer"
+              className="h-12 w-12 rounded-lg border border-primary bg-white shadow-sm cursor-pointer"
             />
             <div>
-              <p className="text-sm font-medium text-gray-900">{t('settings.highlightsLinks')}</p>
-              <p className="text-xs text-gray-500">{t('settings.usedForSecondaryButtons')}</p>
-              <p className="text-xs text-gray-400 mt-1 font-mono">{secondaryColor}</p>
+              <p className="text-sm font-medium text-heading">{t('settings.highlightsLinks')}</p>
+              <p className="text-xs text-body">{t('settings.usedForSecondaryButtons')}</p>
+              <p className="text-xs text-muted mt-1 font-mono">{secondaryColor}</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="tertiary-color" className="block text-sm font-medium text-heading mb-2">
+            {t('settings.tertiaryColor') || 'Tertiary Color'}
+          </label>
+          <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-white px-4 py-4">
+            <input
+              id="tertiary-color"
+              type="color"
+              value={tertiaryColor}
+              onChange={(e) => setTertiaryColor(e.target.value)}
+              className="h-12 w-12 rounded-lg border border-primary bg-white shadow-sm cursor-pointer"
+            />
+            <div>
+              <p className="text-sm font-medium text-heading">{t('settings.smallAccentLines') || 'Small Accent Lines'}</p>
+              <p className="text-xs text-body">{t('settings.usedForSmallLines') || 'Used for dividers, underlines, and small decorative borders'}</p>
+              <p className="text-xs text-muted mt-1 font-mono">{tertiaryColor}</p>
             </div>
           </div>
         </div>

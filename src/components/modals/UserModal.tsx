@@ -31,23 +31,20 @@ const UserModal: React.FC<UserModalProps> = ({ isOpen, onClose, user }) => {
       await updateUser.mutateAsync({ id: user.id, ...updateData });
     } else {
       // For new users: password is ALWAYS set via email link - NEVER provided through form
-      // REQUIRED: role_ids must be provided
-      if (!formData.role_ids || formData.role_ids.length === 0) {
-        throw new Error('At least one role is required');
-      }
+      // Roles are NOT assigned during creation - they will be assigned later via role button
 
       const createData = {
         username: formData.username,
         email: formData.email,
         company_id: companyId!,
-        role_ids: formData.role_ids, // REQUIRED
+        // role_ids is NOT included - roles will be assigned after user creation via role button
         // Password is NEVER included - backend always sends password setup email
         // profile field is REMOVED - replaced with roles system
       };
 
       // Backend will automatically send password setup email with secure token link
       // User must click the link to set their password
-      // Backend automatically creates user_roles entries from role_ids
+      // Roles will be assigned separately via /users/:id/roles endpoint
       await createUser.mutateAsync(createData);
     }
     onClose();

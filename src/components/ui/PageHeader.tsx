@@ -17,12 +17,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className="border-b border-gray-200 bg-gradient-to-r from-white to-gray-50/50 pb-6 mb-6 rounded-lg px-1">
+    <div className="border-b border-tertiary/20 bg-gradient-to-r from-white to-gray-50/50 pb-6 mb-6 rounded-lg px-1">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
             {icon && (
-              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-primary shadow-sm border border-primary/10">
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center text-secondary shadow-sm border border-secondary/10">
                 {icon}
               </div>
             )}

@@ -156,7 +156,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
             <button
               type="button"
               onClick={() => navigate('/settings')}
-              className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
+              className="font-medium text-secondary hover:text-secondary/80 underline cursor-pointer transition-colors"
             >
               {t('sidebar.settings')}
             </button>

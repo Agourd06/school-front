@@ -100,7 +100,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <ProgramProvider>
         <SpecializationProvider>
           <Navbar />
-          <div className="min-h-screen bg-surface flex pt-16">
+          <div className="min-h-screen bg-surface flex" style={{ paddingTop: 'var(--navbar-height, 4rem)' }}>
             {/* SECURITY: Only render Sidebar for admin/support profiles */}
             {/* Students/teachers should NEVER see this sidebar */}
             {shouldRenderSidebar && (
@@ -117,7 +117,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               <button
                 type="button"
                 onClick={toggleSidebarVisibility}
-                className="hidden sm:flex fixed top-20 left-4 z-30 h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-heading shadow-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="hidden sm:flex fixed left-4 z-30 h-10 w-10 items-center justify-center rounded-full border border-tertiary bg-surface text-heading shadow-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                style={{ top: 'calc(var(--navbar-height, 4rem) + 1rem)' }}
                 aria-label="Show sidebar"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

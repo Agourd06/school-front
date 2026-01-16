@@ -17,9 +17,26 @@ const api = axios.create({
 const isPublicEndpoint = (url: string | undefined, method: string = 'GET'): boolean => {
   if (!url) return false;
   
-  // Auth endpoints are always public
-  if (url.includes('/auth/')) {
+  // Explicitly list public auth endpoints (login, register, password reset, etc.)
+  // IMPORTANT: /auth/change-password requires authentication and should NOT be in this list
+  const publicAuthEndpoints = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+    '/auth/set-password',
+    '/auth/validate-token', // Used for password setup tokens, doesn't require user auth
+  ];
+  
+  // Check if this is a public auth endpoint
+  const isPublicAuthEndpoint = publicAuthEndpoints.some(endpoint => url.includes(endpoint));
+  if (isPublicAuthEndpoint) {
     return true;
+  }
+  
+  // /auth/change-password requires authentication - explicitly exclude it
+  if (url.includes('/auth/change-password')) {
+    return false;
   }
   
   // CAPTCHA endpoints are always public

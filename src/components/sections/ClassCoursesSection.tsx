@@ -398,7 +398,7 @@ const ClassCoursesSection: React.FC = () => {
                       <div>{course.title}</div>
                       <button
                         type="button"
-                        className="text-xs text-primary hover:underline"
+                        className="text-xs text-secondary hover:underline"
                         onClick={() =>
                           setDescriptionPreview({
                             title: course.title ?? `${t('forms.courseNumber')}${course.id}`,

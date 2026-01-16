@@ -2,26 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global text color - Edusol Blue */
+body {
+  color: var(--color-body, #1D3867);
+}
+
+/* All text elements use Edusol Blue by default */
+h1, h2, h3, h4, h5, h6, p, span, div, label, a {
+  color: var(--color-body, #1D3867);
+}
+
+/* Headings use Edusol Blue */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-heading, #1D3867);
+}
+
 /* === Global Theme Tokens ===================================== */
+/* Edusol Brand Colors */
 :root,
 :root[data-theme='default'] {
-  /* Modern, vibrant primary blue */
-  --color-primary: #3b82f6;
+  /* Edusol Orange - Primary color for buttons, borders, accents */
+  --color-primary: #F2791E;
   --color-primary-foreground: #ffffff;
-  --color-primary-hover: #2563eb;
-  --color-primary-light: #dbeafe;
+  --color-primary-hover: #d66815;
+  --color-primary-light: #fef3e8;
 
-  --color-secondary: #0ea5e9;
+  /* Edusol Blue - Secondary color */
+  --color-secondary: #1D3867;
   --color-secondary-foreground: #ffffff;
+
+  /* Tertiary color - Customizable by company (default: Edusol Orange) - used for small accent lines, dividers, underlines */
+  --color-tertiary: #F2791E;
+  --color-tertiary-foreground: #1D3867;
 
   /* Softer background - light gray/blue-gray instead of pure white */
   --color-surface: #f8fafc;
-  --color-surface-foreground: #0f172a;
+  --color-surface-foreground: #1D3867;
 
   --color-muted: #64748b;
   --color-muted-foreground: #f1f5f9;
 
-  --color-accent: #8b5cf6;
+  --color-accent: #F2791E;
   --color-accent-foreground: #ffffff;
 
   /* Modern, professional status colors */
@@ -32,11 +53,13 @@
   --color-danger: #ef4444;
   --color-danger-light: #fee2e2;
 
-  --color-border: #e2e8f0;
-  --color-border-light: #f1f5f9;
+  /* Edusol Orange for input borders */
+  --color-border: #F2791E;
+  --color-border-light: #fef3e8;
   --color-card: #ffffff;
-  --color-heading: #0f172a;
-  --color-body: #334155;
+  /* Edusol Blue for all text */
+  --color-heading: #1D3867;
+  --color-body: #1D3867;
   
   /* Modern shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -44,6 +67,14 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  /* Navbar design tokens */
+  --navbar-height: 4rem; /* 64px - slim and elegant */
+  --navbar-bg: #ffffff;
+  --navbar-border: rgba(229, 231, 235, 0.6); /* subtle gray border */
+  --navbar-text: var(--color-heading); /* Edusol Blue */
+  --navbar-text-muted: var(--color-muted);
+  --navbar-hover-bg: #f9fafb; /* very light gray */
 }
 
 /* Hook for runtime theme overrides (e.g., per company) */
@@ -247,18 +278,19 @@
 
 /* Custom utility classes for transparent primary color backgrounds */
 /* Using rgba with CSS variable fallback for maximum compatibility */
+/* Updated for Edusol Orange (#F2791E) */
 .hover\:bg-primary-transparent:hover {
-  background-color: rgba(37, 99, 235, 0.1);
+  background-color: rgba(242, 121, 30, 0.1);
   background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .hover\:bg-primary-transparent-50:hover {
-  background-color: rgba(37, 99, 235, 0.5);
+  background-color: rgba(242, 121, 30, 0.5);
   background-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
 }
 
 .bg-primary-transparent {
-  background-color: rgba(37, 99, 235, 0.1);
+  background-color: rgba(242, 121, 30, 0.1);
   background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
@@ -355,7 +387,7 @@
   background-color: var(--color-card);
   color: var(--color-body);
   border-color: var(--color-border);
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364788b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23F2791E' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
@@ -368,14 +400,19 @@
 }
 
 .custom-select:focus {
-  border-color: var(--color-primary);
+  border-color: var(--color-primary) !important; /* Edusol Orange */
   outline: none;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 20%, transparent);
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23F2791E' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 }
 
 .custom-select:hover:not(:disabled):not(:focus) {
-  border-color: var(--color-primary);
+  border-color: var(--color-primary) !important; /* Edusol Orange */
+}
+
+/* Default border for custom-select - Edusol Orange */
+.custom-select {
+  border-color: var(--color-primary) !important; /* Edusol Orange */
 }
 
 .custom-select:disabled {
@@ -383,7 +420,7 @@
   color: var(--color-muted);
   cursor: not-allowed;
   opacity: 0.6;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364788b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23F2791E' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 }
 
 /* Select option styling - Enhanced with theme colors */
@@ -473,8 +510,8 @@ table thead th {
   font-size: 0.75rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #64748b;
-  border-bottom: 2px solid #e2e8f0;
+  color: var(--color-body, #1D3867); /* Edusol Blue */
+  border-bottom: 2px solid var(--color-primary, #F2791E); /* Edusol Orange */
   background-color: #f8fafc;
   padding: 0.875rem 1.25rem;
 }
@@ -498,7 +535,7 @@ table tbody tr:last-child {
 /* Table cell padding improvements */
 table td {
   padding: 1rem 1.25rem;
-  color: #334155;
+  color: var(--color-body, #1D3867); /* Edusol Blue */
   font-size: 0.875rem;
 }
 
@@ -532,7 +569,7 @@ input[type="url"]:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary) !important; /* Edusol Orange */
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
   transform: translateY(-1px);
 }
@@ -545,7 +582,21 @@ input[type="date"]:hover:not(:disabled):not(:focus),
 input[type="time"]:hover:not(:disabled):not(:focus),
 textarea:hover:not(:disabled):not(:focus),
 select:hover:not(:disabled):not(:focus) {
-  border-color: var(--color-primary);
+  border-color: var(--color-primary) !important; /* Edusol Orange */
+}
+
+/* Default border color for all inputs - Edusol Orange */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  border-color: var(--color-primary) !important; /* Edusol Orange */
 }
 
 /* Modern card styling */

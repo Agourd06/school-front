@@ -73,7 +73,7 @@ const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-card border-t border-border">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-card border-t border-tertiary/20">
       {/* Items info */}
       <div className="text-sm text-body">
         {t('sections.showing')} <span className="font-medium">{startItem}</span> {t('sections.to')}{' '}
@@ -92,7 +92,7 @@ const Pagination: React.FC<PaginationProps> = ({
             value={itemsPerPage}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             disabled={isLoading}
-            className="custom-select px-2 py-1 text-sm border border-border rounded-md bg-card text-body focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="custom-select px-2 py-1 text-sm border border-border rounded-md bg-card text-body focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {pageSizeOptions.map((size) => (
               <option key={size} value={size}>
@@ -108,7 +108,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!hasPrevious || isLoading}
-            className="px-3 py-1 text-sm font-medium text-muted bg-card border border-border rounded-l-md hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 text-sm font-medium text-muted bg-card border border-tertiary rounded-l-md hover:bg-surface focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('sections.previous')}
           </button>
@@ -122,9 +122,9 @@ const Pagination: React.FC<PaginationProps> = ({
                 <button
                   onClick={() => onPageChange(page as number)}
                   disabled={isLoading}
-                  className={`px-3 py-1 text-sm font-medium border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`px-3 py-1 text-sm font-medium border border-tertiary focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${
                     page === currentPage
-                      ? 'text-primary-foreground bg-primary border-primary'
+                      ? 'text-secondary-foreground bg-secondary border-secondary'
                       : 'text-body bg-card hover:bg-surface'
                   }`}
                 >
@@ -138,7 +138,7 @@ const Pagination: React.FC<PaginationProps> = ({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!hasNext || isLoading}
-            className="px-3 py-1 text-sm font-medium text-muted bg-card border border-border rounded-r-md hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1 text-sm font-medium text-muted bg-card border border-tertiary rounded-r-md hover:bg-surface focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('sections.next')}
           </button>

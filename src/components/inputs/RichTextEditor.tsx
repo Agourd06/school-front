@@ -10,7 +10,7 @@ interface RichTextEditorProps {
 }
 
 const fallbackView = (
-  <div className="flex h-48 w-full items-center justify-center rounded border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500">
+  <div className="flex h-48 w-full items-center justify-center rounded border border-dashed border-primary bg-gray-50 text-sm text-body">
     Loading editor…
   </div>
 );

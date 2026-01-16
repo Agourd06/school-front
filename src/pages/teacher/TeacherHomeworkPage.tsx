@@ -183,7 +183,7 @@ const TeacherHomeworkPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={selectAllStudents}
-                    className="text-sm text-primary hover:text-primary-dark"
+                    className="text-sm text-secondary hover:text-secondary/80"
                   >
                     Select All
                   </button>

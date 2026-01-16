@@ -142,7 +142,7 @@ const SetPasswordPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-surface">
         <Navbar />
-        <div className="pt-16 min-h-screen flex items-center justify-center px-4">
+        <div className="min-h-screen flex items-center justify-center px-4" style={{ paddingTop: 'var(--navbar-height, 4rem)' }}>
           <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +170,7 @@ const SetPasswordPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-surface">
         <Navbar />
-        <div className="pt-16 min-h-screen flex items-center justify-center px-4">
+        <div className="min-h-screen flex items-center justify-center px-4" style={{ paddingTop: 'var(--navbar-height, 4rem)' }}>
           <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +190,7 @@ const SetPasswordPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-surface">
       <Navbar />
-      <div className="pt-16 min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ paddingTop: 'var(--navbar-height, 4rem)' }}>
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-heading mb-2">Set Your Password</h2>
@@ -255,7 +255,7 @@ const SetPasswordPage: React.FC = () => {
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/auth?mode=login')}
-              className="text-sm text-primary hover:text-primary/80"
+              className="text-sm text-secondary hover:text-secondary/80"
             >
               Back to Login
             </button>

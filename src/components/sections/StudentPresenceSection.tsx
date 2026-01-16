@@ -493,7 +493,7 @@ const StudentPresenceSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => openNoteEditor(presence)}
-                  className="text-primary hover:underline"
+                  className="text-secondary hover:underline"
                 >
                   {t('forms.viewRemarks')}
                 </button>

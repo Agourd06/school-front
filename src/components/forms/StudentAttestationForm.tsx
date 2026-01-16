@@ -273,7 +273,7 @@ const StudentAttestationForm: React.FC<StudentAttestationFormProps> = ({
             {form.Idattestation && (
               <button
                 type="button"
-                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                className="inline-flex items-center gap-1 text-sm text-secondary hover:underline"
                 onClick={() => setAttestationDetailsOpen(true)}
               >
                 <Eye className="h-4 w-4" />

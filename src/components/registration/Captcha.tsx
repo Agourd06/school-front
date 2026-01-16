@@ -285,7 +285,7 @@ const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError, disabled = false, 
             type="button"
             onClick={handleRefresh}
             disabled={disabled}
-            className="px-3 py-1.5 text-xs bg-white border border-border/60 rounded-lg hover:bg-[#fafbfc] hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="px-3 py-1.5 text-xs bg-white border border-primary/60 rounded-lg hover:bg-[#fafbfc] hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             aria-label={t('registration.captchaRefresh') || 'Refresh CAPTCHA'}
             title={t('registration.captchaRefresh') || 'Refresh CAPTCHA'}
           >
@@ -297,7 +297,7 @@ const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError, disabled = false, 
   }
 
   return (
-    <div className="p-4 border border-border/60 rounded-xl bg-[#fafbfc]">
+    <div className="p-4 border border-primary/60 rounded-xl bg-[#fafbfc]">
       <div className="mb-4">
         <p className="text-sm text-muted mb-3 text-center">
           {t('registration.captchaInstruction') || 'Enter the characters shown above'}
@@ -311,7 +311,7 @@ const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError, disabled = false, 
             type="button"
             onClick={handleRefresh}
             disabled={disabled || isVerifying}
-            className="px-4 py-2 bg-white border border-border/60 rounded-xl hover:bg-[#fafbfc] hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
+            className="px-4 py-2 bg-white border border-primary/60 rounded-xl hover:bg-[#fafbfc] hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
             aria-label={t('registration.captchaRefresh') || 'Refresh CAPTCHA'}
             title={t('registration.captchaRefresh') || 'Refresh CAPTCHA'}
           >

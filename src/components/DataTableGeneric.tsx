@@ -95,7 +95,7 @@ function DataTableGeneric<T extends { id: number }>({
           }
         />
       ) : (
-        <div className="border-b border-gray-200 bg-white pb-6 mb-6">
+        <div className="border-b border-tertiary/20 bg-white pb-6 mb-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
@@ -116,9 +116,9 @@ function DataTableGeneric<T extends { id: number }>({
           </div>
         </div>
       )}
-    <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden transition-shadow duration-200 hover:shadow-lg">
+    <div className="bg-white rounded-xl border border-tertiary/20 shadow-sm overflow-hidden">
 
-      <div className="px-4 py-3 bg-surface border-t border-border">
+      <div className="px-4 py-3 bg-surface border-t border-tertiary/20">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <SearchBar onSearch={onSearch} placeholder={searchPlaceholder} isLoading={loading} />
@@ -152,21 +152,55 @@ function DataTableGeneric<T extends { id: number }>({
         </div>
       ) : (
         <>
-          <ul className="divide-y divide-border">
-            {Array.isArray(data) && data.length > 0 ? (
-              (data as T[]).map((item, index) => renderRow(item, onEdit, onDelete, index))
-            ) : (
-              <li className="px-4 py-8 sm:px-6">
-                <div className="text-center text-muted">
-                  {(filters as { search?: string }).search ? (
-                    <>{t('forms.noItemsFoundMatching', { item: title.toLowerCase(), search: (filters as { search?: string }).search })}</>
-                  ) : (
-                    t('forms.noItemsFound', { item: title.toLowerCase() })
-                  )}
-                </div>
-              </li>
-            )}
-          </ul>
+          {Array.isArray(data) && data.length > 0 ? (
+            <ul className="divide-y divide-gray-100">
+              {(data as T[]).map((item, index) => renderRow(item, onEdit, onDelete, index))}
+            </ul>
+          ) : (
+            <div className="px-6 py-16 text-center">
+              <div className="max-w-sm mx-auto">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+                <h3 className="mt-4 text-sm font-medium text-heading">
+                  {(filters as { search?: string }).search
+                    ? t('sections.noUsersFound') || 'No users found'
+                    : t('sections.noUsersYet') || 'No users yet'}
+                </h3>
+                <p className="mt-2 text-sm text-muted">
+                  {(filters as { search?: string }).search
+                    ? t('sections.noUsersFoundMessage') || 'Try adjusting your search to find what you\'re looking for.'
+                    : t('sections.noUsersYetMessage') || 'Get started by creating a new user.'}
+                </p>
+                {!(filters as { search?: string }).search && (
+                  <div className="mt-6">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={onAdd}
+                      className="inline-flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      {addButtonText}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {pagination.total > 0 && (
             <Pagination

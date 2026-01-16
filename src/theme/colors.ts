@@ -3,6 +3,8 @@ export interface ThemeColors {
   primaryForeground: string;
   secondary: string;
   secondaryForeground: string;
+  tertiary: string;
+  tertiaryForeground: string;
   surface: string;
   surfaceForeground: string;
   accent: string;
@@ -19,23 +21,25 @@ export interface ThemeColors {
 }
 
 export const defaultTheme: ThemeColors = {
-  primary: '#2563eb',
+  primary: '#F2791E', // Edusol Orange
   primaryForeground: '#ffffff',
-  secondary: '#0ea5e9',
+  secondary: '#1D3867', // Edusol Blue
   secondaryForeground: '#ffffff',
+  tertiary: '#F2791E', // Default tertiary (Edusol Orange) - used for small accent lines, dividers, underlines
+  tertiaryForeground: '#1D3867', // Edusol Blue
   surface: '#f8fafc',
-  surfaceForeground: '#0f172a',
-  accent: '#9333ea',
+  surfaceForeground: '#1D3867', // Edusol Blue
+  accent: '#F2791E', // Edusol Orange
   accentForeground: '#ffffff',
   muted: '#64748b',
   mutedForeground: '#e2e8f0',
   success: '#10b981',
   warning: '#f59e0b',
   danger: '#ef4444',
-  border: '#e2e8f0',
+  border: '#F2791E', // Edusol Orange for input borders
   card: '#ffffff',
-  heading: '#0f172a',
-  body: '#1f2937',
+  heading: '#1D3867', // Edusol Blue
+  body: '#1D3867', // Edusol Blue
 };
 
 const cssVarMap: Record<keyof ThemeColors, string> = {
@@ -43,6 +47,8 @@ const cssVarMap: Record<keyof ThemeColors, string> = {
   primaryForeground: '--color-primary-foreground',
   secondary: '--color-secondary',
   secondaryForeground: '--color-secondary-foreground',
+  tertiary: '--color-tertiary',
+  tertiaryForeground: '--color-tertiary-foreground',
   surface: '--color-surface',
   surfaceForeground: '--color-surface-foreground',
   accent: '--color-accent',

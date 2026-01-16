@@ -40,7 +40,7 @@ const UserForm: React.FC<UserFormProps> = ({ data, companyName, onChange, onSubm
           required
           value={data.username}
           onChange={handleChange('username')}
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+          className="w-full rounded-lg border border-primary px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
           placeholder="jane.doe"
         />
       </div>
@@ -55,7 +55,7 @@ const UserForm: React.FC<UserFormProps> = ({ data, companyName, onChange, onSubm
           required
           value={data.email}
           onChange={handleChange('email')}
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+          className="w-full rounded-lg border border-primary px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
           placeholder="jane@example.com"
         />
         <p className="mt-1 text-xs text-muted">
@@ -72,7 +72,7 @@ const UserForm: React.FC<UserFormProps> = ({ data, companyName, onChange, onSubm
           required
           value={data.profile}
           onChange={handleChange('profile')}
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+          className="w-full rounded-lg border border-primary px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
         >
           {PROFILE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>

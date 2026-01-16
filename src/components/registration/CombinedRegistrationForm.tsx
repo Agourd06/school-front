@@ -105,7 +105,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
       </div>
 
       {/* Company Section */}
-      <div className="space-y-5 pb-6 border-b border-border/60">
+      <div className="space-y-5 pb-6 border-b border-tertiary/30">
         <div>
           <h3 className="text-lg font-semibold text-heading mb-1">{t('registration.companyInformation')}</h3>
           <p className="text-xs text-muted">{t('registration.companyInformationDescription') || 'Enter your school or organization details'}</p>
@@ -121,7 +121,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             required
             value={data.companyName}
             onChange={handleChange('companyName')}
-            className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border"
+            className="w-full rounded-xl border border-primary/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-primary"
             placeholder={t('registration.companyNamePlaceholder')}
           />
         </div>
@@ -136,7 +136,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             required
             value={data.companyEmail}
             onChange={handleChange('companyEmail')}
-            className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border"
+            className="w-full rounded-xl border border-primary/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-primary"
             placeholder={t('registration.companyEmailPlaceholder')}
           />
           <p className="mt-1.5 text-xs text-muted">
@@ -153,7 +153,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
             type="tel"
             value={data.companyPhone}
             onChange={handleChange('companyPhone')}
-            className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border"
+            className="w-full rounded-xl border border-primary/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-primary"
             placeholder={t('registration.phonePlaceholder')}
           />
         </div>
@@ -167,7 +167,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               id="company-country"
               value={data.country}
               onChange={handleChange('country')}
-              className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border custom-select"
+              className="w-full rounded-xl border border-primary/60 px-4 py-3 text-sm text-heading focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-primary custom-select"
             >
               <option value="">{t('registration.selectACountry')}</option>
               {loadingCountries ? (
@@ -191,7 +191,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               value={data.city}
               onChange={handleChange('city')}
               disabled={!data.country || loadingCities}
-              className="w-full rounded-xl border border-border/60 px-4 py-3 text-sm text-heading focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-border disabled:opacity-50 disabled:cursor-not-allowed custom-select"
+              className="w-full rounded-xl border border-primary/60 px-4 py-3 text-sm text-heading focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed custom-select"
             >
               <option value="">
                 {!data.country
@@ -219,7 +219,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               id="privacy-policy"
               checked={data.acceptedPrivacyPolicy}
               onChange={handleCheckboxChange('acceptedPrivacyPolicy')}
-              className="mt-1 h-4 w-4 text-primary border-border/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              className="mt-1 h-4 w-4 text-primary border-primary/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer"
               required
             />
             <label htmlFor="privacy-policy" className="text-sm text-heading cursor-pointer flex-1">
@@ -242,7 +242,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               id="terms-of-use"
               checked={data.acceptedTermsOfUse}
               onChange={handleCheckboxChange('acceptedTermsOfUse')}
-              className="mt-1 h-4 w-4 text-primary border-border/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              className="mt-1 h-4 w-4 text-primary border-primary/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer"
               required
             />
             <label htmlFor="terms-of-use" className="text-sm text-heading cursor-pointer flex-1">

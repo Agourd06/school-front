@@ -111,7 +111,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-extrabold text-gray-900">
+        <h2 className="text-3xl font-extrabold text-heading">
           {t('auth.signInToAccount')}
         </h2>
       </div>
@@ -130,7 +130,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
       >
         <div className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-heading">
               {t('auth.emailAddress')}
             </label>
             <input
@@ -138,7 +138,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
               name="email"
               type="email"
               required
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
               placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChange={(e) => {
@@ -157,7 +157,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
               name="password"
               type="password"
               required
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
               placeholder={t('auth.passwordPlaceholder')}
               value={password}
               onChange={(e) => {
@@ -189,7 +189,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
             <div className="text-sm">
               <Link
                 to="/auth?mode=forgot-password"
-                className="font-medium text-primary hover:text-primary/80"
+                className="font-medium text-secondary hover:text-secondary/80"
               >
                 {t('auth.forgotYourPassword')}
               </Link>

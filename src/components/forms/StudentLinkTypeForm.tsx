@@ -70,7 +70,7 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t('forms.linkTypePlaceholder')}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-body placeholder:text-muted/70 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+          className="mt-1 block w-full rounded-md border border-primary bg-white px-3 py-2 text-sm text-body placeholder:text-muted/70 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
         />
         {error && <p className="mt-1 text-sm text-danger">{error}</p>}
       </div>
@@ -82,7 +82,7 @@ const StudentLinkTypeForm: React.FC<StudentLinkTypeFormProps> = ({
         <select
           value={status}
           onChange={(e) => setStatus(Number(e.target.value))}
-          className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-body shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors custom-select"
+          className="mt-1 block w-full rounded-md border border-primary bg-white px-3 py-2 text-sm text-body shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors custom-select"
         >
           {STATUS_OPTIONS_FORM.map((opt) => {
             const statusLabels: Record<number, string> = {

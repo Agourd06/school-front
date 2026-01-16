@@ -183,7 +183,7 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
               <button
                 type="button"
                 onClick={() => navigate('/settings')}
-                className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
+                className="font-medium text-secondary hover:text-secondary/80 underline cursor-pointer transition-colors"
               >
                 settings
               </button>
@@ -232,7 +232,7 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
       ) : null}
 
       {allContacts.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
+        <div className="mt-6 pt-6 border-t border-tertiary/20">
           <h3 className="text-sm font-medium text-gray-900 mb-3">Existing Contacts</h3>
           <div className="space-y-2">
             {allContacts.map((contact) => {
@@ -247,7 +247,7 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
                   className={`flex items-center justify-between p-3 rounded-md border ${
                     currentContactId === contact.id
                       ? 'border-primary bg-primary/5'
-                      : 'border-gray-200 bg-white hover:bg-gray-50'
+                      : 'border-primary/20 bg-white hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex-1">

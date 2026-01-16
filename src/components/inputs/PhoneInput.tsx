@@ -208,7 +208,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
         </label>
       )}
       <div className={`flex gap-0 border rounded-md overflow-hidden ${
-        error ? 'border-danger' : 'border-border'
+        error ? 'border-danger' : 'border-primary'
       } ${error ? 'focus-within:ring-2 focus-within:ring-danger' : 'focus-within:ring-2 focus-within:ring-primary'}`}>
         {/* Country Code Button */}
         <button
@@ -218,7 +218,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           className={`flex items-center justify-center border-r px-3 py-2 text-sm focus:outline-none transition-all ${
             error
               ? 'border-danger'
-              : 'border-border'
+              : 'border-primary'
           } ${
             disabled
               ? 'cursor-not-allowed bg-muted-foreground text-muted opacity-60'
@@ -250,11 +250,11 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       {isCountrySearchOpen && !disabled && (
         <div
           ref={dropdownRef}
-          className="absolute z-[9999] mt-1 w-80 bg-card border border-border rounded-md shadow-lg"
+          className="absolute z-[9999] mt-1 w-80 bg-card border border-primary rounded-md shadow-lg"
           style={{ top: '100%', left: 0 }}
         >
           {/* Search Input */}
-          <div className="p-2 border-b border-border">
+          <div className="p-2 border-b border-tertiary/20">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted" />
               <input
@@ -263,7 +263,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
                 value={countrySearchQuery}
                 onChange={(e) => setCountrySearchQuery(e.target.value)}
                 placeholder="Type to search for a country"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-card text-body italic text-gray-500 placeholder:text-gray-400"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-primary rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-card text-body italic text-gray-500 placeholder:text-gray-400"
               />
               {countrySearchQuery && (
                 <button

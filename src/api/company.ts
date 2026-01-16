@@ -41,6 +41,7 @@ export interface Company {
   company_id?: number;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  tertiaryColor?: string | null;
   country?: string | null;
   city?: string | null;
   created_at?: string;
@@ -60,6 +61,7 @@ export interface CreateCompanyRequest {
   company_id?: number;
   primaryColor?: string;
   secondaryColor?: string;
+  tertiaryColor?: string;
   country?: string;
   city?: string;
   captchaToken?: string;
@@ -76,6 +78,7 @@ export interface UpdateCompanyRequest {
   company_id?: number;
   primaryColor?: string;
   secondaryColor?: string;
+  tertiaryColor?: string;
   country?: string;
   city?: string;
 }
@@ -84,10 +87,11 @@ export interface GetCompaniesParams extends FilterParams {
   company_id?: number;
 }
 
-const normalizeCompany = (company: Company & { primary_color?: string | null; secondary_color?: string | null }): Company => ({
+const normalizeCompany = (company: Company & { primary_color?: string | null; secondary_color?: string | null; tertiary_color?: string | null }): Company => ({
   ...company,
   primaryColor: company.primaryColor ?? company.primary_color ?? null,
   secondaryColor: company.secondaryColor ?? company.secondary_color ?? null,
+  tertiaryColor: company.tertiaryColor ?? company.tertiary_color ?? null,
   country: company.country ?? null,
   city: company.city ?? null,
 });

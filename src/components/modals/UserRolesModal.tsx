@@ -28,6 +28,7 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
   
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [processingRoleId, setProcessingRoleId] = useState<number | null>(null);
 
   const assignedRoleIds = new Set(userRoles.map((r: Role) => r.id));
   
@@ -59,7 +60,13 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
       return;
     }
     
+    // Prevent multiple simultaneous assignments
+    if (loading || processingRoleId !== null) {
+      return;
+    }
+    
     setLoading(true);
+    setProcessingRoleId(role.id);
     setAlert(null);
 
     try {
@@ -76,6 +83,7 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
       setAlert({ type: 'error', message: errorMessage });
     } finally {
       setLoading(false);
+      setProcessingRoleId(null);
     }
   };
 
@@ -145,7 +153,8 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
                       variant={isAssigned ? 'secondary' : 'primary'}
                       size="sm"
                       onClick={() => handleToggleRole(role)}
-                      disabled={loading || isManagingSelf}
+                      disabled={loading || isManagingSelf || processingRoleId !== null}
+                      isLoading={processingRoleId === role.id}
                       className="ml-4"
                       title={isManagingSelf ? (t('messages.cannotModifyOwnRoles') || 'You cannot modify your own roles') : undefined}
                     >

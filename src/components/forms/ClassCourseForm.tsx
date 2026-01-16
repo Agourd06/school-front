@@ -397,7 +397,7 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
             <button
               type="button"
               onClick={() => setIsVolumeManual(true)}
-              className="mt-1 text-xs text-primary hover:text-primary-dark underline"
+              className="mt-1 text-xs text-secondary hover:text-secondary/80 underline"
             >
               {t('forms.editManually')}
             </button>

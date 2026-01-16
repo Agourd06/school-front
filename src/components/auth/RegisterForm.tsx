@@ -42,7 +42,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-6">
-        <h2 className="text-3xl font-extrabold text-gray-900">
+        <h2 className="text-3xl font-extrabold text-heading">
           Create your account
         </h2>
       </div>
@@ -50,7 +50,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="username" className="block text-sm font-medium text-heading">
               Username
             </label>
             <input
@@ -58,7 +58,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
               name="username"
               type="text"
               required
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -66,7 +66,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
           </div>
           
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-heading">
               Email address
             </label>
             <input
@@ -74,7 +74,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
               name="email"
               type="email"
               required
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -82,7 +82,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
           </div>
           
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-heading">
               Password
             </label>
             <input
@@ -90,7 +90,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
               name="password"
               type="password"
               required
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -98,7 +98,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
           </div>
           
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-heading">
               Confirm Password
             </label>
             <input
@@ -106,7 +106,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
               name="confirmPassword"
               type="password"
               required
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -136,7 +136,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, showLinks = true
 
         {showLinks && (
           <div className="text-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-body">
               Already have an account?{' '}
               <Link
                 to="/auth?mode=login"

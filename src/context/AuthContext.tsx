@@ -12,6 +12,7 @@ interface Company {
   email?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  tertiaryColor?: string | null;
 }
 
 interface User {
@@ -56,7 +57,7 @@ interface AuthProviderProps {
 
 const normalizeCompany = (company?: Company | null | Record<string, unknown>): Company | null => {
   if (!company) return null;
-  const raw = company as Company & { primary_color?: string | null; secondary_color?: string | null };
+  const raw = company as Company & { primary_color?: string | null; secondary_color?: string | null; tertiary_color?: string | null };
   return {
     id: raw.id,
     name: raw.name,
@@ -64,6 +65,7 @@ const normalizeCompany = (company?: Company | null | Record<string, unknown>): C
     email: raw.email ?? null,
     primaryColor: raw.primaryColor ?? raw.primary_color ?? null,
     secondaryColor: raw.secondaryColor ?? raw.secondary_color ?? null,
+    tertiaryColor: raw.tertiaryColor ?? raw.tertiary_color ?? null,
   };
 };
 
@@ -136,6 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           mergeTheme({
             primary: validatedUser.company?.primaryColor ?? defaultTheme.primary,
             secondary: validatedUser.company?.secondaryColor ?? defaultTheme.secondary,
+            tertiary: validatedUser.company?.tertiaryColor ?? defaultTheme.tertiary,
             accent: validatedUser.company?.secondaryColor ?? defaultTheme.secondary,
           })
         );
@@ -155,26 +158,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // Track applied theme colors to prevent unnecessary re-applications
-  const appliedThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
+  const appliedThemeRef = useRef<{ primary: string; secondary: string; tertiary: string } | null>(null);
 
   useEffect(() => {
     if (user?.company) {
       const primary = user.company.primaryColor ?? defaultTheme.primary;
       const secondary = user.company.secondaryColor ?? defaultTheme.secondary;
+      const tertiary = user.company.tertiaryColor ?? defaultTheme.tertiary;
       
       // Only apply theme if colors actually changed
       if (
         appliedThemeRef.current?.primary !== primary ||
-        appliedThemeRef.current?.secondary !== secondary
+        appliedThemeRef.current?.secondary !== secondary ||
+        appliedThemeRef.current?.tertiary !== tertiary
       ) {
         applyThemeToDocument(
           mergeTheme({
             primary,
             secondary,
+            tertiary,
             accent: secondary,
           })
         );
-        appliedThemeRef.current = { primary, secondary };
+        appliedThemeRef.current = { primary, secondary, tertiary };
       }
     } else {
       // Only apply default theme if we haven't already applied it
@@ -183,7 +189,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         appliedThemeRef.current = null;
       }
     }
-  }, [user?.company?.primaryColor, user?.company?.secondaryColor]);
+  }, [user?.company?.primaryColor, user?.company?.secondaryColor, user?.company?.tertiaryColor]);
 
   // Track if we've fetched company to prevent infinite loops
   const companyFetchedRef = useRef<number | null>(null);
@@ -194,7 +200,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       !user.company_id ||
       (user.company &&
         user.company.primaryColor &&
-        user.company.secondaryColor)
+        user.company.secondaryColor &&
+        user.company.tertiaryColor)
     ) {
       // Reset ref if user changes or company already has colors
       if (!user || !user.company_id) {
@@ -227,7 +234,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (
             currentCompany?.id === company.id &&
             currentCompany?.primaryColor === company.primaryColor &&
-            currentCompany?.secondaryColor === company.secondaryColor
+            currentCompany?.secondaryColor === company.secondaryColor &&
+            currentCompany?.tertiaryColor === company.tertiaryColor
           ) {
             // No change needed, return previous to prevent re-render
             return prev;
@@ -314,6 +322,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         mergeTheme({
           primary: user.company?.primaryColor ?? defaultTheme.primary,
           secondary: user.company?.secondaryColor ?? defaultTheme.secondary,
+          tertiary: user.company?.tertiaryColor ?? defaultTheme.tertiary,
           accent: user.company?.secondaryColor ?? defaultTheme.secondary,
         })
       );
@@ -345,13 +354,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = (redirectToLogin: boolean = false) => {
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('allowedPages');
     applyThemeToDocument(defaultTheme);
+    
+    // Redirect to login if requested (e.g., after password change)
+    if (redirectToLogin) {
+      window.location.href = '/auth?mode=login';
+    }
   };
 
   // SECURITY: Refresh permissions from server - never modify roles/profile
@@ -394,6 +408,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const changePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => {
     try {
       await authApi.changePassword({ currentPassword, newPassword, confirmPassword });
+      // After successful password change, log out the user for security
+      // User will need to log in again with the new password
+      logout(true); // Redirect to login page
     } catch (error) {
       throw error;
     }

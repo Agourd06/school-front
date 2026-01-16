@@ -290,10 +290,10 @@ const PageAccessSettings: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-1">
+        <h3 className="text-xl font-semibold text-heading mb-1">
           {t('settings.pageAccessManagement')}
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-body">
           {t('settings.assignPagesToProfiles')}
         </p>
       </div>
@@ -324,7 +324,7 @@ const PageAccessSettings: React.FC = () => {
       {/* Role Selector */}
       <div className="bg-white border-b border-gray-200 pb-4">
         <div>
-          <label htmlFor="role-select" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="role-select" className="block text-sm font-medium text-heading mb-2">
             {t('settings.selectProfile')}
           </label>
           <div className="relative">
@@ -344,7 +344,7 @@ const PageAccessSettings: React.FC = () => {
             </select>
             {(isLoadingRole || rolePagesLoading) && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                <Loader2 className="h-4 w-4 animate-spin text-muted" />
               </div>
             )}
           </div>
@@ -354,9 +354,9 @@ const PageAccessSettings: React.FC = () => {
       {/* Main Content */}
       {!selectedRoleId ? (
         <div className="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 font-medium">{t('settings.pleaseSelectProfile')}</p>
-          <p className="text-sm text-gray-400 mt-1">Select a role to manage page access</p>
+          <FileText className="w-12 h-12 text-muted mx-auto mb-4" />
+          <p className="text-body font-medium">{t('settings.pleaseSelectProfile')}</p>
+          <p className="text-sm text-muted mt-1">Select a role to manage page access</p>
         </div>
       ) : selectedRole && (
         <div className="space-y-6">
@@ -409,23 +409,23 @@ const PageAccessSettings: React.FC = () => {
             </div>
           ) : allPages.length === 0 ? (
             <div className="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">No pages available</p>
-              <p className="text-sm text-gray-400 mt-1">Pages will appear here once they are created</p>
+              <FileText className="w-12 h-12 text-muted mx-auto mb-4" />
+              <p className="text-body font-medium">No pages available</p>
+              <p className="text-sm text-muted mt-1">Pages will appear here once they are created</p>
             </div>
           ) : (
             <DragDropContext onDragEnd={handleDragEnd}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Unassigned Pages Panel */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
+                <div className="bg-white rounded-xl border border-primary/20 shadow-sm overflow-hidden">
+                  <div className="bg-gray-50 border-b border-tertiary/20 px-4 py-3">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <Circle className="w-4 h-4 text-gray-400" />
-                        <h4 className="text-sm font-semibold text-gray-900">
+                        <Circle className="w-4 h-4 text-muted" />
+                        <h4 className="text-sm font-semibold text-heading">
                           Unassigned Pages
                         </h4>
-                        <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded-full">
+                        <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-body rounded-full">
                           {filteredUnassigned.length}
                         </span>
                       </div>
@@ -442,13 +442,13 @@ const PageAccessSettings: React.FC = () => {
                       )}
                     </div>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted" />
                       <input
                         type="text"
                         value={unassignedSearch}
                         onChange={(e) => setUnassignedSearch(e.target.value)}
                         placeholder="Search pages..."
-                        className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                        className="w-full pl-10 pr-4 py-2 text-sm border border-primary rounded-lg focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none bg-white"
                       />
                     </div>
                   </div>
@@ -467,17 +467,17 @@ const PageAccessSettings: React.FC = () => {
                           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-xl z-20">
                             <div className="flex flex-col items-center gap-2">
                               <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                              <span className="text-sm text-gray-600">Updating...</span>
+                              <span className="text-sm text-body">Updating...</span>
                             </div>
                           </div>
                         )}
                         {filteredUnassigned.length === 0 ? (
                           <div className="text-center py-12">
                             <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                            <p className="text-sm text-gray-500 font-medium">
+                            <p className="text-sm text-body font-medium">
                               {unassignedSearch ? 'No pages found' : 'All pages assigned'}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-muted mt-1">
                               {unassignedSearch ? 'Try a different search term' : 'Drag pages here to remove access'}
                             </p>
                           </div>
@@ -494,23 +494,23 @@ const PageAccessSettings: React.FC = () => {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`mb-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm cursor-move transition-all hover:shadow-md hover:border-gray-300 ${
+                                  className={`mb-2 p-3 bg-white border border-primary/30 rounded-lg shadow-sm cursor-move transition-all hover:shadow-md hover:border-primary ${
                                     snapshot.isDragging
                                       ? 'shadow-lg border-primary ring-2 ring-primary ring-opacity-20'
                                       : ''
                                   } ${isAnyMutationPending ? 'opacity-50' : ''}`}
                                 >
                                   <div className="flex items-start gap-3">
-                                    <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                    <FileText className="w-4 h-4 text-muted mt-0.5 flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                      <div className="font-medium text-sm text-gray-900 truncate">
+                                      <div className="font-medium text-sm text-heading truncate">
                                         {page.title}
                                       </div>
-                                      <div className="text-xs text-gray-500 font-mono mt-0.5 truncate">
+                                      <div className="text-xs text-muted font-mono mt-0.5 truncate">
                                         {page.route}
                                       </div>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <ArrowRight className="w-4 h-4 text-muted flex-shrink-0" />
                                   </div>
                                 </div>
                               )}
@@ -524,12 +524,12 @@ const PageAccessSettings: React.FC = () => {
                 </div>
 
                 {/* Assigned Pages Panel */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                  <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
+                <div className="bg-white rounded-xl border border-primary/20 shadow-sm overflow-hidden">
+                  <div className="bg-gray-50 border-b border-tertiary/20 px-4 py-3">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-green-600" />
-                        <h4 className="text-sm font-semibold text-gray-900">
+                        <h4 className="text-sm font-semibold text-heading">
                           Assigned Pages
                         </h4>
                         <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
@@ -549,13 +549,13 @@ const PageAccessSettings: React.FC = () => {
                       )}
                     </div>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted" />
                       <input
                         type="text"
                         value={assignedSearch}
                         onChange={(e) => setAssignedSearch(e.target.value)}
                         placeholder="Search pages..."
-                        className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none bg-white"
+                        className="w-full pl-10 pr-4 py-2 text-sm border border-primary rounded-lg focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none bg-white"
                       />
                     </div>
                   </div>
@@ -573,10 +573,10 @@ const PageAccessSettings: React.FC = () => {
                         {filteredAssigned.length === 0 ? (
                           <div className="text-center py-12">
                             <CheckCircle2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                            <p className="text-sm text-gray-500 font-medium">
+                            <p className="text-sm text-body font-medium">
                               {assignedSearch ? 'No pages found' : 'No pages assigned'}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-muted mt-1">
                               {assignedSearch ? 'Try a different search term' : 'Drag pages here to grant access'}
                             </p>
                           </div>

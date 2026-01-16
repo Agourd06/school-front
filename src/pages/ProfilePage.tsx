@@ -130,6 +130,7 @@ const ProfilePage: React.FC = () => {
         passwordForm.newPassword,
         passwordForm.confirmPassword
       );
+      // Password changed successfully - user will be logged out automatically
       setPasswordSuccess(true);
       setPasswordForm({
         currentPassword: '',
@@ -138,8 +139,8 @@ const ProfilePage: React.FC = () => {
       });
       setPasswordErrors({});
       
-      // Clear success message after 5 seconds
-      setTimeout(() => setPasswordSuccess(false), 5000);
+      // Note: logout() is called in AuthContext, which will redirect to login
+      // No need to clear success message as user will be redirected
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string | string[] } }; message?: string };
       const errorMessage = Array.isArray(axiosError?.response?.data?.message)
@@ -180,7 +181,7 @@ const ProfilePage: React.FC = () => {
 
         <div className="space-y-6">
           {/* User Information Card */}
-          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <div className="bg-card rounded-lg shadow-sm border border-tertiary p-6">
             <h2 className="text-xl font-semibold text-heading mb-6">Account Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -205,12 +206,12 @@ const ProfilePage: React.FC = () => {
           </div>
 
           {/* Change Password Card */}
-          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <div className="bg-card rounded-lg shadow-sm border border-tertiary p-6">
             <h2 className="text-xl font-semibold text-heading mb-6">Change Password</h2>
             
             {passwordSuccess && (
               <div className="mb-4 rounded-md border border-success-light bg-success-light px-4 py-3 text-sm text-success-dark">
-                Password changed successfully!
+                Password changed successfully! You will be logged out and redirected to login.
               </div>
             )}
 

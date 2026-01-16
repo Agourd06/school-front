@@ -331,7 +331,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               <button
                 type="button"
                 onClick={() => navigate('/settings')}
-                className="font-medium text-primary hover:text-primary-dark underline cursor-pointer transition-colors"
+                className="font-medium text-secondary hover:text-secondary/80 underline cursor-pointer transition-colors"
               >
                 {t('forms.settings')}
               </button>
@@ -354,7 +354,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
           </div>
         </div>
 
-        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-border">
+        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-tertiary/20">
           {onDuplicate && (
             <button
               type="button"

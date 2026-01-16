@@ -37,7 +37,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ data, onChange, onSubmit, loa
           required
           value={data.name}
           onChange={handleChange('name')}
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+          className="w-full rounded-lg border border-primary px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
           placeholder="Acme Schools"
         />
       </div>
@@ -52,7 +52,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ data, onChange, onSubmit, loa
           required
           value={data.email}
           onChange={handleChange('email')}
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+          className="w-full rounded-lg border border-primary px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
           placeholder="contact@acmeschools.com"
         />
       </div>
@@ -66,7 +66,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ data, onChange, onSubmit, loa
           type="tel"
           value={data.phone}
           onChange={handleChange('phone')}
-          className="w-full rounded-lg border border-border px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
+          className="w-full rounded-lg border border-primary px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none transition bg-card"
           placeholder="+1-444-555-1212"
         />
       </div>

@@ -34,7 +34,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
       <Navbar />
       
       {/* Main Content */}
-      <main className="pt-20 pb-24">
+      <main className="pb-24" style={{ paddingTop: 'var(--navbar-height, 4rem)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Welcome Header */}
           <div className="mb-8">
@@ -61,7 +61,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
                 to={item.path}
                 className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
                   isActive(item.path)
-                    ? 'text-primary border-t-2 border-primary'
+                    ? 'text-primary border-t-2 border-tertiary'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >

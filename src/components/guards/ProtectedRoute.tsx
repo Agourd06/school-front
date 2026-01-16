@@ -182,10 +182,28 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     // Check if user has direct access to the route
     let hasPageAccess = normalizedAllowedPages.includes(pageToCheck);
     
-    // If no direct access, check if user has access to a parent route
-    // This allows users with /settings to access /settings/access, /settings/roles, etc.
-    if (!hasPageAccess) {
-      // Check parent routes (e.g., /settings allows access to /settings/*)
+    // Special handling for Settings routes
+    const isSettingsRoute = pageToCheck.startsWith('/settings');
+    if (!hasPageAccess && isSettingsRoute) {
+      // For /settings route: allow if user has /settings page OR any settings sub-tab
+      if (pageToCheck === '/settings') {
+        hasPageAccess =
+          normalizedAllowedPages.includes('/settings') ||
+          normalizedAllowedPages.includes('/settings/colors') ||
+          normalizedAllowedPages.includes('/settings/access') ||
+          normalizedAllowedPages.includes('/settings/roles') ||
+          normalizedAllowedPages.includes('/settings/types/link') ||
+          normalizedAllowedPages.includes('/settings/types/classroom') ||
+          normalizedAllowedPages.includes('/settings/types/planning');
+      }
+      // IMPORTANT: For settings sub-routes, do NOT grant access via parent /settings
+      // Permissions are granular - user must have explicit access to each sub-tab
+      // This ensures users with /settings page cannot access /settings/types unless explicitly assigned
+    }
+    
+    // If no direct access and not a settings route, check parent routes
+    if (!hasPageAccess && !isSettingsRoute) {
+      // Check parent routes (e.g., /students allows access to /students/*)
       const pathParts = pageToCheck.split('/').filter(Boolean);
       for (let i = pathParts.length; i > 0; i--) {
         const parentPath = '/' + pathParts.slice(0, i).join('/');

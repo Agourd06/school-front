@@ -11,6 +11,8 @@ export default {
         "primary-foreground": "var(--color-primary-foreground)",
         secondary: "var(--color-secondary)",
         "secondary-foreground": "var(--color-secondary-foreground)",
+        tertiary: "var(--color-tertiary)",
+        "tertiary-foreground": "var(--color-tertiary-foreground)",
         surface: "var(--color-surface)",
         "surface-foreground": "var(--color-surface-foreground)",
         accent: "var(--color-accent)",
