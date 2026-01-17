@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Input, Button } from '../components/ui';
 import { getProfileLabel } from '../types/profile';
+import { isStudentRole, isTeacherRole } from '../utils/permissions';
 
 const ProfilePage: React.FC = () => {
   const { user, changePassword, isLoading } = useAuth();
@@ -13,9 +14,11 @@ const ProfilePage: React.FC = () => {
   // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
   useEffect(() => {
     if (!isLoading && user) {
-      const userRoles = Array.isArray(user.roles) ? user.roles : [];
-      const isStudent = userRoles.includes('student') || user.profile === 'student';
-      const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user.profile === 'teacher' || user.profile === 'prof';
+      const userRoles = Array.isArray(user.roles) 
+        ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
+        : [];
+      const isStudent = isStudentRole(userRoles) || user.profile === 'student';
+      const isTeacher = isTeacherRole(userRoles) || user.profile === 'teacher';
       const currentPath = window.location.pathname;
       
       // Only redirect from /profile (dashboard profile) - NOT from /student/profile or /teacher/profile
@@ -41,9 +44,11 @@ const ProfilePage: React.FC = () => {
   // SECURITY: Only block rendering if student/teacher accessing /profile (dashboard profile)
   // Allow access when accessed through /student/profile or /teacher/profile
   // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
-  const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
-  const isStudent = userRoles.includes('student') || user?.profile === 'student';
-  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user?.profile === 'teacher' || user?.profile === 'prof';
+  const userRoles = Array.isArray(user?.roles) 
+    ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
+    : [];
+  const isStudent = isStudentRole(userRoles) || user?.profile === 'student';
+  const isTeacher = isTeacherRole(userRoles) || user?.profile === 'teacher';
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
   
   // Only show redirect message if accessing /profile (not /student/profile or /teacher/profile)

@@ -116,11 +116,21 @@ const App: React.FC = () => {
   useRestrictNewAdminRole(true); // Set to false to disable safety net
 
   // Memoize default route to prevent infinite loops
-  // Only recalculate when profile or allowedPages actually change
+  // Only recalculate when profile, roles, or allowedPages actually change
   const allowedPagesKey = user?.allowedPages ? JSON.stringify([...user.allowedPages].sort()) : '';
+  const rolesKey = user?.roles ? JSON.stringify([...user.roles].sort()) : '';
   const defaultRoute = useMemo(() => {
-    return getDefaultRoute(user);
-  }, [user?.profile, allowedPagesKey]);
+    const route = getDefaultRoute(user);
+    // Debug logging (remove in production)
+    if (import.meta.env.DEV) {
+      console.log('[App] Default route calculation:', {
+        profile: user?.profile,
+        roles: user?.roles,
+        defaultRoute: route,
+      });
+    }
+    return route;
+  }, [user?.profile, rolesKey, allowedPagesKey]);
 
   if (isLoading) {
     return (

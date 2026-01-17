@@ -14,7 +14,7 @@ import { rolesApi } from '../../api/roles';
 import { Search, FileText, ArrowRight, ArrowLeft, CheckCircle2, Circle, Loader2 } from 'lucide-react';
 
 // Roles that have their own dashboards and cannot be assigned parameter routes
-const RESTRICTED_ROLE_CODES = ['teacher', 'prof', 'student', 'parent', 'parents'];
+const RESTRICTED_ROLE_CODES = ['teacher', 'student', 'parent', 'parents'];
 
 const PageAccessSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -46,7 +46,8 @@ const PageAccessSettings: React.FC = () => {
 
   // Fetch all roles
   const { data: rolesResp } = useRoles({ page: 1, limit: 100 });
-  const allRoles = rolesResp?.data ?? [];
+  // Filter out 'prof' role - it's deprecated, use 'teacher' instead
+  const allRoles = (rolesResp?.data ?? []).filter(role => role.code !== 'prof');
   
   // Filter out restricted roles
   const roles = useMemo(() => {

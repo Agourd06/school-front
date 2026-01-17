@@ -8,8 +8,7 @@ const UnauthorizedPage: React.FC = () => {
   const getRedirectPath = () => {
     if (!user) return '/auth';
     if (user.profile === 'student') return '/student';
-    // Handle both 'teacher' and 'prof' (professor) profiles
-    if (user.profile === 'teacher' || user.profile === 'prof') return '/teacher';
+    if (user.profile === 'teacher') return '/teacher';
     return '/dashboard';
   };
 

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { getFileUrl } from '../utils/apiConfig';
 import { getProfileLabel } from '../types/profile';
+import { isStudentRole, isTeacherRole } from '../utils/permissions';
 import { LogOut, User, Settings, ChevronDown, Menu, Globe } from 'lucide-react';
 
 const Navbar: React.FC = () => {
@@ -38,9 +39,11 @@ const Navbar: React.FC = () => {
   // Get profile link based on user roles/profile - students go to /student/profile, teachers to /teacher/profile, others to /profile
   // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
   const profileLink = useMemo(() => {
-    const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
-    const isStudent = userRoles.includes('student') || user?.profile === 'student';
-    const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user?.profile === 'teacher' || user?.profile === 'prof';
+    const userRoles = Array.isArray(user?.roles) 
+      ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
+      : [];
+    const isStudent = isStudentRole(userRoles) || user?.profile === 'student';
+    const isTeacher = isTeacherRole(userRoles) || user?.profile === 'teacher';
     
     if (isStudent) {
       return '/student/profile';

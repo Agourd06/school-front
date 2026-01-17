@@ -38,7 +38,8 @@ const RolesSection: React.FC = () => {
   );
 
   const { data: rolesResp, isLoading, refetch } = useRoles(params);
-  const roles = rolesResp?.data ?? [];
+  // Filter out 'prof' role - it's deprecated, use 'teacher' instead
+  const roles = (rolesResp?.data ?? []).filter(role => role.code !== 'prof');
   const meta = rolesResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
   const deleteRoleMut = useDeleteRole();

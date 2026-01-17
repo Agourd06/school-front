@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { hasDashboardAccess } from '../../types/profile';
+import { isStudentRole, isTeacherRole } from '../../utils/permissions';
 
 // Stable redirect component to prevent infinite loops
 const StableRedirect: React.FC<{ to: string }> = ({ to }) => {
@@ -101,18 +102,35 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // TypeScript now knows user is not null
   const authenticatedUser = user;
 
-  // SECURITY: Block students and teachers from accessing ANY dashboard routes
+  // SECURITY: Block students and teachers from accessing dashboard routes
+  // BUT: Only if they have ONLY student/teacher roles (no dashboard roles)
+  // Users with both teacher and dashboard roles (e.g., 'teacher' + 'finance') should access dashboard
   // ProtectedRoute is ONLY used for dashboard routes (not student/teacher routes)
-  // Students/teachers should NEVER see DashboardLayout (with sidebar) or dashboard pages
-  // Complete role separation is mandatory - redirect them to their own pages immediately
   // CRITICAL: This check must happen BEFORE DashboardLayout renders (which includes Sidebar)
-  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
-  const userRoles = Array.isArray(authenticatedUser.roles) ? authenticatedUser.roles : [];
-  const isStudent = userRoles.includes('student') || authenticatedUser.profile === 'student';
-  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || authenticatedUser.profile === 'teacher' || authenticatedUser.profile === 'prof';
+  // CRITICAL: Roles are now in a separate table - users can have multiple roles
+  // We should ONLY check the roles array, NOT the profile field
+  // Normalize role codes to lowercase for case-insensitive comparison
+  const userRoles = Array.isArray(authenticatedUser.roles) 
+    ? authenticatedUser.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
+    : [];
   
-  if (isStudent) {
-    // Students can ONLY access /student/* routes - block all dashboard routes
+  // Define dashboard roles - users with these roles should access dashboard
+  const dashboardRoles = ['admin', 'finance', 'direction', 'scholarity', 'support'];
+  
+  // Check if user has any dashboard roles (excluding student/teacher/parent)
+  const hasDashboardRole = userRoles.some(role => 
+    dashboardRoles.includes(role) || 
+    // Custom roles (like '26c630a3') are also considered dashboard roles
+    (!['student', 'teacher', 'parent', 'parents'].includes(role))
+  );
+  
+  // Check if user is student or teacher - use helper functions from permissions
+  const isStudent = isStudentRole(userRoles);
+  const isTeacher = isTeacherRole(userRoles);
+  
+  // Only redirect if user has student/teacher role AND no dashboard roles
+  if (isStudent && !hasDashboardRole) {
+    // Students with ONLY student role can ONLY access /student/* routes - block all dashboard routes
     // Force immediate redirect - this bypasses React Router completely
     if (typeof window !== 'undefined' && window.location.pathname !== '/student') {
       window.location.replace('/student'); // Use replace instead of href to prevent back button
@@ -124,8 +142,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
     return <StableRedirect to="/student" />;
   }
-  if (isTeacher) {
-    // Teachers can ONLY access /teacher/* routes - block all dashboard routes
+  if (isTeacher && !hasDashboardRole) {
+    // Teachers with ONLY teacher role can ONLY access /teacher/* routes - block all dashboard routes
     // Force immediate redirect - this bypasses React Router completely
     if (typeof window !== 'undefined' && window.location.pathname !== '/teacher') {
       window.location.replace('/teacher'); // Use replace instead of href to prevent back button

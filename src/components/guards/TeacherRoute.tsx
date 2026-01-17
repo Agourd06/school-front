@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { hasDashboardAccess } from '../../types/profile';
+import { isTeacherRole } from '../../utils/permissions';
 
 interface TeacherRouteProps {
   children: React.ReactNode;
@@ -41,15 +42,24 @@ const TeacherRoute: React.FC<TeacherRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // SECURITY: Check roles/profile from server-validated user data (from useAuth context)
-  // Roles and profile are validated from database on app init - cannot be manipulated client-side
-  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
-  const userRoles = Array.isArray(user.roles) ? user.roles : [];
-  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user.profile === 'teacher' || user.profile === 'prof';
+  // SECURITY: Check roles from server-validated user data (from useAuth context)
+  // Roles are validated from database on app init - cannot be manipulated client-side
+  // CRITICAL: Roles are now in a separate table - users can have multiple roles
+  // We should ONLY check the roles array, NOT the profile field
+  // Normalize role codes to lowercase for case-insensitive comparison
+  const userRoles = Array.isArray(user.roles) 
+    ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
+    : [];
+  
+  // Check if user is teacher - use helper function from permissions
+  const isTeacher = isTeacherRole(userRoles);
   
   if (!isTeacher) {
-    // Redirect non-teachers to dashboard or auth
-    return <Navigate to={hasDashboardAccess(user.profile) ? '/programs' : redirectTo} replace />;
+    // Redirect non-teachers to their default route (profile page for dashboard users)
+    // Use getDefaultRoute to determine the correct destination
+    const { getDefaultRoute } = require('../../utils/permissions');
+    const defaultRoute = getDefaultRoute(user);
+    return <Navigate to={defaultRoute} replace />;
   }
 
   return <>{children}</>;

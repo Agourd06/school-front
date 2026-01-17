@@ -21,7 +21,8 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
   
   const { data: userRoles = [], refetch: refetchUserRoles } = useUserRoles(userId);
   const { data: rolesResp } = useRoles({ page: 1, limit: 100 });
-  const allRoles = rolesResp?.data ?? [];
+  // Filter out 'prof' role - it's deprecated, use 'teacher' instead
+  const allRoles = (rolesResp?.data ?? []).filter(role => role.code !== 'prof');
   
   const assignRoleMut = useAssignRoleToUser();
   const removeRoleMut = useRemoveRoleFromUser();

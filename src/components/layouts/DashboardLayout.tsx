@@ -7,6 +7,7 @@ import { SchoolYearProvider } from '../../context/SchoolYearContext';
 import { ProgramProvider } from '../../context/ProgramContext';
 import { SpecializationProvider } from '../../context/SpecializationContext';
 import { routePathToTab, tabToRoutePath, type RouteTab } from '../../utils/routeMapping';
+import { isStudentRole, isTeacherRole } from '../../utils/permissions';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -36,15 +37,33 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   }
 
   // SECURITY: Block students and teachers from seeing DashboardLayout IMMEDIATELY
+  // BUT: Only if they have ONLY student/teacher roles (no dashboard roles)
+  // Users with both teacher and dashboard roles (e.g., 'teacher' + 'finance') should see dashboard
   // This check happens BEFORE any rendering to prevent sidebar from showing
-  // Students/teachers should NEVER see DashboardLayout or its Sidebar
   // CRITICAL: This is a second line of defense - ProtectedRoute should catch it first
-  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
-  const userRoles = Array.isArray(user?.roles) ? user.roles : [];
-  const isStudent = userRoles.includes('student') || user?.profile === 'student';
-  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user?.profile === 'teacher' || user?.profile === 'prof';
+  // CRITICAL: Roles are now in a separate table - users can have multiple roles
+  // We should ONLY check the roles array, NOT the profile field
+  // Normalize role codes to lowercase for case-insensitive comparison
+  const userRoles = Array.isArray(user?.roles) 
+    ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
+    : [];
   
-  if (isStudent) {
+  // Define dashboard roles - users with these roles should access dashboard
+  const dashboardRoles = ['admin', 'finance', 'direction', 'scholarity', 'support'];
+  
+  // Check if user has any dashboard roles (excluding student/teacher/parent)
+  const hasDashboardRole = userRoles.some(role => 
+    dashboardRoles.includes(role) || 
+    // Custom roles (like '26c630a3') are also considered dashboard roles
+    (!['student', 'teacher', 'parent', 'parents'].includes(role))
+  );
+  
+  // Check if user is student or teacher - use helper functions from permissions
+  const isStudent = isStudentRole(userRoles);
+  const isTeacher = isTeacherRole(userRoles);
+  
+  // Only redirect if user has student/teacher role AND no dashboard roles
+  if (isStudent && !hasDashboardRole) {
     if (typeof window !== 'undefined' && window.location.pathname !== '/student') {
       window.location.replace('/student');
       return (
@@ -55,7 +74,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
     return <Navigate to="/student" replace />;
   }
-  if (isTeacher) {
+  if (isTeacher && !hasDashboardRole) {
     if (typeof window !== 'undefined' && window.location.pathname !== '/teacher') {
       window.location.replace('/teacher');
       return (
@@ -93,7 +112,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   // Double-check: Ensure we NEVER render Sidebar for students/teachers
   // This check happens before rendering to prevent any sidebar flash
-  const shouldRenderSidebar = user && user.profile !== 'student' && user.profile !== 'teacher' && user.profile !== 'prof';
+  const shouldRenderSidebar = user && user.profile !== 'student' && user.profile !== 'teacher';
 
   return (
     <SchoolYearProvider>

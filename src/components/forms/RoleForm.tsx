@@ -57,6 +57,10 @@ const RoleForm: React.FC<RoleFormProps> = ({
       if (!/^[a-z0-9_]+$/.test(formData.code)) {
         newErrors.code = t('forms.roleCodeInvalid') || 'Code must be lowercase, alphanumeric with underscores only';
       }
+      // Prevent creating 'prof' role - use 'teacher' instead
+      if (formData.code.toLowerCase().trim() === 'prof') {
+        newErrors.code = t('forms.roleCodeProfNotAllowed') || 'Role code "prof" is not allowed. Please use "teacher" instead.';
+      }
     }
 
     if (!formData.label.trim()) {

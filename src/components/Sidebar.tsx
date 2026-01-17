@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { tabToRoutePath, routePathToTab, type RouteTab } from "../utils/routeMapping";
-import { usePermissions } from "../utils/permissions";
+import { usePermissions, isStudentRole, isTeacherRole } from "../utils/permissions";
 import { useAuth } from "../hooks/useAuth";
 
 interface SidebarProps {
@@ -34,9 +34,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   // If this component somehow renders for them, return null immediately
   // This is a safety check in addition to DashboardLayout protection
   // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
-  const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
-  const isStudent = userRoles.includes('student') || user?.profile === 'student';
-  const isTeacher = userRoles.includes('teacher') || userRoles.includes('prof') || user?.profile === 'teacher' || user?.profile === 'prof';
+  const userRoles = Array.isArray(user?.roles) 
+    ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
+    : [];
+  const isStudent = isStudentRole(userRoles) || user?.profile === 'student';
+  const isTeacher = isTeacherRole(userRoles) || user?.profile === 'teacher';
   
   if (isStudent || isTeacher) {
     return null; // Don't render anything - they should use their own layouts
