@@ -89,72 +89,42 @@ export const isStudentRole = (userRoles: string[]): boolean => {
  * 
  * Note: This function should be memoized when used in components to prevent infinite loops
  */
-export const getDefaultRoute = (user: { profile?: string; roles?: string[]; allowedPages?: string[] } | null): string => {
+export const getDefaultRoute = (user: { roles?: string[]; allowedPages?: string[] } | null): string => {
   if (!user) {
     return '/auth';
   }
 
-  // CRITICAL: Roles are now in a separate table - users can have multiple roles
-  // We should ONLY check the roles array, NOT the profile field
-  // The profile field may be incorrectly set by the backend and should be ignored for routing
-  // Normalize role codes to lowercase for case-insensitive comparison
+  // Normalize roles once
   const userRoles = Array.isArray(user.roles) 
     ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
     : [];
   
-  // Define dashboard roles - users with these roles should go to dashboard
-  // These are roles that have access to the main dashboard with sidebar
-  const dashboardRoles = ['admin', 'finance', 'direction', 'scholarity', 'support'];
-  
-  // Check if user has any dashboard roles (excluding student/teacher/parent)
-  const hasDashboardRole = userRoles.some(role => 
-    dashboardRoles.includes(role) || 
-    // Custom roles (like '26c630a3') are also considered dashboard roles
-    (!['student', 'teacher', 'parent', 'parents'].includes(role))
-  );
-  
-  // Check if user is student or teacher - use helper functions
-  const isStudent = isStudentRole(userRoles);
-  const isTeacher = isTeacherRole(userRoles);
-  
-  // Debug logging in development
-  if (import.meta.env.DEV) {
-    console.log('[getDefaultRoute] User data:', {
-      profile: user.profile, // For debugging only - not used for routing
-      roles: user.roles,
-      normalizedRoles: userRoles,
-      isStudent,
-      isTeacher,
-      hasDashboardRole,
-    });
+  if (userRoles.length === 0) {
+    return '/profile';
   }
+  
+  // Define role sets for efficient lookup
+  const dashboardRoles = new Set(['admin', 'finance', 'direction', 'scholarity', 'support']);
+  const excludedRoles = new Set(['student', 'teacher', 'parent', 'parents']);
+  
+  // Check role types in single pass
+  let hasStudent = false;
+  let hasTeacher = false;
+  let hasDashboard = false;
+  
+  for (const role of userRoles) {
+    if (role === 'student') hasStudent = true;
+    else if (role === 'teacher') hasTeacher = true;
+    else if (dashboardRoles.has(role) || !excludedRoles.has(role)) hasDashboard = true;
+  }
+  
+  // Route students/teachers only if they have no dashboard roles
+  if (hasStudent && !hasDashboard) return '/student';
+  if (hasTeacher && !hasDashboard) return '/teacher';
 
-  // CRITICAL: Only route to student/teacher pages if user has ONLY student/teacher roles
-  // If user has dashboard roles in addition to student/teacher roles, route to dashboard
-  // This allows users with multiple roles (e.g., 'teacher' + 'finance') to access dashboard
-  
-  // Student routing: only if they have student role AND no dashboard roles
-  if (isStudent && !hasDashboardRole) {
-    if (import.meta.env.DEV) {
-      console.log('[getDefaultRoute] User identified as student (no dashboard roles), routing to /student');
-    }
-    return '/student';
-  }
-  
-  // Teacher routing: only if they have teacher role AND no dashboard roles
-  if (isTeacher && !hasDashboardRole) {
-    if (import.meta.env.DEV) {
-      console.log('[getDefaultRoute] User identified as teacher (no dashboard roles), routing to /teacher');
-    }
-    return '/teacher';
-  }
-
-  // All dashboard users (admin, finance, etc.) go to profile page first
-  // They can then navigate to allowed routes based on their role permissions
-  if (import.meta.env.DEV) {
-    console.log('[getDefaultRoute] User identified as dashboard user, routing to /profile');
-  }
-  return '/profile';
+  // Dashboard users: route to first allowed page or profile
+  const allowedPages = Array.isArray(user.allowedPages) ? user.allowedPages : [];
+  return allowedPages.length > 0 ? allowedPages[0] : '/profile';
 };
 
 /**

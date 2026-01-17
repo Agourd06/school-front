@@ -51,6 +51,7 @@ export const APP_ROUTES: RouteDefinition[] = [
   { route: '/settings/colors', title: 'Settings - Colors' },
   { route: '/settings/access', title: 'Settings - Page Access' },
   { route: '/settings/roles', title: 'Settings - Roles' },
+  { route: '/settings/company', title: 'Settings - Company' },
   { route: '/settings/types', title: 'Settings - Types' },
   { route: '/settings/types/link', title: 'Settings - Link Types' },
   { route: '/settings/types/classroom', title: 'Settings - Classroom Types' },

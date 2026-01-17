@@ -19,7 +19,12 @@ interface User {
   id: number;
   email: string;
   username: string;
-  profile: Profile;
+  profile?: Profile; // Optional for backward compatibility
+  picture?: string | null; // Relative path: /uploads/{companyId}/users/{timestamp}_{filename}
+  phone?: string | null; // Format: +{countrycode}{nationalnumber}
+  privacyPolicyAccepted?: boolean; // Whether user has accepted Privacy Policy
+  termsAccepted?: boolean; // Whether user has accepted Terms of Use
+  consentAcceptedAt?: string | null; // ISO 8601 datetime when consent was accepted
   company_id?: number | null;
   company?: Company | null;
   roles?: string[];
@@ -34,7 +39,7 @@ interface AuthContextType {
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
-  changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
+  changePassword: (newPassword: string, confirmPassword: string) => Promise<void>;
   refreshPermissions: () => Promise<void>;
   isLoading: boolean;
   companyId: number | null;
@@ -100,6 +105,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
+
         // Get allowedPages from server (via getMyRoutes endpoint)
         let allowedPages: string[] = [];
         try {
@@ -112,17 +118,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           allowedPages = Array.isArray(serverUser.allowedPages) ? serverUser.allowedPages : [];
         }
 
+        // Extract roles from server response
+        // IMPORTANT: The /profile endpoint should include roles in the response
+        // If roles are not in the response, we cannot fetch them via /users/{id}/roles
+        // because that endpoint requires admin permissions (403 Forbidden for non-admins)
+        // So we rely on the backend to include roles in the /profile response
+        let roles: string[] = [];
+        if (Array.isArray(serverUser.roles) && serverUser.roles.length > 0) {
+          // Roles are provided as string array (role codes) in the profile response
+          roles = serverUser.roles;
+        } else {
+          // Roles not in profile response - this should not happen if backend is configured correctly
+          // We cannot fetch via /users/{id}/roles because it requires admin permissions
+          // The backend MUST include roles in the /profile endpoint response
+          // For now, leave roles as empty array - user can still access pages via allowedPages
+          roles = [];
+        }
+
         // Use ONLY server-validated data - never modify roles/profile client-side
+        // Handle picture exactly like other fields (email, username, phone, etc.)
         const validatedUser: User = {
           id: serverUser.id!,
           email: serverUser.email,
           username: serverUser.username,
           profile: serverUser.profile, // From server DB - cannot be manipulated
+          picture: serverUser.picture ?? null, // Handle exactly like phone, email, etc.
+          phone: serverUser.phone ?? null, // Format: +{countrycode}{nationalnumber}
+          privacyPolicyAccepted: serverUser.privacyPolicyAccepted ?? false,
+          termsAccepted: serverUser.termsAccepted ?? false,
+          consentAcceptedAt: serverUser.consentAcceptedAt ?? null,
           company_id: serverUser.company_id ?? null,
           company: normalizeCompany(serverUser.company),
-          roles: Array.isArray(serverUser.roles) ? serverUser.roles : [], // From server DB - cannot be manipulated
+          roles: roles, // From server DB - cannot be manipulated
           allowedPages: allowedPages, // From server DB - cannot be manipulated
         };
+
 
         // SECURITY: Store validated data ONLY for caching/offline detection
         // NEVER use localStorage for auth decisions - always validate from server
@@ -193,25 +223,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Track if we've fetched company to prevent infinite loops
   const companyFetchedRef = useRef<number | null>(null);
+  const [companyUpdateTrigger, setCompanyUpdateTrigger] = useState(0);
+
+  // Listen for company update events to refresh company data
+  useEffect(() => {
+    const handleCompanyUpdate = () => {
+      // Reset ref to allow re-fetch immediately
+      companyFetchedRef.current = null;
+      setCompanyUpdateTrigger(prev => prev + 1);
+      
+      // Also directly update user if we have fresh data in localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser && user?.company_id) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser.company_id === user.company_id && parsedUser.company) {
+            setUser((prev) => {
+              if (!prev || prev.company_id !== parsedUser.company_id) return prev;
+              return { ...prev, company: parsedUser.company };
+            });
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    };
+    
+    window.addEventListener('company-updated', handleCompanyUpdate);
+    return () => window.removeEventListener('company-updated', handleCompanyUpdate);
+  }, [user?.company_id]);
 
   useEffect(() => {
-    if (
-      !user ||
-      !user.company_id ||
-      (user.company &&
-        user.company.primaryColor &&
-        user.company.secondaryColor &&
-        user.company.tertiaryColor)
-    ) {
-      // Reset ref if user changes or company already has colors
-      if (!user || !user.company_id) {
-        companyFetchedRef.current = null;
-      }
+    if (!user || !user.company_id) {
+      companyFetchedRef.current = null;
       return;
     }
 
-    // Prevent fetching if we've already fetched for this company_id
-    if (companyFetchedRef.current === user.company_id) {
+    // Always fetch company data to ensure we have latest logo and colors
+    // Reset ref if companyUpdateTrigger changed (logo was updated)
+    if (companyFetchedRef.current === user.company_id && companyUpdateTrigger === 0) {
       return;
     }
 
@@ -229,13 +279,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             return prev;
           }
           
-          // Check if company data is different before updating
+          // Check if company data is different before updating (including logo)
           const currentCompany = prev.company;
           if (
             currentCompany?.id === company.id &&
             currentCompany?.primaryColor === company.primaryColor &&
             currentCompany?.secondaryColor === company.secondaryColor &&
-            currentCompany?.tertiaryColor === company.tertiaryColor
+            currentCompany?.tertiaryColor === company.tertiaryColor &&
+            currentCompany?.logo === company.logo
           ) {
             // No change needed, return previous to prevent re-render
             return prev;
@@ -253,7 +304,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     fetchCompany();
-  }, [user?.company_id, user?.company?.id, user?.company?.primaryColor, user?.company?.secondaryColor]);
+  }, [user?.company_id, user?.company?.id, user?.company?.primaryColor, user?.company?.secondaryColor, user?.company?.logo, companyUpdateTrigger]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -271,12 +322,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // SECURITY: Use ONLY server-provided roles - never modify client-side
       // Roles come from database and cannot be manipulated
       let allowedPages = userData.allowedPages || [];
-      let roles = Array.isArray(userData.roles) ? userData.roles : [];
-      
-      // NEVER modify roles client-side - always trust server response
       
       // Save token FIRST so axios interceptor can use it for subsequent API calls
       localStorage.setItem('token', token);
+      
+      // Extract roles from login response
+      // IMPORTANT: The login endpoint should include roles in the response
+      // If roles are not in the response, we cannot fetch them via /users/{id}/roles
+      // because that endpoint requires admin permissions (403 Forbidden for non-admins)
+      // So we rely on the backend to include roles in the login response
+      let roles: string[] = [];
+      if (Array.isArray(userData.roles) && userData.roles.length > 0) {
+        // Roles are provided in login response as string array (role codes)
+        roles = userData.roles;
+      } else {
+        // Roles not in login response - this should not happen if backend is configured correctly
+        // We cannot fetch via /users/{id}/roles because it requires admin permissions
+        // The backend MUST include roles in the login endpoint response
+        // For now, leave roles as empty array - user can still access pages via allowedPages
+        roles = [];
+      }
+      
+      // NEVER modify roles client-side - always trust server response
       
       // IMPORTANT: All users (including admins) need allowedPages from server
       // The backend sets allowedPages based on role-page assignments
@@ -298,15 +365,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
 
+      // Handle picture exactly like other fields (email, username, phone, etc.)
       const user: User = {
         id: userData.id!,
         email: userData.email,
         username: userData.username,
         profile: userData.profile,
+        picture: userData.picture ?? null, // Handle exactly like phone, email, etc.
+        phone: userData.phone ?? null,
+        privacyPolicyAccepted: userData.privacyPolicyAccepted ?? false,
+        termsAccepted: userData.termsAccepted ?? false,
+        consentAcceptedAt: userData.consentAcceptedAt ?? null,
         company_id: userData.company_id ?? null,
         company: normalizeCompany(userData.company),
-        roles,
-        allowedPages,
+        roles: roles, // Ensure roles array is always set
+        allowedPages: allowedPages, // Ensure allowedPages array is always set
       };
 
       // SECURITY: Store server-validated user data (only for caching - never used for auth)
@@ -338,7 +411,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       // Note: RegisterRequest only accepts username, email, and company_id
       // Password and profile are not accepted - backend sends password setup email
-      await authApi.register({ username, email, company_id: 1 });
+      await authApi.register({ 
+        username, 
+        email, 
+        company_id: 1,
+        privacyPolicyAccepted: true,
+        termsAccepted: true
+      });
       // Note: Registration doesn't return a token, user needs to login
       // setToken(data.token);
       // setUser(data.user);
@@ -405,9 +484,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => {
+  const changePassword = async (newPassword: string, confirmPassword: string) => {
     try {
-      await authApi.changePassword({ currentPassword, newPassword, confirmPassword });
+      await authApi.changePassword({ newPassword, confirmPassword });
       // After successful password change, log out the user for security
       // User will need to log in again with the new password
       logout(true); // Redirect to login page

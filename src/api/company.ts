@@ -70,7 +70,7 @@ export interface CreateCompanyRequest {
 
 export interface UpdateCompanyRequest {
   name?: string;
-  logo?: string;
+  logo?: string | File | null; // Supports both URL string, File upload, or null to remove
   email?: string;
   phone?: string;
   website?: string;
@@ -170,6 +170,38 @@ export const companyApi = {
   update: async (id: number, data: UpdateCompanyRequest): Promise<Company> => {
     const { company_id: _companyId, ...rest } = data;
     void _companyId;
+    
+    // Check if we have a File (logo upload) or logo is explicitly null (remove logo)
+    const hasFile = data.logo instanceof File;
+    const shouldRemoveLogo = data.logo === null;
+    
+    // If we have a file or need to remove logo, use FormData
+    if (hasFile || shouldRemoveLogo) {
+      const formData = new FormData();
+      
+      // Add all fields to FormData
+      Object.entries(rest).forEach(([key, value]) => {
+        if (value !== undefined) {
+          if (key === 'logo') {
+            if (value instanceof File) {
+              formData.append('logo', value);
+            } else if (value === null) {
+              // For removing logo, send empty string or omit the field
+              formData.append('logo', '');
+            }
+          } else {
+            formData.append(key, String(value));
+          }
+        }
+      });
+      
+      // Note: Don't set Content-Type header - axios interceptor will handle it
+      // The browser needs to set it with the correct multipart boundary
+      const response = await api.patch(`/company/${id}`, formData);
+      return normalizeCompany(response.data);
+    }
+    
+    // Otherwise, use regular JSON
     const payload: UpdateCompanyRequest = {
       ...rest,
     };

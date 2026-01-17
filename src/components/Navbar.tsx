@@ -1,19 +1,44 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { getFileUrl } from '../utils/apiConfig';
-import { getProfileLabel } from '../types/profile';
 import { isStudentRole, isTeacherRole } from '../utils/permissions';
 import { LogOut, User, Settings, ChevronDown, Menu, Globe } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
+  const location = useLocation();
   const company = user?.company;
-  const companyLogo = company?.logo;
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Memoize logo URL and company name for performance
+  const logoData = useMemo(() => {
+    if (!user || !company) {
+      return { logoUrl: '/edusol_logo.png', companyName: null, hasCompanyLogo: false };
+    }
+    
+    const companyLogo = company.logo;
+    // Check if logo exists and is not empty/null
+    if (companyLogo && companyLogo.trim()) {
+      const logoUrl = getFileUrl(companyLogo);
+      const hasValidLogo = Boolean(logoUrl?.trim());
+      
+      return {
+        logoUrl: hasValidLogo ? logoUrl.trim() : '/edusol_logo.png',
+        companyName: company.name || null,
+        hasCompanyLogo: hasValidLogo,
+      };
+    }
+    
+    return { logoUrl: '/edusol_logo.png', companyName: null, hasCompanyLogo: false };
+  }, [user, company, company?.logo, company?.name]);
+  
+  // Check if we're on the login page
+  const isLoginPage = location.pathname === '/auth' && 
+    (location.search.includes('mode=login') || !location.search);
 
   const rawUser = user as { username?: string; email?: string } | null;
   const displayName = rawUser?.username || rawUser?.email || 'User';
@@ -25,12 +50,9 @@ const Navbar: React.FC = () => {
     .join('')
     .toUpperCase();
 
-  // Get user role label
+  // Get user role label - profile field no longer exists, use roles only
   const userRoleLabel = useMemo(() => {
-    if (user?.profile) {
-      return getProfileLabel(user.profile);
-    }
-    if (user?.roles && user.roles.length > 0) {
+    if (user?.roles && Array.isArray(user.roles) && user.roles.length > 0) {
       return user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1);
     }
     return 'User';
@@ -42,8 +64,8 @@ const Navbar: React.FC = () => {
     const userRoles = Array.isArray(user?.roles) 
       ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
       : [];
-    const isStudent = isStudentRole(userRoles) || user?.profile === 'student';
-    const isTeacher = isTeacherRole(userRoles) || user?.profile === 'teacher';
+    const isStudent = isStudentRole(userRoles);
+    const isTeacher = isTeacherRole(userRoles);
     
     if (isStudent) {
       return '/student/profile';
@@ -76,7 +98,7 @@ const Navbar: React.FC = () => {
     };
   }, [isUserMenuOpen]);
 
-  // Get navbar background - uses tertiary color with very light tint (3% opacity)
+  // Get navbar background - uses tertiary color with light tint (8% opacity)
   // This allows companies to customize navbar color while maintaining readability
   const [navbarBackground, setNavbarBackground] = React.useState('#ffffff');
   
@@ -112,9 +134,9 @@ const Navbar: React.FC = () => {
         }
       }
       
-      // Apply the color with 3% opacity, or use white as fallback
+      // Apply the color with 8% opacity for better visibility, or use white as fallback
       if (tertiaryColor) {
-        setNavbarBackground(hexToRgba(tertiaryColor, 0.03));
+        setNavbarBackground(hexToRgba(tertiaryColor, 0.06));
       } else {
         setNavbarBackground('#ffffff');
       }
@@ -172,18 +194,23 @@ const Navbar: React.FC = () => {
               to={user ? "/settings" : "/auth"}
               className="flex items-center gap-3 group"
             >
-              {user && companyLogo ? (
-                <img
-                  src={getFileUrl(companyLogo)}
-                  alt={company?.name || 'Company logo'}
-                  className="h-8 w-auto max-w-[180px] object-contain transition-opacity group-hover:opacity-90"
-                />
-              ) : (
-                <img
-                  src="/edusol_logo.png"
-                  alt="Edusol"
-                  className="h-9 w-auto object-contain transition-opacity group-hover:opacity-90"
-                />
+              <img
+                src={logoData.logoUrl}
+                alt={logoData.hasCompanyLogo ? logoData.companyName || 'Company logo' : 'Edusol'}
+                className={`${logoData.hasCompanyLogo ? 'h-8' : 'h-9'} w-auto max-w-[180px] object-contain transition-opacity group-hover:opacity-90`}
+                onError={(e) => {
+                  // Fallback to Edusol logo if company logo fails to load
+                  const target = e.target as HTMLImageElement;
+                  if (logoData.hasCompanyLogo) {
+                    target.src = '/edusol_logo.png';
+                    target.className = 'h-9 w-auto object-contain transition-opacity group-hover:opacity-90';
+                  }
+                }}
+              />
+              {logoData.hasCompanyLogo && logoData.companyName && (
+                <span className="hidden sm:block text-base font-semibold text-heading">
+                  {logoData.companyName}
+                </span>
               )}
             </Link>
           </div>
@@ -293,12 +320,15 @@ const Navbar: React.FC = () => {
                 </div>
               </>
             ) : (
-              <Link
-                to="/auth?mode=login"
-                className="px-4 py-2 rounded-md bg-primary text-white font-medium text-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors shadow-sm"
-              >
-                {t('navbar.login')}
-              </Link>
+              // Only show login button if not already on login page
+              !isLoginPage && (
+                <Link
+                  to="/auth?mode=login"
+                  className="px-4 py-2 rounded-md bg-primary text-white font-medium text-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors shadow-sm"
+                >
+                  {t('navbar.login')}
+                </Link>
+              )
             )}
           </div>
         </div>

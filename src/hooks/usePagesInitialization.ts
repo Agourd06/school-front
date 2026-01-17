@@ -33,46 +33,28 @@ export const usePagesInitialization = (
         // Mark as initializing immediately to prevent duplicate calls
         hasInitialized.current = true;
 
-        console.log('[Pages Init] Starting page initialization...');
-        console.log('[Pages Init] Total APP_ROUTES defined:', APP_ROUTES.length);
-        console.log('[Pages Init] APP_ROUTES:', APP_ROUTES);
-
         // Step 1: Get all existing pages from the database
         // Use a large limit to get all pages at once
         const existingPagesResponse = await pagesApi.getAll({ limit: 100 });
         const existingPages = existingPagesResponse.data;
         const existingRoutes = new Set(existingPages.map(page => page.route));
 
-        console.log('[Pages Init] Existing pages in DB:', existingPages.length);
-        console.log('[Pages Init] Existing routes:', Array.from(existingRoutes));
-
         // Step 2: Find missing routes
         const missingRoutes = APP_ROUTES.filter(
           route => !existingRoutes.has(route.route)
         );
 
-        console.log('[Pages Init] Missing routes:', missingRoutes.length);
-        console.log('[Pages Init] Missing routes details:', missingRoutes);
-
         if (missingRoutes.length === 0) {
-          console.log('[Pages Init] No missing routes, all pages are synced!');
           return;
         }
 
         // Step 3: Create missing pages using bulk creation endpoint
-        console.log('[Pages Init] Creating missing pages...');
-        const result = await pagesApi.createFromRoutes({
+        await pagesApi.createFromRoutes({
           routes: missingRoutes,
           skipExisting: true, // Skip if route already exists (safety check)
         });
-        
-        console.log('[Pages Init] Pages created successfully!');
-        console.log('[Pages Init] Result:', result);
       } catch (error: any) {
         console.error('[Pages Init] Error initializing pages:', error);
-        console.error('[Pages Init] Error details:', error.response?.data || error.message);
-        console.error('[Pages Init] Full error response:', error.response);
-        console.error('[Pages Init] Error config:', error.config);
         // Allow retry on next app start if initialization failed
         hasInitialized.current = false;
       }

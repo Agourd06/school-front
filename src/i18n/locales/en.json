@@ -44,7 +44,9 @@
     "attestation": "Attestation",
     "student": "Student",
     "dismiss": "Dismiss",
-    "you": "You"
+    "you": "You",
+    "upload": "Upload",
+    "uploading": "Uploading..."
   },
   "navbar": {
     "welcomeBack": "Welcome back",
@@ -121,7 +123,10 @@
     "resetYourPassword": "Reset your password",
     "signingIn": "Signing in...",
     "emailAddress": "Email address",
+    "identifier": "Identifier (email address)",
     "emailPlaceholder": "Email address",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "passwordPlaceholder": "Password",
     "forgotYourPassword": "Forgot your password?",
     "rememberYourPassword": "Remember your password?",
@@ -196,15 +201,17 @@
     "generatedUsername": "Your username will be:",
     "companyInformationDescription": "Enter your school or organization details",
     "companyEmailNote": "This email will also be used for your administrator account",
+    "legalNotice": "In accordance with law 09-08, you have the right to access, rectify and oppose the processing of your personal data.",
     "iHaveReadAndAgreeTo": "I have read and agree to the",
     "privacyPolicy": "Privacy Policy",
     "termsOfUse": "Terms of Use",
+    "mustAcceptConditions": "You must accept the conditions to continue",
     "captchaLoading": "Loading CAPTCHA...",
     "captchaFailedToLoad": "Failed to load CAPTCHA",
     "captchaInstruction": "Enter the characters shown above",
     "captchaEnterAnswer": "Please enter the characters shown above",
     "captchaAnswer": "CAPTCHA answer",
-    "captchaRefresh": "Refresh CAPTCHA",
+    "captchaRefresh": "Refresh",
     "captchaVerifying": "Verifying...",
     "captchaVerify": "Verify",
     "captchaVerificationFailed": "CAPTCHA verification failed",
@@ -718,6 +725,7 @@
     "cannotModifyOwnRolesDescription": "You cannot modify roles for your own account. Please ask another administrator to manage your roles.",
     "cannotModifyOwnRolePagesDescription": "You cannot modify pages for your own role. Please ask another administrator to manage this role.",
     "roleAssignedToUser": "Role assigned successfully",
+    "confirmAssignAdminRole": "Are you sure you want to assign the \"Admin\" role to this user? This will give them full administrative access.",
     "roleRemovedFromUser": "Role removed successfully",
     "restrictedRolesInfo": "Note: Teacher, Student, and Parent Roles",
     "restrictedRolesInfoDescription": "Teacher, student, and parent roles have their own dedicated dashboards and cannot be assigned parameter routes. They are automatically excluded from this page."
@@ -1246,7 +1254,15 @@
     "editLinkType": "Edit Link Type",
     "addLinkType": "Add Link Type",
     "editPlanningSessionType": "Edit Planning Session Type",
-    "addPlanningSessionType": "Add Planning Session Type"
+    "addPlanningSessionType": "Add Planning Session Type",
+    "company": "Company",
+    "companyInfo": "Company Information",
+    "companyName": "Company Name",
+    "companyEmail": "Company Email",
+    "companyPhone": "Company Phone",
+    "companyLogo": "Company Logo",
+    "logoHint": "Allowed formats: JPEG, PNG, GIF, WebP. Max size: 2MB",
+    "companyUpdated": "Company updated successfully"
   }
 }
 

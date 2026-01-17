@@ -1,8 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { hasDashboardAccess } from '../../types/profile';
-import { isTeacherRole } from '../../utils/permissions';
+import { isTeacherRole, getDefaultRoute } from '../../utils/permissions';
 
 interface TeacherRouteProps {
   children: React.ReactNode;
@@ -57,7 +56,6 @@ const TeacherRoute: React.FC<TeacherRouteProps> = ({
   if (!isTeacher) {
     // Redirect non-teachers to their default route (profile page for dashboard users)
     // Use getDefaultRoute to determine the correct destination
-    const { getDefaultRoute } = require('../../utils/permissions');
     const defaultRoute = getDefaultRoute(user);
     return <Navigate to={defaultRoute} replace />;
   }

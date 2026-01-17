@@ -14,7 +14,12 @@ export interface LoginResponse {
     id?: number;
     email: string;
     username: string;
-    profile: Profile;
+    profile?: Profile; // Optional for backward compatibility
+    picture?: string | null; // Relative path: /uploads/{companyId}/users/{timestamp}_{filename}
+    phone?: string | null; // Format: +{countrycode}{nationalnumber}
+    privacyPolicyAccepted?: boolean; // Whether user has accepted Privacy Policy
+    termsAccepted?: boolean; // Whether user has accepted Terms of Use
+    consentAcceptedAt?: string | null; // ISO 8601 datetime when consent was accepted
     company_id?: number | null;
     company?: Company | null;
     roles?: string[];
@@ -26,6 +31,9 @@ export interface RegisterRequest {
   email: string;
   username: string;
   company_id: number; // Required for initial registration (first user for company)
+  phone?: string; // Phone number (same as company phone for admin)
+  privacyPolicyAccepted: boolean; // Privacy policy consent
+  termsAccepted: boolean; // Terms of use consent
   captchaToken?: string; // CAPTCHA token (optional for first user - already verified during company creation)
   captchaAnswer?: string; // CAPTCHA answer (optional for first user - already verified during company creation)
   // Password is NEVER provided - backend always sends password setup email
@@ -54,7 +62,6 @@ export interface ResetPasswordRequest {
 }
 
 export interface ChangePasswordRequest {
-  currentPassword: string;
   newPassword: string;
   confirmPassword: string;
 }

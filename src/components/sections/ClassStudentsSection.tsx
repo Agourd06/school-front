@@ -367,15 +367,17 @@ const ClassStudentsSection: React.FC = () => {
     if (!classFilter) return;
     const assignments = allAssignmentsQuery.data?.data || [];
     const assignedIds = new Set<number>();
-    assignments.forEach((item) => {
+    
+    // Build assigned IDs set in single pass
+    for (const item of assignments) {
       if (item.status !== -2 && item.student_id) {
         assignedIds.add(item.student_id);
       }
-    });
+    }
 
+    // Filter and map in single pass for better performance
     const students = ((studentsResp as PaginatedResponse<ApiStudent>)?.data || [])
-      .filter((stu) => stu?.status !== -2)
-      .filter((stu) => !assignedIds.has(stu.id))
+      .filter((stu) => stu?.status !== -2 && !assignedIds.has(stu.id))
       .map((stu) => makeStudentLite(stu.id, stu))
       .sort((a, b) => sortStudentsByLabel(a, b, t));
 

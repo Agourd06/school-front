@@ -27,6 +27,10 @@ interface CombinedRegistrationFormProps {
   captchaAnswer?: string;
   onCaptchaVerify?: (token: string, answer: string) => Promise<void>;
   captchaError?: string;
+  consentErrors?: {
+    privacyPolicy?: string;
+    termsOfUse?: string;
+  };
 }
 
 
@@ -39,6 +43,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
   captchaAnswer,
   onCaptchaVerify,
   captchaError,
+  consentErrors,
 }) => {
   const { t } = useTranslation();
   const [countries, setCountries] = useState<Array<{ name: string }>>([]);
@@ -209,29 +214,43 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
       </div>
 
       {/* Legal Agreements */}
-      <div className="space-y-4 pt-2">
-        <div className="space-y-3">
+      <div className="space-y-4 pt-2 pb-2">
+        {/* Legal Notice */}
+        <div className="text-sm text-heading leading-relaxed pb-2">
+          {t('registration.legalNotice')}
+        </div>
+
+        {/* Consent Checkboxes */}
+        <div className="space-y-4">
           <div className="flex items-start gap-3">
             <input
               type="checkbox"
               id="privacy-policy"
               checked={data.acceptedPrivacyPolicy}
               onChange={handleCheckboxChange('acceptedPrivacyPolicy')}
-              className="mt-1 h-4 w-4 text-primary border-primary/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              className={`mt-0.5 h-5 w-5 text-primary border-primary/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer flex-shrink-0 ${
+                consentErrors?.privacyPolicy ? 'border-danger' : ''
+              }`}
               required
             />
-            <label htmlFor="privacy-policy" className="text-sm text-heading cursor-pointer flex-1">
-              {t('registration.iHaveReadAndAgreeTo') || 'I have read and agree to the'}{' '}
-              <a
-                href="/privacy-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary font-semibold hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {t('registration.privacyPolicy') || 'Privacy Policy'}
-              </a>
-            </label>
+            <div className="flex-1">
+              <label htmlFor="privacy-policy" className="text-sm text-heading cursor-pointer flex-1 leading-relaxed block">
+                {t('registration.iHaveReadAndAgreeTo')}{' '}
+                <a
+                  href="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary font-semibold hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t('registration.privacyPolicy')}
+                </a>
+                .
+              </label>
+              {consentErrors?.privacyPolicy && (
+                <p className="mt-1 text-xs text-danger">{consentErrors.privacyPolicy}</p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-start gap-3">
@@ -240,21 +259,29 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               id="terms-of-use"
               checked={data.acceptedTermsOfUse}
               onChange={handleCheckboxChange('acceptedTermsOfUse')}
-              className="mt-1 h-4 w-4 text-primary border-primary/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              className={`mt-0.5 h-5 w-5 text-primary border-primary/60 rounded focus:ring-2 focus:ring-primary/20 cursor-pointer flex-shrink-0 ${
+                consentErrors?.termsOfUse ? 'border-danger' : ''
+              }`}
               required
             />
-            <label htmlFor="terms-of-use" className="text-sm text-heading cursor-pointer flex-1">
-              {t('registration.iHaveReadAndAgreeTo') || 'I have read and agree to the'}{' '}
-              <a
-                href="/terms-of-use"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary font-semibold hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {t('registration.termsOfUse') || 'Terms of Use'}
-              </a>
-            </label>
+            <div className="flex-1">
+              <label htmlFor="terms-of-use" className="text-sm text-heading cursor-pointer flex-1 leading-relaxed block">
+                {t('registration.iHaveReadAndAgreeTo')}{' '}
+                <a
+                  href="/terms-of-use"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary font-semibold hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t('registration.termsOfUse')}
+                </a>
+                .
+              </label>
+              {consentErrors?.termsOfUse && (
+                <p className="mt-1 text-xs text-danger">{consentErrors.termsOfUse}</p>
+              )}
+            </div>
           </div>
         </div>
 

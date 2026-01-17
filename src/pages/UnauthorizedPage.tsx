@@ -1,14 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { isStudentRole, isTeacherRole } from '../utils/permissions';
 
 const UnauthorizedPage: React.FC = () => {
   const { user } = useAuth();
 
   const getRedirectPath = () => {
     if (!user) return '/auth';
-    if (user.profile === 'student') return '/student';
-    if (user.profile === 'teacher') return '/teacher';
+    
+    // Use roles instead of profile (profile field no longer exists)
+    const userRoles = Array.isArray(user.roles) 
+      ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
+      : [];
+    
+    if (isStudentRole(userRoles)) return '/student';
+    if (isTeacherRole(userRoles)) return '/teacher';
     return '/dashboard';
   };
 

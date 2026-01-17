@@ -111,15 +111,23 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       
       if (foundCountry) {
         setSelectedCountry(foundCountry);
-        // Remove the dial code (with or without space)
-        const phoneOnly = value
+        // Remove the dial code (with or without space) and clean the number
+        let phoneOnly = value
           .replace(foundCountry.dialCode, '')
           .replace(/^[\s\-]+/, '')
           .trim();
+        // Remove all spaces, dashes, parentheses
+        phoneOnly = phoneOnly.replace(/[\s\-\(\)]/g, '');
+        // Remove leading 0 if present (for numbers with country code)
+        if (phoneOnly.startsWith('0')) {
+          phoneOnly = phoneOnly.substring(1);
+        }
         setPhoneNumber(phoneOnly);
       } else {
         // If no country code found, assume it's just the phone number
-        setPhoneNumber(value);
+        // Clean it but keep leading 0 if no country code (might be local format)
+        let cleanedValue = value.replace(/[\s\-\(\)]/g, '');
+        setPhoneNumber(cleanedValue);
       }
     } else {
       setPhoneNumber('');
@@ -165,8 +173,14 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     setSelectedCountry(country);
     setIsCountrySearchOpen(false);
     setCountrySearchQuery('');
-    // Update the combined value
-    const newValue = country.dialCode + (phoneNumber ? ' ' + phoneNumber : '');
+    // Clean phone number: remove spaces, dashes, and leading 0
+    let cleanedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+    // Remove leading 0 if present (for numbers with country code)
+    if (cleanedPhone.startsWith('0')) {
+      cleanedPhone = cleanedPhone.substring(1);
+    }
+    // Update the combined value: format as +212655996022 (no space, no leading 0)
+    const newValue = cleanedPhone ? country.dialCode + cleanedPhone : country.dialCode;
     const syntheticEvent = {
       target: { name, value: newValue },
     } as React.ChangeEvent<HTMLInputElement>;
@@ -191,9 +205,16 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       }
     }
     
+    // Remove leading 0 if user types it (for numbers with country code)
+    if (newPhoneNumber.startsWith('0') && selectedCountry) {
+      newPhoneNumber = newPhoneNumber.substring(1);
+    }
+    
     setPhoneNumber(newPhoneNumber);
-    // Combine country code with phone number
-    const newValue = selectedCountry.dialCode + (newPhoneNumber ? ' ' + newPhoneNumber : '');
+    // Clean phone number: remove spaces, dashes, parentheses
+    const cleanedPhone = newPhoneNumber.replace(/[\s\-\(\)]/g, '');
+    // Combine country code with phone number: format as +212655996022 (no space, no leading 0)
+    const newValue = cleanedPhone ? selectedCountry.dialCode + cleanedPhone : selectedCountry.dialCode;
     const syntheticEvent = {
       target: { name, value: newValue },
     } as React.ChangeEvent<HTMLInputElement>;

@@ -184,15 +184,16 @@ const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError, disabled = false, 
   const renderGrid = () => {
     if (!captchaData) return null;
 
-    // Row 1: Display characters in the specified column
+    // Row 1: Display characters in the specified column (hide empty cells, but keep grid structure)
     const row1 = [];
     for (let col = 0; col < 5; col++) {
       if (col === captchaData.charactersColumn) {
-        // Display characters in this column - match visual height with row 2
+        // Display characters in this column - positioned correctly in the grid
         row1.push(
           <div
             key={col}
-            className="flex-1 basis-0 min-w-0 flex items-center justify-center py-2.5 px-5 bg-gradient-to-br from-primary/8 to-primary/5 border-2 border-primary/40 rounded-xl shadow-sm"
+            style={{ gridColumn: col + 1 }}
+            className="flex items-center justify-center py-2.5 px-5 bg-gradient-to-br from-primary/8 to-primary/5 border-2 border-primary/40 rounded-xl shadow-sm"
             aria-label={`Characters column ${col + 1}`}
           >
             <span className="text-2xl font-bold text-heading tracking-[0.15em] font-mono select-none">
@@ -201,48 +202,46 @@ const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError, disabled = false, 
           </div>
         );
       } else {
-        // Empty cell - show it with visible styling, match visual height with row 2
+        // Empty cell - hide it but keep grid position
         row1.push(
           <div
             key={col}
-            className="flex-1 basis-0 min-w-0 flex items-center justify-center py-2.5 px-5 bg-gray-50/60 border-2 border-gray-200/50 rounded-xl"
+            style={{ gridColumn: col + 1 }}
+            className="hidden"
             aria-label={`Empty column ${col + 1}`}
           ></div>
         );
       }
     }
 
-    // Row 2: Display input field in the specified column
+    // Row 2: Display input field in the specified column (hide empty cells, but keep grid structure)
     const row2 = [];
     for (let col = 0; col < 5; col++) {
       if (col === captchaData.inputColumn) {
-        // Display input field in this column - keep current padding as reference
+        // Input cell itself (not input inside a cell) - positioned correctly in the grid
         row2.push(
-          <div
+          <input
             key={col}
-            className="flex-1 basis-0 min-w-0 flex items-center justify-center py-1.5 px-5 bg-gradient-to-br from-primary/8 to-primary/5 border-2 border-primary/40 rounded-xl shadow-sm"
-            aria-label={`Input column ${col + 1}`}
-          >
-            <input
-              type="text"
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value.toUpperCase())}
-              placeholder=""
-              disabled={disabled || isVerifying}
-              className="w-full px-1 py-2.5 text-center text-md font-bold border-2 border-primary/50 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all duration-200 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed font-mono tracking-[0.02em] uppercase shadow-sm"
-              maxLength={5}
-              required
-              aria-label={t('registration.captchaAnswer') || 'Enter CAPTCHA characters'}
-              autoComplete="off"
-            />
-          </div>
+            type="text"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value.toUpperCase())}
+            placeholder=""
+            disabled={disabled || isVerifying}
+            style={{ gridColumn: col + 1 }}
+            className="py-2.5 px-5 text-center text-md font-bold bg-gradient-to-br from-primary/8 to-primary/5 border-2 border-primary/40 rounded-xl shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all duration-200 disabled:bg-gray-50 disabled:cursor-not-allowed font-mono tracking-[0.15em] uppercase"
+            maxLength={5}
+            required
+            aria-label={t('registration.captchaAnswer') || 'Enter CAPTCHA characters'}
+            autoComplete="off"
+          />
         );
       } else {
-        // Empty cell - show it with visible styling, match visual height
+        // Empty cell - hide it but keep grid position
         row2.push(
           <div
             key={col}
-            className="flex-1 basis-0 min-w-0 flex items-center justify-center py-2.5 px-5 bg-gray-50/60 border-2 border-gray-200/50 rounded-xl"
+            style={{ gridColumn: col + 1 }}
+            className="hidden"
             aria-label={`Empty column ${col + 1}`}
           ></div>
         );
@@ -252,11 +251,11 @@ const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError, disabled = false, 
     return (
       <div className="mb-4 space-y-4" role="presentation">
         {/* Row 1: Characters */}
-        <div className="flex gap-4 w-full">
+        <div className="grid grid-cols-5 gap-4 w-full">
           {row1}
         </div>
         {/* Row 2: Input */}
-        <div className="flex gap-4 w-full">
+        <div className="grid grid-cols-5 gap-4 w-full">
           {row2}
         </div>
       </div>
@@ -286,8 +285,8 @@ const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError, disabled = false, 
             onClick={handleRefresh}
             disabled={disabled}
             className="px-3 py-1.5 text-xs bg-white border border-primary/60 rounded-lg hover:bg-[#fafbfc] hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            aria-label={t('registration.captchaRefresh') || 'Refresh CAPTCHA'}
-            title={t('registration.captchaRefresh') || 'Refresh CAPTCHA'}
+            aria-label={t('registration.captchaRefresh') || 'Refresh'}
+            title={t('registration.captchaRefresh') || 'Refresh'}
           >
             {t('registration.captchaRefresh') || 'Refresh'}
           </button>
@@ -312,8 +311,8 @@ const Captcha: React.FC<CaptchaProps> = ({ onVerify, onError, disabled = false, 
             onClick={handleRefresh}
             disabled={disabled || isVerifying}
             className="px-4 py-2 bg-white border border-primary/60 rounded-xl hover:bg-[#fafbfc] hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
-            aria-label={t('registration.captchaRefresh') || 'Refresh CAPTCHA'}
-            title={t('registration.captchaRefresh') || 'Refresh CAPTCHA'}
+            aria-label={t('registration.captchaRefresh') || 'Refresh'}
+            title={t('registration.captchaRefresh') || 'Refresh'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.5m13.5 5v-5H14m-5 5a7.5 7.5 0 01-7.5-7.5V7.5m15 0a7.5 7.5 0 01-7.5 7.5v-5m-7.5 0h5" />

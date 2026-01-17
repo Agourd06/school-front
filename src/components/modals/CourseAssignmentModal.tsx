@@ -3,11 +3,13 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import BaseModal from './BaseModal';
 import DescriptionModal from './DescriptionModal';
 import DeleteModal from './DeleteModal';
+import AlertModal from './AlertModal';
 import { useCourseAssignments } from '../../hooks/useCourseAssignments';
 import { useAddCourseToModule, useRemoveCourseFromModule, useReorderCourseInModule } from '../../hooks/useIndividualAssignments';
 import { useUpdateModuleCourse } from '../../hooks/useModuleCourse';
 import { useCourse } from '../../hooks/useCourses';
 import { useModule, useUpdateModule } from '../../hooks/useModules';
+import { useAlert } from '../../hooks/useAlert';
 import { DeleteButton } from '../ui';
 import { RefreshCw } from 'lucide-react';
 import type { Course as CourseEntity } from '../../api/course';
@@ -48,6 +50,9 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
 
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  
+  // Alert modal
+  const { alert, showAlert, closeAlert } = useAlert();
   const [courseToDelete, setCourseToDelete] = useState<AssignmentCourse | null>(null);
 
   // Track last synced volume - starts with module's current volume
@@ -189,9 +194,9 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
           error?.message ||
           "Failed to add course to module";
         if (error?.response?.status === 404) {
-          alert("Relationship not found. Please refresh and try again.");
+          showAlert("Relationship not found. Please refresh and try again.", "error");
         } else {
-          alert(`Error: ${errorMessage}`);
+          showAlert(`Error: ${errorMessage}`, "error");
         }
       } finally {
         setLoadingItemId(null);
@@ -264,7 +269,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
         error?.response?.data?.message ||
         error?.message ||
         "Failed to remove course from module";
-      alert(`Error: ${errorMessage}`);
+      showAlert(`Error: ${errorMessage}`, "error");
     } finally {
       setLoadingItemId(null);
     }
@@ -385,7 +390,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       // Rollback on error - refetch to get the correct state
       await refetchAssignments();
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to update course assignment";
-      alert(`Error: ${errorMessage}`);
+      showAlert(`Error: ${errorMessage}`, "error");
     }
   };
 
@@ -419,7 +424,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       const error = err as { response?: { data?: { message?: string } }; message?: string };
       console.error("Failed to sync module volume:", error);
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to sync module volume";
-      alert(`Error: ${errorMessage}`);
+      showAlert(`Error: ${errorMessage}`, "error");
     }
   };
 
@@ -864,6 +869,25 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
           </div>
         </BaseModal>
       )}
+
+      <DeleteModal
+        isOpen={deleteModalOpen}
+        title="Remove Course from Module"
+        entityName={courseToDelete?.title}
+        message={`Are you sure you want to remove "${courseToDelete?.title}" from this module? This will soft delete the assignment.`}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        isLoading={removeCourseFromModule.isPending || loadingItemId !== null}
+      />
+
+      <AlertModal
+        isOpen={alert.isOpen}
+        message={alert.message}
+        type={alert.type}
+        title={alert.title}
+        confirmText={alert.confirmText}
+        onClose={closeAlert}
+      />
     </BaseModal>
   );
 };

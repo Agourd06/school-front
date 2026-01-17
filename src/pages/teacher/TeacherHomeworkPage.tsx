@@ -5,6 +5,8 @@ import { usePlanningStudents, usePlanningStudent } from '../../hooks/usePlanning
 import { useClassStudents } from '../../hooks/useClassStudents';
 import { Button, Input } from '../../components/ui';
 import { useCreateStudentLinkType } from '../../hooks/useStudentLinkTypes';
+import { useAlert } from '../../hooks/useAlert';
+import AlertModal from '../../components/modals/AlertModal';
 
 const TeacherHomeworkPage: React.FC = () => {
   const { user } = useAuth();
@@ -32,12 +34,13 @@ const TeacherHomeworkPage: React.FC = () => {
   });
 
   const createLinkMut = useCreateStudentLinkType();
+  const { alert, showAlert, closeAlert } = useAlert();
 
   const classStudents = classStudentsData?.data || [];
 
   const handleAssignHomework = async () => {
     if (!homeworkUrl || !title || selectedStudents.length === 0) {
-      alert('Please fill in all required fields and select at least one student');
+      showAlert('Please fill in all required fields and select at least one student', 'warning');
       return;
     }
 
@@ -58,14 +61,14 @@ const TeacherHomeworkPage: React.FC = () => {
       );
 
       await Promise.all(promises);
-      alert('Homework assigned successfully!');
+      showAlert('Homework assigned successfully!', 'success');
       setHomeworkUrl('');
       setTitle('');
       setDescription('');
       setDueDate('');
       setSelectedStudents([]);
     } catch (error) {
-      alert('Failed to assign homework. Please try again.');
+      showAlert('Failed to assign homework. Please try again.', 'error');
     }
   };
 
@@ -241,6 +244,15 @@ const TeacherHomeworkPage: React.FC = () => {
           Please select a session to assign homework to students.
         </div>
       )}
+
+      <AlertModal
+        isOpen={alert.isOpen}
+        message={alert.message}
+        type={alert.type}
+        title={alert.title}
+        confirmText={alert.confirmText}
+        onClose={closeAlert}
+      />
     </div>
   );
 };

@@ -37,8 +37,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const userRoles = Array.isArray(user?.roles) 
     ? user.roles.map(r => String(r).toLowerCase().trim()).filter(Boolean)
     : [];
-  const isStudent = isStudentRole(userRoles) || user?.profile === 'student';
-  const isTeacher = isTeacherRole(userRoles) || user?.profile === 'teacher';
+    const isStudent = isStudentRole(userRoles);
+    const isTeacher = isTeacherRole(userRoles);
   
   if (isStudent || isTeacher) {
     return null; // Don't render anything - they should use their own layouts
@@ -346,9 +346,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 to="/settings"
                 onClick={closeMobile}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === '/settings'
-                    ? 'bg-secondary/10 text-secondary border-l-2 border-secondary'
-                    : 'text-muted hover:bg-secondary/5 hover:text-secondary'
+                  location.pathname.startsWith('/settings')
+                    ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                    : 'text-muted hover:bg-primary/5 hover:text-primary'
                 }`}
               >
                 <svg

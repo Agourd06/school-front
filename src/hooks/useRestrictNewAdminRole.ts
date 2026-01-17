@@ -25,7 +25,8 @@ export const useRestrictNewAdminRole = (enabled: boolean = true) => {
   const { user } = useAuth();
   const userId = user?.id ?? null;
   // Check both old profile field and new roles array for backward compatibility
-  const isAdmin = user?.profile === 'admin' || user?.roles?.includes('admin') === true;
+  // Profile field no longer exists - use only roles
+  const isAdmin = user?.roles?.includes('admin') === true;
   
   const { data: userRoles = [] } = useUserRoles(userId);
   const hasChecked = useRef(false);
@@ -69,7 +70,6 @@ export const useRestrictNewAdminRole = (enabled: boolean = true) => {
           // Get pages currently assigned to this role
           const rolePages = await rolesApi.getPages(role.id);
           const currentPageIds = new Set(rolePages.map(p => p.id));
-          const currentRoutes = new Set(rolePages.map(p => p.route));
           
           // Check if role has unexpected pages (for logging only)
           const unexpectedPages = rolePages.filter((p) => !expectedPageIds.has(p.id));

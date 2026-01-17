@@ -255,16 +255,23 @@ const StudentPresenceSection: React.FC = () => {
     [classStudentMap, t]
   );
 
-  const absentPresences = useMemo(() => {
-    return planPresences
-      .filter((presence) => presence.presence !== 'present')
-      .sort(compareByName);
-  }, [planPresences, compareByName]);
-
-  const presentPresences = useMemo(() => {
-    return planPresences
-      .filter((presence) => presence.presence === 'present')
-      .sort(compareByName);
+  // Split presences in single pass for better performance
+  const { absentPresences, presentPresences } = useMemo(() => {
+    const absent: typeof planPresences = [];
+    const present: typeof planPresences = [];
+    
+    for (const presence of planPresences) {
+      if (presence.presence === 'present') {
+        present.push(presence);
+      } else {
+        absent.push(presence);
+      }
+    }
+    
+    return {
+      absentPresences: absent.sort(compareByName),
+      presentPresences: present.sort(compareByName),
+    };
   }, [planPresences, compareByName]);
 
   const createPresenceMut = useCreateStudentPresence();

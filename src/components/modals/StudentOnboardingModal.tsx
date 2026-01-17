@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import BaseModal from './BaseModal';
+import ConfirmModal from './ConfirmModal';
 import { StudentModalProvider, useStudentModalContext } from './student/StudentModalContext';
 import { useStudentModalHandlers } from './student/useStudentModalHandlers';
 import { useDeleteStudentContact } from '../../hooks/useStudentContacts';
 import { useDeleteStudentDiplome } from '../../hooks/useStudentDiplomes';
+import { useConfirm } from '../../hooks/useConfirm';
 import StudentStep from './student/StudentStep';
 import DiplomeStep from './student/DiplomeStep';
 import ContactStep from './student/ContactStep';
@@ -61,6 +63,7 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
   // Delete mutations
   const deleteContactMut = useDeleteStudentContact();
   const deleteDiplomeMut = useDeleteStudentDiplome();
+  const { confirm, showConfirm, closeConfirm, handleConfirm } = useConfirm();
 
   const handleStudentPicture = handlers.handleStudentPicture;
 
@@ -109,20 +112,27 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
   };
 
   const handleDeleteDiplome = async (diplomeId: number) => {
-    if (window.confirm('Are you sure you want to delete this diplome?')) {
-      try {
-        await deleteDiplomeMut.mutateAsync(diplomeId);
-        refetchDiplomes();
-        refetchStudentDetails();
-        // If the deleted diplome was being edited, clear the form
-        if (currentDiplome?.id === diplomeId) {
-          setCurrentDiplome(null);
-          handlers.resetDiplomeForm();
+    showConfirm(
+      'Are you sure you want to delete this diplome?',
+      async () => {
+        try {
+          await deleteDiplomeMut.mutateAsync(diplomeId);
+          refetchDiplomes();
+          refetchStudentDetails();
+          // If the deleted diplome was being edited, clear the form
+          if (currentDiplome?.id === diplomeId) {
+            setCurrentDiplome(null);
+            handlers.resetDiplomeForm();
+          }
+        } catch (error) {
+          console.error('Failed to delete diplome:', error);
         }
-      } catch (error) {
-        console.error('Failed to delete diplome:', error);
+      },
+      {
+        confirmVariant: 'danger',
+        confirmText: 'Delete',
       }
-    }
+    );
   };
 
   // Handlers for contact "Add Another" functionality
@@ -165,20 +175,27 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
   };
 
   const handleDeleteContact = async (contactId: number) => {
-    if (window.confirm('Are you sure you want to delete this contact?')) {
-      try {
-        await deleteContactMut.mutateAsync(contactId);
-        refetchContacts();
-        refetchStudentDetails();
-        // If the deleted contact was being edited, clear the form
-        if (currentContact?.id === contactId) {
-          setCurrentContact(null);
-          handlers.resetContactForm();
+    showConfirm(
+      'Are you sure you want to delete this contact?',
+      async () => {
+        try {
+          await deleteContactMut.mutateAsync(contactId);
+          refetchContacts();
+          refetchStudentDetails();
+          // If the deleted contact was being edited, clear the form
+          if (currentContact?.id === contactId) {
+            setCurrentContact(null);
+            handlers.resetContactForm();
+          }
+        } catch (error) {
+          console.error('Failed to delete contact:', error);
         }
-      } catch (error) {
-        console.error('Failed to delete contact:', error);
+      },
+      {
+        confirmVariant: 'danger',
+        confirmText: 'Delete',
       }
-    }
+    );
   };
 
   const renderStepContent = () => {
@@ -257,6 +274,7 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
   };
 
   return (
+    <>
       <div className="space-y-6">
         <StepProgress steps={STEPS} currentIndex={stepIndex} />
 
@@ -265,6 +283,18 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
         {renderStepContent()}
       </div>
     </div>
+
+    <ConfirmModal
+      isOpen={confirm.isOpen}
+      message={confirm.message}
+      title={confirm.title}
+      confirmText={confirm.confirmText}
+      cancelText={confirm.cancelText}
+      confirmVariant={confirm.confirmVariant}
+      onConfirm={handleConfirm}
+      onCancel={closeConfirm}
+    />
+    </>
   );
 };
 

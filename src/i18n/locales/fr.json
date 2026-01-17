@@ -44,7 +44,9 @@
     "attestation": "Attestation",
     "student": "Étudiant",
     "dismiss": "Ignorer",
-    "you": "Vous"
+    "you": "Vous",
+    "upload": "Téléverser",
+    "uploading": "Téléversement en cours..."
   },
   "navbar": {
     "welcomeBack": "Bon retour",
@@ -120,7 +122,10 @@
     "resetYourPassword": "Réinitialisez votre mot de passe",
     "signingIn": "Connexion en cours...",
     "emailAddress": "Adresse e-mail",
+    "identifier": "Identifiant (adresse e-mail)",
     "emailPlaceholder": "Adresse e-mail",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
     "passwordPlaceholder": "Mot de passe",
     "forgotYourPassword": "Mot de passe oublié?",
     "rememberYourPassword": "Vous vous souvenez de votre mot de passe?",
@@ -195,15 +200,17 @@
     "generatedUsername": "Votre nom d'utilisateur sera:",
     "companyInformationDescription": "Entrez les détails de votre école ou organisation",
     "companyEmailNote": "Cet email sera également utilisé pour votre compte administrateur",
+    "legalNotice": "Conformément à la loi 09-08, vous disposez d'un droit d'accès, de rectification et d'opposition au traitement de vos données personnelles.",
     "iHaveReadAndAgreeTo": "J'ai lu et j'accepte",
-    "privacyPolicy": "la Politique de Confidentialité",
-    "termsOfUse": "les Conditions d'Utilisation",
+    "privacyPolicy": "la Politique de confidentialité",
+    "termsOfUse": "les Conditions d'utilisation",
+    "mustAcceptConditions": "Vous devez accepter les conditions pour continuer",
     "captchaLoading": "Chargement du CAPTCHA...",
     "captchaFailedToLoad": "Échec du chargement du CAPTCHA",
     "captchaInstruction": "Entrez les caractères affichés ci-dessus",
     "captchaEnterAnswer": "Veuillez entrer les caractères affichés ci-dessus",
     "captchaAnswer": "Réponse CAPTCHA",
-    "captchaRefresh": "Actualiser le CAPTCHA",
+    "captchaRefresh": "Actualiser",
     "captchaVerifying": "Vérification...",
     "captchaVerify": "Vérifier",
     "captchaVerificationFailed": "Échec de la vérification du CAPTCHA",
@@ -720,6 +727,7 @@
     "cannotModifyOwnRolesDescription": "Vous ne pouvez pas modifier les rôles de votre propre compte. Veuillez demander à un autre administrateur de gérer vos rôles.",
     "cannotModifyOwnRolePagesDescription": "Vous ne pouvez pas modifier les pages de votre propre rôle. Veuillez demander à un autre administrateur de gérer ce rôle.",
     "roleAssignedToUser": "Rôle attribué avec succès",
+    "confirmAssignAdminRole": "Êtes-vous sûr de vouloir attribuer le rôle \"Admin\" à cet utilisateur ? Cela lui donnera un accès administratif complet.",
     "roleRemovedFromUser": "Rôle retiré avec succès",
     "restrictedRolesInfo": "Note : Rôles Enseignant, Étudiant et Parent",
     "restrictedRolesInfoDescription": "Les rôles enseignant, étudiant et parent ont leurs propres tableaux de bord dédiés et ne peuvent pas se voir attribuer des routes de paramètres. Ils sont automatiquement exclus de cette page."
@@ -1271,7 +1279,15 @@
     "editLinkType": "Modifier le type de lien",
     "addLinkType": "Ajouter un type de lien",
     "editPlanningSessionType": "Modifier le type de session de planification",
-    "addPlanningSessionType": "Ajouter un type de session de planification"
+    "addPlanningSessionType": "Ajouter un type de session de planification",
+    "company": "Entreprise",
+    "companyInfo": "Informations de l'entreprise",
+    "companyName": "Nom de l'entreprise",
+    "companyEmail": "Email de l'entreprise",
+    "companyPhone": "Téléphone de l'entreprise",
+    "companyLogo": "Logo de l'entreprise",
+    "logoHint": "Formats autorisés : JPEG, PNG, GIF, WebP. Taille max : 2MB",
+    "companyUpdated": "Entreprise mise à jour avec succès"
   }
 }
 

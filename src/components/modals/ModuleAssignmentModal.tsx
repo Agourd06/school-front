@@ -3,6 +3,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import BaseModal from "./BaseModal";
 import DescriptionModal from "./DescriptionModal";
 import DeleteModal from "./DeleteModal";
+import AlertModal from "./AlertModal";
 import { useModuleAssignments } from "../../hooks/useModuleAssignments";
 import {
   useAddModuleToCourse,
@@ -12,6 +13,7 @@ import {
 import { useUpdateModuleCourse } from "../../hooks/useModuleCourse";
 import { useModule } from "../../hooks/useModules";
 import { useCourse } from "../../hooks/useCourses";
+import { useAlert } from "../../hooks/useAlert";
 import { DeleteButton } from "../ui";
 import type { Module as ModuleEntity } from "../../api/module";
 
@@ -79,6 +81,9 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState<AssignmentModule | null>(null);
+
+  // Alert modal
+  const { alert, showAlert, closeAlert } = useAlert();
 
   // Check if any mutation is pending or if we're currently assigning
   const isAnyMutationPending =
@@ -200,9 +205,9 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
           error?.message ||
           "Failed to add module to course";
         if (error?.response?.status === 404) {
-          alert("Relationship not found. Please refresh and try again.");
+          showAlert("Relationship not found. Please refresh and try again.", "error");
         } else {
-          alert(`Error: ${errorMessage}`);
+          showAlert(`Error: ${errorMessage}`, "error");
         }
       } finally {
         setLoadingItemId(null);
@@ -273,7 +278,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
         error?.response?.data?.message ||
         error?.message ||
         "Failed to remove module from course";
-      alert(`Error: ${errorMessage}`);
+      showAlert(`Error: ${errorMessage}`, "error");
     } finally {
       setLoadingItemId(null);
     }
@@ -394,7 +399,7 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
       // Rollback on error - refetch to get the correct state
       await refetchAssignments();
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to update module assignment";
-      alert(`Error: ${errorMessage}`);
+      showAlert(`Error: ${errorMessage}`, "error");
     }
   };
 
@@ -853,6 +858,15 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         isLoading={removeModuleFromCourse.isPending || loadingItemId !== null}
+      />
+
+      <AlertModal
+        isOpen={alert.isOpen}
+        message={alert.message}
+        type={alert.type}
+        title={alert.title}
+        confirmText={alert.confirmText}
+        onClose={closeAlert}
       />
     </BaseModal>
   );

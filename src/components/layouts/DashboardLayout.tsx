@@ -112,7 +112,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   // Double-check: Ensure we NEVER render Sidebar for students/teachers
   // This check happens before rendering to prevent any sidebar flash
-  const shouldRenderSidebar = user && user.profile !== 'student' && user.profile !== 'teacher';
+  // userRoles, isStudent, and isTeacher are already declared above (lines 47, 62-63)
+  const shouldRenderSidebar = user && !isStudent && !isTeacher;
 
   return (
     <SchoolYearProvider>

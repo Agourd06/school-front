@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
+import ConfirmModal from './ConfirmModal';
 import { useUserRoles, useAssignRoleToUser, useRemoveRoleFromUser } from '../../hooks/useUserRoles';
 import { useRoles } from '../../hooks/useRoles';
 import { useAuth } from '../../hooks/useAuth';
+import { useConfirm } from '../../hooks/useConfirm';
 import { Button } from '../ui';
 import type { User } from '../../api/users';
 import type { Role } from '../../api/roles';
@@ -30,6 +32,7 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [processingRoleId, setProcessingRoleId] = useState<number | null>(null);
+  const { confirm, showConfirm, closeConfirm, handleConfirm } = useConfirm();
 
   const assignedRoleIds = new Set(userRoles.map((r: Role) => r.id));
   
@@ -49,22 +52,8 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
     }
   }, [alert]);
 
-  const handleToggleRole = async (role: Role) => {
+  const performRoleAction = async (role: Role) => {
     if (!userId) return;
-    
-    // Prevent managing own roles
-    if (isManagingSelf) {
-      setAlert({ 
-        type: 'error', 
-        message: t('messages.cannotModifyOwnRoles') || 'You cannot modify roles for your own account' 
-      });
-      return;
-    }
-    
-    // Prevent multiple simultaneous assignments
-    if (loading || processingRoleId !== null) {
-      return;
-    }
     
     setLoading(true);
     setProcessingRoleId(role.id);
@@ -86,6 +75,43 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
       setLoading(false);
       setProcessingRoleId(null);
     }
+  };
+
+  const handleToggleRole = async (role: Role) => {
+    if (!userId) return;
+    
+    // Prevent managing own roles
+    if (isManagingSelf) {
+      setAlert({ 
+        type: 'error', 
+        message: t('messages.cannotModifyOwnRoles') || 'You cannot modify roles for your own account' 
+      });
+      return;
+    }
+    
+    // Prevent multiple simultaneous assignments
+    if (loading || processingRoleId !== null) {
+      return;
+    }
+    
+    // Check if assigning admin role - show confirmation modal
+    const isAdminRole = role.code?.toLowerCase() === 'admin';
+    if (!assignedRoleIds.has(role.id) && isAdminRole) {
+      const confirmMessage = t('messages.confirmAssignAdminRole') || 
+        `Are you sure you want to assign the "Admin" role to this user? This will give them full administrative access.`;
+      
+      showConfirm(confirmMessage, () => {
+        performRoleAction(role);
+      }, {
+        title: t('common.confirm') || 'Confirm',
+        confirmText: t('common.assign') || 'Assign',
+        cancelText: t('common.cancel') || 'Cancel',
+      });
+      return;
+    }
+    
+    // No confirmation needed, perform action directly
+    await performRoleAction(role);
   };
 
   if (!user) return null;
@@ -193,6 +219,17 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
           </Button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirm.isOpen}
+        message={confirm.message}
+        title={confirm.title}
+        confirmText={confirm.confirmText}
+        cancelText={confirm.cancelText}
+        confirmVariant={confirm.confirmVariant}
+        onConfirm={handleConfirm}
+        onCancel={closeConfirm}
+      />
     </BaseModal>
   );
 };

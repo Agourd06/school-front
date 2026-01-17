@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -15,6 +16,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(persistentError); // Initialize from persistent storage
   const { login, isLoading } = useAuth();
   const formRef = useRef<HTMLFormElement>(null);
@@ -131,7 +133,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
         <div className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-heading">
-              {t('auth.emailAddress')}
+              {t('auth.identifier')}
             </label>
             <input
               id="email"
@@ -149,22 +151,36 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, showLinks = true }) =>
           </div>
           
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-heading">
               {t('auth.password')}
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-              placeholder={t('auth.passwordPlaceholder')}
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                // Don't clear error on input change - let user see the error
-              }}
-            />
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                className="mt-1 appearance-none relative block w-full px-3 py-2 pr-10 border border-primary placeholder-muted text-heading rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder={t('auth.passwordPlaceholder')}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  // Don't clear error on input change - let user see the error
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted hover:text-heading transition-colors"
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

@@ -61,112 +61,75 @@ const StudentSchedulePage: React.FC = () => {
     };
   }, [allSessions]);
 
-  // Filter sessions
+  // Filter sessions - optimized single pass filtering
   const filteredSessions = useMemo(() => {
-    let filtered = [...allSessions];
-
-    // View filter (all/upcoming/past)
-    // Check both date AND time for accurate past/upcoming status
-    const now = new Date();
+    if (!allSessions.length) return [];
     
-    if (viewFilter === 'upcoming') {
-      filtered = filtered.filter((session) => {
-        if (!session.date_day) return false;
+    const now = new Date();
+    const fromDate = dateFrom ? new Date(dateFrom) : null;
+    if (fromDate) fromDate.setHours(0, 0, 0, 0);
+    
+    const toDate = dateTo ? new Date(dateTo) : null;
+    if (toDate) toDate.setHours(23, 59, 59, 999);
+    
+    // Helper to check if session is upcoming/past
+    const isSessionUpcoming = (session: PlanningStudentEntry): boolean => {
+      if (!session.date_day) return false;
+      const sessionDate = new Date(session.date_day);
+      sessionDate.setHours(0, 0, 0, 0);
+      
+      if (sessionDate > now) return true;
+      if (sessionDate.toDateString() !== now.toDateString()) return false;
+      
+      const timeStr = session.hour_end || session.hour_start;
+      if (!timeStr) return false;
+      
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const sessionTime = new Date(sessionDate);
+      sessionTime.setHours(hours, minutes || 0, 0, 0);
+      return sessionTime > now;
+    };
+    
+    const isSessionPast = (session: PlanningStudentEntry): boolean => {
+      if (!session.date_day) return false;
+      const sessionDate = new Date(session.date_day);
+      sessionDate.setHours(0, 0, 0, 0);
+      
+      if (sessionDate < now) return true;
+      if (sessionDate.toDateString() !== now.toDateString()) return false;
+      
+      const timeStr = session.hour_end || session.hour_start;
+      if (timeStr) {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const sessionTime = new Date(sessionDate);
+        sessionTime.setHours(hours, minutes || 0, 0, 0);
+        return sessionTime <= now;
+      }
+      return true;
+    };
+    
+    // Single pass filter with all conditions
+    return allSessions.filter((session) => {
+      // View filter
+      if (viewFilter === 'upcoming' && !isSessionUpcoming(session)) return false;
+      if (viewFilter === 'past' && !isSessionPast(session)) return false;
+      
+      // Date range filters
+      if (session.date_day) {
         const sessionDate = new Date(session.date_day);
         sessionDate.setHours(0, 0, 0, 0);
-        
-        // If session is in the future (different day), it's upcoming
-        if (sessionDate > now) return true;
-        
-        // If session is today, check the time
-        if (sessionDate.toDateString() === now.toDateString()) {
-          if (session.hour_end) {
-            // Parse time (HH:mm format)
-            const [hours, minutes] = session.hour_end.split(':').map(Number);
-            const sessionEndTime = new Date(sessionDate);
-            sessionEndTime.setHours(hours, minutes || 0, 0, 0);
-            return sessionEndTime > now; // Upcoming if end time hasn't passed
-          } else if (session.hour_start) {
-            // If no end time, check start time
-            const [hours, minutes] = session.hour_start.split(':').map(Number);
-            const sessionStartTime = new Date(sessionDate);
-            sessionStartTime.setHours(hours, minutes || 0, 0, 0);
-            return sessionStartTime > now; // Upcoming if start time hasn't passed
-          }
-          // If no time info, consider it past if it's today
-          return false;
-        }
-        
-        // Past date
+        if (fromDate && sessionDate < fromDate) return false;
+        if (toDate && sessionDate > toDate) return false;
+      } else if (fromDate || toDate) {
         return false;
-      });
-    } else if (viewFilter === 'past') {
-      filtered = filtered.filter((session) => {
-        if (!session.date_day) return false;
-        const sessionDate = new Date(session.date_day);
-        sessionDate.setHours(0, 0, 0, 0);
-        
-        // If session is in the past (different day), it's past
-        if (sessionDate < now) return true;
-        
-        // If session is today, check the time
-        if (sessionDate.toDateString() === now.toDateString()) {
-          if (session.hour_end) {
-            // Parse time (HH:mm format)
-            const [hours, minutes] = session.hour_end.split(':').map(Number);
-            const sessionEndTime = new Date(sessionDate);
-            sessionEndTime.setHours(hours, minutes || 0, 0, 0);
-            return sessionEndTime <= now; // Past if end time has passed
-          } else if (session.hour_start) {
-            // If no end time, check start time
-            const [hours, minutes] = session.hour_start.split(':').map(Number);
-            const sessionStartTime = new Date(sessionDate);
-            sessionStartTime.setHours(hours, minutes || 0, 0, 0);
-            return sessionStartTime <= now; // Past if start time has passed
-          }
-          // If no time info, consider it past if it's today
-          return true;
-        }
-        
-        // Future date
-        return false;
-      });
-    }
-
-    // Date range filter
-    if (dateFrom) {
-      const fromDate = new Date(dateFrom);
-      fromDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter((session) => {
-        if (!session.date_day) return false;
-        const sessionDate = new Date(session.date_day);
-        sessionDate.setHours(0, 0, 0, 0);
-        return sessionDate >= fromDate;
-      });
-    }
-
-    if (dateTo) {
-      const toDate = new Date(dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((session) => {
-        if (!session.date_day) return false;
-        const sessionDate = new Date(session.date_day);
-        sessionDate.setHours(0, 0, 0, 0);
-        return sessionDate <= toDate;
-      });
-    }
-
-    // Course filter
-    if (selectedCourse && selectedCourse !== '') {
-      filtered = filtered.filter((session) => session.course?.id === selectedCourse);
-    }
-
-    // Teacher filter
-    if (selectedTeacher && selectedTeacher !== '') {
-      filtered = filtered.filter((session) => session.teacher?.id === selectedTeacher);
-    }
-
-    return filtered;
+      }
+      
+      // Course and teacher filters
+      if (selectedCourse && session.course?.id !== selectedCourse) return false;
+      if (selectedTeacher && session.teacher?.id !== selectedTeacher) return false;
+      
+      return true;
+    });
   }, [allSessions, viewFilter, dateFrom, dateTo, selectedCourse, selectedTeacher]);
 
   // Group sessions by date

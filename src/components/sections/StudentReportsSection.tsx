@@ -370,11 +370,18 @@ const StudentReportsSection: React.FC = () => {
   }, [dashboardData?.presences, studentLookup, courseMap, teacherMap]);
 
   const courseRows = useMemo<CoursePresenceRow[]>(() => {
+    if (!selectedStudentFilter && !selectedCourseFilter && !selectedTeacherFilter) {
+      return allCourseRows;
+    }
+    
+    const studentId = selectedStudentFilter ? Number(selectedStudentFilter) : null;
+    const courseId = selectedCourseFilter ? Number(selectedCourseFilter) : null;
+    const teacherId = selectedTeacherFilter ? Number(selectedTeacherFilter) : null;
+    
     return allCourseRows.filter((row) => {
-      if (selectedStudentFilter && row.studentId !== Number(selectedStudentFilter)) return false;
-      if (selectedCourseFilter && row.courseId !== Number(selectedCourseFilter)) return false;
-      if (selectedTeacherFilter && row.teacherId !== Number(selectedTeacherFilter)) return false;
-      return true;
+      return (!studentId || row.studentId === studentId) &&
+             (!courseId || row.courseId === courseId) &&
+             (!teacherId || row.teacherId === teacherId);
     });
   }, [allCourseRows, selectedStudentFilter, selectedCourseFilter, selectedTeacherFilter]);
 

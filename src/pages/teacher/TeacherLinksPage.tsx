@@ -6,6 +6,8 @@ import { useClassStudents } from '../../hooks/useClassStudents';
 import { useStudents } from '../../hooks/useStudents';
 import { Button, Input } from '../../components/ui';
 import { useCreateStudentLinkType } from '../../hooks/useStudentLinkTypes';
+import { useAlert } from '../../hooks/useAlert';
+import AlertModal from '../../components/modals/AlertModal';
 
 const TeacherLinksPage: React.FC = () => {
   const { user } = useAuth();
@@ -37,6 +39,7 @@ const TeacherLinksPage: React.FC = () => {
   });
 
   const createLinkMut = useCreateStudentLinkType();
+  const { alert, showAlert, closeAlert } = useAlert();
 
   const classStudents = classStudentsData?.data || [];
   const allStudents = studentsData?.data || [];
@@ -48,7 +51,7 @@ const TeacherLinksPage: React.FC = () => {
 
   const handleShareLink = async () => {
     if (!selectedStudent || !link || !title) {
-      alert('Please fill in all required fields');
+      showAlert('Please fill in all required fields', 'warning');
       return;
     }
 
@@ -60,13 +63,13 @@ const TeacherLinksPage: React.FC = () => {
         description: description || undefined,
         status: 2,
       });
-      alert('Link shared successfully!');
+      showAlert('Link shared successfully!', 'success');
       setLink('');
       setTitle('');
       setDescription('');
       setSelectedStudent(null);
     } catch (error) {
-      alert('Failed to share link. Please try again.');
+      showAlert('Failed to share link. Please try again.', 'error');
     }
   };
 
@@ -160,6 +163,15 @@ const TeacherLinksPage: React.FC = () => {
           {createLinkMut.isPending ? 'Sharing...' : 'Share Link'}
         </Button>
       </div>
+
+      <AlertModal
+        isOpen={alert.isOpen}
+        message={alert.message}
+        type={alert.type}
+        title={alert.title}
+        confirmText={alert.confirmText}
+        onClose={closeAlert}
+      />
     </div>
   );
 };

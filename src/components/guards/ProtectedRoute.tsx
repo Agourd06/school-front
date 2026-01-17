@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { hasDashboardAccess } from '../../types/profile';
 import { isStudentRole, isTeacherRole } from '../../utils/permissions';
 
 // Stable redirect component to prevent infinite loops
@@ -239,16 +238,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
   
   // Additional check: verify user has dashboard access if required
-  // IMPORTANT: Check roles array first (new system), then profile (backwards compatibility)
-  // Dashboard access is granted if user has 'admin' or 'support' role
+  // IMPORTANT: Use ONLY roles array - profile field no longer exists
+  // Dashboard access is granted if user has 'admin' or 'support' role, or any dashboard role
   if (requireDashboardAccess) {
     const userRoles = Array.isArray(authenticatedUser.roles) ? authenticatedUser.roles : [];
     const hasAdminRole = userRoles.includes('admin');
     const hasSupportRole = userRoles.includes('support');
     
-    // Check roles first (new system), then fallback to profile (backwards compatibility)
-    const hasDashboard = hasAdminRole || hasSupportRole || 
-      (authenticatedUser.profile ? hasDashboardAccess(authenticatedUser.profile) : false);
+    // Define dashboard roles
+    const dashboardRoles = ['admin', 'finance', 'direction', 'scholarity', 'support'];
+    const hasDashboardRole = userRoles.some(role => 
+      dashboardRoles.includes(role.toLowerCase()) ||
+      // Custom roles (not student/teacher/parent) are also dashboard roles
+      (!['student', 'teacher', 'parent', 'parents'].includes(role.toLowerCase()))
+    );
+    
+    // Check if user has any dashboard role
+    const hasDashboard = hasAdminRole || hasSupportRole || hasDashboardRole;
     
     if (!hasDashboard) {
       return <StableRedirect to={authRedirect} />;

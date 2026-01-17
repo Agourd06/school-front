@@ -38,6 +38,10 @@ const RegistrationPage: React.FC = () => {
   const [captchaToken, setCaptchaToken] = useState<string>('');
   const [captchaAnswer, setCaptchaAnswer] = useState<string | undefined>(undefined);
   const [captchaError, setCaptchaError] = useState<string>('');
+  const [consentErrors, setConsentErrors] = useState<{
+    privacyPolicy?: string;
+    termsOfUse?: string;
+  }>({});
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'fr' : 'en';
@@ -68,9 +72,26 @@ const RegistrationPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setConsentErrors({});
     setLoading(true);
 
     try {
+      // Validate consent checkboxes
+      const newConsentErrors: { privacyPolicy?: string; termsOfUse?: string } = {};
+      if (!formData.acceptedPrivacyPolicy) {
+        newConsentErrors.privacyPolicy = t('registration.mustAcceptConditions');
+      }
+      if (!formData.acceptedTermsOfUse) {
+        newConsentErrors.termsOfUse = t('registration.mustAcceptConditions');
+      }
+      
+      if (Object.keys(newConsentErrors).length > 0) {
+        setConsentErrors(newConsentErrors);
+        setLoading(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
       // Step 1: Create company
       // Validate CAPTCHA before proceeding
       if (!captchaToken || !captchaToken.trim() || captchaAnswer === undefined || !captchaAnswer.trim()) {
@@ -118,6 +139,9 @@ const RegistrationPage: React.FC = () => {
         username: generatedUsername,
         email: formData.companyEmail.trim(), // Use company email as user email
         company_id: company.id, // Required: Link user to the created company
+        phone: formData.companyPhone.trim() || undefined, // Use company phone for admin user
+        privacyPolicyAccepted: formData.acceptedPrivacyPolicy, // Privacy policy consent
+        termsAccepted: formData.acceptedTermsOfUse, // Terms of use consent
         // CAPTCHA fields are NOT included - already verified during company creation
         // Backend should skip CAPTCHA verification for first user (userCountForCompany === 0)
         // DO NOT send: profile (removed), role_ids (not accepted), password (email-based)
@@ -234,6 +258,7 @@ const RegistrationPage: React.FC = () => {
               captchaAnswer={captchaAnswer}
               onCaptchaVerify={handleCaptchaVerify}
               captchaError={captchaError}
+              consentErrors={consentErrors}
             />
           )}
 

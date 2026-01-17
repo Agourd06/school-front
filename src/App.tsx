@@ -57,6 +57,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ColorsSettingsPage = lazy(() => import('./pages/settings/ColorsSettingsPage'));
 const PageAccessSettingsPage = lazy(() => import('./pages/settings/PageAccessSettingsPage'));
 const RolesSettingsPage = lazy(() => import('./pages/settings/RolesSettingsPage'));
+const CompanySettingsPage = lazy(() => import('./pages/settings/CompanySettingsPage'));
 const TypesSettings = lazy(() => import('./components/settings/TypesSettings'));
 const LinkTypesPage = lazy(() => import('./pages/settings/types/LinkTypesPage'));
 const ClassroomTypesPage = lazy(() => import('./pages/settings/types/ClassroomTypesPage'));
@@ -105,8 +106,8 @@ const App: React.FC = () => {
 
   // Initialize pages in database on app startup (only for admin users)
   // Pages are global and shared across all companies
-  // Check both old profile field and new roles array for backward compatibility
-  const isAdmin = user?.profile === 'admin' || user?.roles?.includes('admin') === true;
+  // Check roles array for admin (profile field no longer exists)
+  const isAdmin = user?.roles?.includes('admin') === true;
   usePagesInitialization(isAdmin, true);
   
   // Safety net: Restrict new admin users to only /settings and /users pages
@@ -120,17 +121,8 @@ const App: React.FC = () => {
   const allowedPagesKey = user?.allowedPages ? JSON.stringify([...user.allowedPages].sort()) : '';
   const rolesKey = user?.roles ? JSON.stringify([...user.roles].sort()) : '';
   const defaultRoute = useMemo(() => {
-    const route = getDefaultRoute(user);
-    // Debug logging (remove in production)
-    if (import.meta.env.DEV) {
-      console.log('[App] Default route calculation:', {
-        profile: user?.profile,
-        roles: user?.roles,
-        defaultRoute: route,
-      });
-    }
-    return route;
-  }, [user?.profile, rolesKey, allowedPagesKey]);
+    return getDefaultRoute(user);
+  }, [rolesKey, allowedPagesKey]);
 
   if (isLoading) {
     return (
@@ -659,6 +651,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute requiredPage="/settings/roles">
                 <Suspense fallback={<PageLoadingFallback />}><RolesSettingsPage /></Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="company"
+            element={
+              <ProtectedRoute requiredPage="/settings/company">
+                <Suspense fallback={<PageLoadingFallback />}><CompanySettingsPage /></Suspense>
               </ProtectedRoute>
             }
           />

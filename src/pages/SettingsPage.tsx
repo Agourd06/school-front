@@ -5,7 +5,7 @@ import { PageHeader } from '../components/ui';
 import { Settings } from 'lucide-react';
 import { usePermissions } from '../utils/permissions';
 
-type SettingsTab = 'colors' | 'access' | 'types' | 'roles';
+type SettingsTab = 'colors' | 'access' | 'types' | 'roles' | 'company';
 
 const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -19,6 +19,7 @@ const SettingsPage: React.FC = () => {
     if (path.startsWith('/settings/types')) return 'types';
     if (path === '/settings/access' || path === '/settings/page-access') return 'access';
     if (path === '/settings/roles') return 'roles';
+    if (path === '/settings/company') return 'company';
     if (path === '/settings/colors' || path === '/settings') return 'colors';
     return 'colors'; // default
   };
@@ -31,17 +32,6 @@ const SettingsPage: React.FC = () => {
     const hasClassroomAccess = hasPageAccess('/settings/types/classroom');
     const hasPlanningAccess = hasPageAccess('/settings/types/planning');
     const hasTypesAccess = hasLinkAccess || hasClassroomAccess || hasPlanningAccess;
-    
-    // Debug logging (remove in production)
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[SettingsPage] Types access check:', {
-        hasLinkAccess,
-        hasClassroomAccess,
-        hasPlanningAccess,
-        hasTypesAccess,
-        allowedPages,
-      });
-    }
     
     return [
       {
@@ -68,6 +58,12 @@ const SettingsPage: React.FC = () => {
         path: '/settings/roles',
         isAllowed: hasPageAccess('/settings/roles'),
       },
+      {
+        id: 'company' as const,
+        label: t('settings.company') || 'Company',
+        path: '/settings/company',
+        isAllowed: hasPageAccess('/settings/company'),
+      },
     ];
   }, [hasPageAccess, t, allowedPages]);
 
@@ -83,7 +79,6 @@ const SettingsPage: React.FC = () => {
 
     // CRITICAL: If user is on /settings/types but doesn't have access, redirect immediately
     if (location.pathname.startsWith('/settings/types') && !allowedTabs.some((tab) => tab.id === 'types')) {
-      console.warn('[SettingsPage] User attempted to access /settings/types without permission. Redirecting...');
       navigate(allowedTabs[0].path, { replace: true });
       return;
     }
