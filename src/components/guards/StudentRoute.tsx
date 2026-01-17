@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { hasDashboardAccess } from '../../types/profile';
+import { getDefaultRoute } from '../../utils/permissions';
 
 interface StudentRouteProps {
   children: React.ReactNode;
@@ -57,7 +57,6 @@ const StudentRoute: React.FC<StudentRouteProps> = ({
   if (!isStudent) {
     // Redirect non-students to their default route (profile page for dashboard users)
     // Use getDefaultRoute to determine the correct destination
-    const { getDefaultRoute } = require('../../utils/permissions');
     const defaultRoute = getDefaultRoute(user);
     return <Navigate to={defaultRoute} replace />;
   }

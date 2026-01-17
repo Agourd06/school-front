@@ -69,7 +69,6 @@ export const useRestrictNewAdminRole = (enabled: boolean = true) => {
           // Get pages currently assigned to this role
           const rolePages = await rolesApi.getPages(role.id);
           const currentPageIds = new Set(rolePages.map(p => p.id));
-          const currentRoutes = new Set(rolePages.map(p => p.route));
           
           // Check if role has unexpected pages (for logging only)
           const unexpectedPages = rolePages.filter((p) => !expectedPageIds.has(p.id));

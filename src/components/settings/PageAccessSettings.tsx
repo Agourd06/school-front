@@ -10,7 +10,6 @@ import { useAuth } from '../../hooks/useAuth';
 import type { Page } from '../../api/pages';
 import Button from '../ui/Button';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { rolesApi } from '../../api/roles';
 import { Search, FileText, ArrowRight, ArrowLeft, CheckCircle2, Circle, Loader2 } from 'lucide-react';
 
 // Roles that have their own dashboards and cannot be assigned parameter routes
@@ -28,7 +27,6 @@ const PageAccessSettings: React.FC = () => {
   // Local state for drag-and-drop
   const [assignedPages, setAssignedPages] = useState<Page[]>([]);
   const [unassignedPages, setUnassignedPages] = useState<Page[]>([]);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   
   // Search states for each panel
@@ -91,7 +89,6 @@ const PageAccessSettings: React.FC = () => {
         // Clear state when no role is selected
         setAssignedPages([]);
         setUnassignedPages([]);
-        setHasUnsavedChanges(false);
       }
       return;
     }
@@ -104,7 +101,6 @@ const PageAccessSettings: React.FC = () => {
       
       setAssignedPages(assigned);
       setUnassignedPages(unassigned);
-      setHasUnsavedChanges(false);
     }
   }, [selectedRoleId, rolePages, allPages, pagesLoading, rolePagesLoading]);
 
@@ -117,7 +113,6 @@ const PageAccessSettings: React.FC = () => {
     if (assignPageMut.isSuccess || removePageMut.isSuccess) {
       setSuccess(true);
       setError(null);
-      setHasUnsavedChanges(false);
       refetchRolePages();
       queryClient.invalidateQueries({ queryKey: ['roles', 'all-pages'] });
       const timer = setTimeout(() => setSuccess(false), 3000);
@@ -143,7 +138,6 @@ const PageAccessSettings: React.FC = () => {
     setSelectedRoleId(newRoleId);
     setUnassignedSearch('');
     setAssignedSearch('');
-    setHasUnsavedChanges(false);
     setTimeout(() => setIsLoadingRole(false), 100);
   };
 
@@ -180,14 +174,12 @@ const PageAccessSettings: React.FC = () => {
         // Optimistic update
         setUnassignedPages(prev => prev.filter(p => p.id !== pageId));
         setAssignedPages(prev => [...prev, page]);
-        setHasUnsavedChanges(false);
       } else if (source.droppableId === 'assigned' && destination.droppableId === 'unassigned') {
         // Remove page
         await removePageMut.mutateAsync({ roleId: selectedRoleId, pageId });
         // Optimistic update
         setAssignedPages(prev => prev.filter(p => p.id !== pageId));
         setUnassignedPages(prev => [...prev, page]);
-        setHasUnsavedChanges(false);
       }
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || t('settings.failedToUpdateAccess');
@@ -212,7 +204,6 @@ const PageAccessSettings: React.FC = () => {
         )
       );
       refetchRolePages();
-      setHasUnsavedChanges(false);
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || t('settings.failedToUpdateAccess');
       setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
@@ -234,7 +225,6 @@ const PageAccessSettings: React.FC = () => {
         )
       );
       refetchRolePages();
-      setHasUnsavedChanges(false);
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || t('settings.failedToUpdateAccess');
       setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
