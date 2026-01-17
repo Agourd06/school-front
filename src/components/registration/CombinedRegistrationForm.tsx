@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { countriesApi } from '../../api/countries';
 import Captcha from './Captcha';
+import PhoneInput from '../inputs/PhoneInput';
 
 export interface CombinedRegistrationFormData {
   // Company fields only
@@ -145,16 +146,13 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
         </div>
 
         <div>
-          <label htmlFor="company-phone" className="block text-sm font-semibold text-heading mb-2">
-            {t('registration.phoneNumber')}
-          </label>
-          <input
-            id="company-phone"
-            type="tel"
+          <PhoneInput
+            label={t('registration.phoneNumber')}
+            name="companyPhone"
             value={data.companyPhone}
             onChange={handleChange('companyPhone')}
-            className="w-full rounded-xl border border-primary/60 px-4 py-3 text-sm text-heading placeholder:text-muted/60 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all duration-200 bg-white hover:border-primary"
             placeholder={t('registration.phonePlaceholder')}
+            className="w-full"
           />
         </div>
 
