@@ -1195,6 +1195,7 @@
     "pageAccess": "Accès aux pages",
     "types": "Types",
     "roles": "Rôles",
+    "users": "Utilisateurs",
     "linkTypes": "Types de liens",
     "classRoomTypes": "Types de salles de classe",
     "planningSessionTypes": "Types de sessions de planification",
@@ -1288,6 +1289,136 @@
     "companyLogo": "Logo de l'entreprise",
     "logoHint": "Formats autorisés : JPEG, PNG, GIF, WebP. Taille max : 2MB",
     "companyUpdated": "Entreprise mise à jour avec succès"
+  },
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "lastUpdated": "Dernière mise à jour :",
+    "introduction": {
+      "title": "1. Introduction",
+      "paragraph1": "Cette Politique de Confidentialité explique comment nous collectons, utilisons et protégeons vos données personnelles conformément à la",
+      "law": "Loi marocaine 09-08",
+      "paragraph1Cont": "relative à la protection des personnes physiques à l'égard du traitement des données à caractère personnel.",
+      "paragraph2": "En utilisant notre site web et nos services, vous reconnaissez avoir lu, compris et accepté d'être lié par cette Politique de Confidentialité."
+    },
+    "dataCollection": {
+      "title": "2. Données que Nous Collectons",
+      "intro": "Nous pouvons collecter les types d'informations personnelles suivants :",
+      "identityInfo": "Informations d'Identité :",
+      "identityInfoDesc": "Prénom et nom de famille",
+      "contactInfo": "Informations de Contact :",
+      "contactInfoDesc": "Adresse e-mail et numéro de téléphone",
+      "accountInfo": "Informations de Compte :",
+      "accountInfoDesc": "Nom d'utilisateur, identifiants de connexion et données d'authentification",
+      "technicalData": "Données Techniques :",
+      "technicalDataDesc": "Adresse IP, type de navigateur, informations sur l'appareil et statistiques d'utilisation",
+      "usageData": "Données d'Utilisation :",
+      "usageDataDesc": "Informations sur la façon dont vous interagissez avec notre plateforme et nos services"
+    },
+    "dataUsage": {
+      "title": "3. Pourquoi Nous Utilisons Vos Données",
+      "intro": "Vos données personnelles sont utilisées aux fins suivantes :",
+      "purpose1": "Pour créer et gérer votre compte utilisateur",
+      "purpose2": "Pour vous fournir l'accès à notre plateforme éducative et à nos services",
+      "purpose3": "Pour communiquer des informations importantes, des mises à jour et des notifications",
+      "purpose4": "Pour améliorer la fonctionnalité, l'expérience utilisateur et les services de notre plateforme",
+      "purpose5": "Pour assurer la sécurité et l'intégrité de notre plateforme",
+      "purpose6": "Pour se conformer aux obligations légales et aux exigences réglementaires"
+    },
+    "dataProtection": {
+      "title": "4. Protection des Données",
+      "paragraph1": "Nous nous engageons à protéger vos données personnelles et à préserver votre vie privée. Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour assurer la sécurité et la confidentialité de vos informations.",
+      "important": "Important :",
+      "importantText": "Vos données personnelles ne sont jamais vendues, louées ou partagées avec des tiers à des fins marketing sans votre consentement explicite."
+    },
+    "dataSharing": {
+      "title": "5. Partage des Données",
+      "intro": "Nous ne pouvons partager vos données personnelles que dans les circonstances suivantes :",
+      "circumstance1": "Avec des prestataires de services de confiance qui nous aident à exploiter notre plateforme (sous des accords de confidentialité stricts)",
+      "circumstance2": "Lorsque requis par la loi, une procédure judiciaire ou des autorités gouvernementales",
+      "circumstance3": "Pour protéger nos droits, notre propriété ou notre sécurité, ou ceux de nos utilisateurs",
+      "circumstance4": "Dans le cadre d'un transfert d'entreprise, d'une fusion ou d'une acquisition (avec préavis)"
+    },
+    "yourRights": {
+      "title": "6. Vos Droits (Loi 09-08)",
+      "intro": "Conformément à la",
+      "law": "Loi marocaine 09-08",
+      "introCont": "vous disposez des droits suivants concernant vos données personnelles :",
+      "rightAccess": "Droit d'Accès :",
+      "rightAccessDesc": "Vous pouvez demander l'accès à vos données personnelles que nous détenons",
+      "rightRectification": "Droit de Rectification :",
+      "rightRectificationDesc": "Vous pouvez demander la correction de données inexactes ou incomplètes",
+      "rightOpposition": "Droit d'Opposition :",
+      "rightOppositionDesc": "Vous pouvez vous opposer au traitement de vos données personnelles",
+      "rightDeletion": "Droit de Suppression :",
+      "rightDeletionDesc": "Vous pouvez demander la suppression de vos données personnelles dans certaines circonstances",
+      "contactTitle": "Pour exercer vos droits, veuillez nous contacter à :"
+    },
+    "policyChanges": {
+      "title": "7. Modifications de la Politique",
+      "paragraph1": "Nous nous réservons le droit de mettre à jour ou de modifier cette Politique de Confidentialité à tout moment pour refléter les changements dans nos pratiques, notre technologie, les exigences légales ou d'autres facteurs. Toute modification sera publiée sur cette page avec une date de \"Dernière mise à jour\" mise à jour.",
+      "paragraph2": "Nous vous encourageons à consulter périodiquement cette Politique de Confidentialité pour rester informé de la façon dont nous protégeons vos informations."
+    },
+    "footer": "Si vous avez des questions concernant cette Politique de Confidentialité, veuillez nous contacter en utilisant les informations fournies ci-dessus."
+  },
+  "terms": {
+    "title": "Conditions d'Utilisation",
+    "lastUpdated": "Dernière mise à jour :",
+    "acceptance": {
+      "title": "1. Acceptation",
+      "paragraph1": "En accédant et en utilisant ce site web et notre plateforme éducative, vous reconnaissez avoir lu, compris et accepté d'être lié par ces Conditions d'Utilisation. Si vous n'acceptez aucune partie de ces conditions, vous ne devez pas utiliser nos services.",
+      "paragraph2": "Ces conditions constituent un accord juridiquement contraignant entre vous et notre plateforme. Votre utilisation continue de la plateforme après toute modification de ces conditions constitue votre acceptation des conditions mises à jour."
+    },
+    "useOfPlatform": {
+      "title": "2. Utilisation de la Plateforme",
+      "intro": "En utilisant notre plateforme, vous acceptez de :",
+      "agreement1": "Fournir des informations exactes, actuelles et complètes lors de la création d'un compte ou de l'utilisation de nos services",
+      "agreement2": "Utiliser la plateforme de manière légale et conformément à toutes les lois et réglementations applicables",
+      "agreement3": "Respecter les droits des autres utilisateurs et maintenir une conduite appropriée",
+      "agreement4": "Ne pas abuser, endommager ou interférer avec le service, les serveurs ou les réseaux connectés à la plateforme",
+      "agreement5": "Ne pas tenter d'obtenir un accès non autorisé à une partie quelconque de la plateforme ou de ses systèmes",
+      "agreement6": "Ne pas utiliser la plateforme à des fins illégales, frauduleuses ou nuisibles",
+      "agreement7": "Ne pas transmettre de virus, logiciels malveillants ou autres codes nuisibles"
+    },
+    "accountResponsibility": {
+      "title": "3. Responsabilité du Compte",
+      "paragraph1": "Vous êtes seul responsable du maintien de la confidentialité et de la sécurité de vos identifiants de compte, y compris votre nom d'utilisateur et votre mot de passe.",
+      "responsibility1": "Vous ne devez pas partager vos informations de connexion avec un tiers",
+      "responsibility2": "Vous êtes responsable de toutes les activités qui se produisent sous votre compte",
+      "responsibility3": "Vous devez nous notifier immédiatement de toute utilisation non autorisée de votre compte ou de toute violation de sécurité",
+      "responsibility4": "Nous ne sommes pas responsables de toute perte ou dommage résultant de votre incapacité à protéger vos identifiants de compte"
+    },
+    "intellectualProperty": {
+      "title": "4. Propriété Intellectuelle",
+      "paragraph1": "Tout le contenu, les matériaux, les fonctionnalités et les fonctionnalités disponibles sur cette plateforme, y compris mais sans s'y limiter, le texte, les graphiques, les logos, les icônes, les images, les clips audio, les téléchargements numériques et les logiciels, sont la propriété exclusive du propriétaire de la plateforme ou de ses concédants de licence.",
+      "important": "Important :",
+      "importantText": "Tout le contenu de cette plateforme est protégé par les lois sur le droit d'auteur, les marques de commerce et autres lois sur la propriété intellectuelle. Vous ne pouvez pas reproduire, distribuer, modifier, créer des œuvres dérivées, afficher publiquement ou utiliser autrement tout contenu sans notre autorisation écrite préalable."
+    },
+    "serviceAvailability": {
+      "title": "5. Disponibilité du Service",
+      "intro": "Nous nous efforçons de fournir un accès continu et fiable à notre plateforme. Cependant :",
+      "availability1": "Nous ne garantissons pas un accès ininterrompu, sans erreur ou sécurisé à la plateforme",
+      "availability2": "La plateforme peut être temporairement indisponible en raison de la maintenance, des mises à jour ou de problèmes techniques",
+      "availability3": "Nous nous réservons le droit de modifier, suspendre ou interrompre toute partie du service à tout moment",
+      "availability4": "Nous ne sommes pas responsables de toute perte ou inconvénient résultant d'interruptions de service"
+    },
+    "accountSuspension": {
+      "title": "6. Suspension du Compte",
+      "paragraph1": "Nous nous réservons le droit de suspendre, restreindre ou résilier votre compte et l'accès à la plateforme à tout moment, avec ou sans préavis, pour l'une des raisons suivantes :",
+      "reason1": "Violation de ces Conditions d'Utilisation ou de toute loi applicable",
+      "reason2": "Activité frauduleuse, abusive ou illégale",
+      "reason3": "Mauvaise utilisation de la plateforme ou de ses fonctionnalités",
+      "reason4": "Échec du paiement de tous les frais requis (le cas échéant)",
+      "reason5": "Toute autre raison que nous jugeons nécessaire pour protéger la plateforme, ses utilisateurs ou nos intérêts",
+      "paragraph2": "En cas de suspension ou de résiliation, votre droit d'utiliser la plateforme cessera immédiatement, et nous pouvons supprimer ou désactiver votre compte et toutes les données associées."
+    },
+    "applicableLaw": {
+      "title": "7. Loi Applicable",
+      "paragraph1": "Ces Conditions d'Utilisation sont régies par et interprétées conformément aux lois du Royaume du Maroc.",
+      "paragraph2": "Tout litige découlant de ou lié à ces conditions ou à votre utilisation de la plateforme sera soumis à la juridiction exclusive des tribunaux compétents du Maroc.",
+      "legalCompliance": "Conformité Légale :",
+      "legalComplianceText": "En utilisant cette plateforme, vous acceptez de vous conformer à toutes les lois et réglementations marocaines applicables, y compris mais sans s'y limiter, les lois sur la protection des données (Loi 09-08) et les réglementations éducatives."
+    },
+    "footer": "Si vous avez des questions concernant ces Conditions d'Utilisation, veuillez nous contacter pour clarification."
   }
 }
 

@@ -37,7 +37,7 @@ export type RouteTab =
  * Maps tab names to route paths
  */
 export const tabToRoute: Record<RouteTab, string> = {
-  users: '/users',
+  users: '/settings/user',
   companies: '/companies',
   programs: '/programs',
   specializations: '/specializations',

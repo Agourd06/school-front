@@ -1170,6 +1170,7 @@
     "pageAccess": "Page Access",
     "types": "Types",
     "roles": "Roles",
+    "users": "Users",
     "linkTypes": "Link Types",
     "classRoomTypes": "Class Room Types",
     "planningSessionTypes": "Planning Session Types",
@@ -1263,6 +1264,136 @@
     "companyLogo": "Company Logo",
     "logoHint": "Allowed formats: JPEG, PNG, GIF, WebP. Max size: 2MB",
     "companyUpdated": "Company updated successfully"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated:",
+    "introduction": {
+      "title": "1. Introduction",
+      "paragraph1": "This Privacy Policy explains how we collect, use, and protect your personal data in accordance with",
+      "law": "Moroccan Law 09-08",
+      "paragraph1Cont": "relating to the protection of individuals with regard to the processing of personal data.",
+      "paragraph2": "By using our website and services, you acknowledge that you have read, understood, and agree to be bound by this Privacy Policy."
+    },
+    "dataCollection": {
+      "title": "2. Data We Collect",
+      "intro": "We may collect the following types of personal information:",
+      "identityInfo": "Identity Information:",
+      "identityInfoDesc": "First name and last name",
+      "contactInfo": "Contact Information:",
+      "contactInfoDesc": "Email address and phone number",
+      "accountInfo": "Account Information:",
+      "accountInfoDesc": "Username, login credentials, and authentication data",
+      "technicalData": "Technical Data:",
+      "technicalDataDesc": "IP address, browser type, device information, and usage statistics",
+      "usageData": "Usage Data:",
+      "usageDataDesc": "Information about how you interact with our platform and services"
+    },
+    "dataUsage": {
+      "title": "3. Why We Use Your Data",
+      "intro": "Your personal data is used for the following purposes:",
+      "purpose1": "To create and manage your user account",
+      "purpose2": "To provide you with access to our educational platform and services",
+      "purpose3": "To communicate important information, updates, and notifications",
+      "purpose4": "To improve our platform's functionality, user experience, and services",
+      "purpose5": "To ensure the security and integrity of our platform",
+      "purpose6": "To comply with legal obligations and regulatory requirements"
+    },
+    "dataProtection": {
+      "title": "4. Data Protection",
+      "paragraph1": "We are committed to protecting your personal data and maintaining your privacy. We implement appropriate technical and organizational measures to ensure the security and confidentiality of your information.",
+      "important": "Important:",
+      "importantText": "Your personal data is never sold, rented, or shared with third parties for marketing purposes without your explicit consent."
+    },
+    "dataSharing": {
+      "title": "5. Data Sharing",
+      "intro": "We may share your personal data only in the following circumstances:",
+      "circumstance1": "With trusted service providers who assist us in operating our platform (under strict confidentiality agreements)",
+      "circumstance2": "When required by law, legal process, or governmental authorities",
+      "circumstance3": "To protect our rights, property, or safety, or that of our users",
+      "circumstance4": "In connection with a business transfer, merger, or acquisition (with prior notice)"
+    },
+    "yourRights": {
+      "title": "6. Your Rights (Law 09-08)",
+      "intro": "In accordance with",
+      "law": "Moroccan Law 09-08",
+      "introCont": "you have the following rights regarding your personal data:",
+      "rightAccess": "Right of Access:",
+      "rightAccessDesc": "You can request access to your personal data that we hold",
+      "rightRectification": "Right of Rectification:",
+      "rightRectificationDesc": "You can request correction of inaccurate or incomplete data",
+      "rightOpposition": "Right of Opposition:",
+      "rightOppositionDesc": "You can object to the processing of your personal data",
+      "rightDeletion": "Right of Deletion:",
+      "rightDeletionDesc": "You can request deletion of your personal data under certain circumstances",
+      "contactTitle": "To exercise your rights, please contact us at:"
+    },
+    "policyChanges": {
+      "title": "7. Policy Changes",
+      "paragraph1": "We reserve the right to update or modify this Privacy Policy at any time to reflect changes in our practices, technology, legal requirements, or other factors. Any changes will be published on this page with an updated \"Last updated\" date.",
+      "paragraph2": "We encourage you to review this Privacy Policy periodically to stay informed about how we protect your information."
+    },
+    "footer": "If you have any questions about this Privacy Policy, please contact us using the information provided above."
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "lastUpdated": "Last updated:",
+    "acceptance": {
+      "title": "1. Acceptance",
+      "paragraph1": "By accessing and using this website and our educational platform, you acknowledge that you have read, understood, and agree to be bound by these Terms of Use. If you do not agree with any part of these terms, you must not use our services.",
+      "paragraph2": "These terms constitute a legally binding agreement between you and our platform. Your continued use of the platform after any modifications to these terms constitutes your acceptance of the updated terms."
+    },
+    "useOfPlatform": {
+      "title": "2. Use of the Platform",
+      "intro": "By using our platform, you agree to:",
+      "agreement1": "Provide accurate, current, and complete information when creating an account or using our services",
+      "agreement2": "Use the platform in a lawful manner and in accordance with all applicable laws and regulations",
+      "agreement3": "Respect the rights of other users and maintain appropriate conduct",
+      "agreement4": "Not misuse, damage, or interfere with the service, servers, or networks connected to the platform",
+      "agreement5": "Not attempt to gain unauthorized access to any part of the platform or its systems",
+      "agreement6": "Not use the platform for any illegal, fraudulent, or harmful purposes",
+      "agreement7": "Not transmit any viruses, malware, or other harmful code"
+    },
+    "accountResponsibility": {
+      "title": "3. Account Responsibility",
+      "paragraph1": "You are solely responsible for maintaining the confidentiality and security of your account credentials, including your username and password.",
+      "responsibility1": "You must not share your login information with any third party",
+      "responsibility2": "You are responsible for all activities that occur under your account",
+      "responsibility3": "You must immediately notify us of any unauthorized use of your account or any security breach",
+      "responsibility4": "We are not liable for any loss or damage arising from your failure to protect your account credentials"
+    },
+    "intellectualProperty": {
+      "title": "4. Intellectual Property",
+      "paragraph1": "All content, materials, features, and functionality available on this platform, including but not limited to text, graphics, logos, icons, images, audio clips, digital downloads, and software, are the exclusive property of the platform owner or its licensors.",
+      "important": "Important:",
+      "importantText": "All content on this platform is protected by copyright, trademark, and other intellectual property laws. You may not reproduce, distribute, modify, create derivative works of, publicly display, or otherwise use any content without our prior written permission."
+    },
+    "serviceAvailability": {
+      "title": "5. Service Availability",
+      "intro": "We strive to provide continuous and reliable access to our platform. However:",
+      "availability1": "We do not guarantee uninterrupted, error-free, or secure access to the platform",
+      "availability2": "The platform may be temporarily unavailable due to maintenance, updates, or technical issues",
+      "availability3": "We reserve the right to modify, suspend, or discontinue any part of the service at any time",
+      "availability4": "We are not liable for any loss or inconvenience resulting from service interruptions"
+    },
+    "accountSuspension": {
+      "title": "6. Account Suspension",
+      "paragraph1": "We reserve the right to suspend, restrict, or terminate your account and access to the platform at any time, with or without notice, for any of the following reasons:",
+      "reason1": "Violation of these Terms of Use or any applicable laws",
+      "reason2": "Fraudulent, abusive, or illegal activity",
+      "reason3": "Misuse of the platform or its features",
+      "reason4": "Failure to pay any required fees (if applicable)",
+      "reason5": "Any other reason we deem necessary to protect the platform, its users, or our interests",
+      "paragraph2": "Upon suspension or termination, your right to use the platform will immediately cease, and we may delete or deactivate your account and all associated data."
+    },
+    "applicableLaw": {
+      "title": "7. Applicable Law",
+      "paragraph1": "These Terms of Use are governed by and construed in accordance with the laws of the Kingdom of Morocco.",
+      "paragraph2": "Any disputes arising from or relating to these terms or your use of the platform shall be subject to the exclusive jurisdiction of the competent courts of Morocco.",
+      "legalCompliance": "Legal Compliance:",
+      "legalComplianceText": "By using this platform, you agree to comply with all applicable Moroccan laws and regulations, including but not limited to data protection laws (Law 09-08) and educational regulations."
+    },
+    "footer": "If you have any questions about these Terms of Use, please contact us for clarification."
   }
 }
 

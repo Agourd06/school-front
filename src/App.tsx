@@ -20,6 +20,8 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const RegistrationPage = lazy(() => import('./pages/RegistrationPage'));
 const SetPasswordPage = lazy(() => import('./pages/SetPasswordPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'));
 
 // Dashboard pages
 const DashboardHomePage = lazy(() => import('./pages/dashboard/DashboardHomePage'));
@@ -181,6 +183,14 @@ const App: React.FC = () => {
         <Route 
           path="/set-password" 
           element={<Suspense fallback={<PageLoadingFallback />}><SetPasswordPage /></Suspense>} 
+        />
+        <Route 
+          path="/privacy-policy" 
+          element={<><Navbar /><div style={{ paddingTop: 'var(--navbar-height, 4rem)' }}><Suspense fallback={<PageLoadingFallback />}><PrivacyPolicyPage /></Suspense></div></>} 
+        />
+        <Route 
+          path="/terms-of-use" 
+          element={<><Navbar /><div style={{ paddingTop: 'var(--navbar-height, 4rem)' }}><Suspense fallback={<PageLoadingFallback />}><TermsOfUsePage /></Suspense></div></>} 
         />
         {/* SECURITY: Student and Teacher routes MUST come BEFORE dashboard routes */}
         {/* This ensures students/teachers can access their pages without being blocked */}
@@ -599,16 +609,6 @@ const App: React.FC = () => {
           }
         />
         <Route
-          path="/users"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Suspense fallback={<PageLoadingFallback />}><UsersPage /></Suspense>
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/companies"
           element={
             <ProtectedRoute>
@@ -659,6 +659,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute requiredPage="/settings/company">
                 <Suspense fallback={<PageLoadingFallback />}><CompanySettingsPage /></Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="user"
+            element={
+              <ProtectedRoute requiredPage="/settings/user">
+                <Suspense fallback={<PageLoadingFallback />}><UsersPage /></Suspense>
               </ProtectedRoute>
             }
           />

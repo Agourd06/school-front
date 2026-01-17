@@ -5,7 +5,7 @@ import { PageHeader } from '../components/ui';
 import { Settings } from 'lucide-react';
 import { usePermissions } from '../utils/permissions';
 
-type SettingsTab = 'colors' | 'access' | 'types' | 'roles' | 'company';
+type SettingsTab = 'colors' | 'access' | 'types' | 'roles' | 'company' | 'users';
 
 const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -20,6 +20,7 @@ const SettingsPage: React.FC = () => {
     if (path === '/settings/access' || path === '/settings/page-access') return 'access';
     if (path === '/settings/roles') return 'roles';
     if (path === '/settings/company') return 'company';
+    if (path === '/settings/user') return 'users';
     if (path === '/settings/colors' || path === '/settings') return 'colors';
     return 'colors'; // default
   };
@@ -63,6 +64,12 @@ const SettingsPage: React.FC = () => {
         label: t('settings.company') || 'Company',
         path: '/settings/company',
         isAllowed: hasPageAccess('/settings/company'),
+      },
+      {
+        id: 'users' as const,
+        label: t('settings.users') || 'Users',
+        path: '/settings/user',
+        isAllowed: hasPageAccess('/settings/user'),
       },
     ];
   }, [hasPageAccess, t, allowedPages]);

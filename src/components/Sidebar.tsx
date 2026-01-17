@@ -114,7 +114,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         { tab: 'students', labelKey: 'sidebar.students' },
         { tab: 'teachers', labelKey: 'sidebar.teachers' },
         { tab: 'classStudents', labelKey: 'sidebar.classStudents' },
-        { tab: 'users', labelKey: 'sidebar.users' },
         { tab: 'companies', labelKey: 'sidebar.companies' },
       ],
     },
@@ -172,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   // Filter menu items based on allowedPages (RBAC)
   // IMPORTANT: Even admin users must have pages in allowedPages - no bypass
   // The backend sets allowedPages based on role-page assignments
-  // New admins only have /settings and /users in allowedPages
+  // New admins only have /settings and /settings/user in allowedPages
   const filterMenuItems = useMemo(() => {
     return (items: Array<{ tab: SidebarProps['activeTab']; labelKey: string }>) => {
       // Filter items based on allowedPages (applies to all users, including admins)
@@ -338,6 +337,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             hasPageAccess('/settings/colors') ||
             hasPageAccess('/settings/access') ||
             hasPageAccess('/settings/roles') ||
+            hasPageAccess('/settings/user') ||
             hasPageAccess('/settings/types/link') ||
             hasPageAccess('/settings/types/classroom') ||
             hasPageAccess('/settings/types/planning')) && (
