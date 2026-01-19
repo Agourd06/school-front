@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateProgram, useUpdateProgram } from '../../hooks/usePrograms';
 import { ProgramForm, type Program } from '../forms';
@@ -10,6 +11,7 @@ interface ProgramModalProps {
 }
 
 const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program }) => {
+  const { t } = useTranslation();
   const createMutation = useCreateProgram();
   const updateMutation = useUpdateProgram();
 
@@ -60,7 +62,7 @@ const ProgramModal: React.FC<ProgramModalProps> = ({ isOpen, onClose, program })
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Program' : 'Add Program'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? t('sections.editProgram') : t('sections.addProgram')}>
       <ProgramForm
         initialData={program}
         onSubmit={handleSubmit}

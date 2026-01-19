@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCreateCompany, useUpdateCompany } from '../../hooks/useCompanies';
 import BaseModal from './BaseModal';
 import { CompanyForm, type Company } from '../forms';
@@ -10,6 +11,7 @@ interface CompanyModalProps {
 }
 
 const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, company }) => {
+  const { t } = useTranslation();
   const createCompany = useCreateCompany();
   const updateCompany = useUpdateCompany();
 
@@ -39,7 +41,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, company })
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Edit Company' : 'Add Company'}
+      title={isEditing ? t('sections.editCompany') : t('sections.addCompany')}
     >
       <CompanyForm
         initialData={company}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Input, Select, Button } from '../ui';
 import SearchSelect from '../inputs/SearchSelect';
@@ -51,6 +52,7 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
   currentContactId,
   isDeletingContact,
 }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [countries, setCountries] = useState<Array<{ name: string }>>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -272,7 +274,7 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
                         type="button"
                         onClick={() => onEditContact(contact)}
                         className="p-1.5 text-gray-400 hover:text-primary transition-colors"
-                        title="Edit contact"
+                        title={t('forms.editContact')}
                         disabled={isDeletingContact}
                       >
                         <Pencil className="h-4 w-4" />
@@ -323,7 +325,7 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
                 variant="secondary"
                 onClick={onAddAnother}
               >
-                Add Another
+                {t('forms.addAnother')}
               </Button>
               <Button
                 type="button"

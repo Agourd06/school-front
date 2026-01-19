@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { STATUS_OPTIONS_FORM } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Input, Select, Button, FileInput } from '../ui';
@@ -59,6 +60,7 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
   currentDiplomeId,
   isDeletingDiplome,
 }) => {
+  const { t } = useTranslation();
   const [previewUrl1, setPreviewUrl1] = useState<string | null>(null);
   const [previewUrl2, setPreviewUrl2] = useState<string | null>(null);
   const [countries, setCountries] = useState<Array<{ name: string }>>([]);
@@ -304,7 +306,7 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
                       type="button"
                       onClick={() => onEditDiplome(diplome)}
                       className="p-1.5 text-gray-400 hover:text-primary transition-colors"
-                      title="Edit diplome"
+                      title={t('forms.editDiplome')}
                       disabled={isDeletingDiplome}
                     >
                       <Pencil className="h-4 w-4" />
@@ -354,7 +356,7 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
                 variant="secondary"
                 onClick={onAddAnother}
               >
-                Add Another
+                {t('forms.addAnother')}
               </Button>
               <Button
                 type="button"

@@ -54,7 +54,7 @@ const extractErrorMessage = (err: unknown, t: (key: string) => string): string =
 };
 
 const SchoolYearPeriodsSection: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { selectedSchoolYearId } = useSchoolYear();
   const { data: selectedSchoolYear } = useSchoolYearById(selectedSchoolYearId || 0);
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
@@ -185,7 +185,8 @@ const SchoolYearPeriodsSection: React.FC = () => {
     if (!dateString) return 'N/A';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+      return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
     } catch {
       return dateString;
     }
@@ -209,7 +210,7 @@ const SchoolYearPeriodsSection: React.FC = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Add Period
+                {t('sections.addPeriod')}
               </Button>
             ) : undefined
           }
@@ -217,7 +218,7 @@ const SchoolYearPeriodsSection: React.FC = () => {
         {selectedSchoolYearId && selectedSchoolYear && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-sm text-blue-900">
-              <span className="font-medium">School Year:</span> {selectedSchoolYear.title}
+              <span className="font-medium">{t('sections.schoolYearLabel')}</span> {selectedSchoolYear.title}
               {selectedSchoolYear.start_date && selectedSchoolYear.end_date && (
                 <span className="text-xs text-blue-700 ml-2">
                   ({formatDateWithMonthDay(selectedSchoolYear.start_date)} - {formatDateWithMonthDay(selectedSchoolYear.end_date)})
@@ -229,7 +230,7 @@ const SchoolYearPeriodsSection: React.FC = () => {
         {!selectedSchoolYearId && (
           <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
             <p className="text-sm text-amber-900">
-              <strong>No school year selected.</strong> Please select a school year from the School Years section to view and manage its periods.
+              <strong>{t('sections.noSchoolYearSelected')}</strong> {t('sections.selectSchoolYearToViewPeriods')}
             </p>
           </div>
         )}
@@ -256,8 +257,8 @@ const SchoolYearPeriodsSection: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <div>
-                <p className="font-semibold mb-1">Warning: School Year "{selectedSchoolYear.title}" has no ongoing period</p>
-                <p>It is recommended to have one ongoing period per school year. Please set one period to 'ongoing' status.</p>
+                <p className="font-semibold mb-1">{t('sections.noOngoingPeriodWarning', { title: selectedSchoolYear.title })}</p>
+                <p>{t('sections.recommendOneOngoingPeriod')}</p>
               </div>
             </div>
           </div>
@@ -268,26 +269,26 @@ const SchoolYearPeriodsSection: React.FC = () => {
         <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <SearchSelect
-                label="Status"
+                label={t('sections.status')}
                 value={filters.status}
                 onChange={handleFilterChange('status')}
                 options={statusFilterOptions}
                 isClearable={false}
               />
               <SearchSelect
-                label="Lifecycle Status"
+                label={t('sections.lifecycleStatus')}
                 value={filters.lifecycle_status}
                 onChange={handleFilterChange('lifecycle_status')}
                 options={lifecycleStatusFilterOptions}
                 isClearable={false}
               />
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Search</label>
+                <label className="block text-sm font-medium text-gray-700">{t('sections.search')}</label>
                 <input
                   type="text"
                   value={filters.search}
                   onChange={handleSearchChange}
-                  placeholder="Search by period or year title..."
+                  placeholder={t('sections.searchByPeriodOrYear')}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
@@ -299,22 +300,22 @@ const SchoolYearPeriodsSection: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Title
+                  {t('sections.title')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Start Date
+                  {t('sections.startDate')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  End Date
+                  {t('sections.endDate')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  School Year
+                  {t('sections.schoolYear')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Lifecycle Status
+                  {t('sections.lifecycleStatus')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Actions
+                  {t('sections.actions')}
                 </th>
               </tr>
             </thead>
@@ -322,13 +323,13 @@ const SchoolYearPeriodsSection: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    Loading periods…
+                    {t('sections.loadingPeriods')}
                   </td>
                 </tr>
               ) : periods.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-sm text-gray-500">
-                    No periods found.
+                    {t('sections.noPeriodsFound')}
                   </td>
                 </tr>
               ) : (
@@ -346,7 +347,10 @@ const SchoolYearPeriodsSection: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize text-gray-700">
-                          {period.lifecycle_status || 'planned'}
+                          {period.lifecycle_status === 'ongoing' ? t('sections.ongoing') : 
+                           period.lifecycle_status === 'planned' ? t('sections.planned') : 
+                           period.lifecycle_status === 'completed' ? t('sections.completed') : 
+                           period.lifecycle_status || t('sections.planned')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
@@ -402,7 +406,7 @@ const SchoolYearPeriodsSection: React.FC = () => {
 
       <DeleteModal
         isOpen={!!deleteTarget}
-        title="Delete Period"
+        title={t('sections.deletePeriod')}
         entityName={deleteTarget?.title}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import ConfirmModal from './ConfirmModal';
 import { StudentModalProvider, useStudentModalContext } from './student/StudentModalContext';
@@ -314,13 +315,14 @@ const StudentModal: React.FC<StudentModalProps> = ({ isOpen, onClose, student })
     return null;
   }
 
+  const { t } = useTranslation();
   // Don't render if modal is closed or student is missing
   if (!isOpen || !student?.id) {
     return null;
   }
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Edit Student">
+    <BaseModal isOpen={isOpen} onClose={onClose} title={t('sections.editStudent')}>
       <StudentModalProvider initialStudentId={student.id}>
         <StudentModalContent onClose={onClose} />
       </StudentModalProvider>

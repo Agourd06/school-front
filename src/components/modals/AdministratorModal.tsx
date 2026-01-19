@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateAdministrator, useUpdateAdministrator } from '../../hooks/useAdministrators';
 import { useClassRooms } from '../../hooks/useClassRooms';
@@ -15,6 +16,7 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({
   onClose,
   administrator,
 }) => {
+  const { t } = useTranslation();
   const createMutation = useCreateAdministrator();
   const updateMutation = useUpdateAdministrator();
   const { data: classRooms } = useClassRooms({ limit: 100, page: 1 });
@@ -73,7 +75,7 @@ const AdministratorModal: React.FC<AdministratorModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Edit Administrator' : 'Add Administrator'}
+      title={isEditing ? t('sections.editAdministrator') : t('sections.addAdministrator')}
     >
       <AdministratorForm
         initialData={administrator}

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateStudentContact, useUpdateStudentContact } from '../../hooks/useStudentContacts';
 import { useStudentLinkTypes } from '../../hooks/useStudentLinkTypes';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
+  const { t } = useTranslation();
   const createMut = useCreateStudentContact();
   const updateMut = useUpdateStudentContact();
   const { data: linkTypes } = useStudentLinkTypes({ page: 1, limit: 100 });
@@ -77,7 +79,7 @@ const StudentContactModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
   );
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={item ? 'Edit Contact' : 'Add Contact'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={item ? t('forms.editContact') : t('forms.addContact')}>
       <StudentContactForm
         initialData={item}
         onSubmit={handleSubmit}

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useCreateCourse, useUpdateCourse } from "../../hooks/useCourses";
 import BaseModal from "./BaseModal";
 import { CourseForm, type Course } from "../forms";
@@ -14,6 +15,7 @@ const CourseModal: React.FC<CourseModalProps> = ({
   onClose,
   course,
 }) => {
+  const { t } = useTranslation();
   const createCourse = useCreateCourse();
   const updateCourse = useUpdateCourse();
 
@@ -91,7 +93,7 @@ const CourseModal: React.FC<CourseModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? "Edit Course" : "Add Course"}
+      title={isEditing ? t('sections.editCourse') : t('sections.addCourse')}
     >
       <CourseForm
         initialData={course}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import ConfirmModal from './ConfirmModal';
 import { StudentModalProvider, useStudentModalContext } from './student/StudentModalContext';
@@ -299,8 +300,9 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
 };
 
 const StudentOnboardingModal: React.FC<Props> = ({ isOpen, onClose, onStudentCreated }) => {
+  const { t } = useTranslation();
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Add Student">
+    <BaseModal isOpen={isOpen} onClose={onClose} title={t('sections.addStudent')}>
       <StudentModalProvider initialStudentId={null}>
         <StudentOnboardingModalContent onClose={onClose} onStudentCreated={onStudentCreated} />
       </StudentModalProvider>

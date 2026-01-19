@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateSpecialization, useUpdateSpecialization } from '../../hooks/useSpecializations';
 import { usePrograms, useProgram as useProgramById } from '../../hooks/usePrograms';
@@ -19,6 +20,7 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({
   specialization,
   initialProgramId,
 }) => {
+  const { t } = useTranslation();
   const createMutation = useCreateSpecialization();
   const updateMutation = useUpdateSpecialization();
   const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
@@ -79,7 +81,7 @@ const SpecializationModal: React.FC<SpecializationModalProps> = ({
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Specialization' : 'Add Specialization'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? t('sections.editSpecialization') : t('sections.addSpecialization')}>
       <SpecializationForm
         initialData={specialization}
         onSubmit={handleSubmit}

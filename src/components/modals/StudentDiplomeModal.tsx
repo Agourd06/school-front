@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateStudentDiplome, useUpdateStudentDiplome } from '../../hooks/useStudentDiplomes';
 import { useStudents } from '../../hooks/useStudents';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
+  const { t } = useTranslation();
   const [studentSearch, setStudentSearch] = useState('');
 
   const createMut = useCreateStudentDiplome();
@@ -62,7 +64,7 @@ const StudentDiplomeModal: React.FC<Props> = ({ isOpen, onClose, item }) => {
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={item ? 'Edit Diplome' : 'Add Diplome'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={item ? t('forms.editDiplome') : t('forms.addDiplome')}>
       <StudentDiplomeForm
         initialData={item}
         onSubmit={handleSubmit}

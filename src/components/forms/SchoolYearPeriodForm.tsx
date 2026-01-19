@@ -42,11 +42,11 @@ interface SchoolYearPeriodFormProps {
   initialSchoolYearId?: number;
 }
 
-const formatDateWithMonthDay = (dateString: string) => {
+const formatDateWithMonthDay = (dateString: string, locale: string = 'en-US') => {
   if (!dateString) return 'N/A';
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -69,7 +69,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
   isSchoolYearLocked = false,
   initialSchoolYearId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -131,10 +131,18 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
       const end = new Date(endDate);
 
       if (!newErrors.start_date && (start < yearStart || start > yearEnd)) {
-        newErrors.start_date = `Start date must be within the school year (${formatDateWithMonthDay(activeYear.start_date)} - ${formatDateWithMonthDay(activeYear.end_date)}).`;
+        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+        newErrors.start_date = t('sections.startDateWithinYear', {
+          startDate: formatDateWithMonthDay(activeYear.start_date, locale),
+          endDate: formatDateWithMonthDay(activeYear.end_date, locale)
+        });
       }
       if (!newErrors.end_date && (end < yearStart || end > yearEnd)) {
-        newErrors.end_date = `End date must be within the school year (${formatDateWithMonthDay(activeYear.start_date)} - ${formatDateWithMonthDay(activeYear.end_date)}).`;
+        const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+        newErrors.end_date = t('sections.endDateWithinYear', {
+          startDate: formatDateWithMonthDay(activeYear.start_date, locale),
+          endDate: formatDateWithMonthDay(activeYear.end_date, locale)
+        });
       }
     }
 
@@ -171,7 +179,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
                 type="button"
                 onClick={onDismissWarning}
                 className="text-yellow-600 hover:text-yellow-800 flex-shrink-0"
-                aria-label="Dismiss warning"
+                aria-label={t('sections.dismissWarning')}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -191,9 +199,13 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
             </div>
             <div className="text-xs text-muted mt-1">
               {formatDateWithMonthDay(
-                selectedSchoolYear?.start_date || initialData?.schoolYear?.start_date || ''
+                selectedSchoolYear?.start_date || initialData?.schoolYear?.start_date || '',
+                i18n.language === 'fr' ? 'fr-FR' : 'en-US'
               )}{' '}
-              - {formatDateWithMonthDay(selectedSchoolYear?.end_date || initialData?.schoolYear?.end_date || '')}
+              - {formatDateWithMonthDay(
+                selectedSchoolYear?.end_date || initialData?.schoolYear?.end_date || '',
+                i18n.language === 'fr' ? 'fr-FR' : 'en-US'
+              )}
             </div>
           </div>
         ) : (

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateClass, useUpdateClass } from '../../hooks/useClasses';
 import { usePrograms } from '../../hooks/usePrograms';
@@ -26,6 +27,7 @@ const ClassModal: React.FC<ClassModalProps> = ({
   classItem,
   descriptionPosition = 'top',
 }) => {
+  const { t } = useTranslation();
   const [formState, setFormState] = useState(() => ({
     program_id: (classItem?.program_id ?? classItem?.program?.id ?? '') as number | string | '',
     specialization_id: (classItem?.specialization_id ?? classItem?.specialization?.id ?? '') as number | string | '',
@@ -112,12 +114,12 @@ const ClassModal: React.FC<ClassModalProps> = ({
       onClose();
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
-      setFormError(axiosError?.response?.data?.message || 'Failed to save class');
+      setFormError(axiosError?.response?.data?.message || t('messages.unexpectedError'));
     }
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={classItem ? 'Edit Class' : 'Add Class'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={classItem ? t('sections.editClass') : t('sections.addClass')}>
       <ClassForm
         initialData={classItem}
         onSubmit={handleSubmit}

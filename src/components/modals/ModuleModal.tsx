@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useCreateModule, useUpdateModule } from "../../hooks/useModules";
 import BaseModal from "./BaseModal";
 import { ModuleForm, type Module } from "../forms";
@@ -14,6 +15,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
   onClose,
   module,
 }) => {
+  const { t } = useTranslation();
   const createModule = useCreateModule();
   const updateModule = useUpdateModule();
 
@@ -91,7 +93,7 @@ const ModuleModal: React.FC<ModuleModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? "Edit Module" : "Add Module"}
+      title={isEditing ? t('sections.editModule') : t('sections.addModule')}
     >
       <ModuleForm
         initialData={module}

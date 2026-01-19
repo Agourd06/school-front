@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import BaseModal from "./BaseModal";
 import {
   useCreateSchoolYearPeriod,
@@ -22,6 +23,7 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
   period,
   initialSchoolYearId,
 }) => {
+  const { t } = useTranslation();
   const params: GetAllSchoolYearsParams = useMemo(
     () => ({ limit: 100, page: 1 }),
     []
@@ -82,7 +84,7 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
             (p) => p.id !== period?.id
           );
           if (ongoingPeriodsInSameYear.length > 0) {
-            setServerError('There must be at most one ongoing period per school year. Another period in this school year is already ongoing.');
+            setServerError(t('sections.ongoingPeriodConflict'));
             return;
           }
         }
@@ -95,8 +97,8 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
         if (currentSchoolYearId === knownSchoolYearId) {
           const isOnlyOngoing = knownOngoingPeriods.length === 1 && knownOngoingPeriods[0].id === period.id;
           if (isOnlyOngoing) {
-            const schoolYearTitle = selectedSchoolYear?.title || 'this school year';
-            setOngoingWarning(`Warning: This is the only ongoing period in ${schoolYearTitle}. After this change, there will be no ongoing periods for ${schoolYearTitle}. It is recommended to have one ongoing period per school year.`);
+            const schoolYearTitle = selectedSchoolYear?.title || t('sections.schoolYear');
+            setOngoingWarning(t('sections.onlyOngoingPeriodWarning', { schoolYearTitle }));
             // Continue with submission (warning is informational, not blocking)
           }
         }
@@ -112,7 +114,7 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string | string[] } }; message?: string };
       const dataMessage = axiosError?.response?.data?.message;
-      let errorMessage = 'An error occurred while saving the period.';
+      let errorMessage = t('sections.errorSavingPeriod');
       
       if (Array.isArray(dataMessage)) {
         errorMessage = dataMessage.join(', ');
@@ -130,7 +132,7 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title={period ? "Edit Period" : "Add Period"}
+      title={period ? t('sections.editPeriod') : t('sections.addPeriod')}
     >
       <SchoolYearPeriodForm
         initialData={period}

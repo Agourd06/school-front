@@ -95,10 +95,7 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
             <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1 text-xs text-blue-800">
               <p className="font-medium mb-1">{t('sections.howToCreateReports')}</p>
-              <ol className="list-decimal list-inside space-y-0.5 text-blue-700">
-                <li>{t('sections.step1CreateReports')}</li>
-                <li>{t('sections.step2ClickStudent')}</li>
-              </ol>
+              <p className="text-blue-700">{t('sections.step1CreateReports')}</p>
             </div>
           </div>
         </div>
@@ -141,12 +138,9 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
         ) : (
           students.map((student) => {
             const handleCardClick = () => {
-              if (!student.hasReport) {
-                // For students without reports, clicking opens the create report modal
-                onAddReport(student.studentId);
-                return;
+              if (student.hasReport) {
+                onCreateDetail(student.studentId);
               }
-              onCreateDetail(student.studentId);
             };
 
             const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -156,10 +150,6 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
               }
             };
 
-            const handleCreateReportClick = (event: React.MouseEvent) => {
-              event.stopPropagation();
-              onAddReport(student.studentId);
-            };
 
             const isCreatingDetail = creatingDetailStudentId === student.studentId;
             const isSelected = selectedStudentId === student.studentId;
@@ -170,14 +160,14 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
                 className={`relative rounded-xl border-2 bg-white px-5 py-4 shadow-sm transition-all duration-200
                 ${student.hasReport 
                   ? 'border-gray-200 cursor-pointer hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2' 
-                  : 'border-orange-200 bg-orange-50/30 cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 hover:shadow-md focus-within:ring-2 focus-within:ring-orange-500 focus-within:ring-offset-2'}
+                  : 'border-orange-200 bg-orange-50/30'}
                 ${isCreatingDetail ? 'opacity-70 cursor-wait' : ''}
                 ${isSelected ? 'border-blue-400 bg-gradient-to-r from-blue-50 via-white to-white shadow-lg ring-2 ring-blue-300 scale-[1.02]' : ''}`}
-                onClick={handleCardClick}
-                onKeyDown={handleCardKeyDown}
-                role="button"
-                tabIndex={0}
-                title={student.hasReport ? t('sections.clickToAddReportDetail') : t('sections.clickToCreateReport')}
+                onClick={student.hasReport ? handleCardClick : undefined}
+                onKeyDown={student.hasReport ? handleCardKeyDown : undefined}
+                role={student.hasReport ? "button" : undefined}
+                tabIndex={student.hasReport ? 0 : undefined}
+                title={student.hasReport ? t('sections.clickToAddReportDetail') : undefined}
               >
                 {isSelected && (
                   <span className="absolute inset-y-3 left-3 w-1 rounded-full bg-blue-500" aria-hidden="true" />
@@ -223,19 +213,6 @@ const StudentsColumn: React.FC<StudentsColumnProps> = ({
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                  )}
-                  {!student.hasReport && (
-                    <Button
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      className="shrink-0"
-                      onClick={handleCreateReportClick}
-                      title={t('sections.createReportForStudent')}
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span className="ml-1">{t('sections.createReport')}</span>
-                    </Button>
                   )}
                 </div>
                 

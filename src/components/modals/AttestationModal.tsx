@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateAttestation, useUpdateAttestation } from '../../hooks/useAttestations';
 import { AttestationForm } from '../forms';
@@ -11,6 +12,7 @@ interface AttestationModalProps {
 }
 
 const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, attestation }) => {
+  const { t } = useTranslation();
   const createMutation = useCreateAttestation();
   const updateMutation = useUpdateAttestation();
 
@@ -31,7 +33,7 @@ const AttestationModal: React.FC<AttestationModalProps> = ({ isOpen, onClose, at
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Attestation' : 'Add Attestation'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={isEditing ? t('sections.editAttestation') : t('sections.addAttestation')}>
       <AttestationForm
         initialData={attestation}
         onSubmit={handleSubmit}

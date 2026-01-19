@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import BaseModal from './BaseModal';
 import { useCreateLevel, useUpdateLevel } from '../../hooks/useLevels';
 import { usePrograms } from '../../hooks/usePrograms';
@@ -15,6 +16,7 @@ interface LevelModalProps {
 }
 
 const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initialSpecializationId }) => {
+  const { t } = useTranslation();
   const [formState, setFormState] = useState({
     program_id: '' as number | string | '',
     specialization_id: '' as number | string | '',
@@ -119,12 +121,12 @@ const LevelModal: React.FC<LevelModalProps> = ({ isOpen, onClose, level, initial
       onClose();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } }; message?: string };
-      setFormError(error?.response?.data?.message || 'Failed to save level');
+      setFormError(error?.response?.data?.message || t('messages.unexpectedError'));
     }
   };
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title={level ? 'Edit Level' : 'Add Level'}>
+    <BaseModal isOpen={isOpen} onClose={onClose} title={level ? t('sections.editLevel') : t('sections.addLevel')}>
       <LevelForm
         initialData={level}
         onSubmit={handleSubmit}
