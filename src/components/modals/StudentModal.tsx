@@ -12,6 +12,7 @@ import DiplomeStep from './student/DiplomeStep';
 import ContactStep from './student/ContactStep';
 import StepProgress from './student/StepProgress';
 import { STEPS } from './student/constants';
+import { getFileUrl } from '../../utils/apiConfig';
 import type { Student } from '../../api/students';
 import type { PaginatedResponse } from '../../types/api';
 import type { StudentLinkType } from '../../api/studentLinkType';
@@ -87,11 +88,13 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   };
 
   const handleDiplomeAddAnother = () => {
+    // Clear everything for adding a new diploma
     handlers.resetDiplomeForm();
     setCurrentDiplome(null);
     setDiplomeFile1(null);
     setDiplomeFile2(null);
     setJustSavedDiplome(false);
+    // The form will automatically clear preview images when files are null
   };
 
   const handleDiplomeContinue = async () => {
@@ -225,15 +228,30 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         );
 
       case 'diplome':
+        // Only show existing diploma pictures when editing that specific diplome
+        // When currentDiplome is null (adding new), don't show any preview images
+        const showDiplomePictures = currentDiplome !== null;
+        
+        // Determine student picture: prioritize pictureFile (for new uploads), then studentDetailsData (for saved students)
+        let studentPictureUrl: string | null = null;
+        if (pictureFile) {
+          // If there's a new picture file selected, create object URL
+          studentPictureUrl = URL.createObjectURL(pictureFile);
+        } else if (studentDetailsData?.student?.picture) {
+          // If student is saved and has a picture, use the file URL
+          studentPictureUrl = getFileUrl(studentDetailsData.student.picture);
+        }
+        
         return (
           <DiplomeStep
             form={diplomeForm}
             errors={diplomeErrors}
             diplomeFile1={diplomeFile1}
             diplomeFile2={diplomeFile2}
-            currentDiplomePicture1={currentDiplome?.diplome_picture_1 || studentDetailsData?.diploma?.diplome_picture_1}
-            currentDiplomePicture2={currentDiplome?.diplome_picture_2 || studentDetailsData?.diploma?.diplome_picture_2}
+            currentDiplomePicture1={showDiplomePictures ? (currentDiplome?.diplome_picture_1 || studentDetailsData?.diploma?.diplome_picture_1) : null}
+            currentDiplomePicture2={showDiplomePictures ? (currentDiplome?.diplome_picture_2 || studentDetailsData?.diploma?.diplome_picture_2) : null}
             studentName={studentName}
+            studentPicture={studentPictureUrl}
             onFormChange={(field, value) => setDiplomeForm({ ...diplomeForm, [field]: value })}
             onFile1Change={setDiplomeFile1}
             onFile2Change={setDiplomeFile2}
@@ -254,12 +272,23 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         );
 
       case 'contact':
+        // Determine student picture: prioritize pictureFile (for new uploads), then studentDetailsData (for saved students)
+        let contactStudentPictureUrl: string | null = null;
+        if (pictureFile) {
+          // If there's a new picture file selected, create object URL
+          contactStudentPictureUrl = URL.createObjectURL(pictureFile);
+        } else if (studentDetailsData?.student?.picture) {
+          // If student is saved and has a picture, use the file URL
+          contactStudentPictureUrl = getFileUrl(studentDetailsData.student.picture);
+        }
+        
         return (
           <ContactStep
             form={contactForm}
             errors={contactErrors}
             linkTypesData={linkTypesData as PaginatedResponse<StudentLinkType> | null | undefined}
             studentName={studentName}
+            studentPicture={contactStudentPictureUrl}
             onFormChange={(field, value) => setContactForm({ ...contactForm, [field]: value })}
             onSubmit={handleContactSubmitWrapper}
             onBack={() => setStepIndex(1)}

@@ -195,13 +195,6 @@ const AttestationsSection: React.FC = () => {
       
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-body">
-          <SearchSelect
-            label={t('common.status')}
-            value={filters.status}
-            onChange={handleFilterChange('status')}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-heading">{t('common.search')}</label>
             <input
@@ -212,6 +205,13 @@ const AttestationsSection: React.FC = () => {
               className="mt-1 block w-full rounded-md border border-border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary bg-card"
             />
           </div>
+          <SearchSelect
+            label={t('common.status')}
+            value={filters.status}
+            onChange={handleFilterChange('status')}
+            options={statusFilterOptions}
+            isClearable={false}
+          />
         </div>
       
 

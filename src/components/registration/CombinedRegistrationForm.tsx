@@ -106,16 +106,11 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-6 text-body">
       <div>
-        <h2 className="text-2xl font-bold text-heading mb-2">{t('registration.createYourAccount')}</h2>
-        <p className="text-muted">{t('registration.setUpCompanyAndAdmin')}</p>
+        <h2 className="text-2xl font-bold text-heading text-center mb-2">{t('registration.createYourAccount')}</h2>
       </div>
 
       {/* Company Section */}
       <div className="space-y-5 pb-6 border-b border-tertiary/30">
-        <div>
-          <h3 className="text-lg font-semibold text-heading mb-1">{t('registration.companyInformation')}</h3>
-          <p className="text-xs text-muted">{t('registration.companyInformationDescription') || 'Enter your school or organization details'}</p>
-        </div>
 
         <div>
           <label htmlFor="company-name" className="block text-sm font-semibold text-heading mb-2">

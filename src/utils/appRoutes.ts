@@ -46,7 +46,6 @@ export const APP_ROUTES: RouteDefinition[] = [
   { route: '/student-attestations', title: 'Student Attestations' },
   { route: '/class-courses', title: 'Class Courses' },
   { route: '/users', title: 'Users' },
-  { route: '/companies', title: 'Companies' },
   { route: '/settings', title: 'Settings' },
   { route: '/settings/colors', title: 'Settings - Colors' },
   { route: '/settings/access', title: 'Settings - Page Access' },

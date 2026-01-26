@@ -135,6 +135,20 @@ const LevelsSection: React.FC = () => {
     return specializationsResp.data.find((s: Specialization) => s.id === selectedSpecializationId);
   }, [selectedSpecializationId, specializationsResp]);
 
+  // Get the program from the selected specialization
+  const selectedProgram = useMemo(() => {
+    if (!selectedSpecialization) return null;
+    // First try to use the program object from specialization
+    if (selectedSpecialization.program?.title) {
+      return selectedSpecialization.program;
+    }
+    // Otherwise, look it up from programsResp
+    if (selectedSpecialization.program_id && programsResp?.data) {
+      return programsResp.data.find((p: Program) => p.id === selectedSpecialization.program_id) || null;
+    }
+    return null;
+  }, [selectedSpecialization, programsResp]);
+
   // Sync filter with context when context changes
   useEffect(() => {
     if (selectedSpecializationId && !filters.specialization) {
@@ -227,6 +241,21 @@ const LevelsSection: React.FC = () => {
           titleKey="pages.levelsTitle"
           descriptionKey="pages.levelsDescription"
           icon={<TrendingUp className="w-5 h-5" />}
+          middle={
+            selectedSpecialization && selectedProgram ? (
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-900 whitespace-nowrap">
+                  {selectedProgram.title} {'/'} {selectedSpecialization.title}
+                </p>
+              </div>
+            ) : selectedSpecialization ? (
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-900 whitespace-nowrap">
+                  {selectedSpecialization.title}
+                </p>
+              </div>
+            ) : undefined
+          }
           actions={
             <>
               {selectedSpecializationId && navigateBackToSpecializations && (
@@ -262,13 +291,6 @@ const LevelsSection: React.FC = () => {
             </>
           }
         />
-        {selectedSpecialization && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-900">
-              <span className="font-medium">Specialization:</span> {selectedSpecialization.title}
-            </p>
-          </div>
-        )}
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -288,6 +310,16 @@ const LevelsSection: React.FC = () => {
      
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="md:col-span-2">
+            <Input
+              label={t('common.search')}
+              type="text"
+              value={filters.search}
+              onChange={handleSearchChange}
+              placeholder={t('sections.searchByLevelTitle')}
+              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
           <SearchSelect
             label={t('common.status')}
             value={filters.status}
@@ -312,16 +344,6 @@ const LevelsSection: React.FC = () => {
             isClearable
             disabled={!filters.program}
           />
-          <div className="md:col-span-2">
-            <Input
-              label={t('common.search')}
-              type="text"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder={t('sections.searchByLevelTitle')}
-              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-            />
-          </div>
         </div>
      
 

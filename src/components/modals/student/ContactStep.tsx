@@ -10,6 +10,7 @@ interface ContactStepProps {
   errors: Record<string, string>;
   linkTypesData: PaginatedResponse<StudentLinkType> | null | undefined;
   studentName: string;
+  studentPicture?: string | null;
   onFormChange: (field: keyof ContactFormData, value: string | number | '') => void;
   onSubmit: (e: React.FormEvent) => void;
   onBack: () => void;

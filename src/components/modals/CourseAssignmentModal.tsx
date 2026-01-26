@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import BaseModal from './BaseModal';
 import DescriptionModal from './DescriptionModal';
@@ -38,7 +37,6 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   moduleId,
   moduleTitle
 }) => {
-  const { t } = useTranslation();
   const [assignedCourses, setAssignedCourses] = useState<AssignmentCourse[]>([]);
   const [unassignedCourses, setUnassignedCourses] = useState<AssignmentCourse[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<number | null>(null);
@@ -435,51 +433,58 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       title={
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span>Module to course: Manage Courses for Module ( {moduleTitle} )</span>
-              {/* Display module volume and coefficient if available */}
-              {(module?.volume !== null && module?.volume !== undefined) ||
-              (module?.coefficient !== null && module?.coefficient !== undefined) ? (
-                <span className="text-xs text-gray-600">
-                  (
-                  {module?.volume !== null && module?.volume !== undefined && (
-                    <span>Volume: <span className="font-medium text-gray-900">{module.volume}</span></span>
-                  )}
-                  {module?.volume !== null && module?.volume !== undefined && 
-                   module?.coefficient !== null && module?.coefficient !== undefined && (
-                    <span className="mx-1">•</span>
-                  )}
-                  {module?.coefficient !== null && module?.coefficient !== undefined && (
-                    <span>Coefficient: <span className="font-medium text-gray-900">{module.coefficient}</span></span>
-                  )}
-                  )
-                </span>
-              ) : null}
-            </div>
-            {hasModuleDescription && (
-              <button
-                type="button"
-                onClick={handleShowModuleDetails}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+        <div className="flex flex-col w-full">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold  text-right">
+              {moduleTitle || module?.title || 'Module'}
+            </h2>
+          </div>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span>Module to course: Manage Courses for Module ( {moduleTitle} )</span>
+                {/* Display module volume and coefficient if available */}
+                {(module?.volume !== null && module?.volume !== undefined) ||
+                (module?.coefficient !== null && module?.coefficient !== undefined) ? (
+                  <span className="text-xs text-gray-600">
+                    (
+                    {module?.volume !== null && module?.volume !== undefined && (
+                      <span>Volume: <span className="font-medium text-gray-900">{module.volume}</span></span>
+                    )}
+                    {module?.volume !== null && module?.volume !== undefined && 
+                     module?.coefficient !== null && module?.coefficient !== undefined && (
+                      <span className="mx-1">•</span>
+                    )}
+                    {module?.coefficient !== null && module?.coefficient !== undefined && (
+                      <span>Coefficient: <span className="font-medium text-gray-900">{module.coefficient}</span></span>
+                    )}
+                    )
+                  </span>
+                ) : null}
+              </div>
+              {hasModuleDescription && (
+                <button
+                  type="button"
+                  onClick={handleShowModuleDetails}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-               
-              </button>
-            )}
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                 
+                </button>
+              )}
+            </div>
           </div>
         </div>
       }
@@ -716,7 +721,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                                         type="button"
                                         onClick={(e) => handleOpenEditCourse(course, e)}
                                         className="inline-flex items-center justify-center w-6 h-6 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        title={t('sections.editVolumeAndCoefficient')}
+                                        title="Edit volume and coefficient"
                                       >
                                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

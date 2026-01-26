@@ -410,51 +410,58 @@ const ModuleAssignmentModal: React.FC<ModuleAssignmentModalProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       title={
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span>Course to module: Manage Modules for Course ( {courseTitle} )</span>
-              {/* Display course volume and coefficient if available */}
-              {(course?.volume !== null && course?.volume !== undefined) ||
-              (course?.coefficient !== null && course?.coefficient !== undefined) ? (
-                <span className="text-xs text-gray-600">
-                  (
-                  {course?.volume !== null && course?.volume !== undefined && (
-                    <span>Volume: <span className="font-medium text-gray-900">{course.volume}</span></span>
-                  )}
-                  {course?.volume !== null && course?.volume !== undefined && 
-                   course?.coefficient !== null && course?.coefficient !== undefined && (
-                    <span className="mx-1">•</span>
-                  )}
-                  {course?.coefficient !== null && course?.coefficient !== undefined && (
-                    <span>Coefficient: <span className="font-medium text-gray-900">{course.coefficient}</span></span>
-                  )}
-                  )
-                </span>
-              ) : null}
-            </div>
-            {hasCourseDescription && (
-              <button
-                type="button"
-                onClick={handleShowCourseDetails}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+        <div className="flex flex-col w-full">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-right">
+              {courseTitle || course?.title || 'Course'}
+            </h2>
+          </div>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span>Course to module: Manage Modules for Course ( {courseTitle} )</span>
+                {/* Display course volume and coefficient if available */}
+                {(course?.volume !== null && course?.volume !== undefined) ||
+                (course?.coefficient !== null && course?.coefficient !== undefined) ? (
+                  <span className="text-xs text-gray-600">
+                    (
+                    {course?.volume !== null && course?.volume !== undefined && (
+                      <span>Volume: <span className="font-medium text-gray-900">{course.volume}</span></span>
+                    )}
+                    {course?.volume !== null && course?.volume !== undefined && 
+                     course?.coefficient !== null && course?.coefficient !== undefined && (
+                      <span className="mx-1">•</span>
+                    )}
+                    {course?.coefficient !== null && course?.coefficient !== undefined && (
+                      <span>Coefficient: <span className="font-medium text-gray-900">{course.coefficient}</span></span>
+                    )}
+                    )
+                  </span>
+                ) : null}
+              </div>
+              {hasCourseDescription && (
+                <button
+                  type="button"
+                  onClick={handleShowCourseDetails}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-               
-              </button>
-            )}
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                 
+                </button>
+              )}
+            </div>
           </div>
         </div>
       }

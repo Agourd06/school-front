@@ -114,7 +114,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         { tab: 'students', labelKey: 'sidebar.students' },
         { tab: 'teachers', labelKey: 'sidebar.teachers' },
         { tab: 'classStudents', labelKey: 'sidebar.classStudents' },
-        { tab: 'companies', labelKey: 'sidebar.companies' },
       ],
     },
     {

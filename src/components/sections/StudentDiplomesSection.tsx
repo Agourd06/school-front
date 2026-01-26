@@ -212,6 +212,16 @@ const StudentDiplomesSection: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <Input
+              label={t('common.search')}
+              type="text"
+              value={filters.search}
+              onChange={handleSearchChange}
+              placeholder={t('sections.searchByTitleSchoolCity')}
+              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
           <SearchSelect
             label={t('common.status')}
             value={filters.status}
@@ -227,17 +237,7 @@ const StudentDiplomesSection: React.FC = () => {
             placeholder={t('sections.allStudents')}
             isClearable
           />
-          <div>
-            <Input
-              label={t('common.search')}
-              type="text"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder={t('sections.searchByTitleSchoolCity')}
-              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-            />
-          </div>
-      </div>
+        </div>
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">

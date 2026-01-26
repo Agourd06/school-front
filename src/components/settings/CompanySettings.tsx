@@ -17,6 +17,8 @@ const CompanySettings: React.FC = () => {
   const updateMutation = useUpdateCompany();
   
   const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [codePostal, setCodePostal] = useState('');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
@@ -36,6 +38,8 @@ const CompanySettings: React.FC = () => {
   useEffect(() => {
     if (company) {
       setPhone(company.phone || '');
+      setAddress(company.address || '');
+      setCodePostal(company.codePostal || '');
     }
   }, [company]);
 
@@ -171,17 +175,47 @@ const CompanySettings: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!companyId) return;
+    if (!companyId || !company) return;
     
     setIsSaving(true);
     setError(null);
     setSuccess(false);
     
     try {
-      await updateMutation.mutateAsync({
+      const trimmedPhone = phone.trim();
+      const trimmedAddress = address.trim();
+      const trimmedCodePostal = codePostal.trim();
+
+      // Store current values to avoid TypeScript narrowing issues
+      const currentPhone = company.phone || '';
+      const currentAddress = company.address || '';
+      const currentCodePostal = company.codePostal || '';
+
+      const updatePayload: {
+        id: number;
+        phone?: string;
+        address?: string;
+        codePostal?: string;
+      } = {
         id: companyId,
-        phone: phone.trim() || undefined,
-      });
+      };
+
+      // Include phone if it has changed
+      if (trimmedPhone !== currentPhone) {
+        updatePayload.phone = trimmedPhone || undefined;
+      }
+
+      // Include address if it has changed (send empty string to clear per backend guide)
+      if (trimmedAddress !== currentAddress) {
+        updatePayload.address = trimmedAddress;
+      }
+
+      // Include codePostal if it has changed (send empty string to clear per backend guide)
+      if (trimmedCodePostal !== currentCodePostal) {
+        updatePayload.codePostal = trimmedCodePostal;
+      }
+
+      await updateMutation.mutateAsync(updatePayload);
       
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -222,47 +256,8 @@ const CompanySettings: React.FC = () => {
         </h2>
         
         <div className="space-y-4">
-          {/* Company Name - Disabled Input */}
-          <div>
-            <label className="block text-sm font-medium text-muted mb-1">
-              {t('settings.companyName') || 'Company Name'}
-            </label>
-            <Input
-              type="text"
-              value={company.name || ''}
-              disabled
-              className="bg-gray-50 cursor-not-allowed"
-            />
-          </div>
-
-          {/* Company Email - Disabled Input */}
-          <div>
-            <label className="block text-sm font-medium text-muted mb-1">
-              {t('settings.companyEmail') || 'Company Email'}
-            </label>
-            <Input
-              type="email"
-              value={company.email || ''}
-              disabled
-              className="bg-gray-50 cursor-not-allowed"
-            />
-          </div>
-
-          {/* Company Phone - Editable */}
-          <div>
-            <label className="block text-sm font-medium text-muted mb-1">
-              {t('settings.companyPhone') || 'Company Phone'}
-            </label>
-            <Input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1234567890"
-            />
-          </div>
-
-          {/* Company Logo */}
-          <div>
+          {/* Company Logo - Full Width */}
+          <div className="col-span-2">
             <label className="block text-sm font-medium text-muted mb-1">
               {t('settings.companyLogo') || 'Company Logo'}
             </label>
@@ -368,10 +363,110 @@ const CompanySettings: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Company Name - Full Width at Top */}
+          <div>
+            <label className="block text-sm font-medium text-muted mb-1">
+              {t('settings.companyName') || 'Company Name'}
+            </label>
+            <Input
+              type="text"
+              value={company.name || ''}
+              disabled
+              className="bg-gray-50 cursor-not-allowed"
+            />
+          </div>
+
+          {/* Grid Layout for Email and Phone */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Company Email - Disabled Input */}
+            <div>
+              <label className="block text-sm font-medium text-muted mb-1">
+                {t('settings.companyEmail') || 'Company Email'}
+              </label>
+              <Input
+                type="email"
+                value={company.email || ''}
+                disabled
+                className="bg-gray-50 cursor-not-allowed"
+              />
+            </div>
+
+            {/* Company Phone - Editable */}
+            <div>
+              <label className="block text-sm font-medium text-muted mb-1">
+                {t('settings.companyPhone') || 'Company Phone'}
+              </label>
+              <Input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1234567890"
+              />
+            </div>
+          </div>
+
+          {/* Grid Layout for Address and Code Postal */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Address - Editable */}
+            <div>
+              <label className="block text-sm font-medium text-muted mb-1">
+                {t('forms.address') || 'Address'}
+              </label>
+              <Input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder={t('forms.address') || 'Enter address'}
+              />
+            </div>
+
+            {/* Code Postal - Editable */}
+            <div>
+              <label className="block text-sm font-medium text-muted mb-1">
+                {t('forms.postalCode') || 'Postal Code'}
+              </label>
+              <Input
+                type="text"
+                value={codePostal}
+                onChange={(e) => setCodePostal(e.target.value)}
+                placeholder={t('forms.postalCode') || 'Enter postal code'}
+              />
+            </div>
+          </div>
+
+          {/* Grid Layout for Country and City */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Country - Disabled Input */}
+            <div>
+              <label className="block text-sm font-medium text-muted mb-1">
+                {t('forms.country') || 'Country'}
+              </label>
+              <Input
+                type="text"
+                value={company.country || ''}
+                disabled
+                className="bg-gray-50 cursor-not-allowed"
+              />
+            </div>
+
+            {/* City - Disabled Input */}
+            <div>
+              <label className="block text-sm font-medium text-muted mb-1">
+                {t('forms.city') || 'City'}
+              </label>
+              <Input
+                type="text"
+                value={company.city || ''}
+                disabled
+                className="bg-gray-50 cursor-not-allowed"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Save Button for Phone */}
+      {/* Save Button for Phone, Address, and Code Postal */}
       <div className="flex items-center justify-between pt-4 border-t border-tertiary/20">
         <div className="flex-1">
           {error && (
@@ -389,7 +484,7 @@ const CompanySettings: React.FC = () => {
           type="button"
           variant="primary"
           onClick={handleSave}
-          disabled={isSaving || phone === (company.phone || '')}
+          disabled={isSaving || (phone === (company.phone || '') && address === (company.address || '') && codePostal === (company.codePostal || ''))}
         >
           {isSaving ? t('common.saving') || 'Saving...' : t('common.save') || 'Save Changes'}
         </Button>

@@ -104,6 +104,8 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     if (lnErr) errors.last_name = lnErr;
     const emailErr = validateRequired(studentForm.email, 'Email');
     if (emailErr) errors.email = emailErr;
+    const codePostalErr = validateRequired(studentForm.codePostal, 'Postal code');
+    if (codePostalErr) errors.codePostal = codePostalErr;
     setStudentErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -119,7 +121,10 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     if (studentForm.gender) formData.append('gender', studentForm.gender);
     if (studentForm.birthday) formData.append('birthday', studentForm.birthday);
     if (studentForm.phone) formData.append('phone', studentForm.phone);
+    if (studentForm.phone2) formData.append('phone2', studentForm.phone2);
+    if (studentForm.email2) formData.append('email2', studentForm.email2);
     if (studentForm.address) formData.append('address', studentForm.address);
+    if (studentForm.codePostal) formData.append('codePostal', studentForm.codePostal);
     if (studentForm.city) formData.append('city', studentForm.city);
     if (studentForm.country) formData.append('country', studentForm.country);
     if (studentForm.nationality) formData.append('nationality', studentForm.nationality);
@@ -270,7 +275,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
     }
 
     try {
-      const payload: { firstname: string; lastname: string; student_id: number; birthday?: string; email?: string; phone?: string; adress?: string; city?: string; country?: string; status?: number; studentlinktypeId?: number } = {
+      const payload: { firstname: string; lastname: string; student_id: number; birthday?: string; email?: string; phone?: string; adress?: string; codePostal?: string; city?: string; country?: string; status?: number; studentlinktypeId?: number } = {
         firstname: contactForm.firstname,
         lastname: contactForm.lastname,
         student_id: studentIdNumber,
@@ -280,6 +285,7 @@ export const useStudentModalHandlers = (props: UseStudentModalHandlersProps) => 
       if (contactForm.email) payload.email = contactForm.email;
       if (contactForm.phone) payload.phone = contactForm.phone;
       if (contactForm.adress) payload.adress = contactForm.adress;
+      if (contactForm.codePostal) payload.codePostal = contactForm.codePostal;
       if (contactForm.city) payload.city = contactForm.city;
       if (contactForm.country) payload.country = contactForm.country;
       if (contactForm.status) payload.status = Number(contactForm.status);

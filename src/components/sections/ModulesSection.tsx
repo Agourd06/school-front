@@ -10,8 +10,9 @@ import ModuleModal from '../modals/ModuleModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import CourseAssignmentModal from '../modals/CourseAssignmentModal';
+import HierarchyTreeModal from '../modals/HierarchyTreeModal';
 import { EditButton, DeleteButton, Button, PdfActions, PageHeader } from '../ui';
-import { Info, Layers } from 'lucide-react';
+import { Info, Layers, GitBranch } from 'lucide-react';
 import type { Module } from '../../api/module';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -68,6 +69,7 @@ const ModulesSection: React.FC = () => {
   const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
   const [assignmentModal, setAssignmentModal] = useState<{ moduleId: number; moduleTitle: string } | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [treeModalOpen, setTreeModalOpen] = useState(false);
 
   const params = useMemo(
     () => ({
@@ -185,17 +187,28 @@ const ModulesSection: React.FC = () => {
           descriptionKey="pages.modulesDescription"
           icon={<Layers className="w-5 h-5" />}
           actions={
-            <Button
-              type="button"
-              variant="primary"
-              onClick={openCreateModal}
-              className="inline-flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              {t('sections.addModule')}
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setTreeModalOpen(true)}
+                className="inline-flex items-center gap-2"
+                title={t('sections.viewHierarchy') || 'View Hierarchy'}
+              >
+                <GitBranch className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={openCreateModal}
+                className="inline-flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {t('sections.addModule')}
+              </Button>
+            </>
           }
         />
         {alert && (
@@ -217,13 +230,6 @@ const ModulesSection: React.FC = () => {
       
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <SearchSelect
-            label={t('common.status')}
-            value={filters.status}
-            onChange={handleFilterChange('status')}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
             <input
@@ -234,6 +240,13 @@ const ModulesSection: React.FC = () => {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
+          <SearchSelect
+            label={t('common.status')}
+            value={filters.status}
+            onChange={handleFilterChange('status')}
+            options={statusFilterOptions}
+            isClearable={false}
+          />
         </div>
      
 
@@ -379,6 +392,12 @@ const ModulesSection: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteModuleMut.isPending}
+      />
+
+      <HierarchyTreeModal
+        isOpen={treeModalOpen}
+        onClose={() => setTreeModalOpen(false)}
+        type="modules"
       />
     </div>
   );

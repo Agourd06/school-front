@@ -191,7 +191,10 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-heading">{t('sidebar.schoolYears')}</label>
+        <label className="block text-sm font-medium text-heading">
+          {t('sidebar.schoolYears')}
+          {!isSchoolYearLocked && <span className="text-red-500 ml-1">*</span>}
+        </label>
         {isSchoolYearLocked && (selectedSchoolYear || initialData?.schoolYear) ? (
           <div className="mt-1 p-3 bg-surface border border-border rounded-md">
             <div className="text-sm font-medium text-heading">
@@ -213,6 +216,7 @@ const SchoolYearPeriodForm: React.FC<SchoolYearPeriodFormProps> = ({
             value={schoolYearId}
             onChange={(e) => setSchoolYearId(e.target.value ? Number(e.target.value) : '')}
             disabled={isSchoolYearLocked}
+            required={!isSchoolYearLocked}
             options={[
               { value: '', label: t('forms.selectSchoolYear') },
               ...schoolYears.map((y) => ({

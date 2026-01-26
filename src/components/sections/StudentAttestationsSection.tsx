@@ -248,6 +248,16 @@ const StudentAttestationsSection: React.FC = () => {
       
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-body">
+          <div>
+            <label className="block text-sm font-medium text-heading">{t('common.search')}</label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={handleSearchChange}
+              placeholder={t('sections.searchByStudentOrAttestation')}
+              className="mt-1 block w-full rounded-md border border-border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary bg-card"
+            />
+          </div>
           <SearchSelect
             label={t('common.status')}
             value={filters.status}
@@ -271,16 +281,6 @@ const StudentAttestationsSection: React.FC = () => {
             placeholder={t('sections.allAttestations')}
             isClearable
           />
-          <div>
-            <label className="block text-sm font-medium text-heading">{t('common.search')}</label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder={t('sections.searchByStudentOrAttestation')}
-              className="mt-1 block w-full rounded-md border border-border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary bg-card"
-            />
-          </div>
         </div>
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">

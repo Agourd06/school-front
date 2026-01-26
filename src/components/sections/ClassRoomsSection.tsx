@@ -185,13 +185,6 @@ const ClassRoomsSection: React.FC = () => {
       
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <SearchSelect
-            label={t('common.status')}
-            value={filters.status}
-            onChange={handleFilterChange('status')}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
           <div className="md:col-span-2">
             <Input
               label={t('common.search')}
@@ -202,6 +195,13 @@ const ClassRoomsSection: React.FC = () => {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
+          <SearchSelect
+            label={t('common.status')}
+            value={filters.status}
+            onChange={handleFilterChange('status')}
+            options={statusFilterOptions}
+            isClearable={false}
+          />
         </div>
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
@@ -219,6 +219,9 @@ const ClassRoomsSection: React.FC = () => {
                   {t('sections.capacity')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  {t('forms.type')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
                   {t('common.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted">
@@ -229,25 +232,29 @@ const ClassRoomsSection: React.FC = () => {
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-muted">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted">
                     {t('sections.loadingClassrooms')}
                   </td>
                 </tr>
               ) : classRooms.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-sm text-muted">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted">
                     {t('sections.noClassroomsFound')}
                   </td>
                 </tr>
               ) : (
                 classRooms.map((classRoom) => {
                   const statusValue = typeof classRoom.status === 'number' ? classRoom.status : 0;
+                  const classroomTypeTitle = classRoom.classroomType?.title || '—';
                   return (
                     <tr key={classRoom.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-medium text-heading">{classRoom.code}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{classRoom.title}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span className="font-semibold text-heading">{classRoom.capacity}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {classroomTypeTitle}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <span

@@ -241,7 +241,6 @@ const RegistrationPage: React.FC = () => {
               className="h-16 w-auto object-contain"
             />
           </div>
-          <p className="text-lg text-gray-600">{t('registration.tagline')}</p>
         </div>
 
         {/* Main Card */}

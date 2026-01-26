@@ -14,6 +14,7 @@ export interface StudentContactFormData {
   email: string;
   phone: string;
   adress: string;
+  codePostal: string;
   city: string;
   country: string;
   student_id: number | string | '';
@@ -29,6 +30,7 @@ export interface StudentContact {
   email?: string;
   phone?: string;
   adress?: string;
+  codePostal?: string;
   city?: string;
   country?: string;
   student_id?: number;
@@ -70,6 +72,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
     email: '',
     phone: '',
     adress: '',
+    codePostal: '',
     city: '',
     country: '',
     student_id: '',
@@ -102,6 +105,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
           email: initialData.email || '',
           phone: initialData.phone || '',
           adress: initialData.adress || '',
+          codePostal: initialData.codePostal || '',
           city: initialData.city || '',
           country: initialData.country || '',
           student_id: initialData.student_id ?? '',
@@ -116,6 +120,7 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
           email: '',
           phone: '',
           adress: '',
+          codePostal: '',
           city: '',
           country: '',
           student_id: '',
@@ -345,12 +350,20 @@ const StudentContactForm: React.FC<StudentContactFormProps> = ({
         />
       </div>
 
-      <Input
-        label={t('forms.address')}
-        name="adress"
-        value={form.adress}
-        onChange={handleChange}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label={t('forms.address')}
+          name="adress"
+          value={form.adress}
+          onChange={handleChange}
+        />
+        <Input
+          label={t('forms.codePostal') || 'Postal Code'}
+          name="codePostal"
+          value={form.codePostal}
+          onChange={handleChange}
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SearchSelect

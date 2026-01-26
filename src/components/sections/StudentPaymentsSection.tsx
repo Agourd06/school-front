@@ -320,6 +320,16 @@ const StudentPaymentsSection: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div className="xl:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={handleTextFilterChange('search')}
+              placeholder={t('forms.searchByReferenceModeOrStudentName')}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
           <SearchSelect
             label={t('common.status')}
             value={filters.status}
@@ -378,16 +388,6 @@ const StudentPaymentsSection: React.FC = () => {
               value={filters.mode}
               onChange={handleTextFilterChange('mode')}
               placeholder={t('forms.exampleCash')}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-            />
-          </div>
-          <div className="xl:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={handleTextFilterChange('search')}
-              placeholder={t('forms.searchByReferenceModeOrStudentName')}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>

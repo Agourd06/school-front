@@ -17,6 +17,7 @@ interface StudentDiplomeStepFormProps {
   currentDiplomePicture1?: string | null;
   currentDiplomePicture2?: string | null;
   studentName: string;
+  studentPicture?: string | null;
   onFormChange: (field: keyof DiplomeFormData, value: string | number | '') => void;
   onFile1Change: (file: File | null) => void;
   onFile2Change: (file: File | null) => void;
@@ -43,6 +44,7 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
   currentDiplomePicture1,
   currentDiplomePicture2,
   studentName,
+  studentPicture,
   onFormChange,
   onFile1Change,
   onFile2Change,
@@ -138,25 +140,47 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.country]);
 
+  const displayName = studentName || '—';
+  const initials = displayName !== '—' 
+    ? displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : '—';
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <Input
-          label="Student"
-          value={studentName}
-          disabled
-          className="bg-muted-foreground border-border"
-        />
-        <Select
-          label="Status"
-          value={form.status}
-          onChange={(e) => onFormChange('status', Number(e.target.value))}
-          options={STATUS_OPTIONS_FORM.map((opt) => ({
-            value: opt.value,
-            label: opt.label,
-          }))}
-        />
+      
+      {/* Student Info Display */}
+      <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm mb-6">
+        <div className="relative flex-shrink-0">
+          {studentPicture ? (
+            <img
+              src={studentPicture}
+              alt={displayName}
+              className="h-20 w-20 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-blue-200"
+              onError={(e) => {
+                // On error, hide the image and show initials fallback
+                const img = e.target as HTMLImageElement;
+                img.style.display = 'none';
+                // Show the fallback div
+                const fallback = img.nextElementSibling as HTMLElement;
+                if (fallback) {
+                  fallback.style.display = 'flex';
+                }
+              }}
+            />
+          ) : null}
+          <div 
+            className={`h-20 w-20 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center border-4 border-white shadow-md ring-2 ring-blue-200 ${studentPicture ? 'hidden' : ''}`}
+          >
+            <span className="text-white text-2xl font-bold">
+              {initials}
+            </span>
+          </div>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-600 mb-1">{t('forms.student') || 'Student'}</p>
+          <p className="text-xl font-semibold text-gray-900">{displayName}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -215,51 +239,49 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-heading">Diplome picture 1</label>
-            <div className="mt-1 flex items-start gap-3">
-              {previewUrl1 && (
-                <img
-                  src={previewUrl1}
-                  alt="Diplome picture 1 preview"
-                  className="h-16 w-16 rounded object-cover border-2 border-border flex-shrink-0"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              )}
-              <div className="flex-1">
-                <FileInput
-                  accept="image/*"
-                  onChange={onFile1Change}
-                  error={errors.diplome_picture_1}
-                  className="block w-full"
-                />
-              </div>
+        <div>
+          <label className="block text-sm font-medium text-heading">Diplome picture 1</label>
+          <div className="mt-1 flex items-start gap-3">
+            {previewUrl1 && (
+              <img
+                src={previewUrl1}
+                alt="Diplome picture 1 preview"
+                className="h-16 w-16 rounded object-cover border-2 border-border flex-shrink-0"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
+            <div className="flex-1">
+              <FileInput
+                accept="image/*"
+                onChange={onFile1Change}
+                error={errors.diplome_picture_1}
+                className="block w-full"
+              />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-heading">Diplome picture 2</label>
-            <div className="mt-1 flex items-start gap-3">
-              {previewUrl2 && (
-                <img
-                  src={previewUrl2}
-                  alt="Diplome picture 2 preview"
-                  className="h-16 w-16 rounded object-cover border-2 border-border flex-shrink-0"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              )}
-              <div className="flex-1">
-                <FileInput
-                  accept="image/*"
-                  onChange={onFile2Change}
-                  error={errors.diplome_picture_2}
-                  className="block w-full"
-                />
-              </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-heading">Diplome picture 2</label>
+          <div className="mt-1 flex items-start gap-3">
+            {previewUrl2 && (
+              <img
+                src={previewUrl2}
+                alt="Diplome picture 2 preview"
+                className="h-16 w-16 rounded object-cover border-2 border-border flex-shrink-0"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
+            <div className="flex-1">
+              <FileInput
+                accept="image/*"
+                onChange={onFile2Change}
+                error={errors.diplome_picture_2}
+                className="block w-full"
+              />
             </div>
           </div>
         </div>
@@ -329,6 +351,18 @@ const StudentDiplomeStepForm: React.FC<StudentDiplomeStepFormProps> = ({
           </div>
         </div>
       )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <Select
+          label="Status"
+          value={form.status}
+          onChange={(e) => onFormChange('status', Number(e.target.value))}
+          options={STATUS_OPTIONS_FORM.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+          }))}
+        />
+      </div>
 
       <div className="flex justify-between space-x-3 pt-4">
         <Button

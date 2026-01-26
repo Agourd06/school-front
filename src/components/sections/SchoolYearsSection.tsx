@@ -235,6 +235,16 @@ const SchoolYearsSection: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <Input
+              label={t('common.search')}
+              type="text"
+              value={filters.search}
+              onChange={handleSearchChange}
+              placeholder={t('sections.searchBySchoolYearTitle')}
+              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
           <SearchSelect
             label={t('common.status')}
             value={filters.status}
@@ -249,16 +259,6 @@ const SchoolYearsSection: React.FC = () => {
             options={lifecycleStatusFilterOptions}
             isClearable={false}
           />
-          <div className="md:col-span-2">
-            <Input
-              label={t('common.search')}
-              type="text"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder={t('sections.searchBySchoolYearTitle')}
-              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-            />
-          </div>
         </div>
       
 

@@ -215,6 +215,15 @@ const SpecializationsSection: React.FC = () => {
           titleKey="pages.specializationsTitle"
           descriptionKey="pages.specializationsDescription"
           icon={<Target className="w-5 h-5" />}
+          middle={
+            selectedProgram ? (
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-900 whitespace-nowrap">
+                  {selectedProgram.title}
+                </p>
+              </div>
+            ) : undefined
+          }
           actions={
             <>
               {selectedProgramId && navigateBackToPrograms && (
@@ -250,13 +259,6 @@ const SpecializationsSection: React.FC = () => {
             </>
           }
         />
-        {selectedProgram && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-900">
-              <span className="font-medium">Program:</span> {selectedProgram.title}
-            </p>
-          </div>
-        )}
         {alert && (
           <div
             className={`mt-4 rounded-md border px-4 py-2 text-sm ${
@@ -276,6 +278,16 @@ const SpecializationsSection: React.FC = () => {
    
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <Input
+              label={t('common.search')}
+              type="text"
+              value={filters.search}
+              onChange={handleSearchChange}
+              placeholder={t('sections.searchBySpecializationTitle')}
+              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
           <SearchSelect
             label={t('common.status')}
             value={filters.status}
@@ -291,16 +303,6 @@ const SpecializationsSection: React.FC = () => {
             placeholder={t('sections.allPrograms')}
             isClearable
           />
-          <div className="md:col-span-2">
-            <Input
-              label={t('common.search')}
-              type="text"
-              value={filters.search}
-              onChange={handleSearchChange}
-              placeholder={t('sections.searchBySpecializationTitle')}
-              className="rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-            />
-          </div>
         </div>
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">

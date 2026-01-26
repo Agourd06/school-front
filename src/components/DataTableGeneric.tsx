@@ -153,9 +153,32 @@ function DataTableGeneric<T extends { id: number }>({
       ) : (
         <>
           {Array.isArray(data) && data.length > 0 ? (
-            <ul className="divide-y divide-gray-100">
-              {(data as T[]).map((item, index) => renderRow(item, onEdit, onDelete, index))}
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-tertiary/10">
+                <thead className="bg-surface/50 border-b border-tertiary/20">
+                  <tr>
+                    <th scope="col" className="px-4 sm:px-6 py-3.5 text-left text-xs font-semibold text-heading uppercase tracking-wider">
+                      {t('common.name') || 'Name'}
+                    </th>
+                    <th scope="col" className="px-4 sm:px-6 py-3.5 text-left text-xs font-semibold text-heading uppercase tracking-wider">
+                      {t('forms.email') || 'Email'}
+                    </th>
+                    <th scope="col" className="px-4 sm:px-6 py-3.5 text-left text-xs font-semibold text-heading uppercase tracking-wider hidden md:table-cell">
+                      {t('sections.roles') || 'Roles'}
+                    </th>
+                    <th scope="col" className="px-4 sm:px-6 py-3.5 text-left text-xs font-semibold text-heading uppercase tracking-wider">
+                      {t('forms.statusLabel') || 'Status'}
+                    </th>
+                    <th scope="col" className="px-4 sm:px-6 py-3.5 text-right text-xs font-semibold text-heading uppercase tracking-wider">
+                      {t('common.actions') || 'Actions'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-tertiary/10">
+                  {(data as T[]).map((item, index) => renderRow(item, onEdit, onDelete, index))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <div className="px-6 py-16 text-center">
               <div className="max-w-sm mx-auto">

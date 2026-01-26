@@ -35,7 +35,7 @@ export interface UpdateRoleRequest {
  * Query parameters for getting roles
  */
 export interface GetRolesParams extends SearchParams {
-  is_system?: boolean;
+  is_system?: boolean | null; // null = all roles, true = system only, false = custom only
 }
 
 /**
@@ -101,7 +101,11 @@ export const rolesApi = {
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
     if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
-    if (params.is_system !== undefined) queryParams.append('is_system', params.is_system.toString());
+    // IMPORTANT: Only include is_system if it's explicitly true or false (not null/undefined)
+    // This matches the backend guide: null = all roles, true = system, false = custom
+    if (params.is_system !== null && params.is_system !== undefined) {
+      queryParams.append('is_system', params.is_system.toString());
+    }
     
     const queryString = queryParams.toString();
     const url = queryString ? `/roles?${queryString}` : '/roles';

@@ -79,22 +79,37 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    const codeErr = validateRequired(form.code, t('forms.code'));
-    if (codeErr) newErrors.code = codeErr;
-    const titleErr = validateRequired(form.title, t('common.name'));
-    if (titleErr) newErrors.title = titleErr;
-    const capErr = validatePositiveNumber(form.capacity, t('forms.capacity'));
-    if (capErr) newErrors.capacity = capErr;
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-    await onSubmit(form);
+    
+    // If name is empty but code has a value, copy code to name before validation
+    const formToSubmit = { ...form };
+    if (!formToSubmit.title.trim() && formToSubmit.code.trim()) {
+      formToSubmit.title = formToSubmit.code;
+    }
+    
+    // Temporarily update form state for validation
+    const originalForm = form;
+    setForm(formToSubmit);
+    
+    // Validate with updated form
+    const newErrors: Record<string, string> = {};
+    const codeErr = validateRequired(formToSubmit.code, t('forms.code'));
+    if (codeErr) newErrors.code = codeErr;
+    const titleErr = validateRequired(formToSubmit.title, t('common.name'));
+    if (titleErr) newErrors.title = titleErr;
+    const capErr = validatePositiveNumber(formToSubmit.capacity, t('forms.capacity'));
+    if (capErr) newErrors.capacity = capErr;
+    setErrors(newErrors);
+    
+    if (Object.keys(newErrors).length > 0) {
+      // Restore original form if validation fails
+      setForm(originalForm);
+      return;
+    }
+    
+    await onSubmit(formToSubmit);
   };
 
   return (
@@ -112,6 +127,7 @@ const ClassRoomForm: React.FC<ClassRoomFormProps> = ({
           value={form.code}
           onChange={handleChange}
           error={errors.code}
+          required={!form.title.trim()}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
 

@@ -54,7 +54,6 @@ const DashboardStudentAttestationsPage = lazy(() => import('./pages/dashboard/St
 
 const ClassCoursesPage = lazy(() => import('./pages/dashboard/ClassCoursesPage'));
 const UsersPage = lazy(() => import('./pages/dashboard/UsersPage'));
-const CompaniesPage = lazy(() => import('./pages/dashboard/CompaniesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const ColorsSettingsPage = lazy(() => import('./pages/settings/ColorsSettingsPage'));
 const PageAccessSettingsPage = lazy(() => import('./pages/settings/PageAccessSettingsPage'));
@@ -604,16 +603,6 @@ const App: React.FC = () => {
             <ProtectedRoute>
               <DashboardLayout>
                 <Suspense fallback={<PageLoadingFallback />}><ClassCoursesPage /></Suspense>
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/companies"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <Suspense fallback={<PageLoadingFallback />}><CompaniesPage /></Suspense>
               </DashboardLayout>
             </ProtectedRoute>
           }

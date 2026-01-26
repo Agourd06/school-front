@@ -25,8 +25,11 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
       last_name: string;
       birthday: string;
       email: string;
+      email2: string;
       phone: string;
+      phone2: string;
       address: string;
+      codePostal: string;
       city: string;
       country: string;
       nationality: string;
@@ -41,9 +44,12 @@ const TeacherModal: React.FC<TeacherModalProps> = ({ isOpen, onClose, teacher })
     formDataObj.append('first_name', formData.first_name);
     formDataObj.append('last_name', formData.last_name);
     formDataObj.append('email', formData.email);
+    formDataObj.append('codePostal', formData.codePostal); // Required field
     if (formData.gender) formDataObj.append('gender', formData.gender);
     if (formData.birthday) formDataObj.append('birthday', formData.birthday);
     if (formData.phone) formDataObj.append('phone', formData.phone);
+    if (formData.phone2) formDataObj.append('phone2', formData.phone2);
+    if (formData.email2) formDataObj.append('email2', formData.email2);
     if (formData.address) formDataObj.append('address', formData.address);
     if (formData.city) formDataObj.append('city', formData.city);
     if (formData.country) formDataObj.append('country', formData.country);

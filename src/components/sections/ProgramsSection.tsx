@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import { ProgramModal, DeleteModal, DescriptionModal } from '../modals';
+import HierarchyTreeModal from '../modals/HierarchyTreeModal';
 import { EditButton, DeleteButton, Button, PdfActions, PageHeader } from '../ui';
 import { usePrograms, useDeleteProgram } from '../../hooks/usePrograms';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { useProgram } from '../../context/ProgramContext';
-import { Info, GraduationCap } from 'lucide-react';
+import { Info, GraduationCap, GitBranch } from 'lucide-react';
 import type { Program } from '../../api/program';
 
 const EMPTY_META = {
@@ -47,6 +48,7 @@ const ProgramsSection: React.FC = () => {
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name?: string } | null>(null);
+  const [treeModalOpen, setTreeModalOpen] = useState(false);
   
   const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
 
@@ -149,17 +151,28 @@ const ProgramsSection: React.FC = () => {
           descriptionKey="pages.programsDescription"
           icon={<GraduationCap className="w-5 h-5" />}
           actions={
-            <Button
-              type="button"
-              variant="primary"
-              onClick={openCreateModal}
-              className="inline-flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              {t('sections.addProgram')}
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setTreeModalOpen(true)}
+                className="inline-flex items-center gap-2"
+                title={t('sections.viewHierarchy') || 'View Hierarchy'}
+              >
+                <GitBranch className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={openCreateModal}
+                className="inline-flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {t('sections.addProgram')}
+              </Button>
+            </>
           }
         />
         {alert && (
@@ -181,13 +194,6 @@ const ProgramsSection: React.FC = () => {
      
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SearchSelect
-            label={t('common.status')}
-            value={filters.status}
-            onChange={handleFilterChange}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
             <input
@@ -198,6 +204,13 @@ const ProgramsSection: React.FC = () => {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
+          <SearchSelect
+            label={t('common.status')}
+            value={filters.status}
+            onChange={handleFilterChange}
+            options={statusFilterOptions}
+            isClearable={false}
+          />
         </div>
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
@@ -346,6 +359,12 @@ const ProgramsSection: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteProgramMut.isPending}
+      />
+
+      <HierarchyTreeModal
+        isOpen={treeModalOpen}
+        onClose={() => setTreeModalOpen(false)}
+        type="programs"
       />
     </div>
   );

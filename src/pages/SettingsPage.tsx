@@ -21,8 +21,9 @@ const SettingsPage: React.FC = () => {
     if (path === '/settings/roles') return 'roles';
     if (path === '/settings/company') return 'company';
     if (path === '/settings/user') return 'users';
-    if (path === '/settings/colors' || path === '/settings') return 'colors';
-    return 'colors'; // default
+    if (path === '/settings/colors') return 'colors';
+    if (path === '/settings') return 'company'; // default to company (first tab)
+    return 'company'; // default
   };
 
   const activeTab = getActiveTab();
@@ -36,30 +37,6 @@ const SettingsPage: React.FC = () => {
     
     return [
       {
-        id: 'colors' as const,
-        label: t('settings.colors'),
-        path: '/settings/colors',
-        isAllowed: hasPageAccess('/settings/colors'),
-      },
-      {
-        id: 'access' as const,
-        label: t('settings.pageAccess'),
-        path: '/settings/access',
-        isAllowed: hasPageAccess('/settings/access') || hasPageAccess('/settings/page-access'),
-      },
-      {
-        id: 'types' as const,
-        label: t('settings.types'),
-        path: '/settings/types',
-        isAllowed: hasTypesAccess, // Only show if user has at least one types sub-tab
-      },
-      {
-        id: 'roles' as const,
-        label: t('settings.roles'),
-        path: '/settings/roles',
-        isAllowed: hasPageAccess('/settings/roles'),
-      },
-      {
         id: 'company' as const,
         label: t('settings.company') || 'Company',
         path: '/settings/company',
@@ -70,6 +47,30 @@ const SettingsPage: React.FC = () => {
         label: t('settings.users') || 'Users',
         path: '/settings/user',
         isAllowed: hasPageAccess('/settings/user'),
+      },
+      {
+        id: 'access' as const,
+        label: t('settings.pageAccess'),
+        path: '/settings/access',
+        isAllowed: hasPageAccess('/settings/access') || hasPageAccess('/settings/page-access'),
+      },
+      {
+        id: 'roles' as const,
+        label: t('settings.roles'),
+        path: '/settings/roles',
+        isAllowed: hasPageAccess('/settings/roles'),
+      },
+      {
+        id: 'colors' as const,
+        label: t('settings.colors'),
+        path: '/settings/colors',
+        isAllowed: hasPageAccess('/settings/colors'),
+      },
+      {
+        id: 'types' as const,
+        label: t('settings.types'),
+        path: '/settings/types',
+        isAllowed: hasTypesAccess, // Only show if user has at least one types sub-tab
       },
     ];
   }, [hasPageAccess, t, allowedPages]);

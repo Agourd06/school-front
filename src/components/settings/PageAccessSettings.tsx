@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { pagesApi } from '../../api/pages';
@@ -17,6 +18,7 @@ const RESTRICTED_ROLE_CODES = ['teacher', 'student', 'parent', 'parents'];
 
 const PageAccessSettings: React.FC = () => {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
@@ -51,6 +53,20 @@ const PageAccessSettings: React.FC = () => {
   const roles = useMemo(() => {
     return allRoles.filter(role => !RESTRICTED_ROLE_CODES.includes(role.code.toLowerCase()));
   }, [allRoles]);
+
+  // Auto-select role from URL query parameter
+  useEffect(() => {
+    const roleIdParam = searchParams.get('roleId');
+    if (roleIdParam && allRoles.length > 0) {
+      const roleId = Number(roleIdParam);
+      const roleExists = allRoles.some(r => r.id === roleId);
+      if (roleExists && selectedRoleId !== roleId) {
+        setSelectedRoleId(roleId);
+        setUnassignedSearch('');
+        setAssignedSearch('');
+      }
+    }
+  }, [searchParams, allRoles, selectedRoleId]);
   
   const isRestrictedRole = useMemo(() => {
     if (!selectedRoleId) return false;
@@ -138,7 +154,61 @@ const PageAccessSettings: React.FC = () => {
     setSelectedRoleId(newRoleId);
     setUnassignedSearch('');
     setAssignedSearch('');
+    // Update URL query parameter
+    if (newRoleId) {
+      setSearchParams({ roleId: newRoleId.toString() });
+    } else {
+      setSearchParams({});
+    }
     setTimeout(() => setIsLoadingRole(false), 100);
+  };
+
+  const handleAssignPage = async (pageId: number) => {
+    if (!selectedRoleId || isManagingOwnRole || isRestrictedRole || loading || isAnyMutationPending) return;
+
+    const page = unassignedPages.find(p => p.id === pageId);
+    if (!page) return;
+
+    setIsAssigning(true);
+    setError(null);
+
+    try {
+      await assignPageMut.mutateAsync({ roleId: selectedRoleId, pageId });
+      // Optimistic update
+      setUnassignedPages(prev => prev.filter(p => p.id !== pageId));
+      setAssignedPages(prev => [...prev, page]);
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || t('settings.failedToUpdateAccess');
+      setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
+      // Revert optimistic update on error
+      refetchRolePages();
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleUnassignPage = async (pageId: number) => {
+    if (!selectedRoleId || isManagingOwnRole || isRestrictedRole || loading || isAnyMutationPending) return;
+
+    const page = assignedPages.find(p => p.id === pageId);
+    if (!page) return;
+
+    setIsAssigning(true);
+    setError(null);
+
+    try {
+      await removePageMut.mutateAsync({ roleId: selectedRoleId, pageId });
+      // Optimistic update
+      setAssignedPages(prev => prev.filter(p => p.id !== pageId));
+      setUnassignedPages(prev => [...prev, page]);
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || t('settings.failedToUpdateAccess');
+      setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
+      // Revert optimistic update on error
+      refetchRolePages();
+    } finally {
+      setIsAssigning(false);
+    }
   };
 
   const handleDragEnd = async (result: DropResult) => {
@@ -284,20 +354,9 @@ const PageAccessSettings: React.FC = () => {
         <h3 className="text-xl font-semibold text-heading mb-1">
           {t('settings.pageAccessManagement')}
         </h3>
-        <p className="text-sm text-body">
-          {t('settings.assignPagesToProfiles')}
-        </p>
+     
       </div>
 
-      {/* Info about restricted roles */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-        <p className="font-medium mb-1">
-          {t('messages.restrictedRolesInfo') || 'Note: Teacher, Student, and Parent Roles'}
-        </p>
-        <p className="text-xs">
-          {t('messages.restrictedRolesInfoDescription') || 'Teacher, student, and parent roles have their own dedicated dashboards and cannot be assigned parameter routes. They are automatically excluded from this page.'}
-        </p>
-      </div>
 
       {/* Error/Success Messages */}
       {error && (
@@ -484,24 +543,39 @@ const PageAccessSettings: React.FC = () => {
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className={`mb-2 p-3 bg-white border border-primary/30 rounded-lg shadow-sm cursor-move transition-all hover:shadow-md hover:border-primary ${
+                                  className={`mb-2 p-3 bg-white border border-primary/30 rounded-lg shadow-sm transition-all hover:shadow-md hover:border-primary ${
                                     snapshot.isDragging
                                       ? 'shadow-lg border-primary ring-2 ring-primary ring-opacity-20'
                                       : ''
                                   } ${isAnyMutationPending ? 'opacity-50' : ''}`}
                                 >
                                   <div className="flex items-start gap-3">
-                                    <FileText className="w-4 h-4 text-muted mt-0.5 flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="font-medium text-sm text-heading truncate">
-                                        {page.title}
-                                      </div>
-                                      <div className="text-xs text-muted font-mono mt-0.5 truncate">
-                                        {page.route}
+                                    <div 
+                                      {...provided.dragHandleProps}
+                                      className="flex items-center gap-2 flex-1 min-w-0 cursor-move"
+                                    >
+                                      <FileText className="w-4 h-4 text-muted mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-sm text-heading truncate">
+                                          {page.title}
+                                        </div>
+                                        <div className="text-xs text-muted font-mono mt-0.5 truncate">
+                                          {page.route}
+                                        </div>
                                       </div>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-muted flex-shrink-0" />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAssignPage(page.id);
+                                      }}
+                                      disabled={isAnyMutationPending || isManagingOwnRole || isRestrictedRole || loading}
+                                      className="flex-shrink-0 p-1.5 rounded-md hover:bg-primary/10 text-muted hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      title="Assign page"
+                                    >
+                                      <ArrowRight className="w-4 h-4" />
+                                    </button>
                                   </div>
                                 </div>
                               )}
@@ -583,24 +657,39 @@ const PageAccessSettings: React.FC = () => {
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className={`mb-2 p-3 bg-white border border-green-200 rounded-lg shadow-sm cursor-move transition-all hover:shadow-md hover:border-green-300 ${
+                                  className={`mb-2 p-3 bg-white border border-green-200 rounded-lg shadow-sm transition-all hover:shadow-md hover:border-green-300 ${
                                     snapshot.isDragging
                                       ? 'shadow-lg border-green-500 ring-2 ring-green-500 ring-opacity-20'
                                       : ''
                                   } ${isAnyMutationPending ? 'opacity-50' : ''}`}
                                 >
                                   <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="font-medium text-sm text-gray-900 truncate">
-                                        {page.title}
-                                      </div>
-                                      <div className="text-xs text-gray-500 font-mono mt-0.5 truncate">
-                                        {page.route}
+                                    <div 
+                                      {...provided.dragHandleProps}
+                                      className="flex items-center gap-2 flex-1 min-w-0 cursor-move"
+                                    >
+                                      <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-sm text-gray-900 truncate">
+                                          {page.title}
+                                        </div>
+                                        <div className="text-xs text-gray-500 font-mono mt-0.5 truncate">
+                                          {page.route}
+                                        </div>
                                       </div>
                                     </div>
-                                    <ArrowLeft className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleUnassignPage(page.id);
+                                      }}
+                                      disabled={isAnyMutationPending || isManagingOwnRole || isRestrictedRole || loading}
+                                      className="flex-shrink-0 p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      title="Unassign page"
+                                    >
+                                      <ArrowLeft className="w-4 h-4" />
+                                    </button>
                                   </div>
                                 </div>
                               )}

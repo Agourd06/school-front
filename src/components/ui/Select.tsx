@@ -11,6 +11,7 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   onChange?: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   name?: string;
   value?: string | number;
+  required?: boolean;
 }
 
 /**
@@ -46,6 +47,7 @@ const Select: React.FC<SelectProps> = ({
   id,
   onChange,
   value,
+  required,
 }) => {
   return (
     <CustomSelect
@@ -60,6 +62,7 @@ const Select: React.FC<SelectProps> = ({
       id={id}
       onChange={onChange}
       value={value}
+      required={required}
     />
   );
 };

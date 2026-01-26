@@ -18,6 +18,7 @@ export interface CustomSelectProps {
   id?: string;
   disabled?: boolean;
   className?: string;
+  required?: boolean;
 }
 
 /**
@@ -52,6 +53,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   id,
   disabled = false,
   className = '',
+  required = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
@@ -175,6 +177,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
           className="block text-sm font-medium text-heading mb-1"
         >
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       <div className="relative">

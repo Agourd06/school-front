@@ -16,6 +16,7 @@ interface StudentContactStepFormProps {
   errors: Record<string, string>;
   linkTypesData: PaginatedResponse<StudentLinkType> | null | undefined;
   studentName: string;
+  studentPicture?: string | null;
   onFormChange: (field: keyof ContactFormData, value: string | number | '') => void;
   onSubmit: (e: React.FormEvent) => void;
   onBack: () => void;
@@ -37,6 +38,7 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
   errors,
   linkTypesData,
   studentName,
+  studentPicture,
   onFormChange,
   onSubmit,
   onBack,
@@ -102,31 +104,61 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.country]);
 
+  const displayName = studentName || '—';
+  const initials = displayName !== '—' 
+    ? displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : '—';
+
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {errors.form && <p className="text-sm text-danger">{errors.form}</p>}
+      
+      {/* Student Info Display */}
+      <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm mb-6">
+        <div className="relative flex-shrink-0">
+          {studentPicture ? (
+            <img
+              src={studentPicture}
+              alt={displayName}
+              className="h-20 w-20 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-blue-200"
+              onError={(e) => {
+                // On error, hide the image and show initials fallback
+                const img = e.target as HTMLImageElement;
+                img.style.display = 'none';
+                // Show the fallback div
+                const fallback = img.nextElementSibling as HTMLElement;
+                if (fallback) {
+                  fallback.style.display = 'flex';
+                }
+              }}
+            />
+          ) : null}
+          <div 
+            className={`h-20 w-20 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center border-4 border-white shadow-md ring-2 ring-blue-200 ${studentPicture ? 'hidden' : ''}`}
+          >
+            <span className="text-white text-2xl font-bold">
+              {initials}
+            </span>
+          </div>
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-600 mb-1">{t('forms.student') || 'Student'}</p>
+          <p className="text-xl font-semibold text-gray-900">{displayName}</p>
+        </div>
+      </div>
       
       {!hasLinkTypes && (
         <div className="rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800">
           <strong>Warning:</strong> No link types available. Please create a link type first in{' '}
           <button
             type="button"
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/settings/types/link')}
             className="font-medium text-orange-900 hover:text-orange-950 underline cursor-pointer transition-colors"
           >
             settings &gt; types &gt; link types
           </button>
         </div>
       )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label="Student"
-          value={studentName}
-          disabled
-          className="bg-muted-foreground border-border"
-        />
-      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Input
           label="First name"
@@ -195,11 +227,18 @@ const StudentContactStepForm: React.FC<StudentContactStepFormProps> = ({
         </div>
       </div>
 
-      <Input
-        label="Address"
-        value={form.adress}
-        onChange={(e) => onFormChange('adress', e.target.value)}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label="Address"
+          value={form.adress}
+          onChange={(e) => onFormChange('adress', e.target.value)}
+        />
+        <Input
+          label={t('forms.codePostal') || 'Postal Code'}
+          value={form.codePostal}
+          onChange={(e) => onFormChange('codePostal', e.target.value)}
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <SearchSelect

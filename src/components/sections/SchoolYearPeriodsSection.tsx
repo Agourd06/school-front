@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useSchoolYearPeriods,
- 
+  useUpdateSchoolYearPeriod,
   useDeleteSchoolYearPeriod,
 } from '../../hooks/useSchoolYearPeriods';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
@@ -10,7 +10,7 @@ import Pagination from '../Pagination';
 import SchoolYearPeriodModal from '../modals/SchoolYearPeriodModal';
 import DeleteModal from '../modals/DeleteModal';
 import { EditButton, DeleteButton, Button, PageHeader } from '../ui';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
 import type { SchoolYearPeriod } from '../../api/schoolYearPeriod';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { useSchoolYear } from '../../context/SchoolYearContext';
@@ -71,6 +71,10 @@ const SchoolYearPeriodsSection: React.FC = () => {
   const [editingPeriod, setEditingPeriod] = useState<SchoolYearPeriod | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SchoolYearPeriod | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    field: 'start_date' | 'end_date' | null;
+    direction: 'closest' | 'farthest';
+  }>({ field: null, direction: 'closest' });
 
   const params = useMemo(
     () => ({
@@ -106,12 +110,47 @@ const SchoolYearPeriodsSection: React.FC = () => {
     limit: 100,
   });
 
-  const periods = periodsResp?.data ?? [];
+  const periodsData = periodsResp?.data ?? [];
   const meta = periodsResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
+
+  // Sort periods by proximity to today
+  const periods = useMemo(() => {
+    if (!sortConfig.field || periodsData.length === 0) return periodsData;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return [...periodsData].sort((a, b) => {
+      const field = sortConfig.field!;
+      const dateA = new Date(field === 'start_date' ? a.start_date : a.end_date);
+      const dateB = new Date(field === 'start_date' ? b.start_date : b.end_date);
+      dateA.setHours(0, 0, 0, 0);
+      dateB.setHours(0, 0, 0, 0);
+
+      const distanceA = Math.abs(today.getTime() - dateA.getTime());
+      const distanceB = Math.abs(today.getTime() - dateB.getTime());
+
+      if (sortConfig.direction === 'closest') {
+        // Closest to today first (ascending distance)
+        return distanceA - distanceB;
+      } else {
+        // Farthest from today first (descending distance)
+        return distanceB - distanceA;
+      }
+    });
+  }, [periodsData, sortConfig]);
   const ongoingPeriods = ongoingPeriodsResp?.data ?? [];
   const hasNoOngoingPeriods = selectedSchoolYearId !== null && selectedSchoolYearId !== undefined && ongoingPeriods.length === 0;
 
+  // Fetch all periods to find last period and period closest to today
+  const { data: allPeriodsResp } = useSchoolYearPeriods({
+    schoolYearId: selectedSchoolYearId ?? undefined,
+    limit: 1000,
+  });
+  const allPeriods = allPeriodsResp?.data ?? [];
+
   const deletePeriodMut = useDeleteSchoolYearPeriod();
+  const updatePeriodMut = useUpdateSchoolYearPeriod();
 
   const openCreateModal = () => {
     setEditingPeriod(null);
@@ -140,6 +179,24 @@ const SchoolYearPeriodsSection: React.FC = () => {
     const value = event.target.value;
     setFilters((prev) => ({ ...prev, search: value }));
     setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleSort = (field: 'start_date' | 'end_date') => {
+    setSortConfig((prev) => {
+      if (prev.field === field) {
+        // Toggle direction if same field
+        return {
+          field,
+          direction: prev.direction === 'closest' ? 'farthest' : 'closest',
+        };
+      } else {
+        // New field, start with closest
+        return {
+          field,
+          direction: 'closest',
+        };
+      }
+    });
   };
 
   const handleModalClose = () => {
@@ -192,6 +249,99 @@ const SchoolYearPeriodsSection: React.FC = () => {
     }
   };
 
+  // Find last period (most recent by end_date)
+  const lastPeriod = useMemo(() => {
+    if (allPeriods.length === 0) return null;
+    return allPeriods.reduce((latest, period) => {
+      const latestDate = new Date(latest.end_date);
+      const periodDate = new Date(period.end_date);
+      return periodDate > latestDate ? period : latest;
+    });
+  }, [allPeriods]);
+
+  // Find period closest to today
+  const periodClosestToToday = useMemo(() => {
+    if (allPeriods.length === 0) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let closest: SchoolYearPeriod | null = null;
+    let minDistance = Infinity;
+
+    for (const period of allPeriods) {
+      const startDate = new Date(period.start_date);
+      const endDate = new Date(period.end_date);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+
+      // If today is within the period, it's the closest
+      if (today >= startDate && today <= endDate) {
+        return period;
+      }
+
+      // Calculate distance to period (distance to start or end, whichever is closer)
+      const distanceToStart = Math.abs(today.getTime() - startDate.getTime());
+      const distanceToEnd = Math.abs(today.getTime() - endDate.getTime());
+      const minPeriodDistance = Math.min(distanceToStart, distanceToEnd);
+
+      if (minPeriodDistance < minDistance) {
+        minDistance = minPeriodDistance;
+        closest = period;
+      }
+    }
+
+    return closest;
+  }, [allPeriods]);
+
+  const handleSwitchPeriods = async () => {
+    if (!lastPeriod || !periodClosestToToday || lastPeriod.id === periodClosestToToday.id) {
+      setAlert({ type: 'error', message: t('messages.cannotSwitchPeriods') || 'Cannot switch periods' });
+      return;
+    }
+
+    setAlert(null);
+    try {
+      // Determine which one is currently ongoing
+      const lastIsOngoing = lastPeriod.lifecycle_status === 'ongoing';
+      const closestIsOngoing = periodClosestToToday.lifecycle_status === 'ongoing';
+
+      // Switch: make the one that's not ongoing become ongoing, and the other one completed
+      if (lastIsOngoing) {
+        // Switch from last to closest
+        await updatePeriodMut.mutateAsync({
+          id: lastPeriod.id,
+          lifecycle_status: 'completed',
+        });
+        await updatePeriodMut.mutateAsync({
+          id: periodClosestToToday.id,
+          lifecycle_status: 'ongoing',
+        });
+      } else if (closestIsOngoing) {
+        // Switch from closest to last
+        await updatePeriodMut.mutateAsync({
+          id: periodClosestToToday.id,
+          lifecycle_status: 'completed',
+        });
+        await updatePeriodMut.mutateAsync({
+          id: lastPeriod.id,
+          lifecycle_status: 'ongoing',
+        });
+      } else {
+        // Neither is ongoing, make the closest to today ongoing
+        await updatePeriodMut.mutateAsync({
+          id: periodClosestToToday.id,
+          lifecycle_status: 'ongoing',
+        });
+      }
+
+      setAlert({ type: 'success', message: t('messages.periodsSwitchedSuccessfully') || 'Periods switched successfully' });
+      refetchPeriods();
+    } catch (err: unknown) {
+      const message = extractErrorMessage(err, t);
+      setAlert({ type: 'error', message });
+    }
+  };
+
   return (
     <div className="space-y-6">
       
@@ -199,6 +349,20 @@ const SchoolYearPeriodsSection: React.FC = () => {
           titleKey="pages.schoolYearPeriodsTitle"
           descriptionKey="pages.schoolYearPeriodsDescription"
           icon={<CalendarDays className="w-5 h-5" />}
+          middle={
+            selectedSchoolYearId && selectedSchoolYear ? (
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-900 whitespace-nowrap">
+                  <span className="font-medium">{t('sections.schoolYearLabel')}</span> {selectedSchoolYear.title}
+                  {selectedSchoolYear.start_date && selectedSchoolYear.end_date && (
+                    <span className="text-xs text-blue-700 ml-2">
+                      ({formatDateWithMonthDay(selectedSchoolYear.start_date)} - {formatDateWithMonthDay(selectedSchoolYear.end_date)})
+                    </span>
+                  )}
+                </p>
+              </div>
+            ) : undefined
+          }
           actions={
             selectedSchoolYearId ? (
               <Button
@@ -215,18 +379,6 @@ const SchoolYearPeriodsSection: React.FC = () => {
             ) : undefined
           }
         />
-        {selectedSchoolYearId && selectedSchoolYear && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-900">
-              <span className="font-medium">{t('sections.schoolYearLabel')}</span> {selectedSchoolYear.title}
-              {selectedSchoolYear.start_date && selectedSchoolYear.end_date && (
-                <span className="text-xs text-blue-700 ml-2">
-                  ({formatDateWithMonthDay(selectedSchoolYear.start_date)} - {formatDateWithMonthDay(selectedSchoolYear.end_date)})
-                </span>
-              )}
-            </p>
-          </div>
-        )}
         {!selectedSchoolYearId && (
           <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
             <p className="text-sm text-amber-900">
@@ -268,6 +420,16 @@ const SchoolYearPeriodsSection: React.FC = () => {
       {selectedSchoolYearId && (
         <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">{t('sections.search')}</label>
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={handleSearchChange}
+                  placeholder={t('sections.searchByPeriodOrYear')}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                />
+              </div>
               <SearchSelect
                 label={t('sections.status')}
                 value={filters.status}
@@ -282,17 +444,24 @@ const SchoolYearPeriodsSection: React.FC = () => {
                 options={lifecycleStatusFilterOptions}
                 isClearable={false}
               />
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">{t('sections.search')}</label>
-                <input
-                  type="text"
-                  value={filters.search}
-                  onChange={handleSearchChange}
-                  placeholder={t('sections.searchByPeriodOrYear')}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                />
-              </div>
             </div>
+
+          {lastPeriod && periodClosestToToday && lastPeriod.id !== periodClosestToToday.id && (
+            <div className="flex items-center justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleSwitchPeriods}
+                disabled={updatePeriodMut.isPending}
+                isLoading={updatePeriodMut.isPending}
+                className="inline-flex items-center gap-2"
+                title={t('sections.switchPeriods') || 'Switch between last period and period closest to today'}
+              >
+                <RefreshCw className="w-4 h-4" />
+                {t('sections.switchPeriods') || 'Switch Periods'}
+              </Button>
+            </div>
+          )}
 
           <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">
@@ -303,10 +472,46 @@ const SchoolYearPeriodsSection: React.FC = () => {
                   {t('sections.title')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  {t('sections.startDate')}
+                  <div className="flex items-center gap-2 cursor-pointer hover:text-gray-700" onClick={() => handleSort('start_date')}>
+                    <span>{t('sections.startDate')}</span>
+                    <div className="flex flex-col">
+                      <ChevronUp
+                        className={`w-3 h-3 ${
+                          sortConfig.field === 'start_date' && sortConfig.direction === 'closest'
+                            ? 'text-primary'
+                            : 'text-gray-400'
+                        }`}
+                      />
+                      <ChevronDown
+                        className={`w-3 h-3 -mt-1 ${
+                          sortConfig.field === 'start_date' && sortConfig.direction === 'farthest'
+                            ? 'text-primary'
+                            : 'text-gray-400'
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  {t('sections.endDate')}
+                  <div className="flex items-center gap-2 cursor-pointer hover:text-gray-700" onClick={() => handleSort('end_date')}>
+                    <span>{t('sections.endDate')}</span>
+                    <div className="flex flex-col">
+                      <ChevronUp
+                        className={`w-3 h-3 ${
+                          sortConfig.field === 'end_date' && sortConfig.direction === 'closest'
+                            ? 'text-primary'
+                            : 'text-gray-400'
+                        }`}
+                      />
+                      <ChevronDown
+                        className={`w-3 h-3 -mt-1 ${
+                          sortConfig.field === 'end_date' && sortConfig.direction === 'farthest'
+                            ? 'text-primary'
+                            : 'text-gray-400'
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   {t('sections.schoolYear')}

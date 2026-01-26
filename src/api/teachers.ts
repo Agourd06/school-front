@@ -7,8 +7,11 @@ export type Teacher = {
   last_name: string;
   birthday?: string; // YYYY-MM-DD
   email: string;
+  email2?: string;
   phone?: string;
+  phone2?: string;
   address?: string;
+  codePostal?: string;
   city?: string;
   country?: string;
   nationality?: string;

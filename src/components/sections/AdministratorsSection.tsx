@@ -203,13 +203,6 @@ const AdministratorsSection: React.FC = () => {
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <SearchSelect
-            label={t('common.status')}
-            value={filters.status}
-            onChange={handleFilterChange('status')}
-            options={statusFilterOptions}
-            isClearable={false}
-          />
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
             <input
@@ -219,8 +212,15 @@ const AdministratorsSection: React.FC = () => {
               placeholder={t('sections.searchByNameOrEmail')}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             />
+          </div>
+          <SearchSelect
+            label={t('common.status')}
+            value={filters.status}
+            onChange={handleFilterChange('status')}
+            options={statusFilterOptions}
+            isClearable={false}
+          />
         </div>
-      </div>
       
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">

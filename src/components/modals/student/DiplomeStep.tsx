@@ -11,6 +11,7 @@ interface DiplomeStepProps {
   currentDiplomePicture1?: string | null;
   currentDiplomePicture2?: string | null;
   studentName: string;
+  studentPicture?: string | null;
   onFormChange: (field: keyof DiplomeFormData, value: string | number | '') => void;
   onFile1Change: (file: File | null) => void;
   onFile2Change: (file: File | null) => void;

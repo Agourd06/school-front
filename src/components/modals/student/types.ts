@@ -12,8 +12,11 @@ export interface StudentFormData {
   last_name: string;
   birthday: string;
   email: string;
+  email2: string;
   phone: string;
+  phone2: string;
   address: string;
+  codePostal: string;
   city: string;
   country: string;
   nationality: string;
@@ -38,6 +41,7 @@ export interface ContactFormData {
   email: string;
   phone: string;
   adress: string;
+  codePostal: string;
   city: string;
   country: string;
   studentlinktypeId: number | string | '';

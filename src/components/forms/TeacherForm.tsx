@@ -14,8 +14,11 @@ export interface TeacherFormData {
   last_name: string;
   birthday: string;
   email: string;
+  email2: string;
   phone: string;
+  phone2: string;
   address: string;
+  codePostal: string;
   city: string;
   country: string;
   nationality: string;
@@ -30,8 +33,11 @@ export interface Teacher {
   last_name: string;
   birthday?: string;
   email: string;
+  email2?: string;
   phone?: string;
+  phone2?: string;
   address?: string;
+  codePostal?: string;
   city?: string;
   country?: string;
   nationality?: string;
@@ -65,8 +71,11 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
     last_name: '',
     birthday: '',
     email: '',
+    email2: '',
     phone: '',
+    phone2: '',
     address: '',
+    codePostal: '',
     city: '',
     country: '',
     nationality: '',
@@ -124,8 +133,11 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           last_name: initialData.last_name || '',
           birthday: initialData.birthday || '',
           email: initialData.email || '',
+          email2: initialData.email2 || '',
           phone: initialData.phone || '',
+          phone2: initialData.phone2 || '',
           address: initialData.address || '',
+          codePostal: initialData.codePostal || '',
           city: initialData.city || '',
           country: initialData.country || '',
           nationality: initialData.nationality || '',
@@ -139,8 +151,11 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           last_name: '',
           birthday: '',
           email: '',
+          email2: '',
           phone: '',
+          phone2: '',
           address: '',
+          codePostal: '',
           city: '',
           country: '',
           nationality: '',
@@ -274,6 +289,8 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
     if (lnErr) newErrors.last_name = lnErr;
     const emailErr = validateRequired(form.email, t('forms.email'));
     if (emailErr) newErrors.email = emailErr;
+    const codePostalErr = validateRequired(form.codePostal, t('forms.codePostal') || 'Postal Code');
+    if (codePostalErr) newErrors.codePostal = codePostalErr;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -399,10 +416,12 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Input
-          label={t('forms.nationality')}
-          name="nationality"
-          value={form.nationality}
+          label={t('forms.codePostal') || 'Postal Code'}
+          name="codePostal"
+          value={form.codePostal}
           onChange={handleChange}
+          error={errors.codePostal}
+          required
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
@@ -430,6 +449,35 @@ const TeacherForm: React.FC<TeacherFormProps> = ({
           placeholder={!form.country ? t('forms.selectCountryFirst') : loadingCities ? t('forms.loadingCities') : t('forms.searchCity')}
           disabled={!form.country || loadingCities}
           isLoading={loadingCities}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label={t('forms.nationality')}
+          name="nationality"
+          value={form.nationality}
+          onChange={handleChange}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label={t('forms.email2') || 'Second Email'}
+          name="email2"
+          type="email"
+          value={form.email2}
+          onChange={handleChange}
+          error={errors.email2}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+        <PhoneInput
+          label={t('forms.phone2') || 'Second Phone'}
+          name="phone2"
+          value={form.phone2}
+          onChange={handleChange}
+          error={errors.phone2}
         />
       </div>
 

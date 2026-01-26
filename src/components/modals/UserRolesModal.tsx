@@ -143,11 +143,26 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
           </div>
         )}
 
-        <div>
-          <p className="text-sm text-muted mb-4">
-            {t('sections.selectRolesForUser') || 'Select roles to assign to this user. Users with multiple roles will have access to all pages assigned to any of their roles.'}
-          </p>
+        {userRoles.length > 0 && (
+          <div className="pb-4 border-b border-gray-200">
+            <h4 className="text-sm font-medium text-heading mb-2">
+              {t('sections.currentRoles') || 'Current Roles'}:
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {userRoles.map((role: Role) => (
+                <span
+                  key={role.id}
+                  className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-primary-transparent text-primary border border-primary"
+                >
+                  {role.label}
+                  {role.is_system && <span className="ml-1 text-xs">(System)</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
+        <div>
           <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-300 rounded-md p-4">
             {allRoles.length === 0 ? (
               <p className="text-sm text-muted text-center py-4">
@@ -193,25 +208,6 @@ const UserRolesModal: React.FC<UserRolesModalProps> = ({ isOpen, onClose, user }
             )}
           </div>
         </div>
-
-        {userRoles.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="text-sm font-medium text-heading mb-2">
-              {t('sections.currentRoles') || 'Current Roles'}:
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {userRoles.map((role: Role) => (
-                <span
-                  key={role.id}
-                  className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-primary-transparent text-primary border border-primary"
-                >
-                  {role.label}
-                  {role.is_system && <span className="ml-1 text-xs">(System)</span>}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="flex justify-end pt-4 border-t border-gray-200">
           <Button variant="secondary" onClick={onClose}>

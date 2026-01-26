@@ -217,10 +217,12 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           onChange={onChange}
         />
         <Input
-          label={t('forms.nationality')}
-          name="nationality"
-          value={form.nationality}
+          label={t('forms.codePostal') || 'Postal Code'}
+          name="codePostal"
+          value={form.codePostal}
           onChange={onChange}
+          error={errors.codePostal}
+          required
         />
       </div>
 
@@ -247,6 +249,33 @@ const StudentStepForm: React.FC<StudentStepFormProps> = ({
           placeholder={!form.country ? t('forms.selectCountryFirst') : loadingCities ? t('forms.loadingCities') : t('forms.searchCity')}
           disabled={!form.country || loadingCities}
           isLoading={loadingCities}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label={t('forms.nationality')}
+          name="nationality"
+          value={form.nationality}
+          onChange={onChange}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label={t('forms.email2') || 'Second Email'}
+          name="email2"
+          type="email"
+          value={form.email2}
+          onChange={onChange}
+          error={errors.email2}
+        />
+        <PhoneInput
+          label={t('forms.phone2') || 'Second Phone'}
+          name="phone2"
+          value={form.phone2}
+          onChange={onChange}
+          error={errors.phone2}
         />
       </div>
 

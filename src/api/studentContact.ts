@@ -9,6 +9,7 @@ export interface StudentContact {
   email?: string;
   phone?: string;
   adress?: string;
+  codePostal?: string;
   city?: string;
   country?: string;
   student_id?: number;
@@ -25,6 +26,7 @@ export interface CreateStudentContactRequest {
   email?: string;
   phone?: string;
   adress?: string;
+  codePostal?: string;
   city?: string;
   country?: string;
   student_id?: number;

@@ -4,7 +4,6 @@
 
 export type RouteTab =
   | 'users'
-  | 'companies'
   | 'programs'
   | 'specializations'
   | 'levels'
@@ -38,7 +37,6 @@ export type RouteTab =
  */
 export const tabToRoute: Record<RouteTab, string> = {
   users: '/settings/user',
-  companies: '/companies',
   programs: '/programs',
   specializations: '/specializations',
   levels: '/levels',

@@ -40,14 +40,18 @@ export const useStudentModalData = (studentId: number) => {
 
       // Load student data
       if (studentData) {
+        // Directly access the fields - API returns camelCase (email2, phone2, codePostal)
         setStudentForm({
           gender: studentData.gender || '',
           first_name: studentData.first_name || '',
           last_name: studentData.last_name || '',
           birthday: studentData.birthday || '',
           email: studentData.email || '',
+          email2: studentData.email2 || '',
           phone: studentData.phone || '',
+          phone2: studentData.phone2 || '',
           address: studentData.address || '',
+          codePostal: studentData.codePostal || '',
           city: studentData.city || '',
           country: studentData.country || '',
           nationality: studentData.nationality || '',
@@ -83,6 +87,7 @@ export const useStudentModalData = (studentId: number) => {
           email: contact.email || '',
           phone: contact.phone || '',
           adress: contact.adress || '',
+          codePostal: contact.codePostal || '',
           city: contact.city || '',
           country: contact.country || '',
           studentlinktypeId: contact.studentlinktypeId ?? '',
@@ -108,6 +113,9 @@ export const useStudentModalData = (studentId: number) => {
         setLinkTypeTitle('');
         setLinkTypeStatus(1);
       }
+    } else if (!studentId) {
+      // Reset form when studentId is cleared (modal closed or new student)
+      setStudentForm(initialStudentForm);
     }
   }, [studentId, studentDetailsData]);
 
