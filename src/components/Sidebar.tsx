@@ -69,7 +69,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       titleKey: 'sidebar.classManagement',
       items: [
         { tab: 'classes', labelKey: 'sidebar.classes' },
-        { tab: 'planningSessionTypes', labelKey: 'sidebar.planningSessionTypes' },
       ],
     },
     {
@@ -79,7 +78,6 @@ const Sidebar: React.FC<SidebarProps> = ({
        
         { tab: 'administrators', labelKey: 'sidebar.administrators' },
         { tab: 'studentReports', labelKey: 'sidebar.studentReports' },
-        { tab: 'studentLinkTypes', labelKey: 'sidebar.studentLinkTypes' },
         { tab: 'studentContacts', labelKey: 'sidebar.studentContacts' },
         { tab: 'studentDiplomes', labelKey: 'sidebar.studentDiplomes' },
         { tab: 'attestations', labelKey: 'sidebar.attestations' },
@@ -113,7 +111,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { tab: 'students', labelKey: 'sidebar.students' },
         { tab: 'teachers', labelKey: 'sidebar.teachers' },
-        { tab: 'classStudents', labelKey: 'sidebar.classStudents' },
       ],
     },
     {

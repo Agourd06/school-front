@@ -6,6 +6,8 @@ interface SearchSelectOption {
   value: number | string;
   label: string;
   data?: unknown;
+  lifecycleStatus?: 'planned' | 'ongoing' | 'completed';
+  color?: string;
 }
 
 interface SearchSelectProps {
@@ -92,24 +94,34 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
         borderRadius: '0.375rem',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
       }),
-      option: (base: any, state: any) => ({
-        ...base,
-        backgroundColor: state.isSelected
-          ? primary
-          : state.isFocused
-            ? primaryLight
-            : card,
-        color: state.isSelected
-          ? primaryForeground
-          : state.isFocused
+      option: (base: any, state: any) => {
+        const option = state.data as SearchSelectOption;
+        let borderLeftColor = 'transparent';
+        if (option?.lifecycleStatus === 'ongoing') borderLeftColor = '#10b981'; // green
+        else if (option?.lifecycleStatus === 'completed') borderLeftColor = '#6b7280'; // grey
+        else if (option?.lifecycleStatus === 'planned') borderLeftColor = '#3b82f6'; // blue
+        
+        return {
+          ...base,
+          backgroundColor: state.isSelected
             ? primary
-            : body,
-        cursor: 'pointer',
-        '&:active': {
-          backgroundColor: primary,
-          color: primaryForeground,
-        },
-      }),
+            : state.isFocused
+              ? primaryLight
+              : card,
+          color: state.isSelected
+            ? primaryForeground
+            : state.isFocused
+              ? primary
+              : body,
+          cursor: 'pointer',
+          borderLeft: borderLeftColor !== 'transparent' ? `3px solid ${borderLeftColor}` : 'none',
+          paddingLeft: borderLeftColor !== 'transparent' ? 'calc(0.75rem - 3px)' : base.paddingLeft,
+          '&:active': {
+            backgroundColor: primary,
+            color: primaryForeground,
+          },
+        };
+      },
       placeholder: (base: any) => ({
         ...base,
         color: muted,
@@ -117,6 +129,9 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
       singleValue: (base: any) => ({
         ...base,
         color: body,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
       }),
       input: (base: any) => ({
         ...base,
@@ -173,7 +188,12 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
             return val;
           }}
           placeholder={placeholder}
-          value={selectedOption ? { value: selectedOption.value, label: selectedOption.label } : null}
+          value={selectedOption ? { 
+            value: selectedOption.value, 
+            label: selectedOption.label,
+            lifecycleStatus: selectedOption.lifecycleStatus,
+            color: selectedOption.color
+          } : null}
           onChange={(opt) => {
             const selected = opt as SearchSelectOption | null;
             if (!selected) {
@@ -183,6 +203,29 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
             }
           }}
           styles={customStyles}
+          formatOptionLabel={(option: any) => {
+            const { label, lifecycleStatus, color } = option;
+            if (lifecycleStatus || color) {
+              let bgColor = '';
+              if (lifecycleStatus === 'ongoing') bgColor = '#10b981'; // green
+              else if (lifecycleStatus === 'completed') bgColor = '#6b7280'; // grey
+              else if (lifecycleStatus === 'planned') bgColor = '#3b82f6'; // blue
+              else if (color) bgColor = color;
+              
+              return (
+                <div className="flex items-center gap-2">
+                  {bgColor && (
+                    <span
+                      className="inline-block w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: bgColor }}
+                    />
+                  )}
+                  <span>{label}</span>
+                </div>
+              );
+            }
+            return label;
+          }}
           noOptionsMessage={() => {
             if (typeof noOptionsMessage === 'function') return noOptionsMessage(query);
             if (typeof noOptionsMessage === 'string') return noOptionsMessage;

@@ -161,7 +161,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
       <RichTextEditor
         value={form.description}
         onChange={(html) => setForm((prev) => ({ ...prev, description: html }))}
-        placeholder={t('forms.describeClass')}
+        placeholder={t('forms.describeClass') || 'Describe the class...'}
         rows={10}
       />
     </div>
@@ -178,39 +178,13 @@ const ClassForm: React.FC<ClassFormProps> = ({
       {descriptionPosition === 'top' && descriptionEditor}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Input
-          label={`${t('common.name')} *`}
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          error={errors.title}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        />
-        <Select
-          label={`${t('sidebar.schoolYears')} *`}
-          name="school_year_id"
-          value={form.school_year_id}
-          onChange={handleChange}
-          options={[
-            { value: '', label: t('forms.selectSchoolYear') },
-            ...schoolYears.map((year) => ({
-              value: year.id,
-              label: year.title,
-            })),
-          ]}
-          error={errors.school_year_id}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label={`${t('sidebar.programs')} *`}
           name="program_id"
           value={form.program_id}
           onChange={handleChange}
           options={[
-            { value: '', label: t('forms.selectProgram') },
+            { value: '', label: t('forms.selectProgram') || 'Select program' },
             ...programs.map((program) => ({
               value: program.id,
               label: program.title,
@@ -226,7 +200,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
           onChange={handleChange}
           disabled={!form.program_id}
           options={[
-            { value: '', label: t('forms.selectSpecialization') },
+            { value: '', label: t('forms.selectSpecialization') || 'Select specialization' },
             ...specializations.map((spec) => ({
               value: spec.id,
               label: spec.title,
@@ -247,7 +221,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
           onChange={handleChange}
           disabled={!form.specialization_id}
           options={[
-            { value: '', label: t('forms.selectLevel') },
+            { value: '', label: t('forms.selectLevel') || 'Select level' },
             ...levels.map((level) => ({
               value: level.id,
               label: level.title,
@@ -257,6 +231,32 @@ const ClassForm: React.FC<ClassFormProps> = ({
           className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
             !form.specialization_id ? 'bg-muted-foreground cursor-not-allowed' : ''
           }`}
+        />
+        <Select
+          label={`${t('sidebar.schoolYears')} *`}
+          name="school_year_id"
+          value={form.school_year_id}
+          onChange={handleChange}
+          options={[
+            { value: '', label: t('forms.selectSchoolYear') || 'Select school year' },
+            ...schoolYears.map((year) => ({
+              value: year.id,
+              label: year.title,
+            })),
+          ]}
+          error={errors.school_year_id}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Input
+          label={`${t('common.name')} *`}
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          error={errors.title}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
         <Select
           label={t('common.status')}

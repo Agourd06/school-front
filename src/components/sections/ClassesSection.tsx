@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import type { FilterParams, ListState } from '../../types/api';
 import SearchBar from '../../components/SearchBar';
 import FilterDropdown from '../../components/FilterDropdown';
 import Pagination from '../../components/Pagination';
 import { Button, PageHeader } from '../ui';
-import { Users } from 'lucide-react';
+import { Users, UserCheck } from 'lucide-react';
 import { useClasses, useDeleteClass } from '../../hooks/useClasses';
 import { usePrograms } from '../../hooks/usePrograms';
 import { useSpecializations } from '../../hooks/useSpecializations';
@@ -37,6 +38,7 @@ const extractErrorMessage = (err: unknown, t: (key: string) => string): string =
 
 const ClassesSection: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [state, setState] = React.useState<ListState<ClassEntity>>({
     data: [],
     loading: false,
@@ -72,10 +74,13 @@ const ClassesSection: React.FC = () => {
     student_id: undefined, // Removed student_id from params
   };
 
-  const { data: response, isLoading, error, refetch: refetchClasses } = useClasses(params);
+  // Only fetch classes when school year is selected
+  const { data: response, isLoading, error, refetch: refetchClasses } = useClasses(
+    schoolYearFilter ? params : { page: 1, limit: 10 }
+  );
 
   React.useEffect(() => {
-    if (response) {
+    if (response && schoolYearFilter) {
       setState(prev => ({
         ...prev,
         data: response.data,
@@ -83,8 +88,17 @@ const ClassesSection: React.FC = () => {
         error: (error as { message?: string })?.message || null,
         pagination: response.meta,
       }));
+    } else if (!schoolYearFilter) {
+      // Clear data when school year is not selected
+      setState(prev => ({
+        ...prev,
+        data: [],
+        loading: false,
+        error: null,
+        pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrevious: false },
+      }));
     }
-  }, [response, isLoading, error]);
+  }, [response, isLoading, error, schoolYearFilter]);
 
   const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
   const programs = useMemo(() => (programsResp?.data || []) as Program[], [programsResp]);
@@ -109,15 +123,27 @@ const ClassesSection: React.FC = () => {
 
   const { data: schoolYearsResp } = useSchoolYears({ page: 1, limit: 100 });
   const schoolYears = useMemo(() => (schoolYearsResp?.data || []) as SchoolYear[], [schoolYearsResp]);
-  // Filter out completed school years - allow planned and ongoing
-  const availableSchoolYears = useMemo(() => 
-    schoolYears.filter((year: SchoolYear) => year.lifecycle_status !== 'completed'),
+  // Include all school years (completed, ongoing, planned)
+  const schoolYearOptions: SearchSelectOption[] = useMemo(
+    () => schoolYears.map((year: SchoolYear) => ({ 
+      value: year.id, 
+      label: year.title,
+      lifecycleStatus: year.lifecycle_status as 'planned' | 'ongoing' | 'completed' | undefined
+    })),
     [schoolYears]
   );
-  const schoolYearOptions: SearchSelectOption[] = useMemo(
-    () => availableSchoolYears.map((year: SchoolYear) => ({ value: year.id, label: year.title })),
-    [availableSchoolYears]
-  );
+
+  // Get ongoing school year and set it as default
+  const ongoingSchoolYear = useMemo(() => {
+    return schoolYears.find((year: SchoolYear) => year.lifecycle_status === 'ongoing');
+  }, [schoolYears]);
+
+  // Set default ongoing school year on mount
+  useEffect(() => {
+    if (ongoingSchoolYear && !schoolYearFilter) {
+      setSchoolYearFilter(ongoingSchoolYear.id);
+    }
+  }, [ongoingSchoolYear, schoolYearFilter]);
 
   const deleteClassMut = useDeleteClass();
 
@@ -206,7 +232,23 @@ const ClassesSection: React.FC = () => {
         }
       />
 
-      <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 items-end">
+      <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+        <SearchSelect
+          label={`${t('sidebar.schoolYears')} *`}
+          value={schoolYearFilter}
+          onChange={(val) => {
+            const numeric = val === '' ? '' : Number(val);
+            setSchoolYearFilter(numeric);
+            // Reset other filters when school year changes
+            setProgramFilter('');
+            setSpecializationFilter('');
+            setLevelFilter('');
+            setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
+          }}
+          placeholder={t('sections.selectSchoolYear')}
+          options={schoolYearOptions}
+          isClearable={false}
+        />
         <SearchSelect
           label={t('sidebar.programs')}
           value={programFilter}
@@ -217,9 +259,10 @@ const ClassesSection: React.FC = () => {
             setLevelFilter('');
             setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
           }}
-          placeholder="All programs"
+          placeholder={t('sections.allPrograms')}
           options={programOptions}
           isClearable
+          disabled={!schoolYearFilter}
         />
         <SearchSelect
           label={t('dashboard.specializations')}
@@ -247,18 +290,6 @@ const ClassesSection: React.FC = () => {
           options={levelOptions}
           isClearable
           disabled={!specializationFilter}
-        />
-        <SearchSelect
-          label={t('sidebar.schoolYears')}
-          value={schoolYearFilter}
-          onChange={(val) => {
-            const numeric = val === '' ? '' : Number(val);
-            setSchoolYearFilter(numeric);
-            setState(prev => ({ ...prev, pagination: { ...prev.pagination, page: 1 } }));
-          }}
-          placeholder={t('sections.allSchoolYears')}
-          options={schoolYearOptions}
-          isClearable
         />
       </div>
 
@@ -309,7 +340,13 @@ const ClassesSection: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {state.loading ? (
+              {!schoolYearFilter ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted">
+                    {t('sections.selectSchoolYearToViewClasses') || 'Please select a school year to view classes.'}
+                  </td>
+                </tr>
+              ) : state.loading ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted">
                     {t('sections.loadingClasses')}
@@ -345,6 +382,14 @@ const ClassesSection: React.FC = () => {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/class-students?classId=${cls.id}`)}
+                            className="inline-flex items-center justify-center rounded-full p-1.5 text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border border-blue-200"
+                            title={t('sections.manageStudents') || 'Manage Students'}
+                          >
+                            <UserCheck className="h-4 w-4" />
+                          </button>
                           <button
                             type="button"
                             onClick={() => openDetailsModal(cls)}

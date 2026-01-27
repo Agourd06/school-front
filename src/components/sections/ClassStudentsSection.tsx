@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useQuery } from '@tanstack/react-query';
 import { useDeleteClassStudent, useCreateClassStudent } from '../../hooks/useClassStudents';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
-import { useClasses } from '../../hooks/useClasses';
+import { useClasses, useClass } from '../../hooks/useClasses';
 import { useStudents } from '../../hooks/useStudents';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { classStudentApi } from '../../api/classStudent';
@@ -294,6 +295,9 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
 
 const ClassStudentsSection: React.FC = () => {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlClassId = searchParams.get('classId');
+  
   const [yearFilter, setYearFilter] = useState<number | ''>('');
   const [classFilter, setClassFilter] = useState<number | ''>('');
   const [statusFilter, setStatusFilter] = useState<number | ''>('');
@@ -309,6 +313,10 @@ const ClassStudentsSection: React.FC = () => {
 
   const createMut = useCreateClassStudent();
   const deleteMut = useDeleteClassStudent();
+
+  // Fetch class by ID from URL params
+  const urlClassIdNum = urlClassId ? Number(urlClassId) : null;
+  const { data: urlClassData } = useClass(urlClassIdNum || 0);
 
   const { data: studentsResp, isLoading: studentsLoading } = useStudents({ page: 1, limit: MAX_FETCH_LIMIT });
   
@@ -543,12 +551,27 @@ const ClassStudentsSection: React.FC = () => {
     }
   };
 
-  // Reset class filter when year changes
+  // Read classId from URL params and set filters
+  useEffect(() => {
+    if (urlClassData && urlClassIdNum) {
+      // Set the school year filter first
+      if (urlClassData.school_year_id) {
+        setYearFilter(urlClassData.school_year_id);
+      }
+      // Then set the class filter
+      setClassFilter(urlClassIdNum);
+    }
+  }, [urlClassData, urlClassIdNum]);
+
+  // Reset class filter when year changes (unless it came from URL)
   const handleYearChange = (value: string | number | '') => {
     setYearFilter(value === '' || value === undefined ? '' : Number(value));
-    setClassFilter(''); // Reset class when year changes
-    setAssignedStudents([]);
-    setUnassignedStudents([]);
+    // Only reset class if it wasn't set from URL params
+    if (!urlClassId) {
+      setClassFilter('');
+      setAssignedStudents([]);
+      setUnassignedStudents([]);
+    }
   };
 
   const statusFilterOptions: SearchSelectOption[] = useMemo(
