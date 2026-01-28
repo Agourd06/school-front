@@ -3,6 +3,7 @@ import {
   classCourseApi,
   type ClassCourse,
   type CreateClassCoursePayload,
+  type CreateBatchClassCoursePayload,
   type GetClassCourseParams,
   type UpdateClassCoursePayload,
 } from '../api/classCourse';
@@ -32,6 +33,16 @@ export const useCreateClassCourse = () => {
     onSuccess: (result: ClassCourse) => {
       qc.invalidateQueries({ queryKey: [QUERY_KEY] });
       qc.setQueryData([QUERY_KEY, result.id], result);
+    },
+  });
+};
+
+export const useCreateBatchClassCourse = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateBatchClassCoursePayload) => classCourseApi.createBatch(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
   });
 };

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { useQuery } from '@tanstack/react-query';
-import { useDeleteClassStudent, useCreateClassStudent } from '../../hooks/useClassStudents';
+import { useDeleteClassStudent, useCreateClassStudent, useUpdateClassStudent } from '../../hooks/useClassStudents';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { useClasses, useClass } from '../../hooks/useClasses';
 import { useStudents } from '../../hooks/useStudents';
@@ -15,12 +15,13 @@ import type { DropResult } from '@hello-pangea/dnd';
 import type { PaginatedResponse } from '../../types/api';
 import type { SchoolYear } from '../../api/schoolYear';
 import type { ClassEntity } from '../../api/classes';
-import { STATUS_OPTIONS } from '../../constants/status';
+import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import { studentsApi } from '../../api/students';
 import BaseModal from '../modals/BaseModal';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Info, UserPlus } from 'lucide-react';
 import { PageHeader } from '../ui';
+import StatusBadge from '../StatusBadge';
 
 type StudentLite = {
   id: number;
@@ -28,6 +29,7 @@ type StudentLite = {
   last_name?: string | null;
   email?: string | null;
   status?: number | null;
+  picture?: string | null;
 };
 
 type AssignedStudent = {
@@ -46,11 +48,18 @@ const makeStudentLite = (fallbackId: number, student?: Partial<ApiStudent> | Min
   last_name: student?.last_name ?? null,
   email: student?.email ?? null,
   status: student?.status ?? null,
+  picture: student?.picture ?? null,
 });
 
 const getStudentLabel = (student: StudentLite, t: (key: string) => string) => {
   const fullName = `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim();
   return fullName || student.email || `${t('forms.studentNumber')}${student.id}`;
+};
+
+const getStudentInitials = (student: StudentLite): string => {
+  const first = student.first_name?.charAt(0)?.toUpperCase() || '';
+  const last = student.last_name?.charAt(0)?.toUpperCase() || '';
+  return `${first}${last}`.trim() || student.email?.charAt(0)?.toUpperCase() || '?';
 };
 
 const sortStudentsByLabel = (a: StudentLite, b: StudentLite, t: (key: string) => string) => getStudentLabel(a, t).localeCompare(getStudentLabel(b, t));
@@ -310,9 +319,11 @@ const ClassStudentsSection: React.FC = () => {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
 
   const createMut = useCreateClassStudent();
   const deleteMut = useDeleteClassStudent();
+  const updateMut = useUpdateClassStudent();
 
   // Fetch class by ID from URL params
   const urlClassIdNum = urlClassId ? Number(urlClassId) : null;
@@ -429,7 +440,7 @@ const ClassStudentsSection: React.FC = () => {
     });
   }, [unassignedStudents, unassignedFilter, unassignedSearchLower, t]);
 
-  const isMutationLoading = createMut.isPending || deleteMut.isPending || isAssigning || isRemoving;
+  const isMutationLoading = createMut.isPending || deleteMut.isPending || updateMut.isPending || isAssigning || isRemoving || isActivating;
   const isAssignedLoading = assignedQuery.isLoading || assignedQuery.isFetching;
   const isUnassignedLoading = studentsLoading || allAssignmentsQuery.isLoading;
 
@@ -474,7 +485,7 @@ const ClassStudentsSection: React.FC = () => {
       const response = await createMut.mutateAsync({
         class_id: Number(classFilter),
         student_id: studentId,
-        status: 1,
+        status: 2, // Set to pending (2) instead of active (1)
         tri: assignedStudents.length + 1,
       });
 
@@ -529,6 +540,36 @@ const ClassStudentsSection: React.FC = () => {
       setFeedback(message);
     } finally {
       setIsRemoving(false);
+    }
+  };
+
+  const handleActivate = async (assignmentId: number) => {
+    if (isMutationLoading) return;
+    const target = assignedStudents.find((item) => item.assignmentId === assignmentId);
+    if (!target || target.status !== 2) return; // Only activate pending students
+
+    setIsActivating(true);
+    try {
+      await updateMut.mutateAsync({
+        id: assignmentId,
+        data: { status: 1 }, // Change from pending (2) to active (1)
+      });
+      
+      // Update local state
+      setAssignedStudents((prev) =>
+        prev.map((item) =>
+          item.assignmentId === assignmentId ? { ...item, status: 1 } : item
+        )
+      );
+      setFeedback(null);
+      
+      // Small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || t('sections.failedToActivateStudent');
+      setFeedback(message);
+    } finally {
+      setIsActivating(false);
     }
   };
 
@@ -588,44 +629,46 @@ const ClassStudentsSection: React.FC = () => {
         titleKey="pages.classStudentsTitle"
         descriptionKey="pages.classStudentsDescription"
         icon={<UserPlus className="w-5 h-5" />}
+        middle={
+          <div className="flex items-center gap-3 flex-wrap">
+            <SearchSelect
+              label={`${t('sections.filterByYear')} *`}
+              value={yearFilter}
+              onChange={handleYearChange}
+              options={yearOptions}
+              placeholder={t('sections.selectYear')}
+              isClearable
+              isLoading={yearsLoading}
+              className="min-w-[140px]"
+            />
+            <SearchSelect
+              label={`${t('sections.filterByClass')} *`}
+              value={classFilter}
+              onChange={(value) => {
+                setClassFilter(value === '' ? '' : Number(value));
+                setAssignedStudents([]);
+                setUnassignedStudents([]);
+              }}
+              options={classOptions}
+              placeholder={t('forms.selectClass')}
+              isClearable
+              isLoading={classesLoading}
+              disabled={!yearFilter}
+              className="min-w-[140px]"
+            />
+            <SearchSelect
+              label={t('common.status')}
+              value={statusFilter === '' ? '' : String(statusFilter)}
+              onChange={(value) => setStatusFilter(value === '' || value === undefined ? '' : Number(value))}
+              options={statusFilterOptions}
+              placeholder={t('sections.allStatuses')}
+              isClearable
+              disabled={!classFilter}
+              className="min-w-[120px]"
+            />
+          </div>
+        }
       />
-      <div className="mb-6">
-
-        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-          <SearchSelect
-            label={`${t('sections.filterByYear')} *`}
-            value={yearFilter}
-            onChange={handleYearChange}
-            options={yearOptions}
-            placeholder={t('sections.selectYear')}
-            isClearable
-            isLoading={yearsLoading}
-          />
-          <SearchSelect
-            label={`${t('sections.filterByClass')} *`}
-            value={classFilter}
-            onChange={(value) => {
-              setClassFilter(value === '' ? '' : Number(value));
-              setAssignedStudents([]);
-              setUnassignedStudents([]);
-            }}
-            options={classOptions}
-            placeholder={t('forms.selectClass')}
-            isClearable
-            isLoading={classesLoading}
-            disabled={!yearFilter}
-          />
-          <SearchSelect
-            label={t('common.status')}
-            value={statusFilter === '' ? '' : String(statusFilter)}
-            onChange={(value) => setStatusFilter(value === '' || value === undefined ? '' : Number(value))}
-            options={statusFilterOptions}
-            placeholder={t('sections.allStatuses')}
-            isClearable
-            disabled={!classFilter}
-          />
-        </div>
-      </div>
 
       {!yearFilter || !classFilter ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
@@ -664,28 +707,29 @@ const ClassStudentsSection: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
                 <div className="mb-4 pb-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{t('sections.unassignedStudents')}</h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900">{t('sections.unassignedStudents')}</h3>
+                      <span className="text-sm text-gray-600 whitespace-nowrap">
+                        {filteredUnassigned.length === 0 
+                          ? t('sections.noUnassignedStudentsText') 
+                          : `${filteredUnassigned.length} ${filteredUnassigned.length === 1 ? t('sections.studentAvailable') : t('sections.studentsAvailable')}`}
+                      </span>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 flex-shrink-0">
                       {filteredUnassigned.length}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    {t('sections.studentsNotAssigned')}{' '}
-                    {filteredUnassigned.length === 0 
-                      ? `- ${t('sections.noUnassignedStudentsText')}` 
-                      : `- ${filteredUnassigned.length} ${filteredUnassigned.length === 1 ? t('sections.studentAvailable') : t('sections.studentsAvailable')}`}
-                  </p>
                 </div>
                 <Droppable droppableId="unassigned" isDropDisabled={isMutationLoading}>
                   {(provided, snapshot) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`relative min-h-[400px] p-4 border-2 border-dashed rounded-lg transition-all duration-200 ${
+                      className={`relative min-h-[400px] p-4 border border-gray-200 rounded-lg transition-all duration-200 ${
                         snapshot.isDraggingOver
                           ? 'border-green-500 bg-green-50/50 shadow-md'
-                          : 'border-gray-300 bg-gray-50/50'
+                          : 'bg-gray-50/50'
                       } ${isUnassignedLoading ? 'opacity-70' : ''} ${isMutationLoading ? 'pointer-events-none' : ''}`}
                     >
                       {isMutationLoading && (
@@ -724,17 +768,37 @@ const ClassStudentsSection: React.FC = () => {
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
-                                className={`mb-3 p-4 bg-white border rounded-lg transition-all duration-200 flex items-center justify-between ${
+                                className={`mb-2 p-4 bg-white border rounded-lg transition-all duration-200 flex items-center justify-between ${
                                   dragSnapshot.isDragging 
                                     ? 'shadow-xl border-blue-400 scale-105' 
                                     : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                                 }`}
                               >
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item, t)}</p>
-                                  {item.email && (
-                                    <p className="text-xs text-gray-500 truncate mt-0.5">{item.email}</p>
-                                  )}
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  {item.picture ? (
+                                    <img
+                                      src={getFileUrl(item.picture)}
+                                      alt={getStudentLabel(item, t)}
+                                      className="h-10 w-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                                      onError={(e) => {
+                                        const img = e.target as HTMLImageElement;
+                                        img.style.display = 'none';
+                                        const fallback = img.nextElementSibling as HTMLElement;
+                                        if (fallback) {
+                                          fallback.style.display = 'flex';
+                                        }
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className={`h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm border border-gray-200 flex-shrink-0 ${item.picture ? 'hidden' : ''}`}>
+                                    <span>{getStudentInitials(item)}</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item, t)}</p>
+                                    {item.email && (
+                                      <p className="text-xs text-gray-500 truncate mt-0.5">{item.email}</p>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2 ml-3 flex-shrink-0">
                                   <StudentDetailsButton studentId={item.id} />
@@ -767,29 +831,31 @@ const ClassStudentsSection: React.FC = () => {
 
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
                 <div className="mb-4 pb-4 border-b border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{t('sections.assignedStudents')}</h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900">{t('sections.assignedStudents')}</h3>
+                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                        {classOptions.find(opt => Number(opt.value) === classFilter)?.label || t('sidebar.classes')}
+                        {' '}
+                        {filteredAssigned.length === 0 
+                          ? `- ${t('sections.noStudentsAssigned')}` 
+                          : `- ${filteredAssigned.length} ${filteredAssigned.length === 1 ? t('sections.studentAssigned') : t('sections.studentsAssigned')}`}
+                      </span>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0">
                       {filteredAssigned.length}
                     </span>
                   </div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {classOptions.find(opt => Number(opt.value) === classFilter)?.label || t('sidebar.classes')}
-                    {' '}
-                    {filteredAssigned.length === 0 
-                      ? `- ${t('sections.noStudentsAssigned')}` 
-                      : `- ${filteredAssigned.length} ${filteredAssigned.length === 1 ? t('sections.studentAssigned') : t('sections.studentsAssigned')}`}
-                  </p>
                 </div>
                 <Droppable droppableId="assigned" isDropDisabled={!classFilter || isMutationLoading}>
                   {(provided, snapshot) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`relative min-h-[400px] p-4 border-2 border-dashed rounded-lg transition-all duration-200 ${
+                      className={`relative min-h-[400px] p-4 border border-gray-200 rounded-lg transition-all duration-200 ${
                         snapshot.isDraggingOver
                           ? 'border-blue-500 bg-blue-50/50 shadow-md'
-                          : 'border-gray-300 bg-gray-50/50'
+                          : 'bg-gray-50/50'
                       } ${(isAssignedLoading || !classFilter) ? 'opacity-70' : ''} ${isMutationLoading ? 'pointer-events-none' : ''}`}
                     >
                       {isMutationLoading && (
@@ -835,35 +901,77 @@ const ClassStudentsSection: React.FC = () => {
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
-                                className={`mb-3 p-4 bg-white border rounded-lg transition-all duration-200 flex items-center justify-between ${
+                                className={`mb-2 p-4 bg-white border rounded-lg transition-all duration-200 flex items-center justify-between ${
                                   dragSnapshot.isDragging 
                                     ? 'shadow-xl border-red-400 scale-105' 
                                     : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                                 }`}
                               >
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item.student, t)}</p>
-                                  {item.student.email && (
-                                    <p className="text-xs text-gray-500 truncate mt-0.5">{item.student.email}</p>
-                                  )}
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  {item.student.picture ? (
+                                    <img
+                                      src={getFileUrl(item.student.picture)}
+                                      alt={getStudentLabel(item.student, t)}
+                                      className="h-10 w-10 rounded-full object-cover border border-gray-200 flex-shrink-0"
+                                      onError={(e) => {
+                                        const img = e.target as HTMLImageElement;
+                                        img.style.display = 'none';
+                                        const fallback = img.nextElementSibling as HTMLElement;
+                                        if (fallback) {
+                                          fallback.style.display = 'flex';
+                                        }
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className={`h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-semibold text-sm border border-gray-200 flex-shrink-0 ${item.student.picture ? 'hidden' : ''}`}>
+                                    <span>{getStudentInitials(item.student)}</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-sm font-semibold text-gray-900 truncate">{getStudentLabel(item.student, t)}</p>
+                                      <StatusBadge value={item.status} />
+                                    </div>
+                                    {item.student.email && (
+                                      <p className="text-xs text-gray-500 truncate mt-0.5">{item.student.email}</p>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2 ml-3 flex-shrink-0">
                                   <StudentDetailsButton studentId={item.student.id} />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUnassign(item.assignmentId)}
-                                    className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                                    disabled={isMutationLoading}
-                                  >
-                                    {isRemoving ? (
-                                      <>
-                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                                        <span>{t('sections.removing')}</span>
-                                      </>
-                                    ) : (
-                                      t('common.remove')
-                                    )}
-                                  </button>
+                                  {item.status === 2 && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleActivate(item.assignmentId)}
+                                        className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                        disabled={isMutationLoading}
+                                      >
+                                        {isActivating ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                            <span>{t('sections.activating') || 'Activating...'}</span>
+                                          </>
+                                        ) : (
+                                          t('sections.activate') || 'Activate'
+                                        )}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUnassign(item.assignmentId)}
+                                        className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                        disabled={isMutationLoading}
+                                      >
+                                        {isRemoving ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                            <span>{t('sections.removing')}</span>
+                                          </>
+                                        ) : (
+                                          t('common.remove')
+                                        )}
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             )}

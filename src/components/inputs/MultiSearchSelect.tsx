@@ -2,57 +2,76 @@ import React from 'react';
 import Select from 'react-select';
 import type { Props as SelectProps } from 'react-select';
 
-interface SearchSelectOption {
+interface MultiSearchSelectOption {
   value: number | string;
   label: string;
   data?: unknown;
-  lifecycleStatus?: 'planned' | 'ongoing' | 'completed';
-  color?: string;
 }
 
-interface SearchSelectProps {
+interface MultiSearchSelectProps {
   label?: string;
-  value: number | string | '';
-  onChange: (value: number | '' | string) => void;
-  options: SearchSelectOption[];
+  value: (number | string)[];
+  onChange: (value: (number | string)[]) => void;
+  options: MultiSearchSelectOption[];
   placeholder?: string;
   disabled?: boolean;
   isClearable?: boolean;
   className?: string;
-  components?: SelectProps['components'];
   isLoading?: boolean;
   error?: string | null;
   onSearchChange?: (query: string) => void;
   noOptionsMessage?: string | ((query: string) => string);
+  showAllOption?: boolean;
+  allOptionLabel?: string;
 }
 
-const SearchSelect: React.FC<SearchSelectProps> = ({
+const MultiSearchSelect: React.FC<MultiSearchSelectProps> = ({
   label,
   value,
   onChange,
   options,
-  placeholder = 'Search... ',
+  placeholder = 'Search...',
   disabled,
   isClearable = true,
   className,
-  components,
   isLoading,
   error,
   onSearchChange,
   noOptionsMessage,
+  showAllOption = false,
+  allOptionLabel = 'All classes',
 }) => {
   const [query, setQuery] = React.useState('');
 
-  const filteredOptions = React.useMemo(() => {
-    if (onSearchChange) return options;
-    const lower = query.trim().toLowerCase();
-    if (!lower) return options;
-    return options.filter((opt) => opt.label.toLowerCase().includes(lower));
-  }, [options, query, onSearchChange]);
+  const allOptionValue = '__ALL__';
 
-  const selectedOption = React.useMemo(
-    () => options.find((opt) => String(opt.value) === String(value)) || null,
-    [options, value]
+  const enhancedOptions = React.useMemo(() => {
+    if (showAllOption && options.length > 0) {
+      return [
+        { value: allOptionValue, label: allOptionLabel },
+        ...options,
+      ];
+    }
+    return options;
+  }, [options, showAllOption, allOptionLabel, allOptionValue]);
+
+  const filteredOptions = React.useMemo(() => {
+    if (onSearchChange) return enhancedOptions;
+    const lower = query.trim().toLowerCase();
+    if (!lower) return enhancedOptions;
+    return enhancedOptions.filter((opt) => opt.label.toLowerCase().includes(lower));
+  }, [enhancedOptions, query, onSearchChange]);
+
+  const selectedOptions = React.useMemo(
+    () =>
+      enhancedOptions.filter((opt) => {
+        if (opt.value === allOptionValue) {
+          // Show "All classes" as selected if all options are selected
+          return value.length === options.length && options.length > 0;
+        }
+        return value.includes(opt.value);
+      }),
+    [enhancedOptions, value, options, allOptionValue]
   );
 
   // Theme-aware styles for react-select
@@ -68,7 +87,6 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
     const border = getCSSVariable('--color-border') || '#e2e8f0';
     const muted = getCSSVariable('--color-muted') || '#64748b';
     
-    // Create transparent primary color for hover
     const primaryLight = `rgba(${parseInt(primary.slice(1, 3), 16)}, ${parseInt(primary.slice(3, 5), 16)}, ${parseInt(primary.slice(5, 7), 16)}, 0.1)`;
 
     return {
@@ -88,54 +106,49 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
       }),
       menu: (base: any) => ({
         ...base,
-        zIndex: 9999,
+        zIndex: 50,
         backgroundColor: card,
         border: `1px solid ${border}`,
         borderRadius: '0.375rem',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
       }),
-      menuPortal: (base: any) => ({
+      option: (base: any, state: any) => ({
         ...base,
-        zIndex: 9999,
-      }),
-      option: (base: any, state: any) => {
-        const option = state.data as SearchSelectOption;
-        let borderLeftColor = 'transparent';
-        if (option?.lifecycleStatus === 'ongoing') borderLeftColor = '#10b981'; // green
-        else if (option?.lifecycleStatus === 'completed') borderLeftColor = '#6b7280'; // grey
-        else if (option?.lifecycleStatus === 'planned') borderLeftColor = '#3b82f6'; // blue
-        
-        return {
-          ...base,
-          backgroundColor: state.isSelected
+        backgroundColor: state.isSelected
+          ? primary
+          : state.isFocused
+            ? primaryLight
+            : card,
+        color: state.isSelected
+          ? primaryForeground
+          : state.isFocused
             ? primary
-            : state.isFocused
-              ? primaryLight
-              : card,
-          color: state.isSelected
-            ? primaryForeground
-            : state.isFocused
-              ? primary
-              : body,
-          cursor: 'pointer',
-          borderLeft: borderLeftColor !== 'transparent' ? `3px solid ${borderLeftColor}` : 'none',
-          paddingLeft: borderLeftColor !== 'transparent' ? 'calc(0.75rem - 3px)' : base.paddingLeft,
-          '&:active': {
-            backgroundColor: primary,
-            color: primaryForeground,
-          },
-        };
-      },
+            : body,
+        cursor: 'pointer',
+        '&:active': {
+          backgroundColor: primary,
+          color: primaryForeground,
+        },
+      }),
       placeholder: (base: any) => ({
         ...base,
         color: muted,
       }),
-      singleValue: (base: any) => ({
+      multiValue: (base: any) => ({
+        ...base,
+        backgroundColor: primaryLight,
+      }),
+      multiValueLabel: (base: any) => ({
         ...base,
         color: body,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
+      }),
+      multiValueRemove: (base: any) => ({
+        ...base,
+        color: body,
+        '&:hover': {
+          backgroundColor: primary,
+          color: primaryForeground,
+        },
       }),
       input: (base: any) => ({
         ...base,
@@ -174,18 +187,38 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
     };
   }, [error]);
 
+  const handleChange = (selected: any) => {
+    if (!selected || selected.length === 0) {
+      onChange([]);
+      return;
+    }
+
+    const selectedOptions = selected as MultiSearchSelectOption[];
+    const selectedValues = selectedOptions.map((opt) => opt.value);
+    
+    // Check if "All classes" was selected
+    const allOptionSelected = selectedOptions.some((opt) => opt.value === allOptionValue);
+    
+    if (allOptionSelected) {
+      // If "All classes" is selected, select all actual class options (excluding the "All" option itself)
+      const allClassValues = options.map((opt) => opt.value);
+      onChange(allClassValues);
+    } else {
+      // Remove "All classes" value if it exists in the selection
+      onChange(selectedValues.filter((v: any) => v !== allOptionValue));
+    }
+  };
+
   return (
     <div className={className}>
       {label && <label className="block text-sm font-medium text-body">{label}</label>}
       <div className="mt-1">
         <Select
+          isMulti
           isClearable={isClearable}
           isDisabled={disabled}
           isLoading={isLoading}
           options={filteredOptions}
-          components={components}
-          menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
-          menuPosition="fixed"
           onInputChange={(val, meta) => {
             if (meta.action === 'input-change') {
               setQuery(val);
@@ -194,44 +227,9 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
             return val;
           }}
           placeholder={placeholder}
-          value={selectedOption ? { 
-            value: selectedOption.value, 
-            label: selectedOption.label,
-            lifecycleStatus: selectedOption.lifecycleStatus,
-            color: selectedOption.color
-          } : null}
-          onChange={(opt) => {
-            const selected = opt as SearchSelectOption | null;
-            if (!selected) {
-              onChange('');
-            } else {
-              onChange(selected.value);
-            }
-          }}
+          value={selectedOptions}
+          onChange={handleChange}
           styles={customStyles}
-          formatOptionLabel={(option: any) => {
-            const { label, lifecycleStatus, color } = option;
-            if (lifecycleStatus || color) {
-              let bgColor = '';
-              if (lifecycleStatus === 'ongoing') bgColor = '#10b981'; // green
-              else if (lifecycleStatus === 'completed') bgColor = '#6b7280'; // grey
-              else if (lifecycleStatus === 'planned') bgColor = '#3b82f6'; // blue
-              else if (color) bgColor = color;
-              
-              return (
-                <div className="flex items-center gap-2">
-                  {bgColor && (
-                    <span
-                      className="inline-block w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: bgColor }}
-                    />
-                  )}
-                  <span>{label}</span>
-                </div>
-              );
-            }
-            return label;
-          }}
           noOptionsMessage={() => {
             if (typeof noOptionsMessage === 'function') return noOptionsMessage(query);
             if (typeof noOptionsMessage === 'string') return noOptionsMessage;
@@ -244,6 +242,5 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
   );
 };
 
-export type { SearchSelectOption };
-export default SearchSelect;
-
+export type { MultiSearchSelectOption };
+export default MultiSearchSelect;

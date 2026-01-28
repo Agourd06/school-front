@@ -19,7 +19,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <div className="border-b border-tertiary/20 bg-gradient-to-r from-white to-gray-50/50 pb-6 pt-1 mb-6 rounded-lg px-1">
-      <div className="flex items-center justify-between gap-4 flex-nowrap overflow-hidden relative">
+      <div className="flex items-center justify-between gap-4 flex-nowrap overflow-visible relative">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {icon && (
             <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-secondary/10 to-secondary/5 flex items-center justify-center text-secondary shadow-sm border border-secondary/10">
@@ -31,7 +31,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           </h1>
         </div>
         {middle && (
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3 flex-shrink-0">
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-3 flex-shrink-0 z-10">
             {middle}
           </div>
         )}

@@ -48,7 +48,7 @@ const SchoolYearPeriodModal: React.FC<SchoolYearPeriodModalProps> = ({
   const { data: ongoingPeriodsData } = useSchoolYearPeriods({
     schoolYearId: knownSchoolYearId,
     lifecycle_status: 'ongoing',
-    limit: 1000,
+    limit: 100,
   });
   const knownOngoingPeriods = ongoingPeriodsData?.data ?? [];
 

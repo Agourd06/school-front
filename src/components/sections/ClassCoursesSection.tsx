@@ -12,6 +12,7 @@ import type { ClassCourse, ClassCourseStatus } from '../../api/classCourse';
 import {
   useClassCourses,
   useCreateClassCourse,
+  useCreateBatchClassCourse,
   useUpdateClassCourse,
   useDeleteClassCourse,
 } from '../../hooks/useClassCourses';
@@ -19,6 +20,12 @@ import { useClasses } from '../../hooks/useClasses';
 import { useModules } from '../../hooks/useModules';
 import { useCourses } from '../../hooks/useCourses';
 import { useTeachers } from '../../hooks/useTeachers';
+import { usePrograms } from '../../hooks/usePrograms';
+import { useSpecializations } from '../../hooks/useSpecializations';
+import { useLevels } from '../../hooks/useLevels';
+import type { Program } from '../../api/program';
+import type { Specialization } from '../../api/specialization';
+import type { Level } from '../../api/level';
 
 const EMPTY_META = {
   page: 1,
@@ -76,8 +83,9 @@ const ClassCoursesSection: React.FC = () => {
     moduleId: '',
     courseId: '',
     teacherId: '',
-    allday: '',
-    search: '',
+    program: '',
+    specialization: '',
+    level: '',
   });
   
   const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
@@ -101,8 +109,8 @@ const ClassCoursesSection: React.FC = () => {
       module_id: filters.moduleId ? Number(filters.moduleId) : undefined,
       course_id: filters.courseId ? Number(filters.courseId) : undefined,
       teacher_id: filters.teacherId ? Number(filters.teacherId) : undefined,
-      allday: filters.allday === '' ? undefined : filters.allday === 'true',
-      search: filters.search.trim() || undefined,
+      specialization_id: filters.specialization ? Number(filters.specialization) : undefined,
+      level_id: filters.level ? Number(filters.level) : undefined,
     }),
     [filters, pagination]
   );
@@ -118,6 +126,7 @@ const ClassCoursesSection: React.FC = () => {
   const meta = classCoursesResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
   const createMut = useCreateClassCourse();
+  const createBatchMut = useCreateBatchClassCourse();
   const updateMut = useUpdateClassCourse();
   const deleteMut = useDeleteClassCourse();
 
@@ -125,6 +134,25 @@ const ClassCoursesSection: React.FC = () => {
   const { data: modulesResp } = useModules({ page: 1, limit: 100 });
   const { data: coursesResp } = useCourses({ page: 1, limit: 100 });
   const { data: teachersResp } = useTeachers({ page: 1, limit: 100 });
+  
+  // Fetch programs, specializations, and levels for filters
+  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
+  const programs = useMemo(() => (programsResp?.data || []) as Program[], [programsResp]);
+  
+  const { data: specializationsResp } = useSpecializations({
+    page: 1,
+    limit: 100,
+    program_id: filters.program ? Number(filters.program) : undefined,
+  });
+  const specializations = useMemo(() => (specializationsResp?.data || []) as Specialization[], [specializationsResp]);
+  
+  const { data: levelsResp } = useLevels({
+    page: 1,
+    limit: 100,
+    specialization_id: filters.specialization ? Number(filters.specialization) : undefined,
+    program_id: filters.program ? Number(filters.program) : undefined,
+  });
+  const levels = useMemo(() => (levelsResp?.data || []) as Level[], [levelsResp]);
 
   const classOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -168,6 +196,21 @@ const ClassCoursesSection: React.FC = () => {
     [teachersResp, t]
   );
 
+  const programOptions = useMemo<SearchSelectOption[]>(
+    () => programs.map((program) => ({ value: program.id, label: program.title })),
+    [programs]
+  );
+
+  const specializationOptions = useMemo<SearchSelectOption[]>(
+    () => specializations.map((spec) => ({ value: spec.id, label: spec.title })),
+    [specializations]
+  );
+
+  const levelOptions = useMemo<SearchSelectOption[]>(
+    () => levels.map((level) => ({ value: level.id, label: level.title })),
+    [levels]
+  );
+
   const openCreateModal = () => {
     setEditingCourse(null);
     setModalError(null);
@@ -187,52 +230,71 @@ const ClassCoursesSection: React.FC = () => {
   };
 
   const handleFilterChange = (field: keyof typeof filters) => (value: number | string | '') => {
-    setFilters((prev) => ({
-      ...prev,
-      [field]: value === undefined || value === null ? '' : String(value),
-    }));
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  };
-
-  const handleAlldayChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setFilters((prev) => ({
-      ...prev,
-      allday: event.target.value,
-    }));
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, search: event.target.value }));
+    setFilters((prev) => {
+      const updated = {
+        ...prev,
+        [field]: value === undefined || value === null ? '' : String(value),
+      };
+      
+      // Reset dependent filters
+      if (field === 'program') {
+        updated.specialization = '';
+        updated.level = '';
+      }
+      if (field === 'specialization') {
+        updated.level = '';
+      }
+      
+      return updated;
+    });
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleSubmit = async (values: ClassCourseFormValues) => {
     setModalError(null);
     setAlert(null);
-    const weeklyFrequency =
-      values.allday || !values.weeklyFrequency.trim() ? undefined : Number(values.weeklyFrequency);
-
-    const payload = {
-      title: values.title.trim(),
-      description: values.description.trim() ? values.description : undefined,
-      status: values.status,
-      class_id: Number(values.class_id),
-      module_id: Number(values.module_id),
-      course_id: Number(values.course_id),
-      teacher_id: Number(values.teacher_id),
-      volume: values.volume.trim() ? Number(values.volume) : undefined,
-      weeklyFrequency,
-      allday: values.allday,
-      duration: Number(values.duration),
-    };
 
     try {
       if (editingCourse) {
-        await updateMut.mutateAsync({ id: editingCourse.id, data: payload });
+        // For editing, use single class_id (backward compatibility)
+        const weeklyFrequency =
+          values.allday || !values.weeklyFrequency.trim() ? undefined : Number(values.weeklyFrequency);
+        const classIds = values.classIds.map((id) => Number(id));
+        
+        const payload = {
+          description: values.description.trim() ? values.description : undefined,
+          class_id: classIds[0] || editingCourse.class_id,
+          module_id: Number(values.module_id),
+          course_id: Number(values.course_id),
+          teacher_id: Number(values.teacher_id),
+          volume: values.volume.trim() ? Number(values.volume) : undefined,
+          weeklyFrequency,
+          allday: values.allday,
+          duration: Number(values.duration),
+        };
+
+        await updateMut.mutateAsync({
+          id: editingCourse.id,
+          data: payload,
+        });
         setAlert({ type: 'success', message: t('messages.classCourseUpdatedSuccessfully') });
       } else {
-        await createMut.mutateAsync(payload);
+        // For creation, use batch endpoint
+        const frequency = values.allday || !values.weeklyFrequency.trim() ? undefined : Number(values.weeklyFrequency);
+        
+        const batchPayload = {
+          classIds: values.classIds.map((id) => String(id)), // Backend expects string[]
+          moduleId: Number(values.module_id),
+          courseId: Number(values.course_id),
+          teacherId: Number(values.teacher_id),
+          duration: Number(values.duration),
+          frequency: frequency,
+          volume: values.volume.trim() ? Number(values.volume) : undefined,
+          allDay: values.allday,
+          description: values.description.trim() ? values.description : undefined,
+        };
+
+        await createBatchMut.mutateAsync(batchPayload);
         setAlert({ type: 'success', message: t('messages.classCourseCreatedSuccessfully') });
       }
       closeModal();
@@ -300,16 +362,6 @@ const ClassCoursesSection: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-        <div className="xl:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">{t('common.search')}</label>
-          <input
-            type="text"
-            value={filters.search}
-            onChange={handleSearchChange}
-            placeholder={t('forms.titleDescriptionOrTeacher')}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          />
-        </div>
         <SearchSelect
           label={t('common.status')}
           value={filters.status}
@@ -345,18 +397,37 @@ const ClassCoursesSection: React.FC = () => {
           options={teacherOptions}
           placeholder={t('sections.allTeachers')}
         />
-        <div>
-          <label className="block text-sm font-medium text-body">{t('forms.allDay')}</label>
-          <select
-            value={filters.allday}
-            onChange={handleAlldayChange}
-            className="custom-select mt-1 block w-full rounded-md border border-border bg-card text-body px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-          >
-            <option value="">{t('forms.allSessions')}</option>
-            <option value="true">{t('forms.allDayOnly')}</option>
-            <option value="false">{t('forms.timedSessions')}</option>
-          </select>
-        </div>
+        <SearchSelect
+          label={t('sidebar.programs')}
+          value={filters.program}
+          onChange={handleFilterChange('program')}
+          options={programOptions}
+          placeholder={t('sections.allPrograms') || 'All programs'}
+        />
+        <SearchSelect
+          label={t('dashboard.specializations')}
+          value={filters.specialization}
+          onChange={handleFilterChange('specialization')}
+          options={specializationOptions}
+          placeholder={
+            !filters.program
+              ? (t('forms.selectProgramFirst') || 'Select program first')
+              : (t('sections.allSpecializations') || 'All specializations')
+          }
+          disabled={!filters.program}
+        />
+        <SearchSelect
+          label={t('sidebar.levels')}
+          value={filters.level}
+          onChange={handleFilterChange('level')}
+          options={levelOptions}
+          placeholder={
+            !filters.specialization
+              ? (t('forms.selectSpecializationFirst') || 'Select specialization first')
+              : (t('sections.allLevels') || 'All levels')
+          }
+          disabled={!filters.specialization}
+        />
       </div>
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
@@ -465,9 +536,8 @@ const ClassCoursesSection: React.FC = () => {
         onClose={closeModal}
         initialData={editingCourse ?? undefined}
         onSubmit={handleSubmit}
-        isSubmitting={createMut.isPending || updateMut.isPending}
+        isSubmitting={createMut.isPending || createBatchMut.isPending || updateMut.isPending}
         serverError={modalError}
-        classOptions={classOptions}
         moduleOptions={moduleOptions}
         courseOptions={courseOptions}
         teacherOptions={teacherOptions}

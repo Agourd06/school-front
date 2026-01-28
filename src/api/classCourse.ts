@@ -61,6 +61,18 @@ export interface CreateClassCoursePayload {
   duration?: number | null;
 }
 
+export interface CreateBatchClassCoursePayload {
+  classIds: (number | string)[];
+  moduleId: number;
+  courseId: number;
+  teacherId: number;
+  duration?: number;
+  frequency?: number;
+  volume?: number;
+  allDay?: boolean;
+  description?: string;
+}
+
 export type UpdateClassCoursePayload = Partial<CreateClassCoursePayload>;
 
 export interface GetClassCourseParams extends PaginationParams {
@@ -71,6 +83,8 @@ export interface GetClassCourseParams extends PaginationParams {
   course_id?: number;
   teacher_id?: number;
   allday?: boolean;
+  specialization_id?: number;
+  level_id?: number;
 }
 
 const toPaginated = (raw: unknown): PaginatedResponse<ClassCourse> => {
@@ -132,6 +146,8 @@ const buildQueryString = (params: GetClassCourseParams = {}): string => {
   if (params.course_id) qp.append('course_id', String(params.course_id));
   if (params.teacher_id) qp.append('teacher_id', String(params.teacher_id));
   if (typeof params.allday === 'boolean') qp.append('allday', String(params.allday));
+  if (params.specialization_id) qp.append('specialization_id', String(params.specialization_id));
+  if (params.level_id) qp.append('level_id', String(params.level_id));
   const qs = qp.toString();
   return qs ? `?${qs}` : '';
 };
@@ -158,6 +174,11 @@ export const classCourseApi = {
     };
     const { data } = await api.post('/class-course', body);
     return data;
+  },
+
+  async createBatch(payload: CreateBatchClassCoursePayload): Promise<ClassCourse[]> {
+    const { data } = await api.post('/class-course/batch', payload);
+    return Array.isArray(data) ? data : [];
   },
 
   async update(id: number, payload: UpdateClassCoursePayload): Promise<ClassCourse> {

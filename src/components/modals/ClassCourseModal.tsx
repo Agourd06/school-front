@@ -14,7 +14,6 @@ interface ClassCourseModalProps {
   onSubmit: (values: ClassCourseFormValues) => Promise<void>;
   isSubmitting?: boolean;
   serverError?: string | null;
-  classOptions: SearchSelectOption[];
   moduleOptions: SearchSelectOption[];
   courseOptions: SearchSelectOption[];
   teacherOptions: SearchSelectOption[];
@@ -27,7 +26,6 @@ const ClassCourseModal: React.FC<ClassCourseModalProps> = ({
   onSubmit,
   isSubmitting,
   serverError,
-  classOptions,
   moduleOptions,
   courseOptions,
   teacherOptions,
@@ -45,7 +43,6 @@ const ClassCourseModal: React.FC<ClassCourseModalProps> = ({
         onCancel={onClose}
         isSubmitting={isSubmitting}
         serverError={serverError}
-        classOptions={classOptions}
         moduleOptions={moduleOptions}
         courseOptions={courseOptions}
         teacherOptions={teacherOptions}

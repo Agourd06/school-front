@@ -1,17 +1,25 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
+import MultiSearchSelect, { type MultiSearchSelectOption } from '../inputs/MultiSearchSelect';
 import RichTextEditor from '../inputs/RichTextEditor';
-import { STATUS_OPTIONS, STATUS_OPTIONS_FORM } from '../../constants/status';
-import { Input, Select, Button } from '../ui';
-import type { ClassCourse, ClassCourseStatus } from '../../api/classCourse';
+import { Input, Button } from '../ui';
+import type { ClassCourse } from '../../api/classCourse';
 import { useModuleCourses } from '../../hooks/useModules';
+import { usePrograms } from '../../hooks/usePrograms';
+import { useSpecializations } from '../../hooks/useSpecializations';
+import { useLevels } from '../../hooks/useLevels';
+import { useClasses } from '../../hooks/useClasses';
+import type { Program } from '../../api/program';
+import type { Specialization } from '../../api/specialization';
+import type { Level } from '../../api/level';
 
 export interface ClassCourseFormData {
-  title: string;
   description: string;
-  status: ClassCourseStatus;
-  class_id: number | '';
+  program_id: number | '';
+  specialization_id: number | '';
+  level_id: number | '';
+  classIds: (number | string)[];
   module_id: number | '';
   course_id: number | '';
   teacher_id: number | '';
@@ -27,18 +35,10 @@ interface ClassCourseFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   serverError?: string | null;
-  classOptions: SearchSelectOption[];
   moduleOptions: SearchSelectOption[];
   courseOptions: SearchSelectOption[];
   teacherOptions: SearchSelectOption[];
 }
-
-const statusOptionsSelect = STATUS_OPTIONS_FORM.map((option) => ({
-  value: option.value,
-  label: option.label,
-}));
-
-const allowedStatusValues = new Set(STATUS_OPTIONS.map((opt) => Number(opt.value)));
 
 const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
   initialData,
@@ -46,17 +46,17 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
   onCancel,
   isSubmitting = false,
   serverError,
-  classOptions,
   moduleOptions,
   courseOptions,
   teacherOptions,
 }) => {
   const { t } = useTranslation();
   const [form, setForm] = useState<ClassCourseFormData>({
-    title: '',
     description: '',
-    status: 1,
-    class_id: '',
+    program_id: '',
+    specialization_id: '',
+    level_id: '',
+    classIds: [],
     module_id: '',
     course_id: '',
     teacher_id: '',
@@ -68,6 +68,35 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isVolumeManual, setIsVolumeManual] = useState(false);
+
+  // Fetch programs, specializations, levels
+  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
+  const programs = useMemo(() => (programsResp?.data || []) as Program[], [programsResp]);
+
+  const { data: specializationsResp } = useSpecializations({
+    page: 1,
+    limit: 100,
+    program_id: form.program_id ? Number(form.program_id) : undefined,
+  });
+  const specializations = useMemo(() => (specializationsResp?.data || []) as Specialization[], [specializationsResp]);
+
+  const { data: levelsResp } = useLevels({
+    page: 1,
+    limit: 100,
+    specialization_id: form.specialization_id ? Number(form.specialization_id) : undefined,
+    program_id: form.program_id ? Number(form.program_id) : undefined,
+  });
+  const levels = useMemo(() => (levelsResp?.data || []) as Level[], [levelsResp]);
+
+  // Fetch classes filtered by specialization and level
+  const { data: classesResp } = useClasses({
+    page: 1,
+    limit: 100, // Backend maximum limit is 100
+    specialization_id: form.specialization_id ? Number(form.specialization_id) : undefined,
+    level_id: form.level_id ? Number(form.level_id) : undefined,
+  });
+  const filteredClasses = useMemo(() => (classesResp?.data || []), [classesResp]);
+
   const selectedModuleId = form.module_id ? Number(form.module_id) : undefined;
   const { data: moduleCourses = [], isLoading: moduleCoursesLoading } = useModuleCourses(selectedModuleId);
 
@@ -108,12 +137,14 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
 
   useEffect(() => {
     if (initialData) {
-      const normalizedStatus = allowedStatusValues.has(initialData.status) ? initialData.status : 1;
+      // For editing, we'd need to populate from existing data
+      // But since we're removing title and changing structure, editing might need special handling
       setForm({
-        title: initialData.title ?? '',
         description: initialData.description ?? '',
-        status: normalizedStatus,
-        class_id: initialData.class_id ?? '',
+        program_id: '', // Would need to fetch from class
+        specialization_id: '', // Would need to fetch from class
+        level_id: '', // Would need to fetch from class
+        classIds: initialData.class_id ? [initialData.class_id] : [],
         module_id: initialData.module_id ?? '',
         course_id: initialData.course_id ?? '',
         teacher_id: initialData.teacher_id ?? '',
@@ -126,14 +157,14 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
         duration:
           initialData.duration !== undefined && initialData.duration !== null ? String(initialData.duration) : '2',
       });
-      // If editing, volume is already set, so mark as manual
       setIsVolumeManual(true);
     } else {
       setForm({
-        title: '',
         description: '',
-        status: 1,
-        class_id: '',
+        program_id: '',
+        specialization_id: '',
+        level_id: '',
+        classIds: [],
         module_id: '',
         course_id: '',
         teacher_id: '',
@@ -150,11 +181,17 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
   const validate = () => {
     const validationErrors: Record<string, string> = {};
 
-    if (!form.title.trim()) {
-      validationErrors.title = t('forms.titleRequired');
+    if (!form.program_id) {
+      validationErrors.program_id = t('forms.programRequired');
     }
-    if (form.class_id === '' || form.class_id === null) {
-      validationErrors.class_id = t('forms.classRequired');
+    if (!form.specialization_id) {
+      validationErrors.specialization_id = t('forms.specializationRequired');
+    }
+    if (!form.level_id) {
+      validationErrors.level_id = t('forms.levelRequired');
+    }
+    if (form.classIds.length === 0) {
+      validationErrors.classIds = t('forms.classRequired') || 'At least one class must be selected';
     }
     if (form.module_id === '' || form.module_id === null) {
       validationErrors.module_id = t('forms.moduleRequired');
@@ -185,21 +222,49 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
       validationErrors.duration = t('forms.durationMin');
     }
 
-    if (!allowedStatusValues.has(form.status)) {
-      validationErrors.status = t('forms.invalidStatus');
-    }
-
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
   };
 
-  const handleSelectChange = (field: keyof Pick<ClassCourseFormData, 'class_id' | 'module_id' | 'course_id' | 'teacher_id'>) => (value: number | '' | string) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value === '' ? '' : Number(value),
-    }));
+  const handleSelectChange = (field: keyof Pick<ClassCourseFormData, 'program_id' | 'specialization_id' | 'level_id' | 'module_id' | 'course_id' | 'teacher_id'>) => (value: number | '' | string) => {
+    setForm((prev) => {
+      const updated = {
+        ...prev,
+        [field]: value === '' ? '' : Number(value),
+      };
+      
+      // Reset dependent fields
+      if (field === 'program_id') {
+        updated.specialization_id = '';
+        updated.level_id = '';
+        updated.classIds = [];
+      }
+      if (field === 'specialization_id') {
+        updated.level_id = '';
+        updated.classIds = [];
+      }
+      if (field === 'level_id') {
+        updated.classIds = [];
+      }
+      if (field === 'module_id') {
+        updated.course_id = '';
+        updated.volume = '';
+      }
+      
+      return updated;
+    });
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleMultiSelectChange = (values: (number | string)[]) => {
+    setForm((prev) => ({
+      ...prev,
+      classIds: values,
+    }));
+    if (errors.classIds) {
+      setErrors((prev) => ({ ...prev, classIds: '' }));
     }
   };
 
@@ -229,16 +294,6 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
       }
     };
 
-  const handleStatusChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setForm((prev) => ({
-      ...prev,
-      status: Number(event.target.value) as ClassCourseStatus,
-    }));
-    if (errors.status) {
-      setErrors((prev) => ({ ...prev, status: '' }));
-    }
-  };
-
   const handleDescriptionChange = (value: string) => {
     setForm((prev) => ({
       ...prev,
@@ -258,12 +313,30 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
       }));
     }
     return courseOptions;
-  }, [moduleCourses, courseOptions]);
+  }, [moduleCourses, courseOptions, t]);
 
-  const handleCourseChange = (value: number | '' | string) => {
-    handleSelectChange('course_id')(value);
-    // Volume is automatically calculated based on duration and weekly frequency
-  };
+  const classOptions = useMemo<MultiSearchSelectOption[]>(() => {
+    return filteredClasses.map((cls) => ({
+      value: cls.id,
+      label: cls.title || `${t('planning.classNumber')}${cls.id}`,
+      data: cls,
+    }));
+  }, [filteredClasses, t]);
+
+  const programOptions = useMemo<SearchSelectOption[]>(
+    () => programs.map((program) => ({ value: program.id, label: program.title })),
+    [programs]
+  );
+
+  const specializationOptions = useMemo<SearchSelectOption[]>(
+    () => specializations.map((spec) => ({ value: spec.id, label: spec.title })),
+    [specializations]
+  );
+
+  const levelOptions = useMemo<SearchSelectOption[]>(
+    () => levels.map((level) => ({ value: level.id, label: level.title })),
+    [levels]
+  );
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -271,39 +344,76 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
     await onSubmit(form);
   };
 
-  const classValue = useMemo(() => form.class_id ?? '', [form.class_id]);
+  const programValue = useMemo(() => form.program_id ?? '', [form.program_id]);
+  const specializationValue = useMemo(() => form.specialization_id ?? '', [form.specialization_id]);
+  const levelValue = useMemo(() => form.level_id ?? '', [form.level_id]);
   const moduleValue = useMemo(() => form.module_id ?? '', [form.module_id]);
   const courseValue = useMemo(() => form.course_id ?? '', [form.course_id]);
   const teacherValue = useMemo(() => form.teacher_id ?? '', [form.teacher_id]);
 
+  const canSelectClasses = form.specialization_id && form.level_id;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {serverError && (
-        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">{serverError}</div>
+        <div className="rounded-md border border-danger-light bg-danger-light px-3 py-2 text-sm text-danger-dark">
+          {serverError}
+        </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label={t('common.name')}
-          name="title"
-          value={form.title}
-          onChange={handleInputChange('title')}
-          placeholder={t('forms.enterCourseTitle')}
-          error={errors.title}
+      {/* Program, Specialization, Level */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <SearchSelect
+          label={`${t('sidebar.programs')} *`}
+          value={programValue}
+          onChange={handleSelectChange('program_id')}
+          options={programOptions}
+          placeholder={t('forms.selectProgram') || 'Select program'}
+          error={errors.program_id}
         />
         <SearchSelect
-          label={t('sidebar.classes')}
-          value={classValue}
-          onChange={handleSelectChange('class_id')}
-          options={classOptions}
-          placeholder={t('forms.selectClass')}
-          error={errors.class_id}
+          label={`${t('dashboard.specializations')} *`}
+          value={specializationValue}
+          onChange={handleSelectChange('specialization_id')}
+          options={specializationOptions}
+          placeholder={form.program_id ? (t('forms.selectSpecialization') || 'Select specialization') : (t('forms.selectProgramFirst') || 'Select program first')}
+          error={errors.specialization_id}
+          disabled={!form.program_id}
+        />
+        <SearchSelect
+          label={`${t('sidebar.levels')} *`}
+          value={levelValue}
+          onChange={handleSelectChange('level_id')}
+          options={levelOptions}
+          placeholder={form.specialization_id ? (t('forms.selectLevel') || 'Select level') : (t('forms.selectSpecializationFirst') || 'Select specialization first')}
+          error={errors.level_id}
+          disabled={!form.specialization_id}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Classes - Multi-select */}
+      <div>
+        <MultiSearchSelect
+          label={`${t('sidebar.classes')} *`}
+          value={form.classIds}
+          onChange={handleMultiSelectChange}
+          options={classOptions}
+          placeholder={
+            !canSelectClasses
+              ? t('forms.selectSpecializationAndLevel') || 'Select specialization and level first'
+              : t('forms.selectClasses') || 'Select classes'
+          }
+          error={errors.classIds}
+          disabled={!canSelectClasses}
+          showAllOption={true}
+          allOptionLabel={t('forms.allClasses') || 'All classes'}
+        />
+      </div>
+
+      {/* Module → Course → Teacher */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SearchSelect
-          label={t('sidebar.modules')}
+          label={`${t('sidebar.modules')} *`}
           value={moduleValue}
           onChange={(value) => {
             handleSelectChange('module_id')(value);
@@ -314,32 +424,33 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
             }));
           }}
           options={moduleOptions}
-          placeholder={t('forms.selectModule')}
+          placeholder={t('forms.selectModule') || 'Select module'}
           error={errors.module_id}
         />
         <SearchSelect
-          label={t('sidebar.teachers')}
-          value={teacherValue}
-          onChange={handleSelectChange('teacher_id')}
-          options={teacherOptions}
-          placeholder={t('forms.selectTeacher')}
-          error={errors.teacher_id}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SearchSelect
-          label={t('sidebar.courses')}
+          label={`${t('sidebar.courses')} *`}
           value={courseValue}
-          onChange={handleCourseChange}
+          onChange={handleSelectChange('course_id')}
           options={moduleCourseOptions}
           isLoading={moduleCoursesLoading}
           placeholder={form.module_id ? t('forms.selectCourse') : t('forms.selectModuleFirst')}
           error={errors.course_id}
           disabled={!form.module_id}
         />
+        <SearchSelect
+          label={`${t('sidebar.teachers')} *`}
+          value={teacherValue}
+          onChange={handleSelectChange('teacher_id')}
+          options={teacherOptions}
+          placeholder={t('forms.selectTeacher') || 'Select teacher'}
+          error={errors.teacher_id}
+        />
+      </div>
+
+      {/* Duration → Weekly Frequency → Volume */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Input
-          label={t('forms.durationHours')}
+          label={`${t('forms.durationHours')} *`}
           type="number"
           min={1}
           value={form.duration}
@@ -347,11 +458,8 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
           helperText={t('forms.hoursPerSession')}
           error={errors.duration}
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex flex-col justify-end">
-          <div className="flex items-center gap-3 h-10">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
             <input
               id="allday"
               type="checkbox"
@@ -363,20 +471,17 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
               {t('forms.allDaySession')}
             </label>
           </div>
+          <Input
+            label={`${t('forms.weeklyFrequency')} *`}
+            type="number"
+            min={1}
+            value={form.weeklyFrequency}
+            onChange={handleInputChange('weeklyFrequency')}
+            helperText={form.allday ? t('forms.notRequiredForAllDay') : t('forms.timesPerWeekCourseRepeats')}
+            error={errors.weeklyFrequency}
+            disabled={form.allday}
+          />
         </div>
-        <Input
-          label={t('forms.weeklyFrequency')}
-          type="number"
-          min={1}
-          value={form.weeklyFrequency}
-          onChange={handleInputChange('weeklyFrequency')}
-          helperText={form.allday ? t('forms.notRequiredForAllDay') : t('forms.timesPerWeekCourseRepeats')}
-          error={errors.weeklyFrequency}
-          disabled={form.allday}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Input
             label="Volume"
@@ -403,19 +508,19 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
             </button>
           )}
         </div>
-        <Select
-          label={t('common.status')}
-          name="status"
-          value={form.status}
-          onChange={handleStatusChange}
-          options={statusOptionsSelect}
-          error={errors.status}
-        />
       </div>
 
+      {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-body mb-2">{t('forms.descriptionOptional')}</label>
-        <RichTextEditor value={form.description} onChange={handleDescriptionChange} placeholder={t('forms.provideAdditionalDetails')} rows={6} />
+        <label className="block text-sm font-medium text-body mb-2">
+          {t('forms.descriptionOptional')}
+        </label>
+        <RichTextEditor
+          value={form.description}
+          onChange={handleDescriptionChange}
+          placeholder={t('forms.provideAdditionalDetails')}
+          rows={6}
+        />
       </div>
 
       <div className="flex justify-end gap-3">
@@ -431,5 +536,3 @@ const ClassCourseForm: React.FC<ClassCourseFormProps> = ({
 };
 
 export default ClassCourseForm;
-
-

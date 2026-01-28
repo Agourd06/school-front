@@ -113,11 +113,16 @@ const PlanningSection: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeydown);
   }, []);
 
-  const { data: classes, isLoading: classesLoading } = useClasses({ page: 1, limit: 100 });
+  // Fetch all school years, filter to only ongoing/planned
+  const { data: allSchoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
+  // Fetch classes filtered by school_year_id if selected
+  const { data: classes, isLoading: classesLoading } = useClasses({ 
+    page: 1, 
+    limit: 100,
+    school_year_id: form.school_year_id === '' ? undefined : Number(form.school_year_id),
+  });
   const { data: teachers, isLoading: teachersLoading } = useTeachers({ page: 1, limit: 100 });
   const { data: rooms, isLoading: roomsLoading } = useClassRooms({ page: 1, limit: 100 });
-  // Fetch all school years, will be filtered based on selected class
-  const { data: allSchoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 1000 });
   const { data: coursesResp, isLoading: coursesLoading } = useCourses({ page: 1, limit: 100 });
   const { data: periods, isLoading: periodsLoading } = useSchoolYearPeriods({
     page: 1,
@@ -154,74 +159,17 @@ const PlanningSection: React.FC = () => {
     return map;
   }, [classes]);
 
-  // Filter years based on selected class and lifecycle status (ongoing/planned only)
+  // Filter years to only show ongoing/planned ones
   const yearOptions = useMemo(() => {
-    const yearsToInclude: Array<{ id: number; status?: number; title: string; [key: string]: unknown }> = [];
-    
-    if (!form.class_id) {
-      // If no class selected, show all ongoing/planned years
-      const filteredYears = (allSchoolYears?.data || []).filter(
-        (year: { lifecycle_status?: string }) => 
-          year.lifecycle_status === 'ongoing' || year.lifecycle_status === 'planned'
-      ) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>;
-      return mapOptions(filteredYears, 'title');
-    }
-    
-    // Get the selected class to find its school year
-    const selectedClass = classesMap.get(Number(form.class_id));
-    if (selectedClass?.school_year_id) {
-      // First try to find the year in allSchoolYears
-      let classYear: { id: number; title: string; status?: number; [key: string]: unknown } | undefined = 
-        (allSchoolYears?.data || []).find(
-          (year: { id: number }) => year.id === selectedClass.school_year_id
-        ) as { id: number; title: string; status?: number; [key: string]: unknown } | undefined;
-      
-      // If not found in allSchoolYears, try to use the class's schoolYear relation
-      if (!classYear && selectedClass.schoolYear) {
-        classYear = {
-          id: selectedClass.schoolYear.id,
-          title: selectedClass.schoolYear.title,
-          status: 1,
-        };
-      }
-      
-      if (classYear) {
-        yearsToInclude.push(classYear);
-      }
-    }
-    
-    // Also ensure the currently selected year is included (if set in form but not already included)
-    if (form.school_year_id && typeof form.school_year_id !== 'string') {
-      const yearId = typeof form.school_year_id === 'number' ? form.school_year_id : Number(form.school_year_id);
-      const isAlreadyIncluded = yearsToInclude.some((y) => y.id === yearId);
-      if (!isAlreadyIncluded) {
-        // First try to find in allSchoolYears
-        let selectedYear: { id: number; title: string; status?: number; [key: string]: unknown } | undefined = 
-          (allSchoolYears?.data || []).find(
-            (year: { id: number }) => year.id === yearId
-          ) as { id: number; title: string; status?: number; [key: string]: unknown } | undefined;
-        
-        // If not found, try to find it from the selected class's schoolYear relation
-        if (!selectedYear && selectedClass?.school_year_id === yearId && selectedClass.schoolYear) {
-          selectedYear = {
-            id: selectedClass.schoolYear.id,
-            title: selectedClass.schoolYear.title,
-            status: 1,
-          };
-        }
-        
-        if (selectedYear) {
-          yearsToInclude.push(selectedYear);
-        }
-      }
-    }
-    
-    return mapOptions(yearsToInclude, 'title');
-  }, [form.class_id, form.school_year_id, allSchoolYears, classesMap]);
+    const filteredYears = (allSchoolYears?.data || []).filter(
+      (year: { lifecycle_status?: string }) => 
+        year.lifecycle_status === 'ongoing' || year.lifecycle_status === 'planned'
+    ) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>;
+    return mapOptions(filteredYears, 'title');
+  }, [allSchoolYears]);
 
-  const classOptions = useMemo(() => mapOptions((classes?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [classes]);
-  // Class options - no filtering by year since class is selected first
-  const formClassOptions = useMemo(() => {
+  // Class options - filtered by school_year_id
+  const classOptions = useMemo(() => {
     return mapOptions((classes?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title');
   }, [classes]);
 
@@ -568,19 +516,9 @@ const PlanningSection: React.FC = () => {
         };
 
         if (name === 'class_id') {
-          if (value !== '') {
-            const selectedClass = classesMap.get(Number(value));
-            // Auto-set school year from class
-            if (selectedClass?.school_year_id) {
-              updated.school_year_id = selectedClass.school_year_id;
-            }
-          } else {
-            updated.school_year_id = '';
-          }
           updated.class_course_id = '';
           updated.course_id = '';
           updated.teacher_id = '';
-          updated.class_room_id = '';
         }
 
         if (name === 'school_year_id') {
@@ -589,6 +527,7 @@ const PlanningSection: React.FC = () => {
           updated.class_course_id = '';
           updated.course_id = '';
           updated.teacher_id = '';
+          updated.class_room_id = '';
         }
 
         if (name === 'period') {
@@ -596,6 +535,7 @@ const PlanningSection: React.FC = () => {
           updated.class_course_id = '';
           updated.course_id = '';
           updated.teacher_id = '';
+          updated.class_room_id = '';
         }
 
         return updated;
@@ -641,7 +581,7 @@ const PlanningSection: React.FC = () => {
             setForm={setForm}
             setFormErrors={setFormErrors}
             teacherOptions={teacherOptions}
-            classOptions={formClassOptions}
+            classOptions={classOptions}
             roomOptions={roomOptions}
             periodOptions={periodOptions}
             sessionTypeOptions={sessionTypeOptions}

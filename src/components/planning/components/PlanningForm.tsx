@@ -117,7 +117,40 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        {/* Row 1: Class / Class Course */}
+        {/* Row 1: School Year / Period */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.schoolYears')} *</label>
+            <SearchSelect
+              value={form.school_year_id}
+              onChange={handleSelectChange('school_year_id')}
+              options={yearOptions}
+              placeholder={t('forms.selectSchoolYear')}
+              isLoading={yearsLoading}
+              error={formErrors.school_year_id}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.periods')} *</label>
+            <SearchSelect
+              value={form.period}
+              onChange={(value) => {
+                setForm((prev) => ({
+                  ...prev,
+                  period: value === '' ? '' : String(value),
+                }));
+                if (formErrors.period) setFormErrors((prev) => ({ ...prev, period: '' }));
+              }}
+              options={periodOptions}
+              placeholder={form.school_year_id ? t('forms.selectPeriod') : t('forms.selectSchoolYearFirst')}
+              isLoading={periodsLoading}
+              error={formErrors.period}
+              disabled={!form.school_year_id}
+            />
+          </div>
+        </div>
+
+        {/* Row 2: Class / Class Course */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -139,9 +172,10 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               value={form.class_id}
               onChange={handleSelectChange('class_id')}
               options={classOptions}
-              placeholder={t('forms.selectClass')}
+              placeholder={form.school_year_id ? t('forms.selectClass') : t('forms.selectSchoolYearFirst')}
               isLoading={classesLoading}
               error={formErrors.class_id}
+              disabled={!form.school_year_id}
             />
           </div>
           <div>
@@ -154,43 +188,6 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               isLoading={classCourseLoading}
               disabled={!form.class_id}
               error={formErrors.class_course_id}
-            />
-          </div>
-        </div>
-
-        {/* Row 2: School Year / Period */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.schoolYears')} *</label>
-            <SearchSelect
-              value={form.school_year_id}
-              onChange={handleSelectChange('school_year_id')}
-              options={yearOptions}
-              placeholder={form.class_id ? t('forms.selectSchoolYear') : t('forms.selectAClassFirst')}
-              isLoading={yearsLoading}
-              error={formErrors.school_year_id}
-              disabled={!!form.class_id}
-            />
-            {form.class_id && form.school_year_id && (
-              <p className="text-xs text-gray-500 mt-1">{t('forms.autoFilledFromSelectedClass')}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-heading mb-1">{t('sidebar.periods')} *</label>
-            <SearchSelect
-              value={form.period}
-              onChange={(value) => {
-                setForm((prev) => ({
-                  ...prev,
-                  period: value === '' ? '' : String(value),
-                }));
-                if (formErrors.period) setFormErrors((prev) => ({ ...prev, period: '' }));
-              }}
-              options={periodOptions}
-              placeholder={t('forms.selectPeriod')}
-              isLoading={periodsLoading}
-              error={formErrors.period}
-              disabled={!form.school_year_id}
             />
           </div>
         </div>
@@ -252,9 +249,10 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               value={form.class_room_id}
               onChange={handleSelectChange('class_room_id')}
               options={roomOptions}
-              placeholder={t('forms.selectClassroom')}
+              placeholder={form.school_year_id && form.period ? t('forms.selectClassroom') : t('forms.selectSchoolYearAndPeriodFirst')}
               isLoading={roomsLoading}
               error={formErrors.class_room_id}
+              disabled={!form.school_year_id || !form.period}
             />
           </div>
         </div>

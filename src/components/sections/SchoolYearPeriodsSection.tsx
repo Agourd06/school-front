@@ -145,7 +145,7 @@ const SchoolYearPeriodsSection: React.FC = () => {
   // Fetch all periods to find last period and period closest to today
   const { data: allPeriodsResp } = useSchoolYearPeriods({
     schoolYearId: selectedSchoolYearId ?? undefined,
-    limit: 1000,
+    limit: 100,
   });
   const allPeriods = allPeriodsResp?.data ?? [];
 

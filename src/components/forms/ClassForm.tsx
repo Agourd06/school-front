@@ -179,6 +179,21 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
+          label={`${t('sidebar.schoolYears')} *`}
+          name="school_year_id"
+          value={form.school_year_id}
+          onChange={handleChange}
+          options={[
+            { value: '', label: t('forms.selectSchoolYear') || 'Select school year' },
+            ...schoolYears.map((year) => ({
+              value: year.id,
+              label: year.title,
+            })),
+          ]}
+          error={errors.school_year_id}
+          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        />
+        <Select
           label={`${t('sidebar.programs')} *`}
           name="program_id"
           value={form.program_id}
@@ -193,6 +208,9 @@ const ClassForm: React.FC<ClassFormProps> = ({
           error={errors.program_id}
           className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label={`${t('dashboard.specializations')} *`}
           name="specialization_id"
@@ -211,9 +229,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
             !form.program_id ? 'bg-muted-foreground cursor-not-allowed' : ''
           }`}
         />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label={`${t('sidebar.levels')} *`}
           name="level_id"
@@ -231,21 +246,6 @@ const ClassForm: React.FC<ClassFormProps> = ({
           className={`shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
             !form.specialization_id ? 'bg-muted-foreground cursor-not-allowed' : ''
           }`}
-        />
-        <Select
-          label={`${t('sidebar.schoolYears')} *`}
-          name="school_year_id"
-          value={form.school_year_id}
-          onChange={handleChange}
-          options={[
-            { value: '', label: t('forms.selectSchoolYear') || 'Select school year' },
-            ...schoolYears.map((year) => ({
-              value: year.id,
-              label: year.title,
-            })),
-          ]}
-          error={errors.school_year_id}
-          className="shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         />
       </div>
 
