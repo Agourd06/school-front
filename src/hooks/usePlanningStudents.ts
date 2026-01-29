@@ -9,11 +9,12 @@ import {
 
 const QUERY_KEY = 'planningStudents';
 
-export const usePlanningStudents = (params: GetPlanningStudentParams = {}) =>
+export const usePlanningStudents = (params: GetPlanningStudentParams = {}, options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: [QUERY_KEY, params],
     queryFn: () => planningStudentApi.getAll(params),
     placeholderData: keepPreviousData,
+    enabled: options?.enabled ?? true,
   });
 
 export const usePlanningStudent = (id: number) =>

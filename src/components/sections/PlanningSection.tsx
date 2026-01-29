@@ -211,25 +211,29 @@ const PlanningSection: React.FC = () => {
     return map;
   }, [coursesResp]);
 
+  // Class courses are independent - fetch all active class courses
+  // Try without status filter first to see all class courses
   const classCourseParams = useMemo(() => {
-    if (!form.class_id) return null;
-    return { class_id: Number(form.class_id), status: 1 as import('../../api/classCourse').ClassCourseStatus, limit: 100 };
-  }, [form.class_id]);
+    return { limit: 100 };
+  }, []);
 
   const {
     data: classCourseResp,
     isLoading: classCourseLoading,
-  } = useClassCourses(classCourseParams ?? {}, { enabled: Boolean(classCourseParams) });
+  } = useClassCourses(classCourseParams);
 
-  const classCourseOptions = useMemo(
-    () =>
-      (classCourseResp?.data || []).map((item) => ({
-        value: item.id,
-        label: item.title || `Class course #${item.id}`,
-        data: item,
-      })),
-    [classCourseResp]
-  );
+  const classCourseOptions = useMemo(() => {
+    // Filter out archived class courses (status -2) like other sections do
+    const filteredData = (classCourseResp?.data || []).filter((item) => item.status !== -2);
+    
+    const options = filteredData.map((item) => ({
+      value: item.id,
+      label: `${item.level?.title} /  ${item.module?.title} / ${item.course?.title} ` || `Class course #${item.id}`,
+      data: item,
+    }));
+
+    return options;
+  }, [classCourseResp, form.class_course_id]);
 
   const selectedClassDetails = useMemo<ClassEntity | null>(() => {
     if (!form.class_id) return null;
@@ -353,25 +357,62 @@ const PlanningSection: React.FC = () => {
 
   const handleSelectEntry = useCallback((entry: PlanningStudentEntry) => {
     setSelectedEntry(entry);
-    setForm({
-      school_year_id: entry.school_year_id ?? '',
-      period: entry.period ?? '',
+
+    // Set form first with school_year_id so periods can be fetched
+    const formData: FormState = {
+      school_year_id: (entry.school_year_id ?? '') as number | '',
+      period: '', // Will be set by useEffect after periods are loaded
       date_day: entry.date_day,
       hour_start: normalizeTimeFormat(entry.hour_start),
       hour_end: normalizeTimeFormat(entry.hour_end),
       class_id: entry.class_id ?? '',
-      class_course_id: '',
+      class_course_id: (entry.class_course_id ?? '') as number | '', // Use class_course_id from entry if available
       teacher_id: entry.teacher_id ?? '',
       class_room_id: entry.class_room_id ?? '',
       planning_session_type_id: entry.planning_session_type_id,
       course_id: entry.course_id ?? '',
       status: entry.status ?? DEFAULT_PLANNING_STATUS,
-    });
+    };
+
+    setForm(formData);
     setFormErrors({});
     setFormAlert(null);
     setConflictSlot(null);
     setShowForm(true);
   }, []);
+
+  // Auto-fill period ID when periods are loaded for the selected entry
+  useEffect(() => {
+    if (selectedEntry && selectedEntry.period && periods?.data && form.school_year_id && !form.period) {
+      // Find period ID by matching the period title
+      const matchedPeriod = periods.data.find((p) => p.title === selectedEntry.period);
+      if (matchedPeriod) {
+        setForm((prev) => ({
+          ...prev,
+          period: String(matchedPeriod.id),
+        }));
+      }
+    }
+  }, [selectedEntry, periods, form.school_year_id, form.period]);
+
+  // Auto-fill class_course_id when class courses are loaded and we have a selected entry
+  useEffect(() => {
+    if (!selectedEntry) return;
+
+    // If entry has class_course_id, always ensure it's set in the form
+    // This ensures it's set even if class courses haven't loaded yet or if it was cleared
+    if (selectedEntry.class_course_id) {
+      const currentValue = form.class_course_id === '' ? null : Number(form.class_course_id);
+      const entryValue = Number(selectedEntry.class_course_id);
+
+      if (currentValue !== entryValue) {
+        setForm((prev) => ({
+          ...prev,
+          class_course_id: entryValue,
+        }));
+      }
+    }
+  }, [selectedEntry, form.class_course_id, classCourseResp]);
 
   const handleWeekChange = useCallback((offset: number) => {
     setCurrentWeekStart((prev) => {
@@ -450,6 +491,7 @@ const PlanningSection: React.FC = () => {
       planning_session_type_id: +form.planning_session_type_id,
       course_id: +form.course_id,
       school_year_id: form.school_year_id === '' ? undefined : +form.school_year_id,
+      class_course_id: form.class_course_id === '' ? undefined : +form.class_course_id,
       status: form.status,
     };
 
@@ -516,7 +558,7 @@ const PlanningSection: React.FC = () => {
         };
 
         if (name === 'class_id') {
-          updated.class_course_id = '';
+          // Class courses are independent, so we don't reset class_course_id
           updated.course_id = '';
           updated.teacher_id = '';
         }
@@ -565,97 +607,100 @@ const PlanningSection: React.FC = () => {
         error={state.error}
       />
 
-      <div className={`grid gap-6 ${showForm ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
+      <div className={`grid gap-6 ${showForm ? 'grid-cols-1 lg:grid-cols-[45%_55%]' : 'grid-cols-1'}`}>
         {showForm && (
-          <PlanningForm
-            form={form}
-            formErrors={formErrors}
-            formAlert={formAlert}
-            isSubmitting={isSubmitting}
-            isDeleting={isDeleting}
-            selectedEntry={selectedEntry}
-            resetForm={resetForm}
-            handleSubmit={handleSubmit}
-            handleDelete={handleDelete}
-            handleSelectChange={handleSelectChange}
-            setForm={setForm}
-            setFormErrors={setFormErrors}
-            teacherOptions={teacherOptions}
-            classOptions={classOptions}
-            roomOptions={roomOptions}
-            periodOptions={periodOptions}
-            sessionTypeOptions={sessionTypeOptions}
-            courseOptions={courseOptions}
-            yearOptions={yearOptions}
-            periodsLoading={periodsLoading}
-            teachersLoading={teachersLoading}
-            classesLoading={classesLoading}
-            roomsLoading={roomsLoading}
-            yearsLoading={yearsLoading}
-            sessionTypesLoading={sessionTypesLoading}
-            coursesLoading={coursesLoading}
+          <div className="min-w-0">
+            <PlanningForm
+              form={form}
+              formErrors={formErrors}
+              formAlert={formAlert}
+              isSubmitting={isSubmitting}
+              isDeleting={isDeleting}
+              selectedEntry={selectedEntry}
+              resetForm={resetForm}
+              handleSubmit={handleSubmit}
+              handleDelete={handleDelete}
+              handleSelectChange={handleSelectChange}
+              setForm={setForm}
+              setFormErrors={setFormErrors}
+              teacherOptions={teacherOptions}
+              classOptions={classOptions}
+              roomOptions={roomOptions}
+              periodOptions={periodOptions}
+              sessionTypeOptions={sessionTypeOptions}
+              courseOptions={courseOptions}
+              yearOptions={yearOptions}
+              periodsLoading={periodsLoading}
+              teachersLoading={teachersLoading}
+              classesLoading={classesLoading}
+              roomsLoading={roomsLoading}
+              yearsLoading={yearsLoading}
+              sessionTypesLoading={sessionTypesLoading}
+              coursesLoading={coursesLoading}
               classCourseOptions={classCourseOptions}
               classCourseLoading={classCourseLoading}
-            onOpenSessionTypeModal={undefined}
-            isCreatingSessionType={false}
-            classDetails={selectedClassDetails}
-            courseDetails={selectedCourseDetails}
-            classStudents={classStudents}
-            classStudentsLoading={classStudentsLoading}
-            classStudentsError={classStudentsErrorMsg}
-            onDuplicate={async () => {
-              if (selectedEntry) {
-                // If editing existing planning, open duplication modal directly
-                setShowDuplicationModal(true);
-              } else {
-                // If creating new planning, first validate and create it, then open duplication modal
-                const errors = validateForm();
-                if (Object.keys(errors).length > 0) {
-                  // Form has errors, show them
-                  setFormErrors(errors);
-                  setFormAlert({ type: 'error', message: 'Please fill in all required fields before duplicating.' });
-                  return;
-                }
-                
-                // Form is valid, create the planning first
-                const payload = {
-                  period: form.period.trim(),
-                  date_day: form.date_day,
-                  hour_start: normalizeTimeFormat(form.hour_start),
-                  hour_end: normalizeTimeFormat(form.hour_end),
-                  teacher_id: +form.teacher_id,
-                  class_id: +form.class_id,
-                  class_room_id: +form.class_room_id,
-                  planning_session_type_id: +form.planning_session_type_id,
-                  course_id: +form.course_id,
-                  school_year_id: form.school_year_id === '' ? undefined : +form.school_year_id,
-                  status: form.status,
-                };
-                
-                try {
-                  const created = await createMut.mutateAsync(payload);
-                  await planningQuery.refetch();
-                  
-                  // Set the created planning as selected and open duplication modal
-                  setSelectedEntry(created);
+              onOpenSessionTypeModal={undefined}
+              isCreatingSessionType={false}
+              classDetails={selectedClassDetails}
+              courseDetails={selectedCourseDetails}
+              classStudents={classStudents}
+              classStudentsLoading={classStudentsLoading}
+              classStudentsError={classStudentsErrorMsg}
+              onDuplicate={async () => {
+                if (selectedEntry) {
+                  // If editing existing planning, open duplication modal directly
                   setShowDuplicationModal(true);
-                  setFormAlert({ type: 'success', message: 'Planning created. Now you can duplicate it.' });
-                } catch (err: unknown) {
-                  const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-                  const msg = Array.isArray(responseMessage)
-                    ? responseMessage.join(', ')
-                    : responseMessage || (err as Error).message || 'Failed to create planning';
-                  setFormAlert({ type: 'error', message: msg });
-                  if (msg.toLowerCase().includes('overlap')) {
-                    setConflictSlot({ date_day: form.date_day, hour_start: form.hour_start, hour_end: form.hour_end });
+                } else {
+                  // If creating new planning, first validate and create it, then open duplication modal
+                  const errors = validateForm();
+                  if (Object.keys(errors).length > 0) {
+                    // Form has errors, show them
+                    setFormErrors(errors);
+                    setFormAlert({ type: 'error', message: 'Please fill in all required fields before duplicating.' });
+                    return;
+                  }
+                  
+                  // Form is valid, create the planning first
+                  const payload = {
+                    period: form.period.trim(),
+                    date_day: form.date_day,
+                    hour_start: normalizeTimeFormat(form.hour_start),
+                    hour_end: normalizeTimeFormat(form.hour_end),
+                    teacher_id: +form.teacher_id,
+                    class_id: +form.class_id,
+                    class_room_id: +form.class_room_id,
+                    planning_session_type_id: +form.planning_session_type_id,
+                    course_id: +form.course_id,
+                    school_year_id: form.school_year_id === '' ? undefined : +form.school_year_id,
+                    class_course_id: form.class_course_id === '' ? undefined : +form.class_course_id,
+                    status: form.status,
+                  };
+                  
+                  try {
+                    const created = await createMut.mutateAsync(payload);
+                    await planningQuery.refetch();
+                    
+                    // Set the created planning as selected and open duplication modal
+                    setSelectedEntry(created);
+                    setShowDuplicationModal(true);
+                    setFormAlert({ type: 'success', message: 'Planning created. Now you can duplicate it.' });
+                  } catch (err: unknown) {
+                    const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
+                    const msg = Array.isArray(responseMessage)
+                      ? responseMessage.join(', ')
+                      : responseMessage || (err as Error).message || 'Failed to create planning';
+                    setFormAlert({ type: 'error', message: msg });
+                    if (msg.toLowerCase().includes('overlap')) {
+                      setConflictSlot({ date_day: form.date_day, hour_start: form.hour_start, hour_end: form.hour_end });
+                    }
                   }
                 }
-              }
-            }}
-          />
+              }}
+            />
+          </div>
         )}
 
-        <div className="relative">
+        <div className="relative min-w-0">
           {viewMode === 'week' ? (
             <PlanningWeekView
               weekStart={currentWeekStart}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import BaseModal from './BaseModal';
 import DescriptionModal from './DescriptionModal';
@@ -37,6 +38,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
   moduleId,
   moduleTitle
 }) => {
+  const { t } = useTranslation();
   const [assignedCourses, setAssignedCourses] = useState<AssignmentCourse[]>([]);
   const [unassignedCourses, setUnassignedCourses] = useState<AssignmentCourse[]>([]);
   const [loadingItemId, setLoadingItemId] = useState<number | null>(null);
@@ -523,7 +525,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
               {/* Unassigned Courses */}
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Available Courses ({unassignedCourses.length})
+                  {t('forms.availableCourses') || 'Available Courses'} ({unassignedCourses.length})
                 </h3>
                 <Droppable droppableId="unassigned">
                   {(provided, snapshot) => (
@@ -540,13 +542,13 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 rounded-lg z-20">
                           <div className="flex flex-col items-center gap-2">
                             <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-                            <span className="text-sm text-gray-600">Assigning course...</span>
+                            <span className="text-sm text-gray-600">{t('common.updating')}</span>
                           </div>
                         </div>
                       )}
                       {unassignedCourses.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
-                          No available courses
+                          {t('sections.noCoursesFound')}
                         </div>
                       ) : (
                         unassignedCourses.map((course, index) => {
@@ -656,7 +658,7 @@ const CourseAssignmentModal: React.FC<CourseAssignmentModalProps> = ({
                       )}
                       {assignedCourses.length === 0 ? (
                         <div className="text-center text-gray-500 py-8">
-                          No assigned courses
+                          {t('forms.noCoursesAssigned') || 'No courses assigned'}
                         </div>
                       ) : (
                         assignedCourses.map((course, index) => {

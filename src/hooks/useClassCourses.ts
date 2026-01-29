@@ -3,7 +3,6 @@ import {
   classCourseApi,
   type ClassCourse,
   type CreateClassCoursePayload,
-  type CreateBatchClassCoursePayload,
   type GetClassCourseParams,
   type UpdateClassCoursePayload,
 } from '../api/classCourse';
@@ -37,15 +36,7 @@ export const useCreateClassCourse = () => {
   });
 };
 
-export const useCreateBatchClassCourse = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: CreateBatchClassCoursePayload) => classCourseApi.createBatch(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [QUERY_KEY] });
-    },
-  });
-};
+// Batch creation endpoint removed - no longer supported
 
 export const useUpdateClassCourse = () => {
   const qc = useQueryClient();

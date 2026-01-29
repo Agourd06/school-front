@@ -2,6 +2,7 @@ import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next';
 import type { PlanningStudentEntry } from '../../api/planningStudent';
 import PlanningStatusBadge from '../PlanningStatusBadge';
+import { Calendar } from 'lucide-react';
 
 interface PlanningWeekViewProps {
   weekStart: Date;
@@ -16,12 +17,24 @@ interface PlanningWeekViewProps {
   getPeriodLabel?: (entry: PlanningStudentEntry) => string;
 }
 
-const formatDateLabel = (date: Date) =>
-  date.toLocaleDateString(undefined, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
+const formatDateLabel = (date: Date, t: (key: string) => string) => {
+  const dayOfWeek = date.getDay();
+  const day = date.getDate();
+  const month = date.toLocaleDateString(undefined, { month: 'short' });
+  
+  const weekdayKeys: Record<number, string> = {
+    0: 'planning.weekdaySun',
+    1: 'planning.weekdayMon',
+    2: 'planning.weekdayTue',
+    3: 'planning.weekdayWed',
+    4: 'planning.weekdayThu',
+    5: 'planning.weekdayFri',
+    6: 'planning.weekdaySat',
+  };
+  
+  const weekday = t(weekdayKeys[dayOfWeek] || 'planning.weekdayMon');
+  return `${weekday} ${day} ${month}`;
+};
 
 const formatTime = (time: string) => {
   // Convert "HH:mm:ss" or "HH:mm" to "HH:mm"
@@ -67,27 +80,6 @@ const formatSessionTypeMeta = (entry: PlanningStudentEntry, t: (key: string) => 
 
 const getISODate = (date: Date) => date.toISOString().split('T')[0];
 
-const ENTRY_TONE_STYLES: Record<
-  'today' | 'future' | 'past',
-  { base: string; text: string; muted: string }
-> = {
-  today: {
-    base: 'border-green-200 bg-green-50/70 hover:border-green-300 hover:bg-green-50',
-    text: 'text-green-900',
-    muted: 'text-green-700',
-  },
-  future: {
-    base: 'border-blue-200 bg-blue-50/70 hover:border-blue-300 hover:bg-blue-50',
-    text: 'text-blue-900',
-    muted: 'text-blue-700',
-  },
-  past: {
-    base: 'border-gray-200 bg-gray-50 hover:border-gray-200 hover:bg-gray-50 opacity-80',
-    text: 'text-gray-500',
-    muted: 'text-gray-400',
-  },
-};
-
 const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
   weekStart,
   entries,
@@ -119,6 +111,8 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
     []
   );
 
+  const [showWeekend, setShowWeekend] = useState(false);
+
   const days = useMemo(() => {
     const start = new Date(Date.UTC(
       weekStart.getFullYear(),
@@ -126,7 +120,9 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
       weekStart.getDate()
     ));
 
-    return Array.from({ length: 5 }).map((_, index) => {
+    const dayCount = showWeekend ? 7 : 5; // Show 5 days (Mon-Fri) or 7 days (Mon-Sun)
+
+    return Array.from({ length: dayCount }).map((_, index) => {
       const date = new Date(start);
       date.setUTCDate(start.getUTCDate() + index);
       const iso = getISODate(date);
@@ -137,17 +133,17 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
       return {
         date,
         iso,
-        label: formatDateLabel(date),
+        label: formatDateLabel(date, t),
         entries: dayEntries,
       };
     });
-  }, [weekStart, entries]);
+  }, [weekStart, entries, showWeekend, t]);
 
   const weekEnd = useMemo(() => {
     const end = new Date(weekStart);
-    end.setDate(weekStart.getDate() + 4);
+    end.setDate(weekStart.getDate() + (showWeekend ? 6 : 4)); // Monday to Friday (5 days) or Monday to Sunday (7 days)
     return end;
-  }, [weekStart]);
+  }, [weekStart, showWeekend]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -199,41 +195,57 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
 
   return (
     <div className="bg-white shadow rounded-lg border border-gray-200 h-full flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">{t('planning.weeklySchedule')}</h2>
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-gray-200">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold text-gray-900 mb-1">{t('planning.weeklySchedule')}</h2>
           <p className="text-sm text-gray-500">
             {weekStart.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })} – {weekEnd.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })}
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <input
-            type="date"
-            value={getISODate(weekStart)}
-            onChange={(e) => onSelectDate(e.target.value)}
-            className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            aria-label="Jump to week"
-          />
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="relative">
+            <input
+              type="date"
+              value={getISODate(weekStart)}
+              onChange={(e) => onSelectDate(e.target.value)}
+              className="pl-9 pr-2 py-1.5 text-xs border-2 border-orange-500 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+              aria-label="Jump to week"
+            />
+            <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
           <button
             type="button"
             onClick={onPrevWeek}
-            className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 rounded-md hover:bg-gray-200 transition-colors whitespace-nowrap"
           >
             {t('planning.prev')}
           </button>
           <button
             type="button"
             onClick={onToday}
-            className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 rounded-md hover:bg-gray-200 transition-colors whitespace-nowrap"
           >
             {t('planning.today')}
           </button>
           <button
             type="button"
             onClick={onNextWeek}
-            className="px-2 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 rounded-md hover:bg-gray-200 transition-colors whitespace-nowrap"
           >
             {t('planning.next')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowWeekend(!showWeekend)}
+            className={`px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-md transition-colors whitespace-nowrap ${
+              showWeekend
+                ? 'bg-primary text-white border-primary hover:bg-primary/90'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            title={t('planning.weekend')}
+          >
+            {t('planning.weekend')}
           </button>
         </div>
       </div>
@@ -244,26 +256,51 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
             {t('planning.loadingSchedule')}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+          <div className={`grid grid-cols-1 md:${showWeekend ? 'grid-cols-7' : 'grid-cols-5'} divide-y md:divide-y-0 md:divide-x divide-gray-200`}>
             {days.map((day) => (
-              <div key={day.iso} className="p-3 min-h-[180px] overflow-x-hidden">
-                <div className="mb-3">
-                  <span className="text-sm font-medium text-gray-700">{day.label}</span>
+              <div key={day.iso} className="p-4 min-h-[200px] overflow-x-hidden">
+                <div className="mb-4">
+                  <span className="text-sm font-semibold text-gray-900">{day.label}</span>
                 </div>
                 {day.entries.length === 0 ? (
-                  <div className="text-sm text-gray-400 text-center py-4">{t('planning.noSessions')}</div>
+                  <div className="text-sm text-gray-400 text-center py-8">{t('planning.noSessions')}</div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {day.entries.map((entry) => {
                       const periodLabel = getPeriodLabel?.(entry) ?? entry.period;
-                      const tone = ENTRY_TONE_STYLES[getEntryTone(entry)];
+                      const entryTone = getEntryTone(entry);
                       const isConflict =
                         conflictSlot &&
                         conflictSlot.date_day === entry.date_day &&
                         conflictSlot.hour_start === entry.hour_start &&
                         conflictSlot.hour_end === entry.hour_end;
-
                       const isHovered = hoveredEntryId === entry.id;
+                      
+                      // Use soft backgrounds: grey for most, blue for today/future, light blue for selected
+                      const isTodayOrFuture = entryTone === 'today' || entryTone === 'future';
+                      const blockBgClass = isConflict 
+                        ? 'bg-red-50 border-red-300' 
+                        : isTodayOrFuture && entryTone === 'today'
+                        ? 'bg-blue-50 border-blue-200'
+                        : isTodayOrFuture
+                        ? 'bg-blue-50/50 border-blue-200'
+                        : 'bg-gray-50 border-gray-200';
+                      
+                      const textColorClass = isConflict
+                        ? 'text-red-900'
+                        : isTodayOrFuture && entryTone === 'today'
+                        ? 'text-blue-900'
+                        : isTodayOrFuture
+                        ? 'text-blue-800'
+                        : 'text-gray-700';
+                      
+                      const mutedColorClass = isConflict
+                        ? 'text-red-700'
+                        : isTodayOrFuture && entryTone === 'today'
+                        ? 'text-blue-700'
+                        : isTodayOrFuture
+                        ? 'text-blue-600'
+                        : 'text-gray-500';
 
                       return (
                         <div key={entry.id} className="relative">
@@ -272,22 +309,22 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                             onClick={() => onSelectEntry(entry)}
                             onMouseEnter={() => handleMouseEnter(entry.id)}
                             onMouseLeave={handleMouseLeave}
-                            className={`w-full text-left border rounded-lg px-2.5 py-2 shadow-sm transition-all duration-200 ${
-                              isConflict ? 'border-red-400 ring-2 ring-red-100' : tone.base
-                            }`}
+                            className={`w-full text-left border rounded-lg px-3 py-2.5 shadow-sm transition-all duration-200 hover:shadow-md ${blockBgClass}`}
                           >
-                            <div className="flex items-center justify-between mb-1">
-                              <span className={`text-xs font-semibold whitespace-nowrap ${tone.text}`}>
+                            <div className="space-y-1">
+                              <div className="font-semibold text-sm text-gray-900">
                                 {formatTimeRange(entry.hour_start, entry.hour_end)}
-                              </span>
+                              </div>
+                              <div className={`text-sm font-medium ${textColorClass}`}>
+                                {entry.course?.title || entry.classCourse?.title || periodLabel}
+                              </div>
+                              <div className={`text-xs ${mutedColorClass}`}>
+                                {formatSessionType(entry, t)}
+                              </div>
+                              <div className={`text-xs ${mutedColorClass} truncate`}>
+                                {formatTeacherName(entry, t)}
+                              </div>
                             </div>
-                            <p className={`text-xs line-clamp-1 leading-tight mb-0.5 ${tone.text}`}>{periodLabel}</p>
-                            <p className={`text-xs line-clamp-1 leading-tight mb-0.5 ${tone.muted}`}>
-                              {formatSessionType(entry, t)}
-                            </p>
-                            <p className={`text-xs line-clamp-1 leading-tight ${tone.muted}`}>
-                              {formatTeacherName(entry, t)}
-                            </p>
                           </button>
 
                           {/* Large Hover Overlay - Fixed Position */}
@@ -387,6 +424,16 @@ const PlanningWeekView: React.FC<PlanningWeekViewProps> = ({
                                     <p className="text-base text-gray-900 font-semibold">
                                       {entry.course?.title || `${t('planning.courseNumber')}${entry.course_id}`}
                                     </p>
+                                    {entry.classCourse && (
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        {entry.classCourse.title}
+                                        {entry.classCourse.level?.specialization?.program?.title && (
+                                          <span className="ml-1">
+                                            ({entry.classCourse.level.specialization.program.title} / {entry.classCourse.level.specialization.title} / {entry.classCourse.level.title})
+                                          </span>
+                                        )}
+                                      </p>
+                                    )}
                                   </div>
                                 </div>
 

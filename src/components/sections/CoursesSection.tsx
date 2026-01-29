@@ -11,8 +11,9 @@ import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
 import ModuleAssignmentModal from '../modals/ModuleAssignmentModal';
 import HierarchyTreeModal from '../modals/HierarchyTreeModal';
+import TeacherCourseAssignmentModal from '../modals/TeacherCourseAssignmentModal';
 import { EditButton, DeleteButton, Button, PdfActions, PageHeader } from '../ui';
-import { Info, BookOpen, GitBranch } from 'lucide-react';
+import { Info, BookOpen, GitBranch, UserCheck } from 'lucide-react';
 import type { Course } from '../../api/course';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 
@@ -68,6 +69,8 @@ const CoursesSection: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null);
   const [descriptionModal, setDescriptionModal] = useState<{ title: string; description: string } | null>(null);
   const [assignmentModal, setAssignmentModal] = useState<{ courseId: number; courseTitle: string } | null>(null);
+  const [teacherAssignmentModalOpen, setTeacherAssignmentModalOpen] = useState(false);
+  const [selectedCourseForTeacherAssignment, setSelectedCourseForTeacherAssignment] = useState<Course | null>(null);
   const [treeModalOpen, setTreeModalOpen] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -340,6 +343,17 @@ const CoursesSection: React.FC = () => {
                           >
                             {t('sections.courseToModule')}
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCourseForTeacherAssignment(course);
+                              setTeacherAssignmentModalOpen(true);
+                            }}
+                            className="inline-flex items-center justify-center rounded-md border border-blue-200 bg-white px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+                            title={t('forms.assignTeachers') || 'Assign Teachers'}
+                          >
+                            <UserCheck className="h-4 w-4" />
+                          </button>
                           <EditButton onClick={() => openEditModal(course)} />
                           <DeleteButton onClick={() => requestDelete(course)} />
                         </div>
@@ -398,6 +412,16 @@ const CoursesSection: React.FC = () => {
         isOpen={treeModalOpen}
         onClose={() => setTreeModalOpen(false)}
         type="courses"
+      />
+
+      <TeacherCourseAssignmentModal
+        isOpen={teacherAssignmentModalOpen}
+        onClose={() => {
+          setTeacherAssignmentModalOpen(false);
+          setSelectedCourseForTeacherAssignment(null);
+        }}
+        course={selectedCourseForTeacherAssignment}
+        mode="course"
       />
     </div>
   );

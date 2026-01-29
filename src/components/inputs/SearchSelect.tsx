@@ -174,11 +174,15 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
     };
   }, [error]);
 
+  const labelId = React.useMemo(() => `search-select-label-${Math.random().toString(36).substr(2, 9)}`, []);
+
   return (
     <div className={className}>
-      {label && <label className="block text-sm font-medium text-body">{label}</label>}
+      {label && <label id={labelId} className="block text-sm font-medium text-body">{label}</label>}
       <div className="mt-1">
         <Select
+          aria-labelledby={label ? labelId : undefined}
+          aria-label={!label ? placeholder : undefined}
           isClearable={isClearable}
           isDisabled={disabled}
           isLoading={isLoading}

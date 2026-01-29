@@ -16,7 +16,6 @@ interface ClassCourseModalProps {
   serverError?: string | null;
   moduleOptions: SearchSelectOption[];
   courseOptions: SearchSelectOption[];
-  teacherOptions: SearchSelectOption[];
 }
 
 const ClassCourseModal: React.FC<ClassCourseModalProps> = ({
@@ -28,7 +27,6 @@ const ClassCourseModal: React.FC<ClassCourseModalProps> = ({
   serverError,
   moduleOptions,
   courseOptions,
-  teacherOptions,
 }) => {
   const { t } = useTranslation();
   const handleSubmit = async (values: ClassCourseFormData) => {
@@ -45,7 +43,6 @@ const ClassCourseModal: React.FC<ClassCourseModalProps> = ({
         serverError={serverError}
         moduleOptions={moduleOptions}
         courseOptions={courseOptions}
-        teacherOptions={teacherOptions}
       />
     </BaseModal>
   );

@@ -5,26 +5,20 @@ import Pagination from '../Pagination';
 import ClassCourseModal, { type ClassCourseFormValues } from '../modals/ClassCourseModal';
 import DeleteModal from '../modals/DeleteModal';
 import DescriptionModal from '../modals/DescriptionModal';
+import ClassCoursePlanningModal from '../modals/ClassCoursePlanningModal';
 import { Button, EditButton, DeleteButton, PageHeader } from '../ui';
-import { BookMarked } from 'lucide-react';
+import { BookMarked, Info, Calendar } from 'lucide-react';
 import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
 import type { ClassCourse, ClassCourseStatus } from '../../api/classCourse';
 import {
   useClassCourses,
   useCreateClassCourse,
-  useCreateBatchClassCourse,
   useUpdateClassCourse,
   useDeleteClassCourse,
 } from '../../hooks/useClassCourses';
-import { useClasses } from '../../hooks/useClasses';
 import { useModules } from '../../hooks/useModules';
 import { useCourses } from '../../hooks/useCourses';
-import { useTeachers } from '../../hooks/useTeachers';
-import { usePrograms } from '../../hooks/usePrograms';
-import { useSpecializations } from '../../hooks/useSpecializations';
 import { useLevels } from '../../hooks/useLevels';
-import type { Program } from '../../api/program';
-import type { Specialization } from '../../api/specialization';
 import type { Level } from '../../api/level';
 
 const EMPTY_META = {
@@ -59,19 +53,15 @@ const extractErrorMessage = (err: unknown, t: (key: string) => string): string =
   return t('messages.unexpectedError');
 };
 
-const formatDateTime = (value?: string | null) => {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
-};
-
-const getTeacherName = (course: ClassCourse, t: (key: string) => string) => {
-  const first = course.teacher?.first_name ?? '';
-  const last = course.teacher?.last_name ?? '';
-  const full = `${first} ${last}`.trim();
-  if (full) return full;
-  return course.teacher?.email ?? `${t('planning.teacherNumber')}${course.teacher_id}`;
+const getLevelInfo = (course: ClassCourse) => {
+  const level = course.level;
+  if (!level) return '—';
+  const program = level.specialization?.program?.title;
+  const specialization = level.specialization?.title;
+  const levelTitle = level.title;
+  
+  const parts = [program, specialization, levelTitle].filter(Boolean);
+  return parts.join(' / ') || '—';
 };
 
 const ClassCoursesSection: React.FC = () => {
@@ -79,13 +69,9 @@ const ClassCoursesSection: React.FC = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
   const [filters, setFilters] = useState({
     status: 'all',
-    classId: '',
+    level: '',
     moduleId: '',
     courseId: '',
-    teacherId: '',
-    program: '',
-    specialization: '',
-    level: '',
   });
   
   const statusFilterOptions = useMemo(() => getStatusFilterOptions(t), [t]);
@@ -93,6 +79,8 @@ const ClassCoursesSection: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<ClassCourse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ClassCourse | null>(null);
+  const [planningModalOpen, setPlanningModalOpen] = useState(false);
+  const [selectedClassCourseForPlanning, setSelectedClassCourseForPlanning] = useState<ClassCourse | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [descriptionPreview, setDescriptionPreview] = useState<{ title: string; description: string } | null>(null);
@@ -105,12 +93,9 @@ const ClassCoursesSection: React.FC = () => {
         filters.status === 'all'
           ? undefined
           : (Number(filters.status) as ClassCourseStatus),
-      class_id: filters.classId ? Number(filters.classId) : undefined,
+      level_id: filters.level ? Number(filters.level) : undefined,
       module_id: filters.moduleId ? Number(filters.moduleId) : undefined,
       course_id: filters.courseId ? Number(filters.courseId) : undefined,
-      teacher_id: filters.teacherId ? Number(filters.teacherId) : undefined,
-      specialization_id: filters.specialization ? Number(filters.specialization) : undefined,
-      level_id: filters.level ? Number(filters.level) : undefined,
     }),
     [filters, pagination]
   );
@@ -126,42 +111,13 @@ const ClassCoursesSection: React.FC = () => {
   const meta = classCoursesResp?.meta ?? { ...EMPTY_META, page: pagination.page, limit: pagination.limit };
 
   const createMut = useCreateClassCourse();
-  const createBatchMut = useCreateBatchClassCourse();
   const updateMut = useUpdateClassCourse();
   const deleteMut = useDeleteClassCourse();
 
-  const { data: classesResp } = useClasses({ page: 1, limit: 100 });
   const { data: modulesResp } = useModules({ page: 1, limit: 100 });
   const { data: coursesResp } = useCourses({ page: 1, limit: 100 });
-  const { data: teachersResp } = useTeachers({ page: 1, limit: 100 });
-  
-  // Fetch programs, specializations, and levels for filters
-  const { data: programsResp } = usePrograms({ page: 1, limit: 100 });
-  const programs = useMemo(() => (programsResp?.data || []) as Program[], [programsResp]);
-  
-  const { data: specializationsResp } = useSpecializations({
-    page: 1,
-    limit: 100,
-    program_id: filters.program ? Number(filters.program) : undefined,
-  });
-  const specializations = useMemo(() => (specializationsResp?.data || []) as Specialization[], [specializationsResp]);
-  
-  const { data: levelsResp } = useLevels({
-    page: 1,
-    limit: 100,
-    specialization_id: filters.specialization ? Number(filters.specialization) : undefined,
-    program_id: filters.program ? Number(filters.program) : undefined,
-  });
+  const { data: levelsResp } = useLevels({ page: 1, limit: 100 });
   const levels = useMemo(() => (levelsResp?.data || []) as Level[], [levelsResp]);
-
-  const classOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (classesResp?.data || []).map((item) => ({
-        value: item.id,
-        label: item.title || `${t('planning.classNumber')}${item.id}`,
-      })),
-    [classesResp, t]
-  );
 
   const moduleOptions = useMemo<SearchSelectOption[]>(
     () =>
@@ -180,30 +136,6 @@ const ClassCoursesSection: React.FC = () => {
         data: item,
       })),
     [coursesResp, t]
-  );
-
-  const teacherOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (teachersResp?.data || []).map((teacher) => {
-        const first = teacher.first_name ?? '';
-        const last = teacher.last_name ?? '';
-        const full = `${first} ${last}`.trim() || teacher.email || `${t('planning.teacherNumber')}${teacher.id}`;
-        return {
-          value: teacher.id,
-          label: full,
-        };
-      }),
-    [teachersResp, t]
-  );
-
-  const programOptions = useMemo<SearchSelectOption[]>(
-    () => programs.map((program) => ({ value: program.id, label: program.title })),
-    [programs]
-  );
-
-  const specializationOptions = useMemo<SearchSelectOption[]>(
-    () => specializations.map((spec) => ({ value: spec.id, label: spec.title })),
-    [specializations]
   );
 
   const levelOptions = useMemo<SearchSelectOption[]>(
@@ -230,23 +162,10 @@ const ClassCoursesSection: React.FC = () => {
   };
 
   const handleFilterChange = (field: keyof typeof filters) => (value: number | string | '') => {
-    setFilters((prev) => {
-      const updated = {
-        ...prev,
-        [field]: value === undefined || value === null ? '' : String(value),
-      };
-      
-      // Reset dependent filters
-      if (field === 'program') {
-        updated.specialization = '';
-        updated.level = '';
-      }
-      if (field === 'specialization') {
-        updated.level = '';
-      }
-      
-      return updated;
-    });
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value === undefined || value === null ? '' : String(value),
+    }));
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
@@ -255,46 +174,26 @@ const ClassCoursesSection: React.FC = () => {
     setAlert(null);
 
     try {
-      if (editingCourse) {
-        // For editing, use single class_id (backward compatibility)
-        const weeklyFrequency =
-          values.allday || !values.weeklyFrequency.trim() ? undefined : Number(values.weeklyFrequency);
-        const classIds = values.classIds.map((id) => Number(id));
-        
-        const payload = {
-          description: values.description.trim() ? values.description : undefined,
-          class_id: classIds[0] || editingCourse.class_id,
-          module_id: Number(values.module_id),
-          course_id: Number(values.course_id),
-          teacher_id: Number(values.teacher_id),
-          volume: values.volume.trim() ? Number(values.volume) : undefined,
-          weeklyFrequency,
-          allday: values.allday,
-          duration: Number(values.duration),
-        };
+      const payload = {
+        level_id: Number(values.level_id),
+        module_id: Number(values.module_id),
+        course_id: Number(values.course_id),
+        volume: values.volume.trim() ? Number(values.volume) : undefined,
+        description: values.description.trim() ? values.description : undefined,
+      };
 
+      if (editingCourse) {
         await updateMut.mutateAsync({
           id: editingCourse.id,
           data: payload,
         });
         setAlert({ type: 'success', message: t('messages.classCourseUpdatedSuccessfully') });
       } else {
-        // For creation, use batch endpoint
-        const frequency = values.allday || !values.weeklyFrequency.trim() ? undefined : Number(values.weeklyFrequency);
-        
-        const batchPayload = {
-          classIds: values.classIds.map((id) => String(id)), // Backend expects string[]
-          moduleId: Number(values.module_id),
-          courseId: Number(values.course_id),
-          teacherId: Number(values.teacher_id),
-          duration: Number(values.duration),
-          frequency: frequency,
-          volume: values.volume.trim() ? Number(values.volume) : undefined,
-          allDay: values.allday,
-          description: values.description.trim() ? values.description : undefined,
-        };
-
-        await createBatchMut.mutateAsync(batchPayload);
+        // For creation, always set status to pending (2)
+        await createMut.mutateAsync({
+          ...payload,
+          status: 2, // Pending
+        });
         setAlert({ type: 'success', message: t('messages.classCourseCreatedSuccessfully') });
       }
       closeModal();
@@ -361,7 +260,7 @@ const ClassCoursesSection: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <SearchSelect
           label={t('common.status')}
           value={filters.status}
@@ -370,11 +269,11 @@ const ClassCoursesSection: React.FC = () => {
           isClearable={false}
         />
         <SearchSelect
-          label={t('sidebar.classes')}
-          value={filters.classId}
-          onChange={handleFilterChange('classId')}
-          options={classOptions}
-          placeholder={t('forms.allClasses')}
+          label={t('sidebar.levels')}
+          value={filters.level}
+          onChange={handleFilterChange('level')}
+          options={levelOptions}
+          placeholder={t('sections.allLevels') || 'All levels'}
         />
         <SearchSelect
           label={t('sidebar.modules')}
@@ -390,44 +289,6 @@ const ClassCoursesSection: React.FC = () => {
           options={courseOptions}
           placeholder={t('sections.allCourses')}
         />
-        <SearchSelect
-          label={t('sidebar.teachers')}
-          value={filters.teacherId}
-          onChange={handleFilterChange('teacherId')}
-          options={teacherOptions}
-          placeholder={t('sections.allTeachers')}
-        />
-        <SearchSelect
-          label={t('sidebar.programs')}
-          value={filters.program}
-          onChange={handleFilterChange('program')}
-          options={programOptions}
-          placeholder={t('sections.allPrograms') || 'All programs'}
-        />
-        <SearchSelect
-          label={t('dashboard.specializations')}
-          value={filters.specialization}
-          onChange={handleFilterChange('specialization')}
-          options={specializationOptions}
-          placeholder={
-            !filters.program
-              ? (t('forms.selectProgramFirst') || 'Select program first')
-              : (t('sections.allSpecializations') || 'All specializations')
-          }
-          disabled={!filters.program}
-        />
-        <SearchSelect
-          label={t('sidebar.levels')}
-          value={filters.level}
-          onChange={handleFilterChange('level')}
-          options={levelOptions}
-          placeholder={
-            !filters.specialization
-              ? (t('forms.selectSpecializationFirst') || 'Select specialization first')
-              : (t('sections.allLevels') || 'All levels')
-          }
-          disabled={!filters.specialization}
-        />
       </div>
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
@@ -435,63 +296,44 @@ const ClassCoursesSection: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.name')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  {t('forms.classModuleCourse')}
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  {t('sidebar.levels')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  {t('sections.teacher')}
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  {t('sidebar.modules')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('forms.schedule')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('sections.volume')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.status')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t('forms.updated')}</th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t('common.actions')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  {t('sidebar.courses')}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">{t('sections.volume')}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted">{t('common.status')}</th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted">
                     {t('forms.loadingClassCourses')}
                   </td>
                 </tr>
               ) : classCourses.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted">
                     {t('forms.noClassCoursesFound')}
                   </td>
                 </tr>
               ) : (
                 classCourses.map((course) => (
                   <tr key={course.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-900 font-semibold">
-                      <div>{course.title}</div>
-                      <button
-                        type="button"
-                        className="text-xs text-secondary hover:underline"
-                        onClick={() =>
-                          setDescriptionPreview({
-                            title: course.title ?? `${t('forms.courseNumber')}${course.id}`,
-                            description: course.description || '',
-                          })
-                        }
-                      >
-                        {t('forms.viewDescription')}
-                      </button>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {getLevelInfo(course)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      <div className="font-medium">{course.class?.title || `${t('planning.classNumber')}${course.class_id}`}</div>
-                      <div className="text-xs text-gray-500">
-                        {course.module?.title || `${t('forms.moduleNumber')}${course.module_id}`} ·{' '}
-                        {course.course?.title || `${t('forms.courseNumber')}${course.course_id}`}
-                      </div>
+                      {course.module?.title || `${t('forms.moduleNumber')}${course.module_id}`}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{getTeacherName(course, t)}</td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      <div>{course.weeklyFrequency ? `${course.weeklyFrequency}${t('forms.timesPerWeek')}` : '—'}</div>
-                      <div>{course.duration ? `${course.duration}${t('forms.hoursSession')}` : '—'}</div>
-                      <div className="text-xs text-gray-500">{course.allday ? t('forms.allDay') : t('forms.timed')}</div>
+                      {course.course?.title || `${t('forms.courseNumber')}${course.course_id}`}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {course.volume === null || course.volume === undefined ? '—' : `${course.volume} `}
@@ -499,15 +341,38 @@ const ClassCoursesSection: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          statusStyles[course.status] ?? 'bg-gray-100 text-gray-600'
+                          statusStyles[course.status] ?? 'bg-gray-100 text-gray-800'
                         }`}
                       >
                           {STATUS_VALUE_LABEL[course.status] ?? `${t('common.status')} ${course.status}`}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{formatDateTime(course.updated_at)}</td>
                     <td className="px-4 py-3 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDescriptionPreview({
+                              title: course.title ?? `${t('forms.courseNumber')}${course.id}`,
+                              description: course.description || '',
+                            })
+                          }
+                          className="inline-flex items-center justify-center rounded-md border border-tertiary bg-white px-2.5 py-1.5 text-xs font-medium text-body hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title={t('common.viewDetails')}
+                        >
+                          <Info className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedClassCourseForPlanning(course);
+                            setPlanningModalOpen(true);
+                          }}
+                          className="inline-flex items-center justify-center rounded-md border border-green-200 bg-white px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-colors"
+                          title={t('forms.addToPlanning') || 'Add to Planning'}
+                        >
+                          <Calendar className="h-4 w-4" />
+                        </button>
                         <EditButton onClick={() => openEditModal(course)} />
                         <DeleteButton onClick={() => setDeleteTarget(course)} />
                       </div>
@@ -536,11 +401,10 @@ const ClassCoursesSection: React.FC = () => {
         onClose={closeModal}
         initialData={editingCourse ?? undefined}
         onSubmit={handleSubmit}
-        isSubmitting={createMut.isPending || createBatchMut.isPending || updateMut.isPending}
+        isSubmitting={createMut.isPending || updateMut.isPending}
         serverError={modalError}
         moduleOptions={moduleOptions}
         courseOptions={courseOptions}
-        teacherOptions={teacherOptions}
       />
 
       <DeleteModal
@@ -558,6 +422,15 @@ const ClassCoursesSection: React.FC = () => {
         title={descriptionPreview?.title ?? ''}
         description={descriptionPreview?.description ?? ''}
         type="class course"
+      />
+
+      <ClassCoursePlanningModal
+        isOpen={planningModalOpen}
+        onClose={() => {
+          setPlanningModalOpen(false);
+          setSelectedClassCourseForPlanning(null);
+        }}
+        classCourse={selectedClassCourseForPlanning}
       />
     </div>
   );

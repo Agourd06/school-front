@@ -184,9 +184,8 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               value={form.class_course_id}
               onChange={handleClassCourseChange}
               options={classCourseOptions}
-              placeholder={form.class_id ? t('forms.selectClassCourse') : t('forms.selectAClassFirst')}
+              placeholder={t('forms.selectClassCourse')}
               isLoading={classCourseLoading}
-              disabled={!form.class_id}
               error={formErrors.class_course_id}
             />
           </div>
@@ -328,7 +327,7 @@ const PlanningForm: React.FC<PlanningFormProps & { onDuplicate?: () => void }> =
               {t('forms.toCreateAType')}{' '}
               <button
                 type="button"
-                onClick={() => navigate('/settings')}
+                onClick={() => navigate('/settings/types/planning')}
                 className="font-medium text-secondary hover:text-secondary/80 underline cursor-pointer transition-colors"
               >
                 {t('forms.settings')}

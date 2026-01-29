@@ -7,6 +7,9 @@ interface RichTextEditorProps {
   onChange: (html: string) => void;
   placeholder?: string;
   rows?: number;
+  id?: string;
+  'aria-labelledby'?: string;
+  'aria-label'?: string;
 }
 
 const fallbackView = (
@@ -68,6 +71,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           height={editorHeight}
           placeholder={placeholder}
           setOptions={editorOptions}
+          id={id}
+          aria-labelledby={ariaLabelledBy}
+          aria-label={ariaLabel}
         />
       </Suspense>
     </div>

@@ -49,6 +49,7 @@ export interface PlanningStudentEntry {
   class_room_id: number;
   planning_session_type_id: number;
   course_id: number;
+  class_course_id?: number | null;
   company_id?: number | null;
   school_year_id?: number | null;
   teacher?: PlanningTeacher | null;
@@ -58,6 +59,26 @@ export interface PlanningStudentEntry {
   company?: PlanningCompany | null;
   planningSessionType?: PlanningSessionType | null;
   course?: PlanningCourse | null;
+  classCourse?: {
+    id: number;
+    title: string;
+    level?: {
+      id: number;
+      title: string;
+      specialization?: {
+        id: number;
+        title: string;
+        program?: {
+          id: number;
+          title: string;
+        };
+      };
+    };
+    module?: {
+      id: number;
+      title: string;
+    };
+  } | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -73,6 +94,7 @@ export interface PlanningStudentPayload {
   hour_start: string;
   hour_end: string;
   school_year_id?: number | null;
+  class_course_id?: number | null;
   status?: PlanningStatus;
 }
 

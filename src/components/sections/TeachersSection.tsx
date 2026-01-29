@@ -9,10 +9,11 @@ import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import Pagination from '../Pagination';
 import TeacherModal from '../modals/TeacherModal';
 import DeleteModal from '../modals/DeleteModal';
+import TeacherCourseAssignmentModal from '../modals/TeacherCourseAssignmentModal';
 import StatusBadge from '../../components/StatusBadge';
 import { EditButton, DeleteButton, Input, Button, PageHeader } from '../ui';
 import type { Teacher } from '../../api/teachers';
-import { UserCheck } from 'lucide-react';
+import { UserCheck, BookOpen } from 'lucide-react';
 import { STATUS_OPTIONS } from '../../constants/status';
 import { getFileUrl } from '../../utils/apiConfig';
 import { Mail } from 'lucide-react';
@@ -54,6 +55,8 @@ const TeachersSection: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Teacher | null>(null);
+  const [assignmentModalOpen, setAssignmentModalOpen] = useState(false);
+  const [selectedTeacherForAssignment, setSelectedTeacherForAssignment] = useState<Teacher | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const params = useMemo(
@@ -349,6 +352,17 @@ const TeachersSection: React.FC = () => {
                               {canSendInvitation(teacher.id) ? 'Send Invitation' : `${getTimeUntilCanSend(teacher.id)}h`}
                             </Button>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedTeacherForAssignment(teacher);
+                              setAssignmentModalOpen(true);
+                            }}
+                            className="inline-flex items-center justify-center rounded-md border border-blue-200 bg-white px-2.5 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+                            title={t('forms.assignCourses') || 'Assign Courses'}
+                          >
+                            <BookOpen className="h-4 w-4" />
+                          </button>
                           <EditButton onClick={() => openEditModal(teacher)} />
                           <DeleteButton onClick={() => requestDelete(teacher)} />
                         </div>
@@ -393,6 +407,16 @@ const TeachersSection: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         isLoading={deleteTeacherMut.isPending}
+      />
+
+      <TeacherCourseAssignmentModal
+        isOpen={assignmentModalOpen}
+        onClose={() => {
+          setAssignmentModalOpen(false);
+          setSelectedTeacherForAssignment(null);
+        }}
+        teacher={selectedTeacherForAssignment}
+        mode="teacher"
       />
     </div>
   );

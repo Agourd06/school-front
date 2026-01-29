@@ -101,8 +101,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         { tab: 'studentPresence', labelKey: 'sidebar.studentPresence' },
         { tab: 'studentNotes', labelKey: 'sidebar.studentNotes' },
         { tab: 'studentReportDetails', labelKey: 'sidebar.studentReportDetails' },
-        { tab: 'classCourses', labelKey: 'sidebar.classCourses' },
-
       ],
     },
     {
@@ -149,9 +147,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         { tab: 'schoolYears', labelKey: 'sidebar.schoolYears' },
         { tab: 'classRooms', labelKey: 'sidebar.classRooms' },
         { tab: 'programs', labelKey: 'sidebar.programs' },
-        { tab: 'modules', labelKey: 'sidebar.modules' },
         { tab: 'courses', labelKey: 'sidebar.courses' },
-
+        { tab: 'modules', labelKey: 'sidebar.modules' },
+        { tab: 'classCourses', labelKey: 'sidebar.classCourses' },
       ],
     },
 
