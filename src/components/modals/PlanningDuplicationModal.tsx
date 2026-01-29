@@ -30,14 +30,10 @@ const PlanningDuplicationModal: React.FC<PlanningDuplicationModalProps> = ({
   const duplicateMut = useDuplicatePlanningStudent();
 
   // Fetch class course to check allday and weeklyFrequency
-  const { data: classCoursesResp, isLoading: loadingClassCourse } = useClassCourses({
-    class_id: planning.class_id,
+  const { isLoading: loadingClassCourse } = useClassCourses({
     course_id: planning.course_id,
-    teacher_id: planning.teacher_id,
     limit: 1,
   });
-
-  const classCourse = classCoursesResp?.data?.[0];
 
   // Fetch existing plannings to check for potential conflicts
   const { data: existingPlanningsResp } = usePlanningStudents({
@@ -155,7 +151,7 @@ const PlanningDuplicationModal: React.FC<PlanningDuplicationModalProps> = ({
 
     // For frequency type, generate placeholder templates locally and open editor
     if (duplicationType === 'frequency') {
-      const frequencyCount = classCourse?.weeklyFrequency || 1;
+      const frequencyCount = 1; // Default frequency
       // Generate placeholder templates (not yet created)
       const placeholderTemplates: Partial<PlanningStudentEntry>[] = [];
       for (let i = 0; i < frequencyCount; i++) {
@@ -237,7 +233,7 @@ const PlanningDuplicationModal: React.FC<PlanningDuplicationModalProps> = ({
   if (!isOpen) return null;
 
   const weekCount = numberOfWeeks * 6;
-  const frequencyCount = classCourse?.weeklyFrequency || 1;
+  const frequencyCount = 1; // Default frequency
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -293,7 +289,7 @@ const PlanningDuplicationModal: React.FC<PlanningDuplicationModalProps> = ({
           ) : (
             <>
               {/* Week Duplication (only if allday) */}
-              {classCourse?.allday && (
+              {false && (
                 <div className="border border-gray-200 rounded-lg p-4 hover:border-primary transition-colors">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input

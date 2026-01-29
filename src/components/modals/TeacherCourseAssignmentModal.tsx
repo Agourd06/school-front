@@ -8,7 +8,7 @@ import { useCourses } from '../../hooks/useCourses';
 import { useTeachers } from '../../hooks/useTeachers';
 import { useTeacherCourses, useCreateTeacherCourse, useDeleteTeacherCourse } from '../../hooks/useTeacherCourses';
 import type { Teacher } from '../../api/teachers';
-import type { Course } from '../../api/courses';
+import type { Course } from '../../api/course';
 import { ArrowRight, ArrowLeft, GripVertical } from 'lucide-react';
 
 interface TeacherCourseAssignmentModalProps {
@@ -30,7 +30,7 @@ const TeacherCourseAssignmentModal: React.FC<TeacherCourseAssignmentModalProps> 
   const [assignedItems, setAssignedItems] = useState<Array<{ id: number; label: string }>>([]);
   const [unassignedItems, setUnassignedItems] = useState<Array<{ id: number; label: string }>>([]);
   const [search, setSearch] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving] = useState(false);
   const [isMoving, setIsMoving] = useState<number | null>(null);
 
   // Fetch all courses or teachers depending on mode

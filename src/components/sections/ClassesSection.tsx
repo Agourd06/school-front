@@ -366,7 +366,7 @@ const ClassesSection: React.FC = () => {
                   const specializationTitle =
                     cls.specialization?.title || specializations.find(s => s.id === cls.specialization_id)?.title || '—';
                   const levelTitle = cls.level?.title || levels.find(l => l.id === cls.level_id)?.title || '—';
-                  const schoolYearTitle = cls.schoolYear?.title || availableSchoolYears.find(y => y.id === cls.school_year_id)?.title || '—';
+                  const schoolYearTitle = cls.schoolYear?.title || schoolYears.find((y: SchoolYear) => y.id === cls.school_year_id)?.title || '—';
 
                   return (
                     <tr key={cls.id} className="hover:bg-gray-50">

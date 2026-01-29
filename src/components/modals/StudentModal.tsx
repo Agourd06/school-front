@@ -178,6 +178,7 @@ const StudentModalContent: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       adress: contact.adress || '',
       city: contact.city || '',
       country: contact.country || '',
+      codePostal: contact.codePostal || '',
       studentlinktypeId: contact.studentlinktypeId ?? '',
       status: contact.status || 1,
     });

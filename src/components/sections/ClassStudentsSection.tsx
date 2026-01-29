@@ -15,7 +15,7 @@ import type { DropResult } from '@hello-pangea/dnd';
 import type { PaginatedResponse } from '../../types/api';
 import type { SchoolYear } from '../../api/schoolYear';
 import type { ClassEntity } from '../../api/classes';
-import { STATUS_OPTIONS, STATUS_VALUE_LABEL } from '../../constants/status';
+import { STATUS_OPTIONS } from '../../constants/status';
 import { studentsApi } from '../../api/students';
 import BaseModal from '../modals/BaseModal';
 import { getFileUrl } from '../../utils/apiConfig';
@@ -304,7 +304,7 @@ const StudentDetailsButton: React.FC<{ studentId: number }> = ({ studentId }) =>
 
 const ClassStudentsSection: React.FC = () => {
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const urlClassId = searchParams.get('classId');
   
   const [yearFilter, setYearFilter] = useState<number | ''>('');

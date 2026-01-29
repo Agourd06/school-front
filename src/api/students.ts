@@ -175,6 +175,7 @@ export const studentsApi = {
       email?: string;
       phone?: string;
       adress?: string;
+      codePostal?: string;
       city?: string;
       country?: string;
       student_id: number;

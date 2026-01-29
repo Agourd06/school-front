@@ -169,6 +169,7 @@ const StudentOnboardingModalContent: React.FC<{ onClose: () => void; onStudentCr
       adress: contact.adress || '',
       city: contact.city || '',
       country: contact.country || '',
+      codePostal: contact.codePostal || '',
       studentlinktypeId: contact.studentlinktypeId ?? '',
       status: contact.status || 1,
     });

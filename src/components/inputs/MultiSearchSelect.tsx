@@ -1,6 +1,5 @@
 import React from 'react';
 import Select from 'react-select';
-import type { Props as SelectProps } from 'react-select';
 
 interface MultiSearchSelectOption {
   value: number | string;

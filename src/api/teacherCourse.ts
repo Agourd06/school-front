@@ -1,7 +1,7 @@
 import api from './axios';
 import type { PaginatedResponse, PaginationParams } from '../types/api';
 import type { Teacher } from './teachers';
-import type { Course } from './courses';
+import type { Course } from './course';
 
 export type TeacherCourseStatus = -2 | -1 | 0 | 1 | 2;
 

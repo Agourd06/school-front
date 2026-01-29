@@ -23,6 +23,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   onChange,
   placeholder = 'Start typing...',
   rows = 6,
+  id,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-label': ariaLabel,
 }) => {
   const [isClient, setIsClient] = useState(false);
   const [cssLoaded, setCssLoaded] = useState(false);
@@ -63,7 +66,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full" id={id} aria-labelledby={ariaLabelledBy} aria-label={ariaLabel}>
       <Suspense fallback={fallbackView}>
         <SunEditor
           onChange={(content: string) => onChange(content)}
@@ -71,9 +74,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           height={editorHeight}
           placeholder={placeholder}
           setOptions={editorOptions}
-          id={id}
-          aria-labelledby={ariaLabelledBy}
-          aria-label={ariaLabel}
         />
       </Suspense>
     </div>

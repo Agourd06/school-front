@@ -114,7 +114,7 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
     });
     
     // Convert to array with days extracted
-    return Array.from(scheduleMap.entries()).map(([key, entries]) => {
+    return Array.from(scheduleMap.entries()).map(([, entries]) => {
       const firstEntry = entries[0];
       const days = entries.map((entry) => {
         const [year, month, day] = entry.date_day.split('-').map(Number);
@@ -649,7 +649,7 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
               setForm((prev) => ({ ...prev, endDate: e.target.value }));
               if (errors.endDate) setErrors((prev) => ({ ...prev, endDate: '' }));
             }}
-            min={selectedPeriod?.start_date && form.startDate ? Math.max(form.startDate, selectedPeriod.start_date) : selectedPeriod?.start_date || undefined}
+            min={selectedPeriod?.start_date && form.startDate ? (form.startDate > selectedPeriod.start_date ? form.startDate : selectedPeriod.start_date) : selectedPeriod?.start_date || undefined}
             max={selectedPeriod?.end_date || undefined}
             error={errors.endDate}
             disabled={!selectedPeriod}
