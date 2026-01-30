@@ -7,14 +7,15 @@ const PlanningFiltersBar: React.FC<PlanningFiltersBarProps> = ({ filters, onFilt
   const { t } = useTranslation();
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
         <SearchSelect
-          label={t('common.status')}
-          value={filters.status}
-          onChange={(value) => onFilterChange('status')(value === 'all' ? '' : value)}
-          options={options.status}
-          placeholder={t('sections.allStatuses')}
-          isClearable={false}
+          label={t('sidebar.schoolYears')}
+          value={filters.school_year_id}
+          onChange={onFilterChange('school_year_id')}
+          options={options.year}
+          placeholder={t('sections.allSchoolYears') || 'All years'}
+          isClearable
+          isLoading={loading.years}
         />
         <SearchSelect
           label={t('sidebar.classes')}
@@ -60,6 +61,14 @@ const PlanningFiltersBar: React.FC<PlanningFiltersBarProps> = ({ filters, onFilt
           placeholder={t('sections.allCourses')}
           isClearable
           isLoading={loading.courses}
+        />
+        <SearchSelect
+          label={t('common.status')}
+          value={filters.status}
+          onChange={(value) => onFilterChange('status')(value === 'all' ? '' : value)}
+          options={options.status}
+          placeholder={t('sections.allStatuses')}
+          isClearable={false}
         />
       </div>
       {error && (

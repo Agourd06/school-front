@@ -1127,15 +1127,9 @@ const StudentReportsSection: React.FC = () => {
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        titleKey="pages.studentReportsTitle"
-        descriptionKey="pages.studentReportsDescription"
-        icon={<FileBarChart className="w-5 h-5" />}
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  const headerMiddle = (
+    <div className="flex flex-wrap items-end gap-2 justify-center w-full">
+      <div className="min-w-[140px] max-w-[180px]">
         <SearchSelect
           label={t('sidebar.schoolYears')}
           value={selectedYear}
@@ -1148,6 +1142,8 @@ const StudentReportsSection: React.FC = () => {
           placeholder={yearsLoading ? t('sections.loadingYears') : t('sections.selectSchoolYear')}
           isClearable
         />
+      </div>
+      <div className="min-w-[140px] max-w-[180px]">
         <SearchSelect
           label={t('sections.period')}
           value={selectedPeriod}
@@ -1160,6 +1156,8 @@ const StudentReportsSection: React.FC = () => {
           disabled={!selectedYear || periodsLoading}
           isClearable
         />
+      </div>
+      <div className="min-w-[140px] max-w-[180px]">
         <SearchSelect
           label={t('sidebar.classes')}
           value={selectedClass}
@@ -1170,6 +1168,17 @@ const StudentReportsSection: React.FC = () => {
           isClearable
         />
       </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        titleKey="pages.studentReportsTitle"
+        descriptionKey="pages.studentReportsDescription"
+        icon={<FileBarChart className="w-5 h-5" />}
+        middle={headerMiddle}
+      />
 
       {alert && (
         <div

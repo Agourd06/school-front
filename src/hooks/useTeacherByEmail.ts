@@ -10,10 +10,8 @@ export const useTeacherByEmail = (email: string | undefined) => {
     queryKey: ['teacherByEmail', email],
     queryFn: async () => {
       if (!email) return null;
-      // Search for teachers with this email
       const response = await teachersApi.getAll({ search: email, limit: 1 });
       const teachers = response.data;
-      // Find exact email match
       const teacher = teachers.find((t) => t.email.toLowerCase() === email.toLowerCase());
       return teacher || null;
     },

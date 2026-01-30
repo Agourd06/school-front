@@ -8,12 +8,13 @@ import type { SearchSelectOption } from '../inputs/SearchSelect';
 export type PlanningViewMode = 'week' | 'month';
 
 export interface PlanningFilters {
-  status: PlanningStatus | '' | 'all';
   class_id: number | '';
   class_room_id: number | '';
   teacher_id: number | '';
   planning_session_type_id: number | '';
   course_id: number | '';
+  school_year_id: number | '';
+  status: PlanningStatus | '' | 'all';
 }
 
 export interface PlanningPagination {
@@ -94,20 +95,21 @@ export interface PlanningFormProps {
 export interface PlanningHeaderProps {
   viewMode: PlanningViewMode;
   onViewModeChange: (mode: PlanningViewMode) => void;
-  showForm: boolean;
-  onToggleForm: () => void;
+  /** Route to navigate to for adding new planning (e.g. class courses page) */
+  addPlanningHref?: string;
 }
 
 export interface PlanningFiltersBarProps {
   filters: PlanningFilters;
   onFilterChange: (name: keyof PlanningFilters) => (value: number | string | '') => void;
   options: {
-    status: Array<{ value: string | number; label: string }>;
     class: SearchSelectOption[];
     teacher: SearchSelectOption[];
     room: SearchSelectOption[];
     sessionType: SearchSelectOption[];
     course: SearchSelectOption[];
+    year: SearchSelectOption[];
+    status: Array<{ value: string | number; label: string }>;
   };
   loading: {
     classes: boolean;
@@ -115,6 +117,7 @@ export interface PlanningFiltersBarProps {
     rooms: boolean;
     sessionTypes: boolean;
     courses: boolean;
+    years: boolean;
   };
   error: string | null;
 }

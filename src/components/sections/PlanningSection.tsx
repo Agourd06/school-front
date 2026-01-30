@@ -1,35 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlanningStudentEntry, GetPlanningStudentParams } from '../../api/planningStudent';
-import type { ClassEntity } from '../../api/classes';
 import type { Course } from '../../api/course';
-import type { GetClassStudentParams } from '../../api/classStudent';
 import type { Teacher } from '../../api/teachers';
-import {
-  usePlanningStudents,
-  useCreatePlanningStudent,
-  useUpdatePlanningStudent,
-  useDeletePlanningStudent,
-} from '../../hooks/usePlanningStudents';
+import { usePlanningStudents } from '../../hooks/usePlanningStudents';
 import PlanningDuplicationModal from '../modals/PlanningDuplicationModal';
 import FrequencyPlaceholderEditor from '../modals/FrequencyPlaceholderEditor';
 import { useClasses } from '../../hooks/useClasses';
 import { useTeachers } from '../../hooks/useTeachers';
 import { useClassRooms } from '../../hooks/useClassRooms';
-import { useClassStudents } from '../../hooks/useClassStudents';
-import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
-import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { useCourses } from '../../hooks/useCourses';
+import { useSchoolYears } from '../../hooks/useSchoolYears';
 import { usePlanningSessionTypes } from '../../hooks/usePlanningSessionTypes';
-import { useClassCourses } from '../../hooks/useClassCourses';
 import PlanningWeekView from '../planning/PlanningWeekView';
 import PlanningMonthView from '../planning/PlanningMonthView';
 import PlanningHeader from '../planning/components/PlanningHeader';
 import PlanningFiltersBar from '../planning/components/PlanningFiltersBar';
-import PlanningForm from '../planning/components/PlanningForm';
-import type { PlanningFilters, PlanningState, PlanningViewMode, FormState } from '../planning/types';
-import { INITIAL_FORM, INITIAL_PAGINATION, formatISODate, getMonday, normalizeTimeFormat } from '../planning/utils';
-import { DEFAULT_PLANNING_STATUS, PLANNING_STATUS_OPTIONS_FORM } from '../../constants/planning';
+import type { PlanningFilters, PlanningState, PlanningViewMode } from '../planning/types';
+import { INITIAL_PAGINATION, formatISODate, getMonday } from '../planning/utils';
+import { PLANNING_STATUS_OPTIONS_FORM } from '../../constants/planning';
 import type { SearchSelectOption } from '../inputs/SearchSelect';
 
 const PlanningSection: React.FC = () => {
@@ -46,24 +35,19 @@ const PlanningSection: React.FC = () => {
     error: null,
     pagination: INITIAL_PAGINATION,
     filters: {
-      status: 'all',
       class_id: '',
       class_room_id: '',
       teacher_id: '',
       planning_session_type_id: '',
       course_id: '',
+      school_year_id: '',
+      status: 'all',
     },
   });
   const [selectedEntry, setSelectedEntry] = useState<PlanningStudentEntry | null>(null);
-  const [form, setForm] = useState<FormState>(() => INITIAL_FORM(currentWeekStart));
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [formAlert, setFormAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [conflictSlot, setConflictSlot] = useState<{ date_day: string; hour_start: string; hour_end: string } | null>(null);
-  const [showForm, setShowForm] = useState(true);
   const [showDuplicationModal, setShowDuplicationModal] = useState(false);
   const [showPlaceholderEditor, setShowPlaceholderEditor] = useState(false);
   const [createdPlaceholders, setCreatedPlaceholders] = useState<PlanningStudentEntry[]>([]);
-  const [pendingDuplication, setPendingDuplication] = useState<PlanningStudentEntry | null>(null);
 
   const params = useMemo(() => {
     const p: GetPlanningStudentParams = {
@@ -85,8 +69,16 @@ const PlanningSection: React.FC = () => {
     if (filters.teacher_id) p.teacher_id = +filters.teacher_id;
     if (filters.planning_session_type_id) p.planning_session_type_id = +filters.planning_session_type_id;
     if (filters.course_id) p.course_id = +filters.course_id;
+    if (filters.school_year_id) p.school_year_id = +filters.school_year_id;
+    // Request plannings for the displayed week so the backend returns only that range (avoids empty grid when data is on later pages)
+    const weekStart = new Date(currentWeekStart);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6); // Monday to Sunday
+    p.date_day_from = formatISODate(weekStart);
+    p.date_day_to = formatISODate(weekEnd);
     return p;
-  }, [state.filters, state.pagination.page, state.pagination.limit]);
+  }, [state.filters, state.pagination.page, state.pagination.limit, currentWeekStart]);
 
   const planningQuery = usePlanningStudents(params);
   const { data: planningResp, isLoading, error } = planningQuery;
@@ -101,47 +93,16 @@ const PlanningSection: React.FC = () => {
     }));
   }, [planningResp, isLoading, error]);
 
-  useEffect(() => {
-    const handleKeydown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
-        event.preventDefault();
-        setShowForm((prev) => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, []);
-
-  // Fetch all school years, filter to only ongoing/planned
-  const { data: allSchoolYears, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
-  // Fetch classes filtered by school_year_id if selected
-  const { data: classes, isLoading: classesLoading } = useClasses({ 
-    page: 1, 
-    limit: 100,
-    school_year_id: form.school_year_id === '' ? undefined : Number(form.school_year_id),
-  });
+  // Fetch data for filters only (no form)
+  const { data: classes, isLoading: classesLoading } = useClasses({ page: 1, limit: 100 });
   const { data: teachers, isLoading: teachersLoading } = useTeachers({ page: 1, limit: 100 });
   const { data: rooms, isLoading: roomsLoading } = useClassRooms({ page: 1, limit: 100 });
   const { data: coursesResp, isLoading: coursesLoading } = useCourses({ page: 1, limit: 100 });
-  const { data: periods, isLoading: periodsLoading } = useSchoolYearPeriods({
-    page: 1,
-    limit: 100,
-    schoolYearId: form.school_year_id === '' ? undefined : Number(form.school_year_id),
-  });
+  const { data: schoolYearsResp, isLoading: yearsLoading } = useSchoolYears({ page: 1, limit: 100 });
   const {
     data: sessionTypesResp,
     isLoading: sessionTypesLoading,
   } = usePlanningSessionTypes({ page: 1, limit: 100, status: 'active' });
-  const classStudentsParams = useMemo((): GetClassStudentParams => {
-    if (!form.class_id) return {};
-    return { class_id: Number(form.class_id), limit: 100 };
-  }, [form.class_id]);
-  const {
-    data: classStudentsResp,
-    isLoading: classStudentsLoading,
-    error: classStudentsError,
-  } = useClassStudents(classStudentsParams);
 
   const mapOptions = <T extends { id: number; status?: number; [key: string]: unknown }>(
     data: T[],
@@ -151,24 +112,6 @@ const PlanningSection: React.FC = () => {
       .filter((item) => item?.status !== -2)
       .map((item) => ({ value: item.id, label: (item[labelKey] as string) || `#${item.id}` }));
 
-  const classesMap = useMemo(() => {
-    const map = new Map<number, ClassEntity>();
-    (classes?.data || []).forEach((cls: ClassEntity) => {
-      map.set(cls.id, cls);
-    });
-    return map;
-  }, [classes]);
-
-  // Filter years to only show ongoing/planned ones
-  const yearOptions = useMemo(() => {
-    const filteredYears = (allSchoolYears?.data || []).filter(
-      (year: { lifecycle_status?: string }) => 
-        year.lifecycle_status === 'ongoing' || year.lifecycle_status === 'planned'
-    ) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>;
-    return mapOptions(filteredYears, 'title');
-  }, [allSchoolYears]);
-
-  // Class options - filtered by school_year_id
   const classOptions = useMemo(() => {
     return mapOptions((classes?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title');
   }, [classes]);
@@ -184,7 +127,6 @@ const PlanningSection: React.FC = () => {
     [teachers]
   );
   const roomOptions = useMemo(() => mapOptions(rooms?.data || [], 'title'), [rooms]);
-  const periodOptions = useMemo(() => mapOptions((periods?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>, 'title'), [periods]);
   const sessionTypeOptions = useMemo(
     () =>
       (sessionTypesResp?.data || []).map((type) => ({
@@ -203,71 +145,13 @@ const PlanningSection: React.FC = () => {
         })),
     [coursesResp]
   );
-  const coursesMap = useMemo(() => {
-    const map = new Map<number, Course>();
-    (coursesResp?.data || []).forEach((course: Course) => {
-      map.set(course.id, course);
-    });
-    return map;
-  }, [coursesResp]);
 
-  // Class courses are independent - fetch all active class courses
-  // Try without status filter first to see all class courses
-  const classCourseParams = useMemo(() => {
-    return { limit: 100 };
-  }, []);
+  const yearOptions = useMemo(() => {
+    const list = (schoolYearsResp?.data || []) as unknown as Array<{ id: number; status?: number; title: string; [key: string]: unknown }>;
+    return mapOptions(list, 'title');
+  }, [schoolYearsResp]);
 
-  const {
-    data: classCourseResp,
-    isLoading: classCourseLoading,
-  } = useClassCourses(classCourseParams);
-
-  const classCourseOptions = useMemo(() => {
-    // Filter out archived class courses (status -2) like other sections do
-    const filteredData = (classCourseResp?.data || []).filter((item) => item.status !== -2);
-    
-    const options = filteredData.map((item) => ({
-      value: item.id,
-      label: `${item.level?.title} /  ${item.module?.title} / ${item.course?.title} ` || `Class course #${item.id}`,
-      data: item,
-    }));
-
-    return options;
-  }, [classCourseResp, form.class_course_id]);
-
-  const selectedClassDetails = useMemo<ClassEntity | null>(() => {
-    if (!form.class_id) return null;
-    return classesMap.get(Number(form.class_id)) ?? null;
-  }, [form.class_id, classesMap]);
-
-  const selectedCourseDetails = useMemo<Course | null>(() => {
-    if (!form.course_id) return null;
-    return coursesMap.get(Number(form.course_id)) ?? null;
-  }, [form.course_id, coursesMap]);
-
-  const classStudents = useMemo(() => classStudentsResp?.data ?? [], [classStudentsResp]);
-  const classStudentsErrorMsg = useMemo(() => {
-    if (!classStudentsError) return null;
-    if (classStudentsError instanceof Error) return classStudentsError.message;
-    if (typeof classStudentsError === 'string') return classStudentsError;
-    return 'Unable to load students';
-  }, [classStudentsError]);
-
-  const periodLabelMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    periodOptions.forEach((option) => {
-      map[String(option.value)] = option.label;
-    });
-    return map;
-  }, [periodOptions]);
-
-  const getPeriodLabel = useCallback(
-    (entry: PlanningStudentEntry) => {
-      const key = entry.period !== undefined && entry.period !== null ? String(entry.period) : '';
-      return periodLabelMap[key] ?? entry.period ?? '';
-    },
-    [periodLabelMap]
-  );
+  const getPeriodLabel = useCallback((entry: PlanningStudentEntry) => entry.period ?? '', []);
 
   const statusFilterOptions = useMemo(
     () => [
@@ -279,20 +163,22 @@ const PlanningSection: React.FC = () => {
 
   const filtersOptions = useMemo(
     () => ({
-      status: statusFilterOptions,
       class: classOptions,
       teacher: teacherOptions,
       room: roomOptions,
       sessionType: sessionTypeOptions,
       course: courseOptions,
+      year: yearOptions,
+      status: statusFilterOptions,
     }),
     [
-      statusFilterOptions,
       classOptions,
       teacherOptions,
       roomOptions,
       sessionTypeOptions,
       courseOptions,
+      yearOptions,
+      statusFilterOptions,
     ]
   );
 
@@ -303,8 +189,9 @@ const PlanningSection: React.FC = () => {
       rooms: roomsLoading,
       sessionTypes: sessionTypesLoading,
       courses: coursesLoading,
+      years: yearsLoading,
     }),
-    [classesLoading, teachersLoading, roomsLoading, sessionTypesLoading, coursesLoading]
+    [classesLoading, teachersLoading, roomsLoading, sessionTypesLoading, coursesLoading, yearsLoading]
   );
 
   const weekEntries = useMemo(() => {
@@ -312,7 +199,7 @@ const PlanningSection: React.FC = () => {
     start.setHours(0, 0, 0, 0);
     const startISO = formatISODate(start);
     const end = new Date(start);
-    end.setDate(start.getDate() + 4);
+    end.setDate(start.getDate() + 6); // Monday to Sunday (full week, matches PlanningWeekView with Weekend)
     end.setHours(23, 59, 59, 999);
     const endISO = formatISODate(end);
 
@@ -336,14 +223,6 @@ const PlanningSection: React.FC = () => {
     });
   }, [state.data, currentMonthStart]);
 
-  const resetForm = useCallback(() => {
-    setSelectedEntry(null);
-    setForm(INITIAL_FORM(currentWeekStart));
-    setFormErrors({});
-    setFormAlert(null);
-    setConflictSlot(null);
-  }, [currentWeekStart]);
-
   const handleFilterChange = useCallback(
     (name: keyof PlanningFilters) => (value: number | string | '') => {
       setState((prev) => ({
@@ -357,62 +236,8 @@ const PlanningSection: React.FC = () => {
 
   const handleSelectEntry = useCallback((entry: PlanningStudentEntry) => {
     setSelectedEntry(entry);
-
-    // Set form first with school_year_id so periods can be fetched
-    const formData: FormState = {
-      school_year_id: (entry.school_year_id ?? '') as number | '',
-      period: '', // Will be set by useEffect after periods are loaded
-      date_day: entry.date_day,
-      hour_start: normalizeTimeFormat(entry.hour_start),
-      hour_end: normalizeTimeFormat(entry.hour_end),
-      class_id: entry.class_id ?? '',
-      class_course_id: (entry.class_course_id ?? '') as number | '', // Use class_course_id from entry if available
-      teacher_id: entry.teacher_id ?? '',
-      class_room_id: entry.class_room_id ?? '',
-      planning_session_type_id: entry.planning_session_type_id,
-      course_id: entry.course_id ?? '',
-      status: entry.status ?? DEFAULT_PLANNING_STATUS,
-    };
-
-    setForm(formData);
-    setFormErrors({});
-    setFormAlert(null);
-    setConflictSlot(null);
-    setShowForm(true);
+    setShowDuplicationModal(true);
   }, []);
-
-  // Auto-fill period ID when periods are loaded for the selected entry
-  useEffect(() => {
-    if (selectedEntry && selectedEntry.period && periods?.data && form.school_year_id && !form.period) {
-      // Find period ID by matching the period title
-      const matchedPeriod = periods.data.find((p) => p.title === selectedEntry.period);
-      if (matchedPeriod) {
-        setForm((prev) => ({
-          ...prev,
-          period: String(matchedPeriod.id),
-        }));
-      }
-    }
-  }, [selectedEntry, periods, form.school_year_id, form.period]);
-
-  // Auto-fill class_course_id when class courses are loaded and we have a selected entry
-  useEffect(() => {
-    if (!selectedEntry) return;
-
-    // If entry has class_course_id, always ensure it's set in the form
-    // This ensures it's set even if class courses haven't loaded yet or if it was cleared
-    if (selectedEntry.class_course_id) {
-      const currentValue = form.class_course_id === '' ? null : Number(form.class_course_id);
-      const entryValue = Number(selectedEntry.class_course_id);
-
-      if (currentValue !== entryValue) {
-        setForm((prev) => ({
-          ...prev,
-          class_course_id: entryValue,
-        }));
-      }
-    }
-  }, [selectedEntry, form.class_course_id, classCourseResp]);
 
   const handleWeekChange = useCallback((offset: number) => {
     setCurrentWeekStart((prev) => {
@@ -450,153 +275,12 @@ const PlanningSection: React.FC = () => {
     setCurrentMonthStart(new Date(today.getFullYear(), today.getMonth(), 1));
   }, []);
 
-  const createMut = useCreatePlanningStudent();
-  const updateMut = useUpdatePlanningStudent();
-  const deleteMut = useDeletePlanningStudent();
-
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-    if (form.school_year_id === '') errors.school_year_id = 'School year is required';
-    if (!form.period) errors.period = 'Period is required';
-    if (!form.date_day) errors.date_day = 'Date is required';
-    if (!form.hour_start) errors.hour_start = 'Start time is required';
-    if (!form.hour_end) errors.hour_end = 'End time is required';
-    if (form.hour_start && form.hour_end && form.hour_start >= form.hour_end) errors.hour_end = 'End must be after start';
-    if (form.class_id === '') errors.class_id = 'Class is required';
-    if (form.class_course_id === '') errors.class_course_id = 'Class course is required';
-    if (form.teacher_id === '') errors.teacher_id = 'Teacher is required';
-    if (form.class_room_id === '') errors.class_room_id = 'Classroom is required';
-    if (form.planning_session_type_id === '') errors.planning_session_type_id = 'Session type is required';
-    if (form.course_id === '') errors.course_id = 'Course is required';
-    return errors;
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const errors = validateForm();
-    if (Object.keys(errors).length) {
-      setFormErrors(errors);
-      setFormAlert(null);
-      return;
-    }
-
-    const payload = {
-      period: form.period.trim(),
-      date_day: form.date_day,
-      hour_start: normalizeTimeFormat(form.hour_start),
-      hour_end: normalizeTimeFormat(form.hour_end),
-      teacher_id: +form.teacher_id,
-      class_id: +form.class_id,
-      class_room_id: +form.class_room_id,
-      planning_session_type_id: +form.planning_session_type_id,
-      course_id: +form.course_id,
-      school_year_id: form.school_year_id === '' ? undefined : +form.school_year_id,
-      class_course_id: form.class_course_id === '' ? undefined : +form.class_course_id,
-      status: form.status,
-    };
-
-    try {
-      if (selectedEntry) {
-        await updateMut.mutateAsync({ id: selectedEntry.id, data: payload });
-        setFormAlert({ type: 'success', message: 'Planning updated successfully.' });
-        await planningQuery.refetch();
-        setConflictSlot(null);
-      } else {
-        const created = await createMut.mutateAsync(payload);
-        await planningQuery.refetch();
-        
-        // If there's a pending duplication, open the modal with the newly created planning
-        if (pendingDuplication) {
-          setSelectedEntry(created);
-          setPendingDuplication(null);
-          setConflictSlot(null);
-          setShowDuplicationModal(true);
-          setFormAlert({ type: 'success', message: 'Planning created. Now you can duplicate it.' });
-          return; // Don't reset form yet, let user duplicate first
-        }
-        
-        setFormAlert({ type: 'success', message: 'Planning created successfully.' });
-        setConflictSlot(null);
-        setForm(INITIAL_FORM(currentWeekStart));
-        resetForm();
-      }
-    } catch (err: unknown) {
-      const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-      const msg = Array.isArray(responseMessage)
-        ? responseMessage.join(', ')
-        : responseMessage || (err as Error).message || 'Failed to save planning';
-      setFormAlert({ type: 'error', message: msg });
-      if (msg.toLowerCase().includes('overlap')) {
-        setConflictSlot({ date_day: form.date_day, hour_start: form.hour_start, hour_end: form.hour_end });
-      }
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedEntry) return;
-    try {
-      await deleteMut.mutateAsync(selectedEntry.id);
-      setFormAlert({ type: 'success', message: 'Deleted successfully.' });
-      await planningQuery.refetch();
-      resetForm();
-    } catch (err: unknown) {
-      const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-      const msg = responseMessage || (err as Error).message || 'Failed to delete planning';
-      setFormAlert({ type: 'error', message: Array.isArray(msg) ? msg.join(', ') : msg });
-    }
-  };
-
-  const isSubmitting = createMut.isPending || updateMut.isPending;
-  const isDeleting = deleteMut.isPending;
-
-  const handleSelectChange = useCallback(
-    (name: keyof FormState) => (value: number | '' | string) => {
-      setForm((prev) => {
-        const updated = {
-          ...prev,
-          [name]: value === '' ? '' : Number(value),
-        };
-
-        if (name === 'class_id') {
-          // Class courses are independent, so we don't reset class_course_id
-          updated.course_id = '';
-          updated.teacher_id = '';
-        }
-
-        if (name === 'school_year_id') {
-          updated.period = '';
-          updated.class_id = '';
-          updated.class_course_id = '';
-          updated.course_id = '';
-          updated.teacher_id = '';
-          updated.class_room_id = '';
-        }
-
-        if (name === 'period') {
-          updated.class_id = '';
-          updated.class_course_id = '';
-          updated.course_id = '';
-          updated.teacher_id = '';
-          updated.class_room_id = '';
-        }
-
-        return updated;
-      });
-
-      if (formErrors[name as string]) {
-        setFormErrors((prevErrors) => ({ ...prevErrors, [name as string]: '' }));
-      }
-    },
-    [formErrors, classesMap]
-  );
-
   return (
     <div className="space-y-6">
       <PlanningHeader
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        showForm={showForm}
-        onToggleForm={() => setShowForm((prev) => !prev)}
+        addPlanningHref="/class-courses"
       />
 
       <PlanningFiltersBar
@@ -607,142 +291,32 @@ const PlanningSection: React.FC = () => {
         error={state.error}
       />
 
-      <div className={`grid gap-6 ${showForm ? 'grid-cols-1 lg:grid-cols-[45%_55%]' : 'grid-cols-1'}`}>
-        {showForm && (
-          <div className="min-w-0">
-            <PlanningForm
-              form={form}
-              formErrors={formErrors}
-              formAlert={formAlert}
-              isSubmitting={isSubmitting}
-              isDeleting={isDeleting}
-              selectedEntry={selectedEntry}
-              resetForm={resetForm}
-              handleSubmit={handleSubmit}
-              handleDelete={handleDelete}
-              handleSelectChange={handleSelectChange}
-              setForm={setForm}
-              setFormErrors={setFormErrors}
-              teacherOptions={teacherOptions}
-              classOptions={classOptions}
-              roomOptions={roomOptions}
-              periodOptions={periodOptions}
-              sessionTypeOptions={sessionTypeOptions}
-              courseOptions={courseOptions}
-              yearOptions={yearOptions}
-              periodsLoading={periodsLoading}
-              teachersLoading={teachersLoading}
-              classesLoading={classesLoading}
-              roomsLoading={roomsLoading}
-              yearsLoading={yearsLoading}
-              sessionTypesLoading={sessionTypesLoading}
-              coursesLoading={coursesLoading}
-              classCourseOptions={classCourseOptions}
-              classCourseLoading={classCourseLoading}
-              onOpenSessionTypeModal={undefined}
-              isCreatingSessionType={false}
-              classDetails={selectedClassDetails}
-              courseDetails={selectedCourseDetails}
-              classStudents={classStudents}
-              classStudentsLoading={classStudentsLoading}
-              classStudentsError={classStudentsErrorMsg}
-              onDuplicate={async () => {
-                if (selectedEntry) {
-                  // If editing existing planning, open duplication modal directly
-                  setShowDuplicationModal(true);
-                } else {
-                  // If creating new planning, first validate and create it, then open duplication modal
-                  const errors = validateForm();
-                  if (Object.keys(errors).length > 0) {
-                    // Form has errors, show them
-                    setFormErrors(errors);
-                    setFormAlert({ type: 'error', message: 'Please fill in all required fields before duplicating.' });
-                    return;
-                  }
-                  
-                  // Form is valid, create the planning first
-                  const payload = {
-                    period: form.period.trim(),
-                    date_day: form.date_day,
-                    hour_start: normalizeTimeFormat(form.hour_start),
-                    hour_end: normalizeTimeFormat(form.hour_end),
-                    teacher_id: +form.teacher_id,
-                    class_id: +form.class_id,
-                    class_room_id: +form.class_room_id,
-                    planning_session_type_id: +form.planning_session_type_id,
-                    course_id: +form.course_id,
-                    school_year_id: form.school_year_id === '' ? undefined : +form.school_year_id,
-                    class_course_id: form.class_course_id === '' ? undefined : +form.class_course_id,
-                    status: form.status,
-                  };
-                  
-                  try {
-                    const created = await createMut.mutateAsync(payload);
-                    await planningQuery.refetch();
-                    
-                    // Set the created planning as selected and open duplication modal
-                    setSelectedEntry(created);
-                    setShowDuplicationModal(true);
-                    setFormAlert({ type: 'success', message: 'Planning created. Now you can duplicate it.' });
-                  } catch (err: unknown) {
-                    const responseMessage = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
-                    const msg = Array.isArray(responseMessage)
-                      ? responseMessage.join(', ')
-                      : responseMessage || (err as Error).message || 'Failed to create planning';
-                    setFormAlert({ type: 'error', message: msg });
-                    if (msg.toLowerCase().includes('overlap')) {
-                      setConflictSlot({ date_day: form.date_day, hour_start: form.hour_start, hour_end: form.hour_end });
-                    }
-                  }
-                }
-              }}
-            />
-          </div>
+      <div className="min-w-0">
+        {viewMode === 'week' ? (
+          <PlanningWeekView
+            weekStart={currentWeekStart}
+            entries={weekEntries}
+            isLoading={state.loading}
+            onPrevWeek={() => handleWeekChange(-7)}
+            onNextWeek={() => handleWeekChange(7)}
+            onToday={handleToday}
+            onSelectEntry={handleSelectEntry}
+            onSelectDate={handleWeekDateSelect}
+            getPeriodLabel={getPeriodLabel}
+          />
+        ) : (
+          <PlanningMonthView
+            monthStart={currentMonthStart}
+            entries={monthEntries}
+            isLoading={state.loading}
+            onPrevMonth={() => handleMonthChange(-1)}
+            onNextMonth={() => handleMonthChange(1)}
+            onToday={handleToday}
+            onSelectEntry={handleSelectEntry}
+            onSelectDate={handleMonthDateSelect}
+            getPeriodLabel={getPeriodLabel}
+          />
         )}
-
-        <div className="relative min-w-0">
-          {viewMode === 'week' ? (
-            <PlanningWeekView
-              weekStart={currentWeekStart}
-              entries={weekEntries}
-              isLoading={state.loading}
-              conflictSlot={conflictSlot}
-              onPrevWeek={() => handleWeekChange(-7)}
-              onNextWeek={() => handleWeekChange(7)}
-              onToday={handleToday}
-              onSelectEntry={handleSelectEntry}
-              onSelectDate={handleWeekDateSelect}
-              getPeriodLabel={getPeriodLabel}
-            />
-          ) : (
-            <PlanningMonthView
-              monthStart={currentMonthStart}
-              entries={monthEntries}
-              isLoading={state.loading}
-              conflictSlot={conflictSlot}
-              onPrevMonth={() => handleMonthChange(-1)}
-              onNextMonth={() => handleMonthChange(1)}
-              onToday={handleToday}
-              onSelectEntry={handleSelectEntry}
-              onSelectDate={handleMonthDateSelect}
-              getPeriodLabel={getPeriodLabel}
-            />
-          )}
-
-          {!showForm && (
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="fixed bottom-8 right-8 z-40 flex items-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300"
-              aria-label="Show form to add or edit sessions"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="font-semibold text-base">Show Form</span>
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Duplication Modal */}
@@ -755,24 +329,10 @@ const PlanningSection: React.FC = () => {
             setCreatedPlaceholders(placeholders);
             setShowPlaceholderEditor(true);
           }}
-          onSuccess={(createdCount, _plannings, _type, skippedCount) => {
+          onSuccess={(_createdCount, _plannings, _type, _skippedCount) => {
             planningQuery.refetch();
-            
-            // Show success message with skip count if any
-            if (skippedCount && skippedCount > 0) {
-              setFormAlert({ 
-                type: 'success', 
-                message: `${createdCount} planning(s) created successfully. ${skippedCount} planning(s) were skipped due to conflicts (same classroom, time, and teacher).` 
-              });
-            } else {
-              setFormAlert({ 
-                type: 'success', 
-                message: `${createdCount} planning(s) created successfully.` 
-              });
-            }
-            
-            // Note: Frequency type now opens placeholder editor directly via onOpenPlaceholderEditor
-            // This onSuccess is only called for week and recurring types
+            setShowDuplicationModal(false);
+            setSelectedEntry(null);
           }}
         />
       )}

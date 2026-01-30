@@ -25,5 +25,6 @@ export { default as ClassModal } from './ClassModal';
 export { default as AdministratorModal } from './AdministratorModal';
 export { default as ClassStudentModal } from './ClassStudentModal';
 export { default as RoleModal } from './RoleModal';
+export { default as SessionOverviewModal } from './SessionOverviewModal';
 export { default as HierarchyTreeModal } from './HierarchyTreeModal';
 

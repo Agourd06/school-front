@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Eye } from 'lucide-react';
+import { Eye, Info } from 'lucide-react';
 import BaseModal from '../modals/BaseModal';
 import { studentsApi } from '../../api/students';
 import type { Student as ApiStudent } from '../../api/students';
@@ -8,9 +9,12 @@ import { getFileUrl } from '../../utils/apiConfig';
 
 interface StudentDetailsButtonProps {
   studentId?: number;
+  /** 'info' = Info icon + primary/gray style (e.g. attendance); 'eye' = Eye icon + blue style (default) */
+  variant?: 'info' | 'eye';
 }
 
-const StudentDetailsButton: React.FC<StudentDetailsButtonProps> = ({ studentId }) => {
+const StudentDetailsButton: React.FC<StudentDetailsButtonProps> = ({ studentId, variant = 'eye' }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [preview, setPreview] = useState<{ src: string; label: string } | null>(null);
 
@@ -31,17 +35,23 @@ const StudentDetailsButton: React.FC<StudentDetailsButtonProps> = ({ studentId }
     setIsOpen(true);
   };
 
+  const isInfoVariant = variant === 'info';
+  const Icon = isInfoVariant ? Info : Eye;
+  const buttonClass = isInfoVariant
+    ? 'flex-shrink-0 p-1 rounded text-gray-500 hover:text-primary hover:bg-primary/10 transition disabled:opacity-50 disabled:cursor-not-allowed'
+    : 'p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed';
+
   return (
     <>
       <button
         type="button"
         onClick={handleOpen}
         disabled={!studentId}
-        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label="View student details"
-        title="View student details"
+        className={buttonClass}
+        aria-label={t('forms.studentDetails')}
+        title={t('forms.studentDetails')}
       >
-        <Eye className="h-4 w-4" />
+        <Icon className="h-4 w-4" />
       </button>
 
       <BaseModal
@@ -49,14 +59,14 @@ const StudentDetailsButton: React.FC<StudentDetailsButtonProps> = ({ studentId }
         onClose={() => setIsOpen(false)}
         title={
           student
-            ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || student.email || 'Student details'
-            : 'Student details'
+            ? `${student.first_name ?? ''} ${student.last_name ?? ''}`.trim() || student.email || t('forms.studentDetails')
+            : t('forms.studentDetails')
         }
       >
         {isLoading ? (
-          <div className="py-8 text-center text-sm text-gray-500">Loading student details…</div>
+          <div className="py-8 text-center text-sm text-gray-500">{t('forms.loadingStudentDetails')}</div>
         ) : error ? (
-          <div className="py-2 text-sm text-red-600">Failed to load student details. Please try again.</div>
+          <div className="py-2 text-sm text-red-600">{t('forms.failedToLoadStudentDetails')}</div>
         ) : (
           <div className="space-y-5">
             {student && (

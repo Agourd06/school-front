@@ -26,6 +26,10 @@ export const PLANNING_STATUS_LABEL: Record<number, string> = {
   [-2]: 'Deleted',
 };
 
-export const DEFAULT_PLANNING_STATUS: PlanningStatus = 1; // Active by default
+/** New sessions default to PENDING; presence can be edited until activated. */
+export const DEFAULT_PLANNING_STATUS: PlanningStatus = 2; // Pending by default
+
+/** Once activated, presence is read-only (session status = Active). */
+export const PLANNING_STATUS_ACTIVATED: PlanningStatus = 1;
 
 

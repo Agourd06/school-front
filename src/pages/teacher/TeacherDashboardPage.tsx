@@ -105,23 +105,26 @@ const TeacherDashboardPage: React.FC = () => {
         )}
       </div>
 
+      {/* Tip: Attendance via Schedule */}
+      <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 p-4 flex items-start gap-4">
+        <span className="text-2xl flex-shrink-0" aria-hidden>📅✓</span>
+        <div>
+          <p className="font-medium text-gray-900">Attendance is in your Schedule</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Open your <Link to="/teacher/plannings" className="text-primary font-medium hover:underline">Schedule</Link>, then tap any session to mark attendance for that class. One place for your week and your presence list.
+          </p>
+        </div>
+      </div>
+
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link
           to="/teacher/plannings"
           className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
         >
           <div className="text-3xl mb-2">📅</div>
           <h3 className="font-semibold text-gray-900 mb-1">View Schedule</h3>
-          <p className="text-sm text-gray-600">See all your upcoming classes</p>
-        </Link>
-        <Link
-          to="/teacher/attendance"
-          className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
-        >
-          <div className="text-3xl mb-2">✓</div>
-          <h3 className="font-semibold text-gray-900 mb-1">Mark Attendance</h3>
-          <p className="text-sm text-gray-600">Record student presence</p>
+          <p className="text-sm text-gray-600">See your week and mark attendance from any session</p>
         </Link>
         <Link
           to="/teacher/grades"

@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface AvatarProps {
   name: string;
   size?: 'sm' | 'md' | 'lg';
+  src?: string | null;
   className?: string;
 }
 
-const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className = '' }) => {
+const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', src, className = '' }) => {
+  const [imgError, setImgError] = useState(false);
+  const showImage = Boolean(src && !imgError);
+
   const getInitials = (fullName: string): string => {
     const parts = fullName.trim().split(/\s+/);
     if (parts.length >= 2) {
@@ -25,10 +29,19 @@ const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className = '' }) =>
 
   return (
     <div
-      className={`flex items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold ${sizeClasses[size]} ${className}`}
+      className={`flex items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold overflow-hidden flex-shrink-0 ${sizeClasses[size]} ${className}`}
       aria-label={name}
     >
-      {initials}
+      {showImage ? (
+        <img
+          src={src!}
+          alt=""
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        initials
+      )}
     </div>
   );
 };

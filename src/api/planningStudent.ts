@@ -81,6 +81,20 @@ export interface PlanningStudentEntry {
   } | null;
   created_at?: string;
   updated_at?: string;
+  /** Two-step validation: 0=DRAFT, 1=TEACHER_VALIDATED, 2=LOCKED. Independent from notes. See PRESENCE_NOTES_SPEC.md. */
+  presence_validation_status?: number | null;
+  /** Two-step validation: 0=DRAFT, 1=TEACHER_VALIDATED, 2=LOCKED. Independent from presence. See PRESENCE_NOTES_SPEC.md. */
+  notes_validation_status?: number | null;
+  /** If false, Notes module is hidden/disabled for this session; no Notes PDF. Default true for backward compat. */
+  has_notes?: boolean | null;
+  /** New validation model: true when teacher has validated presence. See VALIDATION_BOOLEANS_BACKEND.md. */
+  presence_validated_teacher?: boolean | null;
+  /** New validation model: true when controller has validated presence. See VALIDATION_BOOLEANS_BACKEND.md. */
+  presence_validated_controleur?: boolean | null;
+  /** New validation model: true when teacher has validated notes. See VALIDATION_BOOLEANS_BACKEND.md. */
+  notes_validated_teacher?: boolean | null;
+  /** New validation model: true when controller has validated notes. See VALIDATION_BOOLEANS_BACKEND.md. */
+  notes_validated_controleur?: boolean | null;
 }
 
 export interface PlanningStudentPayload {
@@ -96,19 +110,36 @@ export interface PlanningStudentPayload {
   school_year_id?: number | null;
   class_course_id?: number | null;
   status?: PlanningStatus;
+  presence_validation_status?: number | null;
+  notes_validation_status?: number | null;
+  has_notes?: boolean | null;
+  presence_validated_teacher?: boolean | null;
+  presence_validated_controleur?: boolean | null;
+  notes_validated_teacher?: boolean | null;
+  notes_validated_controleur?: boolean | null;
 }
 
 export type UpdatePlanningStudentPayload = Partial<PlanningStudentPayload>;
 
+/**
+ * Query params for GET /students-plannings.
+ * For date-range filtering (Academic Planning week/month view), see PLANNING_DATE_RANGE_API.md.
+ */
 export interface GetPlanningStudentParams extends PaginationParams {
   status?: PlanningStatus;
   class_id?: number;
+  class_course_id?: number;
   class_room_id?: number;
   teacher_id?: number;
   specialization_id?: number;
   planning_session_type_id?: number;
   course_id?: number;
-  date_day?: string; // YYYY-MM-DD format
+  school_year_id?: number;
+  date_day?: string; // YYYY-MM-DD format (single day)
+  /** Inclusive start date for range filter (YYYY-MM-DD). Backend: filter where date_day >= date_day_from. See PLANNING_DATE_RANGE_API.md. */
+  date_day_from?: string;
+  /** Inclusive end date for range filter (YYYY-MM-DD). Backend: filter where date_day <= date_day_to. See PLANNING_DATE_RANGE_API.md. */
+  date_day_to?: string;
   order?: 'ASC' | 'DESC';
   // company_id is automatically filtered by backend from JWT, no need to send it
 }
@@ -160,16 +191,47 @@ const buildQueryString = (params: GetPlanningStudentParams = {}): string => {
   if (params.limit) qp.append('limit', String(params.limit));
   if (params.status !== undefined && params.status !== null) qp.append('status', String(params.status));
   if (params.class_id) qp.append('class_id', String(params.class_id));
+  if (params.class_course_id) qp.append('class_course_id', String(params.class_course_id));
   if (params.class_room_id) qp.append('class_room_id', String(params.class_room_id));
   if (params.teacher_id) qp.append('teacher_id', String(params.teacher_id));
   if (params.specialization_id) qp.append('specialization_id', String(params.specialization_id));
   if (params.planning_session_type_id) qp.append('planning_session_type_id', String(params.planning_session_type_id));
   if (params.course_id) qp.append('course_id', String(params.course_id));
+  if (params.school_year_id) qp.append('school_year_id', String(params.school_year_id));
+  if (params.date_day) qp.append('date_day', params.date_day);
+  if (params.date_day_from) qp.append('date_day_from', params.date_day_from);
+  if (params.date_day_to) qp.append('date_day_to', params.date_day_to);
   if (params.order) qp.append('order', params.order);
 
   const qs = qp.toString();
   return qs ? `?${qs}` : '';
 };
+
+const PAGE_SIZE = 100;
+
+/**
+ * Fetches all plannings for a date range (and optional filters) by requesting every page until none left.
+ * Use the same filter logic as the planning page: pass date_day_from, date_day_to, and any filters (teacher_id, class_id, etc.) when set.
+ */
+export async function getAllPlanningsInDateRange(
+  params: GetPlanningStudentParams & { date_day_from: string; date_day_to: string }
+): Promise<PlanningStudentEntry[]> {
+  const all: PlanningStudentEntry[] = [];
+  let page = 1;
+  let hasNext = true;
+  while (hasNext) {
+    const res = await planningStudentApi.getAll({
+      ...params,
+      page,
+      limit: PAGE_SIZE,
+      order: params.order ?? 'ASC',
+    });
+    all.push(...(res.data ?? []));
+    hasNext = (res.meta?.hasNext ?? false) && (res.data?.length ?? 0) === PAGE_SIZE;
+    page += 1;
+  }
+  return all;
+}
 
 export const planningStudentApi = {
   async getAll(params: GetPlanningStudentParams = {}): Promise<PaginatedResponse<PlanningStudentEntry>> {

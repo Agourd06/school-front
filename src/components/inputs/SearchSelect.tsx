@@ -126,9 +126,17 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
           },
         };
       },
+      valueContainer: (base: any) => ({
+        ...base,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+      }),
       placeholder: (base: any) => ({
         ...base,
         color: muted,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }),
       singleValue: (base: any) => ({
         ...base,
@@ -136,6 +144,10 @@ const SearchSelect: React.FC<SearchSelectProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '0.5rem',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: '100%',
       }),
       input: (base: any) => ({
         ...base,

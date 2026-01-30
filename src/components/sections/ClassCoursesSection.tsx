@@ -128,15 +128,17 @@ const ClassCoursesSection: React.FC = () => {
     [modulesResp, t]
   );
 
-  const courseOptions = useMemo<SearchSelectOption[]>(
-    () =>
-      (coursesResp?.data || []).map((item) => ({
-        value: item.id,
-        label: item.title || `${t('forms.courseNumber')}${item.id}`,
-        data: item,
-      })),
-    [coursesResp, t]
-  );
+  const courseOptions = useMemo<SearchSelectOption[]>(() => {
+    const courses = (coursesResp?.data || []) as Array<{ id: number; title?: string; modules?: Array<{ id: number }> }>;
+    const filtered = filters.moduleId
+      ? courses.filter((c) => c.modules?.some((m) => m.id === Number(filters.moduleId)))
+      : courses;
+    return filtered.map((item) => ({
+      value: item.id,
+      label: item.title || `${t('forms.courseNumber')}${item.id}`,
+      data: item,
+    }));
+  }, [coursesResp, filters.moduleId, t]);
 
   const levelOptions = useMemo<SearchSelectOption[]>(
     () => levels.map((level) => ({ value: level.id, label: level.title })),
@@ -162,10 +164,11 @@ const ClassCoursesSection: React.FC = () => {
   };
 
   const handleFilterChange = (field: keyof typeof filters) => (value: number | string | '') => {
-    setFilters((prev) => ({
-      ...prev,
-      [field]: value === undefined || value === null ? '' : String(value),
-    }));
+    setFilters((prev) => {
+      const next = { ...prev, [field]: value === undefined || value === null ? '' : String(value) };
+      if (field === 'moduleId') next.courseId = '';
+      return next;
+    });
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
@@ -232,6 +235,52 @@ const ClassCoursesSection: React.FC = () => {
         titleKey="pages.classCoursesTitle"
         descriptionKey="pages.classCoursesDescription"
         icon={<BookMarked className="w-5 h-5" />}
+        middle={
+          <div className="flex flex-nowrap items-end justify-center gap-2 w-full overflow-x-auto">
+            <div className="w-[130px] flex-shrink-0">
+              <SearchSelect
+                label={t('sidebar.levels')}
+                value={filters.level}
+                onChange={handleFilterChange('level')}
+                options={levelOptions}
+                placeholder={t('forms.allLevelsShort') || 'All'}
+                className="w-full"
+              />
+            </div>
+            <div className="w-[130px] flex-shrink-0">
+              <SearchSelect
+                label={t('sidebar.modules')}
+                value={filters.moduleId}
+                onChange={handleFilterChange('moduleId')}
+                options={moduleOptions}
+                placeholder={t('forms.allModulesShort') || 'All'}
+                className="w-full"
+              />
+            </div>
+            <div className="w-[130px] flex-shrink-0">
+              <SearchSelect
+                label={t('sidebar.courses')}
+                value={filters.courseId}
+                onChange={handleFilterChange('courseId')}
+                options={courseOptions}
+                placeholder={filters.moduleId ? (t('forms.allCoursesShort') || 'All') : (t('forms.moduleFirst') || 'Module')}
+                disabled={!filters.moduleId}
+                className="w-full"
+              />
+            </div>
+            <div className="w-[130px] flex-shrink-0">
+              <SearchSelect
+                label={t('common.status')}
+                value={filters.status}
+                onChange={handleFilterChange('status')}
+                options={statusFilterOptions}
+                placeholder={t('forms.allStatusesShort') || 'All'}
+                isClearable={false}
+                className="w-full"
+              />
+            </div>
+          </div>
+        }
         actions={
           <Button type="button" variant="primary" onClick={openCreateModal} className="inline-flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,37 +308,6 @@ const ClassCoursesSection: React.FC = () => {
           {(error as Error).message}
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SearchSelect
-          label={t('common.status')}
-          value={filters.status}
-          onChange={handleFilterChange('status')}
-          options={statusFilterOptions}
-          isClearable={false}
-        />
-        <SearchSelect
-          label={t('sidebar.levels')}
-          value={filters.level}
-          onChange={handleFilterChange('level')}
-          options={levelOptions}
-          placeholder={t('sections.allLevels') || 'All levels'}
-        />
-        <SearchSelect
-          label={t('sidebar.modules')}
-          value={filters.moduleId}
-          onChange={handleFilterChange('moduleId')}
-          options={moduleOptions}
-          placeholder={t('forms.allModules')}
-        />
-        <SearchSelect
-          label={t('sidebar.courses')}
-          value={filters.courseId}
-          onChange={handleFilterChange('courseId')}
-          options={courseOptions}
-          placeholder={t('sections.allCourses')}
-        />
-      </div>
 
       <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-lg">
         <div className="overflow-x-auto">

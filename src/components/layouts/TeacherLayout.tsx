@@ -21,7 +21,6 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({ children }) => {
   const navItems = [
     { path: '/teacher', label: 'Dashboard', icon: '📊' },
     { path: '/teacher/plannings', label: 'Schedule', icon: '📅' },
-    { path: '/teacher/attendance', label: 'Attendance', icon: '✓' },
     { path: '/teacher/grades', label: 'Grades', icon: '📝' },
     { path: '/teacher/links', label: 'Links', icon: '🔗' },
     { path: '/teacher/homework', label: 'Homework', icon: '📚' },

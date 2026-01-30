@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  getAllPlanningsInDateRange,
   planningStudentApi,
   type GetPlanningStudentParams,
   type PlanningStudentEntry,
@@ -8,6 +9,18 @@ import {
 } from '../api/planningStudent';
 
 const QUERY_KEY = 'planningStudents';
+
+/** Fetches all plannings in a date range (same filter logic as planning page) by requesting every page. Use in modals to avoid pagination limits. */
+export const useAllPlanningsInRange = (
+  params: (GetPlanningStudentParams & { date_day_from: string; date_day_to: string }) | null,
+  options?: { enabled?: boolean }
+) =>
+  useQuery({
+    queryKey: [QUERY_KEY, 'allInRange', params],
+    queryFn: () => getAllPlanningsInDateRange(params!),
+    placeholderData: keepPreviousData,
+    enabled: (options?.enabled ?? true) && !!params?.date_day_from && !!params?.date_day_to,
+  });
 
 export const usePlanningStudents = (params: GetPlanningStudentParams = {}, options?: { enabled?: boolean }) =>
   useQuery({

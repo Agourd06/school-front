@@ -1,13 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import BaseModal from './BaseModal';
 import SearchSelect, { type SearchSelectOption } from '../inputs/SearchSelect';
 import { Button, Input } from '../ui';
 import { useClasses } from '../../hooks/useClasses';
+import { useClassRooms } from '../../hooks/useClassRooms';
+import { usePlanningSessionTypes } from '../../hooks/usePlanningSessionTypes';
 import { useTeachersByCourse } from '../../hooks/useTeacherCourses';
 import { useSchoolYearPeriods } from '../../hooks/useSchoolYearPeriods';
-import { useCreatePlanningStudent, usePlanningStudents } from '../../hooks/usePlanningStudents';
+import { useAllPlanningsInRange, useCreatePlanningStudent } from '../../hooks/usePlanningStudents';
 import { useSchoolYears } from '../../hooks/useSchoolYears';
+import { useAuth } from '../../hooks/useAuth';
+import { useTeacherByEmail } from '../../hooks/useTeacherByEmail';
 import type { ClassCourse } from '../../api/classCourse';
 import type { PlanningStudentEntry } from '../../api/planningStudent';
 import { TIME_OPTIONS, formatISODate, getMonday } from '../planning/utils';
@@ -19,15 +24,49 @@ interface ClassCoursePlanningModalProps {
   classCourse: ClassCourse | null;
 }
 
+// value: 0=Sun, 1=Mon, ..., 6=Sat — labels come from t('planning.weekday*')
 const DAYS_OF_WEEK = [
-  { value: 1, label: 'Monday', short: 'Mon' },
-  { value: 2, label: 'Tuesday', short: 'Tue' },
-  { value: 3, label: 'Wednesday', short: 'Wed' },
-  { value: 4, label: 'Thursday', short: 'Thu' },
-  { value: 5, label: 'Friday', short: 'Fri' },
-  { value: 6, label: 'Saturday', short: 'Sat' },
-  { value: 0, label: 'Sunday', short: 'Sun' },
+  { value: 1 },
+  { value: 2 },
+  { value: 3 },
+  { value: 4 },
+  { value: 5 },
+  { value: 6 },
+  { value: 0 },
 ];
+const WEEKDAY_I18N_SUFFIX: Record<number, string> = {
+  0: 'Sun',
+  1: 'Mon',
+  2: 'Tue',
+  3: 'Wed',
+  4: 'Thu',
+  5: 'Fri',
+  6: 'Sat',
+};
+
+/** Normalize date_day to YYYY-MM-DD (API may return ISO string). */
+const normalizeDateDay = (dateDay: string | undefined): string => {
+  if (!dateDay) return '';
+  const s = String(dateDay).trim();
+  if (s.length >= 10 && s[4] === '-' && s[7] === '-') return s.slice(0, 10);
+  return s;
+};
+
+/** Normalize time to HH:mm (API may return HH:mm:ss). */
+const normalizeTime = (time: string | undefined): string => {
+  if (!time) return '';
+  const t = String(time).trim();
+  if (t.length >= 5 && t[2] === ':') return t.slice(0, 5);
+  return t;
+};
+
+/** Format date as YYYY-MM-DD in local time (matches API date_day; avoid UTC shift from toISOString). */
+const formatLocalDate = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
   isOpen,
@@ -35,6 +74,9 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
   classCourse,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: currentTeacher } = useTeacherByEmail(user?.email);
   const [form, setForm] = useState({
     class_id: '',
     teacher_id: '',
@@ -45,6 +87,9 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
     selectedDays: [] as number[],
     hour_start: '08:00',
     hour_end: '09:00',
+    class_room_id: '',
+    planning_session_type_id: '',
+    has_notes: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,84 +99,133 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
 
   const createMut = useCreatePlanningStudent();
 
-  // Fetch existing schedules based on class and teacher selection
+  // ——— Schedule: same as planning page, filters = teacher + class only ———
+  // Week range: Monday to Sunday, local calendar dates (match API date_day)
+  const weekRangeForApi = useMemo(() => {
+    const start = new Date(currentWeekStart);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { from: formatLocalDate(start), to: formatLocalDate(end) };
+  }, [currentWeekStart]);
+
+  // GET /api/students-plannings: only teacher_id, class_id, date_day_from, date_day_to (no other filters)
   const scheduleParams = useMemo(() => {
-    const params: { class_id?: number; teacher_id?: number; limit: number } = { limit: 100 };
-    if (form.class_id) params.class_id = Number(form.class_id);
-    if (form.teacher_id) params.teacher_id = Number(form.teacher_id);
-    return params;
-  }, [form.class_id, form.teacher_id]);
+    if (!form.teacher_id || !form.class_id) return null;
+    return {
+      teacher_id: Number(form.teacher_id),
+      class_id: Number(form.class_id),
+      date_day_from: weekRangeForApi.from,
+      date_day_to: weekRangeForApi.to,
+    };
+  }, [form.teacher_id, form.class_id, weekRangeForApi.from, weekRangeForApi.to]);
 
-  // Only fetch if BOTH class AND teacher are selected
-  const shouldFetchSchedules = !!(form.class_id && form.teacher_id);
-  
-  const { data: existingSchedulesResp } = usePlanningStudents(
-    shouldFetchSchedules ? scheduleParams : { limit: 0 },
-    { enabled: shouldFetchSchedules }
-  );
+  const shouldFetchSchedules = !!scheduleParams;
+  const { data: scheduleSessions, isLoading: scheduleLoading, isFetching: scheduleFetching } = useAllPlanningsInRange(scheduleParams, { enabled: shouldFetchSchedules });
 
-  // Calculate week range
+  // Full week (Mon–Sun) for filtering: local calendar dates so they match API date_day
+  const fullWeekIsos = useMemo(() => {
+    return Array.from({ length: 7 }).map((_, i) => {
+      const date = new Date(currentWeekStart);
+      date.setDate(currentWeekStart.getDate() + i);
+      return formatLocalDate(date);
+    });
+  }, [currentWeekStart]);
+
+  // Displayed week: Mon–Fri or Mon–Sun (columns to show)
   const weekEnd = useMemo(() => {
     const end = new Date(currentWeekStart);
-    end.setDate(currentWeekStart.getDate() + (showWeekend ? 6 : 4)); // Monday to Friday (5 days) or Monday to Sunday (7 days)
+    end.setDate(currentWeekStart.getDate() + (showWeekend ? 6 : 4));
     return end;
   }, [currentWeekStart, showWeekend]);
 
-  // Get dates for the current week (Monday to Friday, or Monday to Sunday if weekend is shown)
   const weekDates = useMemo(() => {
     const dayCount = showWeekend ? 7 : 5;
-    return Array.from({ length: dayCount }).map((_, index) => {
+    return Array.from({ length: dayCount }).map((_, i) => {
       const date = new Date(currentWeekStart);
-      date.setDate(currentWeekStart.getDate() + index);
-      return {
-        date,
-        iso: formatISODate(date),
-        dayOfWeek: date.getDay(),
-      };
+      date.setDate(currentWeekStart.getDate() + i);
+      return { date, iso: formatLocalDate(date), dayOfWeek: date.getDay() };
     });
   }, [currentWeekStart, showWeekend]);
 
-  // Group schedules by time pattern (hour_start, hour_end, class_id, teacher_id) and organize by day
-  // Filter to only show schedules within the current week
+  // Build schedule blocks: merge created + API, filter by full week (7 days), group by time slot
   const groupedSchedules = useMemo(() => {
     if (!shouldFetchSchedules) return [];
-    
-    const allSchedules = [...createdSchedules, ...(existingSchedulesResp?.data || [])];
-    const weekDateSet = new Set(weekDates.map((d) => d.iso));
-    
-    // Filter schedules to only include those in the current week
-    const weekSchedules = allSchedules.filter((entry) => weekDateSet.has(entry.date_day));
-    
-    const scheduleMap = new Map<string, PlanningStudentEntry[]>();
-    
-    // Group by time pattern and collect all entries
-    weekSchedules.forEach((entry) => {
-      const key = `${entry.hour_start}-${entry.hour_end}-${entry.class_id}-${entry.teacher_id}`;
-      if (!scheduleMap.has(key)) {
-        scheduleMap.set(key, []);
-      }
-      scheduleMap.get(key)!.push(entry);
+    const weekDateSet = new Set(fullWeekIsos);
+    const all = [...createdSchedules, ...(scheduleSessions ?? [])];
+    const inWeek = all.filter((e) => weekDateSet.has(normalizeDateDay(e.date_day)));
+    const byKey = new Map<string, PlanningStudentEntry[]>();
+    inWeek.forEach((e) => {
+      const key = `${normalizeTime(e.hour_start)}-${normalizeTime(e.hour_end)}-${e.class_id}-${e.teacher_id}`;
+      if (!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key)!.push(e);
     });
-    
-    // Convert to array with days extracted
-    return Array.from(scheduleMap.entries()).map(([, entries]) => {
-      const firstEntry = entries[0];
-      const days = entries.map((entry) => {
-        const [year, month, day] = entry.date_day.split('-').map(Number);
-        const date = new Date(year, month - 1, day);
-        return date.getDay();
-      });
-      
-      const isNew = entries.some((e) => createdSchedules.some((cs) => cs.id === e.id));
-      
-      return {
-        ...firstEntry,
-        days: [...new Set(days)].sort(),
-        isNew,
-        allEntries: entries, // Keep all entries for reference
-      };
+    return Array.from(byKey.entries()).map(([, entries]) => {
+      const first = entries[0];
+      const days = [...new Set(entries.map((e) => {
+        const iso = normalizeDateDay(e.date_day);
+        const [y, m, d] = iso.split('-').map(Number);
+        return new Date(y, m - 1, d).getDay();
+      }))].sort();
+      const isNew = entries.some((e) => createdSchedules.some((c) => c.id === e.id));
+      return { ...first, days, isNew, allEntries: entries };
     });
-  }, [createdSchedules, existingSchedulesResp, shouldFetchSchedules, weekDates]);
+  }, [createdSchedules, scheduleSessions, shouldFetchSchedules, fullWeekIsos]);
+
+  // Debug: log every move (only references vars defined above to avoid "before initialization" error)
+  useEffect(() => {
+    const tag = '[ClassCoursePlanningModal Schedule]';
+    console.log(tag, '1. Filters', {
+      teacher_id: form.teacher_id || '(empty)',
+      class_id: form.class_id || '(empty)',
+      scheduleParams: scheduleParams ?? '(null – need both teacher and class)',
+    });
+    console.log(tag, '2. Fetch', {
+      shouldFetchSchedules,
+      scheduleLoading,
+      scheduleFetching,
+      apiSessionsCount: scheduleSessions?.length ?? 0,
+      apiSessionsSample: (scheduleSessions ?? []).slice(0, 3).map((s) => ({
+        id: s.id,
+        date_day: s.date_day,
+        hour_start: s.hour_start,
+        hour_end: s.hour_end,
+        class_id: s.class_id,
+        teacher_id: s.teacher_id,
+      })),
+    });
+    const weekDateSet = new Set(fullWeekIsos);
+    const all = [...createdSchedules, ...(scheduleSessions ?? [])];
+    const inWeek = all.filter((e) => weekDateSet.has(normalizeDateDay(e.date_day)));
+    console.log(tag, '3. Week & merge', {
+      weekRangeForApi,
+      fullWeekIsos,
+      createdCount: createdSchedules.length,
+      totalMerged: all.length,
+      inWeekCount: inWeek.length,
+      inWeekSample: inWeek.slice(0, 2).map((e) => ({ date_day: normalizeDateDay(e.date_day), hour_start: e.hour_start })),
+    });
+    console.log(tag, '4. Grouped blocks', {
+      groupedCount: groupedSchedules.length,
+      groups: groupedSchedules.map((g) => ({
+        days: g.days,
+        time: `${normalizeTime(g.hour_start)}-${normalizeTime(g.hour_end)}`,
+        entriesCount: g.allEntries?.length ?? 0,
+      })),
+    });
+  }, [
+    form.teacher_id,
+    form.class_id,
+    scheduleParams,
+    shouldFetchSchedules,
+    scheduleLoading,
+    scheduleFetching,
+    scheduleSessions,
+    weekRangeForApi,
+    fullWeekIsos,
+    createdSchedules,
+    groupedSchedules,
+  ]);
 
   // Week navigation handlers
   const handlePrevWeek = () => {
@@ -197,7 +291,12 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
     enabled: !!courseId,
   });
 
-  // Removed: class rooms and session types (will be updated later in planning)
+  const { data: classRoomsResp, isLoading: roomsLoading } = useClassRooms({ page: 1, limit: 100 });
+  const { data: sessionTypesResp, isLoading: sessionTypesLoading } = usePlanningSessionTypes({
+    page: 1,
+    limit: 100,
+    status: 'active',
+  });
 
   const schoolYearOptions = useMemo<SearchSelectOption[]>(
     () => schoolYears.map((year) => ({ value: year.id, label: year.title })),
@@ -241,7 +340,19 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
     [teachersForCourse]
   );
 
-  // Removed: roomOptions and sessionTypeOptions
+  const roomOptions = useMemo<SearchSelectOption[]>(
+    () => (classRoomsResp?.data || []).map((room) => ({ value: room.id, label: room.title })),
+    [classRoomsResp]
+  );
+
+  const sessionTypeOptions = useMemo<SearchSelectOption[]>(
+    () =>
+      (sessionTypesResp?.data || []).map((type) => ({
+        value: type.id,
+        label: type.title,
+      })),
+    [sessionTypesResp]
+  );
 
   const timeOptions = useMemo<SearchSelectOption[]>(
     () => TIME_OPTIONS.map((time) => ({ value: time, label: time })),
@@ -273,6 +384,9 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
         selectedDays: [],
         hour_start: '08:00',
         hour_end: '09:00',
+        class_room_id: '',
+        planning_session_type_id: '',
+        has_notes: true,
       });
       setErrors({});
       setCreatedSchedules([]); // Reset created schedules when modal opens
@@ -280,6 +394,13 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
       setShowWeekend(false); // Reset weekend visibility
     }
   }, [isOpen, classCourse]);
+
+  // When a teacher opens the modal, pre-fill their teacher_id so they see their sessions immediately
+  useEffect(() => {
+    if (isOpen && classCourse && currentTeacher && !form.teacher_id) {
+      setForm((prev) => ({ ...prev, teacher_id: String(currentTeacher.id) }));
+    }
+  }, [isOpen, classCourse, currentTeacher, form.teacher_id]);
 
   // Get selected period for date validation
   const selectedPeriod = useMemo(() => {
@@ -332,6 +453,9 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
       newErrors.selectedDays = t('forms.daysRequired') || 'At least one day must be selected';
     if (!form.hour_start) newErrors.hour_start = t('forms.startTimeRequired') || 'Start time is required';
     if (!form.hour_end) newErrors.hour_end = t('forms.endTimeRequired') || 'End time is required';
+    if (!form.class_room_id) newErrors.class_room_id = t('forms.classRoomRequired') || 'Classroom is required';
+    if (!form.planning_session_type_id)
+      newErrors.planning_session_type_id = t('forms.sessionTypeRequired') || 'Session type is required';
 
     // Validate dates are within period range
     if (selectedPeriod && form.startDate) {
@@ -395,7 +519,6 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
       const periodTitle = selectedPeriodObj?.title || form.period;
 
       // Create planning entries for each date
-      // Note: class_room_id and planning_session_type_id will be set later in planning view
       const promises = dates.map((date) =>
         createMut.mutateAsync({
           period: periodTitle,
@@ -406,16 +529,27 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
           class_id: Number(form.class_id),
           course_id: courseId!,
           school_year_id: form.school_year_id ? Number(form.school_year_id) : undefined,
-          class_course_id: classCourse?.id ?? undefined, // Include class_course_id from the class course
+          class_course_id: classCourse?.id ?? undefined,
           status: 2, // Pending
-          // class_room_id and planning_session_type_id will be set later in planning view
-        } as any) // Using 'as any' to bypass TypeScript requirement - these fields are required but will be set later
+          class_room_id: Number(form.class_room_id),
+          planning_session_type_id: Number(form.planning_session_type_id),
+          has_notes: form.has_notes,
+        })
       );
 
       const createdEntries = await Promise.all(promises);
       
-      // Add created schedules to the list
       setCreatedSchedules((prev) => [...prev, ...createdEntries]);
+      
+      // Show the week that contains the first created date so the new session is visible
+      if (createdEntries.length > 0 && createdEntries[0].date_day) {
+        const firstIso = normalizeDateDay(createdEntries[0].date_day);
+        const [y, m, d] = firstIso.split('-').map(Number);
+        const firstDate = new Date(y, m - 1, d);
+        if (!Number.isNaN(firstDate.getTime())) {
+          setCurrentWeekStart(getMonday(firstDate));
+        }
+      }
       
       // Reset only schedule-specific fields (days, times)
       setForm((prev) => ({
@@ -491,48 +625,33 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={t('forms.addToPlanning') || 'Add to Planning'}>
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Read-only Course Information */}
+        {/* Read-only Course Information - path style, spaced across full width */}
         <div className="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
-          {/* First Row: Program, Specialization, Level */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-3">
-            <div className="flex flex-col">
-              <label className="text-xs font-medium text-muted uppercase tracking-wide mb-1">
-                {t('sidebar.programs')}
-              </label>
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{programName}</p>
-            </div>
-            <div className="flex flex-col">
-              <label className="text-xs font-medium text-muted uppercase tracking-wide mb-1">
-                {t('dashboard.specializations')}
-              </label>
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{specializationName}</p>
-            </div>
-            <div className="flex flex-col">
-              <label className="text-xs font-medium text-muted uppercase tracking-wide mb-1">
-                {t('sidebar.levels')}
-              </label>
-              <p className="text-sm font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md inline-block w-fit">
-                {levelName}
-              </p>
-            </div>
-          </div>
-
-          {/* Second Row: Module, Course - aligned with top row columns */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 pt-3 border-t border-gray-200">
-            <div className="flex flex-col">
-              <label className="text-xs font-medium text-muted uppercase tracking-wide mb-1">
-                {t('sidebar.modules')}
-              </label>
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{moduleName}</p>
-            </div>
-            <div className="flex flex-col md:col-span-2">
-              <label className="text-xs font-medium text-muted uppercase tracking-wide mb-1">
-                {t('sidebar.courses')}
-              </label>
-              <p className="text-sm font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md inline-block w-fit hover:bg-primary/15 transition-colors">
-                {courseName}
-              </p>
-            </div>
+          <div className="flex flex-wrap items-baseline justify-evenly gap-x-2 gap-y-2 text-sm text-gray-900">
+            <span>
+              <span className="text-xs font-medium text-muted uppercase tracking-wide">{t('sidebar.programs')}:</span>{' '}
+              <span className="font-semibold">{programName}</span>
+            </span>
+            <span className="text-muted">/</span>
+            <span>
+              <span className="text-xs font-medium text-muted uppercase tracking-wide">{t('dashboard.specializations')}:</span>{' '}
+              <span className="font-semibold">{specializationName}</span>
+            </span>
+            <span className="text-muted">/</span>
+            <span>
+              <span className="text-xs font-medium text-muted uppercase tracking-wide">{t('sidebar.levels')}:</span>{' '}
+              <span className="font-semibold text-primary">{levelName}</span>
+            </span>
+            <span className="text-muted">/</span>
+            <span>
+              <span className="text-xs font-medium text-muted uppercase tracking-wide">{t('sidebar.modules')}:</span>{' '}
+              <span className="font-semibold">{moduleName}</span>
+            </span>
+            <span className="text-muted">/</span>
+            <span>
+              <span className="text-xs font-medium text-muted uppercase tracking-wide">{t('sidebar.courses')}:</span>{' '}
+              <span className="font-semibold text-primary">{courseName}</span>
+            </span>
           </div>
         </div>
 
@@ -617,6 +736,64 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
           />
         </div>
 
+        {/* Classroom and Session Type */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SearchSelect
+            label={`${t('sidebar.classRooms')} *`}
+            value={form.class_room_id}
+            onChange={(value) => {
+              setForm((prev) => ({ ...prev, class_room_id: String(value) }));
+              if (errors.class_room_id) setErrors((prev) => ({ ...prev, class_room_id: '' }));
+            }}
+            options={roomOptions}
+            placeholder={
+              roomsLoading
+                ? t('common.loading') || 'Loading...'
+                : roomOptions.length === 0
+                ? t('forms.noClassroomsFound') || 'No classrooms found'
+                : t('forms.selectClassroom') || 'Select classroom'
+            }
+            isLoading={roomsLoading}
+            error={errors.class_room_id}
+          />
+
+          <div>
+            <SearchSelect
+              label={`${t('sections.sessionType')} *`}
+              value={form.planning_session_type_id}
+              onChange={(value) => {
+                setForm((prev) => ({ ...prev, planning_session_type_id: String(value) }));
+                if (errors.planning_session_type_id)
+                  setErrors((prev) => ({ ...prev, planning_session_type_id: '' }));
+              }}
+              options={sessionTypeOptions}
+              placeholder={
+                sessionTypesLoading
+                  ? t('common.loading') || 'Loading...'
+                  : sessionTypeOptions.length === 0
+                  ? t('forms.noSessionTypesFound') || 'No session types found'
+                  : t('forms.selectSessionType') || 'Select session type'
+              }
+              isLoading={sessionTypesLoading}
+              error={errors.planning_session_type_id}
+            />
+            <p className="mt-1 text-xs text-muted">
+              {t('forms.toCreateAType')}{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate('/settings/types/planning');
+                }}
+                className="font-medium text-secondary hover:text-secondary/80 underline cursor-pointer transition-colors"
+              >
+                {t('forms.settings')}
+              </button>
+              {' > '}{t('forms.types')}{' > '}{t('forms.planningSessionTypes')}
+            </p>
+          </div>
+        </div>
+
         {/* Date Range */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
@@ -656,33 +833,32 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
           />
         </div>
 
-        {/* Days of Week - Horizontal Pills */}
-        <div>
-          <label className="block text-sm font-medium text-body mb-2">
-            {t('forms.daysOfWeek')} * <span className="text-xs text-gray-500">({t('forms.selectOneOrMore')})</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {DAYS_OF_WEEK.map((day) => (
-              <button
-                key={day.value}
-                type="button"
-                onClick={() => toggleDay(day.value)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  form.selectedDays.includes(day.value)
-                    ? 'bg-primary text-white shadow-sm hover:bg-primary/90'
-                    : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 hover:border-gray-300'
-                }`}
-                aria-pressed={form.selectedDays.includes(day.value)}
-              >
-                {day.short}
-              </button>
-            ))}
+        {/* Days of Week + Start Hour + End Hour - one row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+          <div>
+            <label className="block text-sm font-medium text-body mb-2">
+              {t('forms.daysOfWeek')} * <span className="text-xs text-gray-500">({t('forms.selectOneOrMore')})</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {DAYS_OF_WEEK.map((day) => (
+                <button
+                  key={day.value}
+                  type="button"
+                  onClick={() => toggleDay(day.value)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    form.selectedDays.includes(day.value)
+                      ? 'bg-primary text-white shadow-sm hover:bg-primary/90'
+                      : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 hover:border-gray-300'
+                  }`}
+                  aria-pressed={form.selectedDays.includes(day.value)}
+                >
+                  {t(`planning.weekday${WEEKDAY_I18N_SUFFIX[day.value]}`)}
+                </button>
+              ))}
+            </div>
+            {errors.selectedDays && <p className="mt-1 text-xs text-red-600">{errors.selectedDays}</p>}
           </div>
-          {errors.selectedDays && <p className="mt-1 text-xs text-red-600">{errors.selectedDays}</p>}
-        </div>
 
-        {/* Time Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SearchSelect
             label={`${t('sections.startHour')} *`}
             value={form.hour_start}
@@ -712,6 +888,23 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
             disabled={!form.hour_start}
             error={errors.hour_end}
           />
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="has_notes"
+              checked={form.has_notes}
+              onChange={(e) => setForm((prev) => ({ ...prev, has_notes: e.target.checked }))}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              aria-describedby="has_notes_description"
+            />
+            <label htmlFor="has_notes" className="text-sm font-medium text-gray-700 cursor-pointer">
+              {t('forms.sessionHasNotes')}
+            </label>
+          </div>
+          <p id="has_notes_description" className="text-xs text-gray-500 -mt-1 ml-6">
+            {t('forms.sessionHasNotesDescription')}
+          </p>
         </div>
 
         {/* Weekly Schedule Calendar Display */}
@@ -784,15 +977,14 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
                   
                   // Find all schedules for this specific date
                   const daySchedules = groupedSchedules.filter((schedule) => {
-                    // Check if this schedule has an entry for this specific date
-                    return schedule.allEntries?.some((entry) => entry.date_day === weekDate.iso) || false;
+                    return schedule.allEntries?.some((entry) => normalizeDateDay(entry.date_day) === weekDate.iso) || false;
                   });
                   
                   return (
                     <div key={weekDate.iso} className="p-3 min-h-[200px]">
                       <div className="mb-3">
                         <span className="text-sm font-semibold text-gray-900">
-                          {t(`planning.weekday${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weekDate.dayOfWeek]}`)}
+                          {t(`planning.weekday${WEEKDAY_I18N_SUFFIX[weekDate.dayOfWeek]}`)}
                         </span>
                         <span className="text-xs text-muted ml-1">
                           {weekDate.date.getDate()}/{weekDate.date.getMonth() + 1}
@@ -820,7 +1012,7 @@ const ClassCoursePlanningModal: React.FC<ClassCoursePlanningModalProps> = ({
                               >
                                 <div className="space-y-1">
                                   <div className={`font-semibold text-sm ${textColorClass}`}>
-                                    {schedule.hour_start} - {schedule.hour_end}
+                                    {normalizeTime(schedule.hour_start)} - {normalizeTime(schedule.hour_end)}
                                   </div>
                                   <div className={`text-sm font-medium ${textColorClass}`}>
                                     {schedule.course?.title || schedule.classCourse?.title || schedule.period}
