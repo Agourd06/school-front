@@ -28,7 +28,7 @@ const RegistrationPage: React.FC = () => {
     companyName: '',
     companyEmail: '',
     companyPhone: '',
-    country: '',
+    country: 'Morocco',
     city: '',
     acceptedPrivacyPolicy: false,
     acceptedTermsOfUse: false,

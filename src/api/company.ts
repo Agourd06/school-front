@@ -46,6 +46,15 @@ export interface Company {
   city?: string | null;
   address?: string | null;
   codePostal?: string | null;
+  entete_1?: string | null;
+  entete_2?: string | null;
+  entete_3?: string | null;
+  pied_1?: string | null;
+  pied_2?: string | null;
+  pied_3?: string | null;
+  logo_left?: boolean;
+  logo_right?: boolean;
+  papier_entete?: boolean;
   created_at?: string;
   updated_at?: string;
   users?: User[];
@@ -85,6 +94,15 @@ export interface UpdateCompanyRequest {
   city?: string;
   address?: string;
   codePostal?: string;
+  entete_1?: string;
+  entete_2?: string;
+  entete_3?: string;
+  pied_1?: string;
+  pied_2?: string;
+  pied_3?: string;
+  logo_left?: boolean;
+  logo_right?: boolean;
+  papier_entete?: boolean;
 }
 
 export interface GetCompaniesParams extends FilterParams {
@@ -99,6 +117,15 @@ const normalizeCompany = (company: Company & { primary_color?: string | null; se
   country: company.country ?? null,
   city: company.city ?? null,
   codePostal: company.codePostal ?? company.code_postal ?? null,
+  entete_1: company.entete_1 ?? null,
+  entete_2: company.entete_2 ?? null,
+  entete_3: company.entete_3 ?? null,
+  pied_1: company.pied_1 ?? null,
+  pied_2: company.pied_2 ?? null,
+  pied_3: company.pied_3 ?? null,
+  logo_left: company.logo_left ?? false,
+  logo_right: company.logo_right ?? false,
+  papier_entete: company.papier_entete ?? false,
 });
 
 const toPaginated = (raw: unknown): PaginatedResponse<Company> => {
@@ -176,6 +203,9 @@ export const companyApi = {
     const { company_id: _companyId, ...rest } = data;
     void _companyId;
     
+    console.log('Company API update called with id:', id, 'data:', data);
+    console.log('Rest data (after removing company_id):', rest);
+    
     // Check if we have a File (logo upload) or logo is explicitly null (remove logo)
     const hasFile = data.logo instanceof File;
     const shouldRemoveLogo = data.logo === null;
@@ -210,7 +240,9 @@ export const companyApi = {
     const payload: UpdateCompanyRequest = {
       ...rest,
     };
+    console.log('Sending JSON payload to PATCH /company/' + id + ':', JSON.stringify(payload));
     const response = await api.patch(`/company/${id}`, payload);
+    console.log('Response from server:', response.data);
     return normalizeCompany(response.data);
   },
 

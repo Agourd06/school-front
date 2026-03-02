@@ -63,6 +63,7 @@ const TypesSettings = lazy(() => import('./components/settings/TypesSettings'));
 const LinkTypesPage = lazy(() => import('./pages/settings/types/LinkTypesPage'));
 const ClassroomTypesPage = lazy(() => import('./pages/settings/types/ClassroomTypesPage'));
 const PlanningTypesPage = lazy(() => import('./pages/settings/types/PlanningTypesPage'));
+const PdfLayoutSettingsPage = lazy(() => import('./pages/settings/PdfLayoutSettingsPage'));
 const RolesPage = lazy(() => import('./pages/dashboard/RolesPage'));
 const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
 
@@ -656,6 +657,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute requiredPage="/settings/user">
                 <Suspense fallback={<PageLoadingFallback />}><UsersPage /></Suspense>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="pdf-layout"
+            element={
+              <ProtectedRoute requiredPage="/settings/pdf-layout">
+                <Suspense fallback={<PageLoadingFallback />}><PdfLayoutSettingsPage /></Suspense>
               </ProtectedRoute>
             }
           />

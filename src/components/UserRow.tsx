@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useUserRoles } from '../hooks/useUserRoles';
 import { EditButton, DeleteButton, Button } from './ui';
 import UserStatusBadge from './UserStatusBadge';
+import { getFileUrl } from '../utils/apiConfig';
 import type { User } from '../api/users';
 import type { Role } from '../api/roles';
 import { Mail, UserCog } from 'lucide-react';
@@ -29,16 +30,25 @@ const UserRow: React.FC<UserRowProps> = ({
   const { t } = useTranslation();
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles(user.id);
   const isPending = user.status === 2;
+  const pictureUrl = user.picture ? getFileUrl(user.picture) : null;
 
   return (
     <tr className="border-b border-tertiary/10 hover:bg-gray-50/50 transition-colors group">
       {/* Name Column */}
       <td className="px-4 sm:px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/5">
-            <span className="text-sm font-semibold text-primary">
-              {user.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
-            </span>
+          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/5 overflow-hidden">
+            {pictureUrl ? (
+              <img
+                src={pictureUrl}
+                alt={user.username || 'User'}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-sm font-semibold text-primary">
+                {user.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
+              </span>
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -134,10 +144,10 @@ const UserRow: React.FC<UserRowProps> = ({
                 size="sm"
                 onClick={() => onManageRoles(user)}
                 className="inline-flex items-center gap-1.5"
-                title={t('sections.manageRoles') || 'Manage Roles'}
+                title={t('sections.manageRights') || 'Manage Rights'}
               >
                 <UserCog className="w-4 h-4" />
-                <span>{t('sections.roles') || 'Roles'}</span>
+                <span>{t('sections.rights') || 'Rights'}</span>
               </Button>
               <EditButton 
                 onClick={() => onEdit(user)} 

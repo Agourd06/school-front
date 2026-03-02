@@ -29,6 +29,8 @@ export interface User {
 export interface CreateUserRequest {
   username: string;
   email: string;
+  phone?: string;
+  picture?: File;
   profile?: Profile;
   company_id: number; // Required for public registration
   role_ids?: number[]; // Optional: Roles can be assigned after user creation via /users/:id/roles endpoint
@@ -38,6 +40,7 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   username?: string;
   email?: string;
+  phone?: string;
   status?: number;
   company_id?: number;
   picture?: string | File | null;
@@ -83,7 +86,33 @@ export const usersApi = {
   },
 
   create: async (data: CreateUserRequest): Promise<User> => {
-    const response = await api.post('/users', data);
+    // Check if we have a File (picture upload)
+    const hasFile = data.picture instanceof File;
+    
+    let response;
+    if (hasFile) {
+      const formData = new FormData();
+      formData.append('username', data.username);
+      formData.append('email', data.email);
+      formData.append('company_id', String(data.company_id));
+      if (data.phone) formData.append('phone', data.phone);
+      if (data.picture instanceof File) formData.append('picture', data.picture);
+      if (data.role_ids && data.role_ids.length > 0) {
+        data.role_ids.forEach(id => formData.append('role_ids[]', String(id)));
+      }
+      response = await api.post('/users', formData);
+    } else {
+      // Send only the required fields without undefined values
+      const jsonData: Record<string, unknown> = {
+        username: data.username,
+        email: data.email,
+        company_id: data.company_id,
+      };
+      if (data.phone) jsonData.phone = data.phone;
+      if (data.role_ids && data.role_ids.length > 0) jsonData.role_ids = data.role_ids;
+      
+      response = await api.post('/users', jsonData);
+    }
     
     // Backend returns: { user: {...} }
     // Invitation email with token link is sent to user's email
@@ -112,18 +141,14 @@ export const usersApi = {
             if (value instanceof File) {
               formData.append('picture', value);
             } else if (value === null) {
-              // For removing picture, send empty string or omit the field
-              // Backend will handle empty string as removal
               formData.append('picture', '');
             }
-          } else {
+          } else if (value !== null) {
             formData.append(key, String(value));
           }
         }
       });
       
-      // Note: Don't set Content-Type header - axios interceptor will handle it
-      // The browser needs to set it with the correct multipart boundary
       const response = await api.patch(`/users/${id}`, formData);
       return response.data;
     }

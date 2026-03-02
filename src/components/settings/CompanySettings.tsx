@@ -5,7 +5,7 @@ import { useCompany } from '../../hooks/useCompanies';
 import { useUpdateCompany } from '../../hooks/useCompanies';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Camera, X } from 'lucide-react';
+import { Camera, X, FileText } from 'lucide-react';
 import { getFileUrl } from '../../utils/apiConfig';
 
 const CompanySettings: React.FC = () => {
@@ -28,6 +28,19 @@ const CompanySettings: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // PDF Layout fields
+  const [entete1, setEntete1] = useState('');
+  const [entete2, setEntete2] = useState('');
+  const [entete3, setEntete3] = useState('');
+  const [pied1, setPied1] = useState('');
+  const [pied2, setPied2] = useState('');
+  const [pied3, setPied3] = useState('');
+
+  // PDF Layout boolean settings
+  const [logoLeft, setLogoLeft] = useState(false);
+  const [logoRight, setLogoRight] = useState(false);
+  const [papierEntete, setPapierEntete] = useState(false);
+
   // Helper function to get logo URL
   const getLogoUrl = (logo?: string | null) => {
     if (!logo) return null;
@@ -40,20 +53,29 @@ const CompanySettings: React.FC = () => {
       setPhone(company.phone || '');
       setAddress(company.address || '');
       setCodePostal(company.codePostal || '');
+      // PDF Layout fields
+      setEntete1(company.entete_1 || '');
+      setEntete2(company.entete_2 || '');
+      setEntete3(company.entete_3 || '');
+      setPied1(company.pied_1 || '');
+      setPied2(company.pied_2 || '');
+      setPied3(company.pied_3 || '');
+      // PDF Layout boolean settings
+      setLogoLeft(company.logo_left ?? false);
+      setLogoRight(company.logo_right ?? false);
+      setPapierEntete(company.papier_entete ?? false);
     }
   }, [company]);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
         setLogoError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
         return;
       }
       
-      // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         setLogoError('Image size must be less than 2MB');
         return;
@@ -61,7 +83,6 @@ const CompanySettings: React.FC = () => {
       
       setLogoFile(file);
       setLogoError(null);
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result as string);
@@ -82,12 +103,10 @@ const CompanySettings: React.FC = () => {
         logo: null,
       });
       
-      // Clear preview and file
       setLogoFile(null);
       setLogoPreview(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       
-      // Update AuthContext with updated company data (logo removed)
       if (user && user.company_id === companyId) {
         const { authApi } = await import('../../api/auth');
         try {
@@ -99,15 +118,13 @@ const CompanySettings: React.FC = () => {
             localStorage.setItem('user', JSON.stringify(updatedUserData));
             window.dispatchEvent(new CustomEvent('company-updated'));
           }
-        } catch (profileError) {
-          // Fallback: update with logo removed
+        } catch {
           const updatedUserData = { ...user, company: { ...user.company, logo: null } };
           localStorage.setItem('user', JSON.stringify(updatedUserData));
           window.dispatchEvent(new CustomEvent('company-updated'));
         }
       }
       
-      // Reload page to ensure all components have fresh data
       window.location.reload();
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string | string[] } }; message?: string };
@@ -132,13 +149,10 @@ const CompanySettings: React.FC = () => {
         logo: logoFile,
       });
       
-      // Clear preview and file - the logo will now come from company.logo
       setLogoFile(null);
       setLogoPreview(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       
-      // Update AuthContext with new company data (including logo)
-      // Fetch fresh profile data to ensure we have the latest company logo
       if (user && user.company_id === companyId) {
         const { authApi } = await import('../../api/auth');
         try {
@@ -146,22 +160,17 @@ const CompanySettings: React.FC = () => {
           const serverUser = profileResponse.user;
           
           if (serverUser?.company) {
-            // Update localStorage with fresh company data from server (includes logo)
             const updatedUserData = { ...user, company: serverUser.company };
             localStorage.setItem('user', JSON.stringify(updatedUserData));
-            
-            // Trigger a custom event to refresh AuthContext immediately
             window.dispatchEvent(new CustomEvent('company-updated'));
           }
-        } catch (profileError) {
-          // Fallback: use updated company from mutation response
+        } catch {
           const updatedUserData = { ...user, company: updatedCompany };
           localStorage.setItem('user', JSON.stringify(updatedUserData));
           window.dispatchEvent(new CustomEvent('company-updated'));
         }
       }
       
-      // Reload page to ensure all components have fresh data
       window.location.reload();
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: { message?: string | string[] } }; message?: string };
@@ -174,7 +183,7 @@ const CompanySettings: React.FC = () => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSaveAll = async () => {
     if (!companyId || !company) return;
     
     setIsSaving(true);
@@ -182,44 +191,30 @@ const CompanySettings: React.FC = () => {
     setSuccess(false);
     
     try {
-      const trimmedPhone = phone.trim();
-      const trimmedAddress = address.trim();
-      const trimmedCodePostal = codePostal.trim();
-
-      // Store current values to avoid TypeScript narrowing issues
-      const currentPhone = company.phone || '';
-      const currentAddress = company.address || '';
-      const currentCodePostal = company.codePostal || '';
-
-      const updatePayload: {
-        id: number;
-        phone?: string;
-        address?: string;
-        codePostal?: string;
-      } = {
+      const payload = {
         id: companyId,
+        phone: phone.trim(),
+        address: address.trim(),
+        codePostal: codePostal.trim(),
+        entete_1: entete1,
+        entete_2: entete2,
+        entete_3: entete3,
+        pied_1: pied1,
+        pied_2: pied2,
+        pied_3: pied3,
+        logo_left: logoLeft,
+        logo_right: logoRight,
+        papier_entete: papierEntete,
       };
 
-      // Include phone if it has changed
-      if (trimmedPhone !== currentPhone) {
-        updatePayload.phone = trimmedPhone || undefined;
-      }
+      console.log('Saving all company settings with payload:', payload);
 
-      // Include address if it has changed (send empty string to clear per backend guide)
-      if (trimmedAddress !== currentAddress) {
-        updatePayload.address = trimmedAddress;
-      }
-
-      // Include codePostal if it has changed (send empty string to clear per backend guide)
-      if (trimmedCodePostal !== currentCodePostal) {
-        updatePayload.codePostal = trimmedCodePostal;
-      }
-
-      await updateMutation.mutateAsync(updatePayload);
+      await updateMutation.mutateAsync(payload);
       
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (error: unknown) {
+      console.error('Save error:', error);
       const axiosError = error as { response?: { data?: { message?: string | string[] } }; message?: string };
       const errorMessage = Array.isArray(axiosError?.response?.data?.message)
         ? axiosError.response.data.message.join(', ')
@@ -228,6 +223,24 @@ const CompanySettings: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const hasChanges = () => {
+    if (!company) return false;
+    return (
+      phone !== (company.phone || '') ||
+      address !== (company.address || '') ||
+      codePostal !== (company.codePostal || '') ||
+      entete1 !== (company.entete_1 || '') ||
+      entete2 !== (company.entete_2 || '') ||
+      entete3 !== (company.entete_3 || '') ||
+      pied1 !== (company.pied_1 || '') ||
+      pied2 !== (company.pied_2 || '') ||
+      pied3 !== (company.pied_3 || '') ||
+      logoLeft !== (company.logo_left ?? false) ||
+      logoRight !== (company.logo_right ?? false) ||
+      papierEntete !== (company.papier_entete ?? false)
+    );
   };
 
   if (isLoading) {
@@ -248,6 +261,41 @@ const CompanySettings: React.FC = () => {
 
   const displayLogoUrl = logoPreview || getLogoUrl(company.logo);
 
+  // Toggle Switch Component
+  const ToggleSwitch = ({ 
+    checked, 
+    onChange, 
+    label, 
+    description 
+  }: { 
+    checked: boolean; 
+    onChange: (checked: boolean) => void; 
+    label: string; 
+    description?: string;
+  }) => (
+    <label className="flex items-start gap-3 cursor-pointer group">
+      <div className="relative flex-shrink-0 mt-0.5">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="sr-only"
+        />
+        <div className={`w-11 h-6 rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-gray-300'}`}>
+          <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+        </div>
+      </div>
+      <div className="flex-1">
+        <span className="text-sm font-medium text-heading group-hover:text-primary transition-colors">
+          {label}
+        </span>
+        {description && (
+          <p className="text-xs text-muted mt-0.5">{description}</p>
+        )}
+      </div>
+    </label>
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -256,7 +304,7 @@ const CompanySettings: React.FC = () => {
         </h2>
         
         <div className="space-y-4">
-          {/* Company Logo - Full Width */}
+          {/* Company Logo */}
           <div className="col-span-2">
             <label className="block text-sm font-medium text-muted mb-1">
               {t('settings.companyLogo') || 'Company Logo'}
@@ -364,7 +412,7 @@ const CompanySettings: React.FC = () => {
             </div>
           </div>
 
-          {/* Company Name - Full Width at Top */}
+          {/* Company Name */}
           <div>
             <label className="block text-sm font-medium text-muted mb-1">
               {t('settings.companyName') || 'Company Name'}
@@ -377,9 +425,8 @@ const CompanySettings: React.FC = () => {
             />
           </div>
 
-          {/* Grid Layout for Email and Phone */}
+          {/* Email and Phone */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Company Email - Disabled Input */}
             <div>
               <label className="block text-sm font-medium text-muted mb-1">
                 {t('settings.companyEmail') || 'Company Email'}
@@ -392,7 +439,6 @@ const CompanySettings: React.FC = () => {
               />
             </div>
 
-            {/* Company Phone - Editable */}
             <div>
               <label className="block text-sm font-medium text-muted mb-1">
                 {t('settings.companyPhone') || 'Company Phone'}
@@ -406,9 +452,8 @@ const CompanySettings: React.FC = () => {
             </div>
           </div>
 
-          {/* Grid Layout for Address and Code Postal */}
+          {/* Address and Postal Code */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Address - Editable */}
             <div>
               <label className="block text-sm font-medium text-muted mb-1">
                 {t('forms.address') || 'Address'}
@@ -421,7 +466,6 @@ const CompanySettings: React.FC = () => {
               />
             </div>
 
-            {/* Code Postal - Editable */}
             <div>
               <label className="block text-sm font-medium text-muted mb-1">
                 {t('forms.postalCode') || 'Postal Code'}
@@ -435,9 +479,8 @@ const CompanySettings: React.FC = () => {
             </div>
           </div>
 
-          {/* Grid Layout for Country and City */}
+          {/* Country and City */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Country - Disabled Input */}
             <div>
               <label className="block text-sm font-medium text-muted mb-1">
                 {t('forms.country') || 'Country'}
@@ -450,7 +493,6 @@ const CompanySettings: React.FC = () => {
               />
             </div>
 
-            {/* City - Disabled Input */}
             <div>
               <label className="block text-sm font-medium text-muted mb-1">
                 {t('forms.city') || 'City'}
@@ -466,8 +508,111 @@ const CompanySettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Save Button for Phone, Address, and Code Postal */}
-      <div className="flex items-center justify-between pt-4 border-t border-tertiary/20">
+      {/* PDF Layout Section */}
+      <div className="pt-6 border-t border-tertiary/20">
+        <div className="flex items-center gap-2 mb-6">
+          <FileText className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-semibold text-heading">
+            {t('settings.pdfLayoutSettings') || 'PDF Layout Settings'}
+          </h2>
+        </div>
+
+        {/* PDF Settings Toggles */}
+        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <ToggleSwitch
+              checked={logoLeft}
+              onChange={setLogoLeft}
+              label={t('settings.logoLeft') || 'Logo on Left'}
+              description={t('settings.logoLeftDesc') || 'Show logo on the left side of PDF header'}
+            />
+            
+            <ToggleSwitch
+              checked={logoRight}
+              onChange={setLogoRight}
+              label={t('settings.logoRight') || 'Logo on Right'}
+              description={t('settings.logoRightDesc') || 'Show logo on the right side of PDF header'}
+            />
+            
+            <ToggleSwitch
+              checked={papierEntete}
+              onChange={setPapierEntete}
+              label={t('settings.papierEntete') || 'Letterhead Mode'}
+              description={t('settings.papierEnteteDesc') || 'Show header & footer text in PDF documents'}
+            />
+          </div>
+        </div>
+
+        {/* Header/Footer Inputs - Only show when papierEntete is enabled */}
+        {papierEntete ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Headers (Entêtes) */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-heading">
+                {t('settings.documentHeaders') || 'Document Headers'}
+              </h3>
+              <Input
+                type="text"
+                value={entete1}
+                onChange={(e) => setEntete1(e.target.value)}
+                placeholder={t('settings.header1') || 'Header 1'}
+                className="text-sm"
+              />
+              <Input
+                type="text"
+                value={entete2}
+                onChange={(e) => setEntete2(e.target.value)}
+                placeholder={t('settings.header2') || 'Header 2'}
+                className="text-sm"
+              />
+              <Input
+                type="text"
+                value={entete3}
+                onChange={(e) => setEntete3(e.target.value)}
+                placeholder={t('settings.header3') || 'Header 3'}
+                className="text-sm"
+              />
+            </div>
+
+            {/* Footers (Pieds) */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-heading">
+                {t('settings.documentFooters') || 'Document Footers'}
+              </h3>
+              <Input
+                type="text"
+                value={pied1}
+                onChange={(e) => setPied1(e.target.value)}
+                placeholder={t('settings.footer1') || 'Footer 1'}
+                className="text-sm"
+              />
+              <Input
+                type="text"
+                value={pied2}
+                onChange={(e) => setPied2(e.target.value)}
+                placeholder={t('settings.footer2') || 'Footer 2'}
+                className="text-sm"
+              />
+              <Input
+                type="text"
+                value={pied3}
+                onChange={(e) => setPied3(e.target.value)}
+                placeholder={t('settings.footer3') || 'Footer 3'}
+                className="text-sm"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+            <p className="text-sm text-blue-800">
+              {t('settings.enableLetterheadHint') || 'Enable "Letterhead Mode" above to customize header and footer content for your PDF documents.'}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Save Button */}
+      <div className="flex items-center justify-between pt-6 mt-6 border-t border-tertiary/20 sticky bottom-0 bg-surface py-4 z-[999]">
         <div className="flex-1">
           {error && (
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-2 mb-2">
@@ -476,17 +621,17 @@ const CompanySettings: React.FC = () => {
           )}
           {success && (
             <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-2 mb-2">
-              {t('settings.companyUpdated') || 'Company updated successfully'}
+              {t('settings.companyUpdated') || 'Company settings updated successfully'}
             </div>
           )}
         </div>
         <Button
           type="button"
           variant="primary"
-          onClick={handleSave}
-          disabled={isSaving || (phone === (company.phone || '') && address === (company.address || '') && codePostal === (company.codePostal || ''))}
+          onClick={handleSaveAll}
+          disabled={isSaving || !hasChanges()}
         >
-          {isSaving ? t('common.saving') || 'Saving...' : t('common.save') || 'Save Changes'}
+          {isSaving ? t('common.saving') || 'Saving...' : t('common.saveChanges') || 'Save Changes'}
         </Button>
       </div>
     </div>

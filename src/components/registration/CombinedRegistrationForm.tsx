@@ -232,7 +232,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               <label htmlFor="privacy-policy" className="text-sm text-heading cursor-pointer flex-1 leading-relaxed block">
                 {t('registration.iHaveReadAndAgreeTo')}{' '}
                 <a
-                  href="/privacy-policy"
+                  href="https://www.muntadaa.com/edusol/privacy_policy.html"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary font-semibold hover:underline"
@@ -263,7 +263,7 @@ const CombinedRegistrationForm: React.FC<CombinedRegistrationFormProps> = ({
               <label htmlFor="terms-of-use" className="text-sm text-heading cursor-pointer flex-1 leading-relaxed block">
                 {t('registration.iHaveReadAndAgreeTo')}{' '}
                 <a
-                  href="/terms-of-use"
+                  href="https://www.muntadaa.com/edusol/terms_of_use.html"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary font-semibold hover:underline"

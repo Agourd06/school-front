@@ -2,16 +2,21 @@ import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { PageHeader } from '../components/ui';
-import { Settings } from 'lucide-react';
+import { Settings, Mail, Phone, Building2 } from 'lucide-react';
 import { usePermissions } from '../utils/permissions';
+import { useAuth } from '../hooks/useAuth';
+import { useCompany } from '../hooks/useCompanies';
 
-type SettingsTab = 'colors' | 'access' | 'types' | 'roles' | 'company' | 'users';
+type SettingsTab = 'colors' | 'access' | 'types' | 'roles' | 'company' | 'users' | 'pdf-layout';
 
 const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { hasPageAccess, allowedPages } = usePermissions();
+  const { user } = useAuth();
+  const companyId = user?.company_id;
+  const { data: company } = useCompany(companyId || 0);
 
   // Determine active tab from URL
   const getActiveTab = (): SettingsTab => {
@@ -22,6 +27,7 @@ const SettingsPage: React.FC = () => {
     if (path === '/settings/company') return 'company';
     if (path === '/settings/user') return 'users';
     if (path === '/settings/colors') return 'colors';
+    if (path === '/settings/pdf-layout' || path === '/settings/mise-en-page') return 'pdf-layout';
     if (path === '/settings') return 'company'; // default to company (first tab)
     return 'company'; // default
   };
@@ -65,6 +71,12 @@ const SettingsPage: React.FC = () => {
         label: t('settings.colors'),
         path: '/settings/colors',
         isAllowed: hasPageAccess('/settings/colors'),
+      },
+      {
+        id: 'pdf-layout' as const,
+        label: t('settings.pdfLayout') || 'Mise en page',
+        path: '/settings/pdf-layout',
+        isAllowed: hasPageAccess('/settings/pdf-layout'),
       },
       {
         id: 'types' as const,
@@ -116,12 +128,39 @@ const SettingsPage: React.FC = () => {
     );
   }
 
+  // Company info component for the header
+  const companyInfoElement = company ? (
+    <div className="flex items-center gap-6 text-sm">
+      <div className="flex items-center gap-2">
+        <Building2 className="w-4 h-4 text-secondary" />
+        <span className="font-semibold text-heading">{company.name}</span>
+      </div>
+      <div className="h-4 w-px bg-tertiary/30" />
+      {company.email && (
+        <div className="flex items-center gap-1.5 text-muted">
+          <Mail className="w-3.5 h-3.5 text-primary" />
+          <span>{company.email}</span>
+        </div>
+      )}
+      {company.phone && (
+        <>
+          <div className="h-4 w-px bg-tertiary/30" />
+          <div className="flex items-center gap-1.5 text-muted">
+            <Phone className="w-3.5 h-3.5 text-primary" />
+            <span>{company.phone}</span>
+          </div>
+        </>
+      )}
+    </div>
+  ) : null;
+
   return (
     <div className="space-y-6">
       <PageHeader
         titleKey="pages.settingsTitle"
         descriptionKey="pages.settingsDescription"
         icon={<Settings className="w-5 h-5" />}
+        middle={companyInfoElement}
       />
 
       {/* Tabs */}

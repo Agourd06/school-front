@@ -55,6 +55,7 @@ export const APP_ROUTES: RouteDefinition[] = [
   { route: '/settings/types/link', title: 'Settings - Link Types' },
   { route: '/settings/types/classroom', title: 'Settings - Classroom Types' },
   { route: '/settings/types/planning', title: 'Settings - Planning Types' },
+  { route: '/settings/pdf-layout', title: 'Settings - PDF Layout' },
   { route: '/roles', title: 'Roles' },
   { route: '/profile', title: 'Profile' },
 
